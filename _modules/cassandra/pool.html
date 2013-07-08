@@ -1,0 +1,631 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.pool &mdash; Cassandra Driver 0.1.4 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 0.1.4 documentation" href="../../index.html" />
+    <link rel="up" title="cassandra" href="../cassandra.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for cassandra.pool</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Connection pooling and host management.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Lock</span><span class="p">,</span> <span class="n">RLock</span><span class="p">,</span> <span class="n">Condition</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">weakref</span>
+
+<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">AuthenticationFailed</span>
+<span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="n">MAX_STREAM_PER_CONNECTION</span><span class="p">,</span> <span class="n">ConnectionException</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">NoConnectionsAvailable</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    All existing connections to a given host are busy, or there are</span>
+<span class="sd">    no open connections.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="Host"><a class="viewcode-back" href="../../api/cassandra/pool.html#cassandra.pool.Host">[docs]</a><span class="k">class</span> <span class="nc">Host</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a single Cassandra node.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">address</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The IP address or hostname of the node.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">monitor</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`.HealthMonitor` instance that tracks whether this node is</span>
+<span class="sd">    up or down.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_datacenter</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_rack</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_reconnection_handler</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inet_address</span><span class="p">,</span> <span class="n">conviction_policy_factory</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">inet_address</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;inet_address may not be None&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">conviction_policy_factory</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;conviction_policy_factory may not be None&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">inet_address</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span> <span class="o">=</span> <span class="n">HealthMonitor</span><span class="p">(</span><span class="n">conviction_policy_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reconnection_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Host.datacenter"><a class="viewcode-back" href="../../api/cassandra/pool.html#cassandra.pool.Host.datacenter">[docs]</a>    <span class="k">def</span> <span class="nf">datacenter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; The datacenter the node is in.  &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datacenter</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Host.rack"><a class="viewcode-back" href="../../api/cassandra/pool.html#cassandra.pool.Host.rack">[docs]</a>    <span class="k">def</span> <span class="nf">rack</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; The rack the node is in.  &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rack</span>
+</div>
+    <span class="k">def</span> <span class="nf">set_location_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the datacenter and rack for this node. Intended for internal</span>
+<span class="sd">        use (by the control connection, which periodically checks the</span>
+<span class="sd">        ring topology) only.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datacenter</span> <span class="o">=</span> <span class="n">datacenter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rack</span> <span class="o">=</span> <span class="n">rack</span>
+
+    <span class="k">def</span> <span class="nf">get_and_set_reconnection_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_handler</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Atomically replaces the reconnection handler for this</span>
+<span class="sd">        host.  Intended for internal use only.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reconnection_lock</span><span class="p">:</span>
+            <span class="n">old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reconnection_handler</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reconnection_handler</span> <span class="o">=</span> <span class="n">new_handler</span>
+            <span class="k">return</span> <span class="n">old</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Host</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">address</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dc</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot; </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datacenter</span><span class="p">,))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datacenter</span> <span class="k">else</span> <span class="s">&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&quot;&lt;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s%s</span><span class="s">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="n">dc</span><span class="p">)</span>
+
+</div>
+<span class="k">class</span> <span class="nc">_ReconnectionHandler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract class for attempting reconnections with a given</span>
+<span class="sd">    schedule and scheduler.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_cancelled</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scheduler</span><span class="p">,</span> <span class="n">schedule</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="o">*</span><span class="n">callback_args</span><span class="p">,</span> <span class="o">**</span><span class="n">callback_kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span> <span class="o">=</span> <span class="n">scheduler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback_args</span> <span class="o">=</span> <span class="n">callback_args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback_kwargs</span> <span class="o">=</span> <span class="n">callback_kwargs</span>
+
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cancelled</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># TODO cancel previous reconnection handlers? That&#39;s probably the job</span>
+        <span class="c"># of whatever created this.</span>
+
+        <span class="n">first_delay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">first_delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cancelled</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">callback_args</span><span class="p">),</span> <span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">callback_kwargs</span><span class="p">))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">on_reconnection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">try_reconnect</span><span class="p">())</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">next_delay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">next_delay</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">next_delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">callback_args</span><span class="p">),</span> <span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">callback_kwargs</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cancelled</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">try_reconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Subclasses must implement this method.  It should attempt to</span>
+<span class="sd">        open a new Connection and return it; if a failure occurs, an</span>
+<span class="sd">        Exception should be raised.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">on_reconnection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Called when a new Connection is successfully opened.  Nothing is</span>
+<span class="sd">        done by default.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">on_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">next_delay</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Called when an Exception is raised when trying to connect.</span>
+<span class="sd">        `exc` is the Exception that was raised and `next_delay` is the</span>
+<span class="sd">        number of seconds (as a float) that the handler will wait before</span>
+<span class="sd">        attempting to connect again.</span>
+
+<span class="sd">        Subclasses should return :const:`False` if no more attempts to</span>
+<span class="sd">        connection should be made, :const:`True` otherwise.  The default</span>
+<span class="sd">        behavior is to always retry unless the error is an</span>
+<span class="sd">        :exc:`.AuthenticationFailed` instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">AuthenticationFailed</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+
+
+<span class="k">class</span> <span class="nc">_HostReconnectionHandler</span><span class="p">(</span><span class="n">_ReconnectionHandler</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">connection_factory</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">_ReconnectionHandler</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connection_factory</span> <span class="o">=</span> <span class="n">connection_factory</span>
+
+    <span class="k">def</span> <span class="nf">try_reconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">on_reconnection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">on_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">next_delay</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">AuthenticationFailed</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Error attempting to reconnect to </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+            <span class="k">return</span> <span class="bp">True</span>
+
+
+<div class="viewcode-block" id="HealthMonitor"><a class="viewcode-back" href="../../api/cassandra/pool.html#cassandra.pool.HealthMonitor">[docs]</a><span class="k">class</span> <span class="nc">HealthMonitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Monitors whether a particular host is marked as up or down.</span>
+<span class="sd">    This class is primarily intended for internal use, although</span>
+<span class="sd">    applications may find it useful to check whether a given node</span>
+<span class="sd">    is up or down.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_up</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A boolean representing the current state of the node.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conviction_policy</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_conviction_policy</span> <span class="o">=</span> <span class="n">conviction_policy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_host</span> <span class="o">=</span> <span class="n">conviction_policy</span><span class="o">.</span><span class="n">host</span>
+        <span class="c"># self._listeners will hold, among other things, references to</span>
+        <span class="c"># Cluster objects.  To allow those to be GC&#39;ed (and shutdown) even</span>
+        <span class="c"># though we&#39;ve implemented __del__, use weak references.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">WeakSet</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">unregister</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">set_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_up</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_conviction_policy</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Host </span><span class="si">%s</span><span class="s"> is considered up&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="n">listeners</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="n">listeners</span><span class="p">:</span>
+            <span class="n">listener</span><span class="o">.</span><span class="n">on_up</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_up</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">set_down</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_up</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_up</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Host </span><span class="si">%s</span><span class="s"> is considered down&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="n">listeners</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="n">listeners</span><span class="p">:</span>
+            <span class="n">listener</span><span class="o">.</span><span class="n">on_down</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_up</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">signal_connection_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection_exc</span><span class="p">):</span>
+        <span class="n">is_down</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conviction_policy</span><span class="o">.</span><span class="n">add_failure</span><span class="p">(</span><span class="n">connection_exc</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_down</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_down</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">is_down</span>
+
+</div>
+<span class="n">_MAX_SIMULTANEOUS_CREATION</span> <span class="o">=</span> <span class="mi">1</span>
+
+
+<span class="k">class</span> <span class="nc">HostConnectionPool</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="n">host</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">host_distance</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">is_shutdown</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">open_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">_scheduled_for_creation</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">host_distance</span><span class="p">,</span> <span class="n">session</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span> <span class="o">=</span> <span class="n">host_distance</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_conn_available_condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">()</span>
+
+        <span class="n">core_conns</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_core_connections_per_host</span><span class="p">(</span><span class="n">host_distance</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span> <span class="o">=</span> <span class="p">[</span><span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+                             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">core_conns</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_trash</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">=</span> <span class="n">core_conns</span>
+
+    <span class="k">def</span> <span class="nf">borrow_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ConnectionException</span><span class="p">(</span>
+                <span class="s">&quot;Pool for </span><span class="si">%s</span><span class="s"> is shutdown&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+
+        <span class="n">conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">conns</span><span class="p">:</span>
+            <span class="c"># handled specially just for simpler code</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Detected empty pool, opening core conns to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,))</span>
+            <span class="n">core_conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_core_connections_per_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="c"># we check the length of self._connections again</span>
+                <span class="c"># along with self._scheduled_for_creation while holding the lock</span>
+                <span class="c"># in case multiple threads hit this condition at the same time</span>
+                <span class="n">to_create</span> <span class="o">=</span> <span class="n">core_conns</span> <span class="o">-</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_for_creation</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">to_create</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_for_creation</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_create_new_connection</span><span class="p">)</span>
+
+            <span class="c"># in_flight is incremented by wait_for_conn</span>
+            <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_conn</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">keyspace</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">conn</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># note: it would be nice to push changes to these config settings</span>
+            <span class="c"># to pools instead of doing a new lookup on every</span>
+            <span class="c"># borrow_connection() call</span>
+            <span class="n">max_reqs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_max_requests_per_connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
+            <span class="n">max_conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_max_connections_per_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
+
+            <span class="n">least_busy</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">conns</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">in_flight</span><span class="p">)</span>
+            <span class="c"># to avoid another thread closing this connection while</span>
+            <span class="c"># trashing it (through the return_connection process), hold</span>
+            <span class="c"># the connection lock from this point until we&#39;ve incremented</span>
+            <span class="c"># its in_flight count</span>
+            <span class="k">with</span> <span class="n">least_busy</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+
+                <span class="c"># if we have too many requests on this connection but we still</span>
+                <span class="c"># have space to open a new connection against this host, go ahead</span>
+                <span class="c"># and schedule the creation of a new connection</span>
+                <span class="k">if</span> <span class="n">least_busy</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">&gt;=</span> <span class="n">max_reqs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">max_conns</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_spawn_new_connection</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">least_busy</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">&gt;=</span> <span class="n">MAX_STREAM_PER_CONNECTION</span><span class="p">:</span>
+                    <span class="c"># once we release the lock, wait for another connection</span>
+                    <span class="n">need_to_wait</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">need_to_wait</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="n">least_busy</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">need_to_wait</span><span class="p">:</span>
+                <span class="c"># wait_for_conn will increment in_flight on the conn</span>
+                <span class="n">least_busy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_conn</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+
+            <span class="n">least_busy</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">keyspace</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">least_busy</span>
+
+    <span class="k">def</span> <span class="nf">_maybe_spawn_new_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_for_creation</span> <span class="o">&gt;=</span> <span class="n">_MAX_SIMULTANEOUS_CREATION</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_for_creation</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Submitting task for creation of new Connection to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_create_new_connection</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_create_new_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_conn_if_under_max</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Unexpectedly failed to create new connection&quot;</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_for_creation</span> <span class="o">-=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">_add_conn_if_under_max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">max_conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_max_connections_per_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">&gt;=</span> <span class="n">max_conns</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="n">new_connections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">[:]</span> <span class="o">+</span> <span class="p">[</span><span class="n">conn</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span> <span class="o">=</span> <span class="n">new_connections</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_signal_available_conn</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">except</span> <span class="n">ConnectionException</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Failed to add new connection to pool for host </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,))</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">signal_connection_failure</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">except</span> <span class="n">AuthenticationFailed</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">_await_available_conn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn_available_condition</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conn_available_condition</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_signal_available_conn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn_available_condition</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conn_available_condition</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_signal_all_available_conn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn_available_condition</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conn_available_condition</span><span class="o">.</span><span class="n">notify_all</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_wait_for_conn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="n">timeout</span>
+
+        <span class="k">while</span> <span class="n">remaining</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c"># wait on our condition for the possibility that a connection</span>
+            <span class="c"># is useable</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_await_available_conn</span><span class="p">(</span><span class="n">remaining</span><span class="p">)</span>
+
+            <span class="c"># self.shutdown() may trigger the above Condition</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ConnectionException</span><span class="p">(</span><span class="s">&quot;Pool is shutdown&quot;</span><span class="p">)</span>
+
+            <span class="n">conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span>
+            <span class="k">if</span> <span class="n">conns</span><span class="p">:</span>
+                <span class="n">least_busy</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">conns</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">in_flight</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">least_busy</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">least_busy</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">&lt;</span> <span class="n">MAX_STREAM_PER_CONNECTION</span><span class="p">:</span>
+                        <span class="n">least_busy</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="k">return</span> <span class="n">least_busy</span>
+
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">timeout</span> <span class="o">-</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+
+        <span class="k">raise</span> <span class="n">NoConnectionsAvailable</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="n">in_flight</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span>
+
+        <span class="k">if</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span><span class="p">:</span>
+            <span class="n">is_down</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">signal_connection_failure</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">last_error</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">is_down</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">connection</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trash</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">in_flight</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_trash</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+                        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="k">return</span>
+
+            <span class="n">core_conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_core_connections_per_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
+            <span class="n">min_reqs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_min_requests_per_connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
+            <span class="c"># we can use in_flight here without holding the connection lock</span>
+            <span class="c"># because the fact that in_flight dipped below the min at some</span>
+            <span class="c"># point is enough to start the trashing procedure</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">core_conns</span> <span class="ow">and</span> <span class="n">in_flight</span> <span class="o">&lt;=</span> <span class="n">min_reqs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_trash_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_signal_available_conn</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_maybe_trash_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="n">core_conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_core_connections_per_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
+        <span class="n">did_trash</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">connection</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">:</span>
+                <span class="k">return</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">&gt;</span> <span class="n">core_conns</span><span class="p">:</span>
+                <span class="n">did_trash</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="n">new_connections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">[:]</span>
+                <span class="n">new_connections</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span> <span class="o">=</span> <span class="n">new_connections</span>
+
+                <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+                        <span class="c"># skip adding it to the trash if we&#39;re already closing it</span>
+                        <span class="k">return</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_trash</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">did_trash</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Trashed connection to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,))</span>
+
+    <span class="k">def</span> <span class="nf">_replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="n">should_replace</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">connection</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">:</span>
+                <span class="n">new_connections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">[:]</span>
+                <span class="n">new_connections</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span> <span class="o">=</span> <span class="n">new_connections</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="n">should_replace</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">if</span> <span class="n">should_replace</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Replacing connection to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,))</span>
+
+            <span class="k">def</span> <span class="nf">close_and_replace</span><span class="p">():</span>
+                <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_add_conn_if_under_max</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">close_and_replace</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># just close it</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Closing connection to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,))</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_signal_all_available_conn</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">-=</span> <span class="mi">1</span>
+
+        <span class="n">reconnector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">get_and_set_reconnection_handler</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reconnector</span><span class="p">:</span>
+            <span class="n">reconnector</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">ensure_core_connections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">core_conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_core_connections_per_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="n">to_create</span> <span class="o">=</span> <span class="n">core_conns</span> <span class="o">-</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_for_creation</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">to_create</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_for_creation</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_create_new_connection</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Tyler Hobbs.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,555 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.policies - Load balancing and Failure Handling Policies &mdash; Cassandra Driver 0.1.4 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 0.1.4 documentation" href="../../index.html" />
+    <link rel="up" title="API Documentation" href="../index.html" />
+    <link rel="next" title="cassandra.metadata - Schema and Ring Topology" href="metadata.html" />
+    <link rel="prev" title="cassandra.cluster - Clusters and Sessions" href="cluster.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="metadata.html" title="cassandra.metadata - Schema and Ring Topology"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies</a><ul>
+<li><a class="reference internal" href="#load-balancing">Load Balancing</a></li>
+<li><a class="reference internal" href="#marking-hosts-up-or-down">Marking Hosts Up or Down</a></li>
+<li><a class="reference internal" href="#reconnecting-to-dead-hosts">Reconnecting to Dead Hosts</a></li>
+<li><a class="reference internal" href="#retrying-failed-operations">Retrying Failed Operations</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="cluster.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">cassandra.cluster</span></tt> - Clusters and Sessions</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="metadata.html"
+                        title="next chapter"><tt class="docutils literal docutils literal"><span class="pre">cassandra.metadata</span></tt> - Schema and Ring Topology</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/api/cassandra/policies.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-cassandra.policies">
+<span id="cassandra-policies-load-balancing-and-failure-handling-policies"></span><h1><tt class="docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies<a class="headerlink" href="#module-cassandra.policies" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="load-balancing">
+<h2>Load Balancing<a class="headerlink" href="#load-balancing" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="cassandra.policies.HostDistance">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">HostDistance</tt><a class="reference internal" href="../../_modules/cassandra/policies.html#HostDistance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.HostDistance" title="Permalink to this definition">¶</a></dt>
+<dd><p>A measure of how &#8220;distant&#8221; a node is from the client, which
+may influence how the load balancer distributes requests
+and how many connections are opened to the node.</p>
+<dl class="attribute">
+<dt id="cassandra.policies.HostDistance.IGNORED">
+<tt class="descname">IGNORED</tt><em class="property"> = -1</em><a class="headerlink" href="#cassandra.policies.HostDistance.IGNORED" title="Permalink to this definition">¶</a></dt>
+<dd><p>A node with this distance should never be queried or have
+connections opened to it.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.policies.HostDistance.LOCAL">
+<tt class="descname">LOCAL</tt><em class="property"> = 0</em><a class="headerlink" href="#cassandra.policies.HostDistance.LOCAL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nodes with <tt class="docutils literal"><span class="pre">LOCAL</span></tt> distance will be preferred for operations
+under some load balancing policies (such as <a class="reference internal" href="#cassandra.policies.DCAwareRoundRobinPolicy" title="cassandra.policies.DCAwareRoundRobinPolicy"><tt class="xref py py-class docutils literal"><span class="pre">DCAwareRoundRobinPolicy</span></tt></a>)
+and will have a greater number of connections opened against
+them by default.</p>
+<p>This distance is typically used for nodes within the same
+datacenter as the client.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.policies.HostDistance.REMOTE">
+<tt class="descname">REMOTE</tt><em class="property"> = 1</em><a class="headerlink" href="#cassandra.policies.HostDistance.REMOTE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nodes with <tt class="docutils literal"><span class="pre">REMOTE</span></tt> distance will be treated as a last resort
+by some load balancing policies (such as <a class="reference internal" href="#cassandra.policies.DCAwareRoundRobinPolicy" title="cassandra.policies.DCAwareRoundRobinPolicy"><tt class="xref py py-class docutils literal"><span class="pre">DCAwareRoundRobinPolicy</span></tt></a>)
+and will have a smaller number of connections opened against
+them by default.</p>
+<p>This distance is typically used for nodes outside of the
+datacenter that the client is running in.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.LoadBalancingPolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">LoadBalancingPolicy</tt><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load balancing policies are used to decide how to distribute
+requests among all possible coordinator nodes in the cluster.</p>
+<p>In particular, they may focus on querying &#8220;near&#8221; nodes (those
+in a local datacenter) or on querying nodes who happen to
+be replicas for the requested data.</p>
+<p>You may also use subclasses of <a class="reference internal" href="#cassandra.policies.LoadBalancingPolicy" title="cassandra.policies.LoadBalancingPolicy"><tt class="xref py py-class docutils literal"><span class="pre">LoadBalancingPolicy</span></tt></a> for
+custom behavior.</p>
+<dl class="method">
+<dt id="cassandra.policies.LoadBalancingPolicy.distance">
+<tt class="descname">distance</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a measure of how remote a <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> is in
+terms of the <a class="reference internal" href="#cassandra.policies.HostDistance" title="cassandra.policies.HostDistance"><tt class="xref py py-class docutils literal"><span class="pre">HostDistance</span></tt></a> enums.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.LoadBalancingPolicy.populate">
+<tt class="descname">populate</tt><big>(</big><em>cluster</em>, <em>hosts</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.populate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.populate" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method is called to initialize the load balancing
+policy with a set of <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> instances before its
+first use.  The <cite>cluster</cite> parameter is an instance of
+<a class="reference internal" href="cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><tt class="xref py py-class docutils literal"><span class="pre">Cluster</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.LoadBalancingPolicy.make_query_plan">
+<tt class="descname">make_query_plan</tt><big>(</big><em>query=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.make_query_plan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.make_query_plan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a <a class="reference internal" href="query.html#cassandra.query.Query" title="cassandra.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a> instance, return a iterable
+of <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> instances which should be queried in that
+order.  A generator may work well for custom implementations
+of this method.</p>
+<p>Note that the <cite>query</cite> argument may be <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt> when preparing
+statements.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.LoadBalancingPolicy.on_up">
+<tt class="descname">on_up</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.on_up"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.on_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when a <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a>&#8216;s <a class="reference internal" href="pool.html#cassandra.pool.HealthMonitor" title="cassandra.pool.HealthMonitor"><tt class="xref py py-class docutils literal"><span class="pre">HealthMonitor</span></tt></a>
+marks the node up.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.LoadBalancingPolicy.on_down">
+<tt class="descname">on_down</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.on_down"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.on_down" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when a <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a>&#8216;s <a class="reference internal" href="pool.html#cassandra.pool.HealthMonitor" title="cassandra.pool.HealthMonitor"><tt class="xref py py-class docutils literal"><span class="pre">HealthMonitor</span></tt></a>
+marks the node down.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.LoadBalancingPolicy.on_add">
+<tt class="descname">on_add</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.on_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.on_add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when a <a class="reference internal" href="cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><tt class="xref py py-class docutils literal"><span class="pre">Cluster</span></tt></a> instance is first created and
+the initial contact points are added as well as when a new
+<a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> is discovered in the cluster, which may
+happen the first time the ring topology is examined or when
+a new node joins the cluster.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.LoadBalancingPolicy.on_remove">
+<tt class="descname">on_remove</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.on_remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.on_remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when a <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> leaves the cluster.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.RoundRobinPolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">RoundRobinPolicy</tt><a class="reference internal" href="../../_modules/cassandra/policies.html#RoundRobinPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.RoundRobinPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A subclass of <a class="reference internal" href="#cassandra.policies.LoadBalancingPolicy" title="cassandra.policies.LoadBalancingPolicy"><tt class="xref py py-class docutils literal"><span class="pre">LoadBalancingPolicy</span></tt></a> which evenly
+distributes queries across all nodes in the cluster,
+regardless of what datacenter the nodes may be in.</p>
+<p>This load balancing policy is used by default.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.DCAwareRoundRobinPolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">DCAwareRoundRobinPolicy</tt><big>(</big><em>local_dc</em>, <em>used_hosts_per_remote_dc=0</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#DCAwareRoundRobinPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.DCAwareRoundRobinPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Similar to <a class="reference internal" href="#cassandra.policies.RoundRobinPolicy" title="cassandra.policies.RoundRobinPolicy"><tt class="xref py py-class docutils literal"><span class="pre">RoundRobinPolicy</span></tt></a>, but prefers hosts
+in the local datacenter and only uses nodes in remote
+datacenters as a last resort.</p>
+<p>The <cite>local_dc</cite> parameter should be the name of the datacenter
+(such as is reported by <tt class="docutils literal"><span class="pre">nodetool</span> <span class="pre">ring</span></tt>) that should
+be considered local.</p>
+<p><cite>used_hosts_per_remote_dc</cite> controls how many nodes in
+each remote datacenter will have connections opened
+against them. In other words, <cite>used_hosts_per_remote_dc</cite> hosts
+will be considered <a class="reference internal" href="#cassandra.policies.HostDistance.REMOTE" title="cassandra.policies.HostDistance.REMOTE"><tt class="xref py py-attr docutils literal"><span class="pre">REMOTE</span></tt></a> and the
+rest will be considered <a class="reference internal" href="#cassandra.policies.HostDistance.IGNORED" title="cassandra.policies.HostDistance.IGNORED"><tt class="xref py py-attr docutils literal"><span class="pre">IGNORED</span></tt></a>.
+By default, all remote hosts are ignored.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.TokenAwarePolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">TokenAwarePolicy</tt><big>(</big><em>child_policy</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#TokenAwarePolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.TokenAwarePolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#cassandra.policies.LoadBalancingPolicy" title="cassandra.policies.LoadBalancingPolicy"><tt class="xref py py-class docutils literal"><span class="pre">LoadBalancingPolicy</span></tt></a> wrapper that adds token awareness to
+a child policy.</p>
+<p>This alters the child policy&#8217;s behavior so that it first attempts to
+send queries to <a class="reference internal" href="#cassandra.policies.HostDistance.LOCAL" title="cassandra.policies.HostDistance.LOCAL"><tt class="xref py py-attr docutils literal"><span class="pre">LOCAL</span></tt></a> replicas (as determined
+by the child policy) based on the <a class="reference internal" href="query.html#cassandra.query.Query" title="cassandra.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a>&#8216;s
+<a class="reference internal" href="query.html#cassandra.query.Query.routing_key" title="cassandra.query.Query.routing_key"><tt class="xref py py-attr docutils literal"><span class="pre">routing_key</span></tt></a>.  Once those hosts are exhausted, the
+remaining hosts in the child policy&#8217;s query plan will be used.</p>
+<p>If no <a class="reference internal" href="query.html#cassandra.query.Query.routing_key" title="cassandra.query.Query.routing_key"><tt class="xref py py-attr docutils literal"><span class="pre">routing_key</span></tt></a> is set on the query, the child
+policy&#8217;s query plan will be used as is.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="marking-hosts-up-or-down">
+<h2>Marking Hosts Up or Down<a class="headerlink" href="#marking-hosts-up-or-down" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="cassandra.policies.ConvictionPolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">ConvictionPolicy</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#ConvictionPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.ConvictionPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A policy which decides when hosts should be considered down
+based on the types of failures and the number of failures.</p>
+<p>If custom behavior is needed, this class may be subclassed.</p>
+<p><cite>host</cite> is an instance of <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a>.</p>
+<dl class="method">
+<dt id="cassandra.policies.ConvictionPolicy.add_failure">
+<tt class="descname">add_failure</tt><big>(</big><em>connection_exc</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#ConvictionPolicy.add_failure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.ConvictionPolicy.add_failure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implementations should return <tt class="xref py py-const docutils literal"><span class="pre">True</span></tt> if the host should be
+convicted, <tt class="xref py py-const docutils literal"><span class="pre">False</span></tt> otherwise.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.ConvictionPolicy.reset">
+<tt class="descname">reset</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#ConvictionPolicy.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.ConvictionPolicy.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implementations should clear out any convictions or state regarding
+the host.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.SimpleConvictionPolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">SimpleConvictionPolicy</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#SimpleConvictionPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.SimpleConvictionPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default implementation of <a class="reference internal" href="#cassandra.policies.ConvictionPolicy" title="cassandra.policies.ConvictionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ConvictionPolicy</span></tt></a>,
+which simply marks a host as down after the first failure
+of any kind.</p>
+<p><cite>host</cite> is an instance of <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="reconnecting-to-dead-hosts">
+<h2>Reconnecting to Dead Hosts<a class="headerlink" href="#reconnecting-to-dead-hosts" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="cassandra.policies.ReconnectionPolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">ReconnectionPolicy</tt><a class="reference internal" href="../../_modules/cassandra/policies.html#ReconnectionPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.ReconnectionPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class and its subclasses govern how frequently an attempt is made
+to reconnect to nodes that are marked dead.</p>
+<p>If custom behavior is needed, this class may be subclassed.</p>
+<dl class="method">
+<dt id="cassandra.policies.ReconnectionPolicy.new_schedule">
+<tt class="descname">new_schedule</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#ReconnectionPolicy.new_schedule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.ReconnectionPolicy.new_schedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>This should return a finite or infinite iterable of delays (each as a
+floating point number of seconds) inbetween each failed reconnection
+attempt.  Note that if the iterable is finite, reconnection attempts
+will cease once the iterable is exhausted.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.ConstantReconnectionPolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">ConstantReconnectionPolicy</tt><big>(</big><em>delay</em>, <em>max_attempts=64</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#ConstantReconnectionPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.ConstantReconnectionPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ReconnectionPolicy</span></tt></a> subclass which sleeps for a fixed delay
+inbetween each reconnection attempt.</p>
+<p><cite>delay</cite> should be a floating point number of seconds to wait inbetween
+each attempt.</p>
+<p><cite>max_attempts</cite> should be a total number of attempts to be made before
+giving up, or <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt> to continue reconnection attempts forever.
+The default is 64.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.ExponentialReconnectionPolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">ExponentialReconnectionPolicy</tt><big>(</big><em>base_delay</em>, <em>max_delay</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#ExponentialReconnectionPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.ExponentialReconnectionPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ReconnectionPolicy</span></tt></a> subclass which exponentially increases
+the length of the delay inbetween each reconnection attempt up to
+a set maximum delay.</p>
+<p><cite>base_delay</cite> and <cite>max_delay</cite> should be in floating point units of
+seconds.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="retrying-failed-operations">
+<h2>Retrying Failed Operations<a class="headerlink" href="#retrying-failed-operations" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="cassandra.policies.WriteType">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">WriteType</tt><a class="reference internal" href="../../_modules/cassandra/policies.html#WriteType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.WriteType" title="Permalink to this definition">¶</a></dt>
+<dd><p>For usage with <a class="reference internal" href="#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">RetryPolicy</span></tt></a>, this describe a type
+of write operation.</p>
+<dl class="attribute">
+<dt id="cassandra.policies.WriteType.SIMPLE">
+<tt class="descname">SIMPLE</tt><em class="property"> = 0</em><a class="headerlink" href="#cassandra.policies.WriteType.SIMPLE" title="Permalink to this definition">¶</a></dt>
+<dd><p>A write to a single partition key. Such writes are guaranteed to be atomic
+and isolated.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.policies.WriteType.BATCH">
+<tt class="descname">BATCH</tt><em class="property"> = 1</em><a class="headerlink" href="#cassandra.policies.WriteType.BATCH" title="Permalink to this definition">¶</a></dt>
+<dd><p>A write to multiple partition keys that used the distributed batch log to
+ensure atomicity.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.policies.WriteType.UNLOGGED_BATCH">
+<tt class="descname">UNLOGGED_BATCH</tt><em class="property"> = 2</em><a class="headerlink" href="#cassandra.policies.WriteType.UNLOGGED_BATCH" title="Permalink to this definition">¶</a></dt>
+<dd><p>A write to multiple partition keys that did not use the distributed batch
+log. Atomicity for such writes is not guaranteed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.policies.WriteType.COUNTER">
+<tt class="descname">COUNTER</tt><em class="property"> = 3</em><a class="headerlink" href="#cassandra.policies.WriteType.COUNTER" title="Permalink to this definition">¶</a></dt>
+<dd><p>A counter write (for one or multiple partition keys). Such writes should
+not be replayed in order to avoid overcount.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.policies.WriteType.BATCH_LOG">
+<tt class="descname">BATCH_LOG</tt><em class="property"> = 4</em><a class="headerlink" href="#cassandra.policies.WriteType.BATCH_LOG" title="Permalink to this definition">¶</a></dt>
+<dd><p>The initial write to the distributed batch log that Cassandra performs
+internally before a BATCH write.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.RetryPolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">RetryPolicy</tt><a class="reference internal" href="../../_modules/cassandra/policies.html#RetryPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.RetryPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A policy that describes whether to retry, rethrow, or ignore timeout
+and unavailable failures.</p>
+<p>To specify a default retry policy, set the
+<a class="reference internal" href="cluster.html#cassandra.cluster.Cluster.default_retry_policy" title="cassandra.cluster.Cluster.default_retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">Cluster.default_retry_policy</span></tt></a> attribute to an instance of this
+class or one of its subclasses.</p>
+<p>To specify a retry policy per query, set the <a class="reference internal" href="query.html#cassandra.query.Query.retry_policy" title="cassandra.query.Query.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">Query.retry_policy</span></tt></a>
+attribute to an instance of this class or one of its subclasses.</p>
+<p>If custom behavior is needed for retrying certain operations,
+this class may be subclassed.</p>
+<dl class="attribute">
+<dt id="cassandra.policies.RetryPolicy.RETRY">
+<tt class="descname">RETRY</tt><em class="property"> = 0</em><a class="headerlink" href="#cassandra.policies.RetryPolicy.RETRY" title="Permalink to this definition">¶</a></dt>
+<dd><p>This should be returned from the below methods if the operation
+should be retried on the same connection.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.policies.RetryPolicy.RETHROW">
+<tt class="descname">RETHROW</tt><em class="property"> = 1</em><a class="headerlink" href="#cassandra.policies.RetryPolicy.RETHROW" title="Permalink to this definition">¶</a></dt>
+<dd><p>This should be returned from the below methods if the failure
+should be propagated and no more retries attempted.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.policies.RetryPolicy.IGNORE">
+<tt class="descname">IGNORE</tt><em class="property"> = 2</em><a class="headerlink" href="#cassandra.policies.RetryPolicy.IGNORE" title="Permalink to this definition">¶</a></dt>
+<dd><p>This should be returned from the below methods if the failure
+should be ignored but no more retries should be attempted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.RetryPolicy.on_read_timeout">
+<tt class="descname">on_read_timeout</tt><big>(</big><em>query</em>, <em>consistency</em>, <em>required_responses</em>, <em>received_responses</em>, <em>data_retrieved</em>, <em>retry_num</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#RetryPolicy.on_read_timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.RetryPolicy.on_read_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is called when a read operation times out from the coordinator&#8217;s
+perspective (i.e. a replica did not respond to the coordinator in time).
+It should return a tuple with two items: one of the class enums (such
+as <a class="reference internal" href="#cassandra.policies.RetryPolicy.RETRY" title="cassandra.policies.RetryPolicy.RETRY"><tt class="xref py py-attr docutils literal"><span class="pre">RETRY</span></tt></a>) and a <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a> to retry the
+operation at or <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt> to keep the same consistency level.</p>
+<p><cite>query</cite> is the <a class="reference internal" href="query.html#cassandra.query.Query" title="cassandra.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a> that timed out.</p>
+<p><cite>consistency</cite> is the <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a> that the operation was
+attempted at.</p>
+<p>The <cite>required_responses</cite> and <cite>received_responses</cite> parameters describe
+how many replicas needed to respond to meet the requested consistency
+level and how many actually did respond before the coordinator timed
+out the request. <cite>data_retrieved</cite> is a boolean indicating whether
+any of those responses contained data (as opposed to just a checksum).</p>
+<p><cite>retry_num</cite> counts how many times the operation has been retried, so
+the first time this method is called, <cite>retry_num</cite> will be 0.</p>
+<p>By default, operations will be retried at most once, and only if
+a sufficient number of replicas responded (with checksums).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.RetryPolicy.on_write_timeout">
+<tt class="descname">on_write_timeout</tt><big>(</big><em>query</em>, <em>consistency</em>, <em>write_type</em>, <em>required_responses</em>, <em>received_responses</em>, <em>retry_num</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#RetryPolicy.on_write_timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.RetryPolicy.on_write_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is called when a write operation times out from the coordinator&#8217;s
+perspective (i.e. a replica did not respond to the coordinator in time).</p>
+<p><cite>query</cite> is the <a class="reference internal" href="query.html#cassandra.query.Query" title="cassandra.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a> that timed out.</p>
+<p><cite>consistency</cite> is the <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a> that the operation was
+attempted at.</p>
+<p><cite>write_type</cite> is one of the <a class="reference internal" href="#cassandra.policies.WriteType" title="cassandra.policies.WriteType"><tt class="xref py py-class docutils literal"><span class="pre">WriteType</span></tt></a> enums describing the
+type of write operation.</p>
+<p>The <cite>required_responses</cite> and <cite>received_responses</cite> parameters describe
+how many replicas needed to acknowledge the write to meet the requested
+consistency level and how many replicas actually did acknowledge the
+write before the coordinator timed out the request.</p>
+<p><cite>retry_num</cite> counts how many times the operation has been retried, so
+the first time this method is called, <cite>retry_num</cite> will be 0.</p>
+<p>By default, failed write operations will retried at most once, and
+they will only be retried if the <cite>write_type</cite> was
+<a class="reference internal" href="#cassandra.policies.WriteType.BATCH_LOG" title="cassandra.policies.WriteType.BATCH_LOG"><tt class="xref py py-attr docutils literal"><span class="pre">BATCH_LOG</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.RetryPolicy.on_unavailable">
+<tt class="descname">on_unavailable</tt><big>(</big><em>query</em>, <em>consistency</em>, <em>required_replicas</em>, <em>alive_replicas</em>, <em>retry_num</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#RetryPolicy.on_unavailable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.RetryPolicy.on_unavailable" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is called when the coordinator node determines that a read or
+write operation cannot be successful because the number of live
+replicas are too low to meet the requested <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a>.
+This means that the read or write operation was never forwared to
+any replicas.</p>
+<p><cite>query</cite> is the <a class="reference internal" href="query.html#cassandra.query.Query" title="cassandra.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a> that failed.</p>
+<p><cite>consistency</cite> is the <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a> that the operation was
+attempted at.</p>
+<p><cite>required_replicas</cite> is the number of replicas that would have needed to
+acknowledge the operation to meet the requested consistency level.
+<cite>alive_replicas</cite> is the number of replicas that the coordinator
+considered alive at the time of the request.</p>
+<p><cite>retry_num</cite> counts how many times the operation has been retried, so
+the first time this method is called, <cite>retry_num</cite> will be 0.</p>
+<p>By default, no retries will be attempted and the error will be re-raised.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.FallthroughRetryPolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">FallthroughRetryPolicy</tt><a class="reference internal" href="../../_modules/cassandra/policies.html#FallthroughRetryPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.FallthroughRetryPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A retry policy that never retries and always propagates failures to
+the application.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.DowngradingConsistencyRetryPolicy">
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">DowngradingConsistencyRetryPolicy</tt><a class="reference internal" href="../../_modules/cassandra/policies.html#DowngradingConsistencyRetryPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.DowngradingConsistencyRetryPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A retry policy that sometimes retries with a lower consistency level than
+the one initially requested.</p>
+<p><strong>BEWARE</strong>: This policy may retry queries using a lower consistency
+level than the one initially requested. By doing so, it may break
+consistency guarantees. In other words, if you use this retry policy,
+there is cases (documented below) where a read at <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.QUORUM" title="cassandra.ConsistencyLevel.QUORUM"><tt class="xref py py-attr docutils literal"><span class="pre">QUORUM</span></tt></a>
+<em>may not</em> see a preceding write at <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.QUORUM" title="cassandra.ConsistencyLevel.QUORUM"><tt class="xref py py-attr docutils literal"><span class="pre">QUORUM</span></tt></a>. Do not use this
+policy unless you have understood the cases where this can happen and
+are ok with that. It is also recommended to subclass this class so
+that queries that required a consistency level downgrade can be
+recorded (so that repairs can be made later, etc).</p>
+<p>This policy implements the same retries as <a class="reference internal" href="#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">RetryPolicy</span></tt></a>,
+but on top of that, it also retries in the following cases:</p>
+<ul class="simple">
+<li>On a read timeout: if the number of replica that responded is
+greater than one but lower than is required by the requested
+consistency level, the operation is retried at a lower consistency
+level.</li>
+<li>On a write timeout: if the operation is an <a class="reference internal" href="#cassandra.policies.WriteType.UNLOGGED_BATCH" title="cassandra.policies.WriteType.UNLOGGED_BATCH"><tt class="xref py py-attr docutils literal"><span class="pre">UNLOGGED_BATCH</span></tt></a>
+and at least one replica acknowledged the write, the operation is
+retried at a lower consistency level.  Furthermore, for other
+write types, if at least one replica acknowledged the write, the
+timeout is ignored.</li>
+<li>On an unavailable exception: if at least one replica is alive, the
+operation is retried at a lower consistency level.</li>
+</ul>
+<p>The reasoning being this retry policy is as follows:. If, based
+on the information the Cassandra coordinator node returns, retrying the
+operation with the initially requested consistency has a chance to
+succeed, do it. Otherwise, if based on that information we know the
+initially requested consistency level cannot be achieved currently, then:</p>
+<ul class="simple">
+<li>For writes, ignore the exception (thus silently failing the
+consistency requirement) if we know the write has been persisted on at
+least one replica.</li>
+<li>For reads, try reading at a lower consistency level (thus silently
+failing the consistency requirement).</li>
+</ul>
+<p>In other words, this policy implements the idea that if the requested
+consistency level cannot be achieved, the next best thing for writes is
+to make sure the data is persisted, and that reading something is better
+than reading nothing, even if there is a risk of reading stale data.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="metadata.html" title="cassandra.metadata - Schema and Ring Topology"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
+             >previous</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Tyler Hobbs.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

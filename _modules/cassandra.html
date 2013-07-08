@@ -1,0 +1,295 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra &mdash; Cassandra Driver 0.1.4 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 0.1.4 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for cassandra</h1><div class="highlight"><pre>
+<span class="n">__version_info__</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">__version_info__</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="ConsistencyLevel"><a class="viewcode-back" href="../api/cassandra.html#cassandra.ConsistencyLevel">[docs]</a><span class="k">class</span> <span class="nc">ConsistencyLevel</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Spcifies how many replicas must respond for an operation to be considered</span>
+<span class="sd">    a success.  By default, ``ONE`` is used for all operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ANY</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Only requires that one replica receives the write *or* the coordinator</span>
+<span class="sd">    stores a hint to replay later. Valid only for writes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ONE</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Only one replica needs to respond to consider the operation a success</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">TWO</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Two replicas must respond to consider the operation a success</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">THREE</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Three replicas must respond to consider the operation a success</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">QUORUM</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ``ceil(RF/2)`` replicas must respond to consider the operation a success</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ALL</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    All replicas must respond to consider the operation a success</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">LOCAL_QUORUM</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Requires a quorum of replicas in the local datacenter</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">EACH_QUORUM</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Requires a quorum of replicas in each datacenter</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</div>
+<span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ANY</span><span class="p">:</span> <span class="s">&#39;ANY&#39;</span><span class="p">,</span>
+    <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span><span class="p">:</span> <span class="s">&#39;ONE&#39;</span><span class="p">,</span>
+    <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">TWO</span><span class="p">:</span> <span class="s">&#39;TWO&#39;</span><span class="p">,</span>
+    <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">THREE</span><span class="p">:</span> <span class="s">&#39;THREE&#39;</span><span class="p">,</span>
+    <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">QUORUM</span><span class="p">:</span> <span class="s">&#39;QUORUM&#39;</span><span class="p">,</span>
+    <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ALL</span><span class="p">:</span> <span class="s">&#39;ALL&#39;</span><span class="p">,</span>
+    <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">LOCAL_QUORUM</span><span class="p">:</span> <span class="s">&#39;LOCAL_QUORUM&#39;</span><span class="p">,</span>
+    <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">EACH_QUORUM</span><span class="p">:</span> <span class="s">&#39;EACH_QUORUM&#39;</span>
+<span class="p">}</span>
+
+<span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">name_to_value</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;ANY&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ANY</span><span class="p">,</span>
+    <span class="s">&#39;ONE&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span><span class="p">,</span>
+    <span class="s">&#39;TWO&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">TWO</span><span class="p">,</span>
+    <span class="s">&#39;THREE&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">THREE</span><span class="p">,</span>
+    <span class="s">&#39;QUORUM&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">QUORUM</span><span class="p">,</span>
+    <span class="s">&#39;ALL&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ALL</span><span class="p">,</span>
+    <span class="s">&#39;LOCAL_QUORUM&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">LOCAL_QUORUM</span><span class="p">,</span>
+    <span class="s">&#39;EACH_QUORUM&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">EACH_QUORUM</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="Unavailable"><a class="viewcode-back" href="../api/cassandra.html#cassandra.Unavailable">[docs]</a><span class="k">class</span> <span class="nc">Unavailable</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    There were not enough live replicas to satisfy the requested consistency</span>
+<span class="sd">    level, so the coordinator node immediately failed the request without</span>
+<span class="sd">    forwarding it to any replicas.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">consistency</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The requested :class:`ConsistencyLevel` &quot;&quot;&quot;</span>
+
+    <span class="n">required_replicas</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The number of replicas that needed to be live to complete the operation &quot;&quot;&quot;</span>
+
+    <span class="n">alive_replicas</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The number of replicas that were actually alive &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">consistency</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">required_replicas</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">alive_replicas</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">consistency</span> <span class="o">=</span> <span class="n">consistency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">required_replicas</span> <span class="o">=</span> <span class="n">required_replicas</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alive_replicas</span> <span class="o">=</span> <span class="n">alive_replicas</span>
+
+</div>
+<div class="viewcode-block" id="Timeout"><a class="viewcode-back" href="../api/cassandra.html#cassandra.Timeout">[docs]</a><span class="k">class</span> <span class="nc">Timeout</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replicas failed to respond to the coordinator node before timing out.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">consistency</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The requested :class:`ConsistencyLevel` &quot;&quot;&quot;</span>
+
+    <span class="n">required_responses</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The number of required replica responses &quot;&quot;&quot;</span>
+
+    <span class="n">received_responses</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The number of replicas that responded before the coordinator timed out</span>
+<span class="sd">    the operation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">consistency</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">required_responses</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">received_responses</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">consistency</span> <span class="o">=</span> <span class="n">consistency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">required_responses</span> <span class="o">=</span> <span class="n">required_responses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">received_responses</span> <span class="o">=</span> <span class="n">received_responses</span>
+
+</div>
+<div class="viewcode-block" id="ReadTimeout"><a class="viewcode-back" href="../api/cassandra.html#cassandra.ReadTimeout">[docs]</a><span class="k">class</span> <span class="nc">ReadTimeout</span><span class="p">(</span><span class="n">Timeout</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A subclass of :exc:`Timeout` for read operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">data_retrieved</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A boolean indicating whether the requested data was retrieved</span>
+<span class="sd">    by the coordinator from any replicas before it timed out the</span>
+<span class="sd">    operation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">data_retrieved</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">Timeout</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_retrieved</span> <span class="o">=</span> <span class="n">data_retrieved</span>
+
+</div>
+<div class="viewcode-block" id="WriteTimeout"><a class="viewcode-back" href="../api/cassandra.html#cassandra.WriteTimeout">[docs]</a><span class="k">class</span> <span class="nc">WriteTimeout</span><span class="p">(</span><span class="n">Timeout</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A subclass of :exc:`Timeout` for write operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">write_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The type of write operation, enum on :class:`~cassandra.policies.WriteType`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">write_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">Timeout</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_type</span> <span class="o">=</span> <span class="n">write_type</span>
+
+</div>
+<span class="k">class</span> <span class="nc">AlreadyExists</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An attempt was made to create a keyspace or table that already exists.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The name of the keyspace that already exists, or, if an attempt was</span>
+<span class="sd">    made to create a new table, the keyspace that the table is in.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">table</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The name of the table that already exists, or, if an attempt was</span>
+<span class="sd">    make to create a keyspace, :const:`None`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">table</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;Table &#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39; already exists&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;Keyspace &#39;</span><span class="si">%s</span><span class="s">&#39; already exists&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">keyspace</span><span class="p">,)</span>
+
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">table</span>
+
+
+<div class="viewcode-block" id="InvalidRequest"><a class="viewcode-back" href="../api/cassandra.html#cassandra.InvalidRequest">[docs]</a><span class="k">class</span> <span class="nc">InvalidRequest</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A query was made that was invalid for some reason, such as trying to set</span>
+<span class="sd">    the keyspace for a connection to a nonexistent keyspace.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="Unauthorized"><a class="viewcode-back" href="../api/cassandra.html#cassandra.Unauthorized">[docs]</a><span class="k">class</span> <span class="nc">Unauthorized</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The current user is not authorized to perfom the requested operation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="AuthenticationFailed"><a class="viewcode-back" href="../api/cassandra.html#cassandra.AuthenticationFailed">[docs]</a><span class="k">class</span> <span class="nc">AuthenticationFailed</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Failed to authenticate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Tyler Hobbs.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

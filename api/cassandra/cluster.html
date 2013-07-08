@@ -1,0 +1,481 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 0.1.4 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 0.1.4 documentation" href="../../index.html" />
+    <link rel="up" title="API Documentation" href="../index.html" />
+    <link rel="next" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" />
+    <link rel="prev" title="cassandra - Exceptions and Enums" href="../cassandra.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="policies.html" title="cassandra.policies - Load balancing and Failure Handling Policies"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../cassandra.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">cassandra</span></tt> - Exceptions and Enums</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="policies.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/api/cassandra/cluster.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-cassandra.cluster">
+<span id="cassandra-cluster-clusters-and-sessions"></span><h1><tt class="docutils literal"><span class="pre">cassandra.cluster</span></tt> - Clusters and Sessions<a class="headerlink" href="#module-cassandra.cluster" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="cassandra.cluster.Cluster">
+<em class="property">class </em><tt class="descclassname">cassandra.cluster.</tt><tt class="descname">Cluster</tt><big>(</big><em>[contact_points=('127.0.0.1',)][, port=9042][, executor_threads=2], **attr_kwargs</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>The main class to use when interacting with a Cassandra cluster.
+Typically, one instance of this class will be created for each
+separate Cassandra cluster that your application interacts with.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">([</span><span class="s">&#39;192.168.1.1&#39;</span><span class="p">,</span> <span class="s">&#39;192.168.1.2&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE KEYSPACE ...&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="o">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cluster</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Any of the mutable Cluster attributes may be set as keyword arguments
+to the constructor.</p>
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.port">
+<tt class="descname">port</tt><em class="property"> = 9042</em><a class="headerlink" href="#cassandra.cluster.Cluster.port" title="Permalink to this definition">¶</a></dt>
+<dd><p>The server-side port to open connections to. Defaults to 9042.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.compression">
+<tt class="descname">compression</tt><em class="property"> = True</em><a class="headerlink" href="#cassandra.cluster.Cluster.compression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not compression should be enabled when possible. Defaults to
+<tt class="xref py py-const docutils literal"><span class="pre">True</span></tt> and attempts to use snappy compression.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.auth_provider">
+<tt class="descname">auth_provider</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.auth_provider" title="Permalink to this definition">¶</a></dt>
+<dd><p>An optional function that accepts one argument, the IP address of a node,
+and returns a dict of credentials for that node.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.load_balancing_policy">
+<tt class="descname">load_balancing_policy</tt><em class="property"> = &lt;cassandra.policies.RoundRobinPolicy object at 0xa1a38ec&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.load_balancing_policy" title="Permalink to this definition">¶</a></dt>
+<dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.LoadBalancingPolicy" title="cassandra.policies.LoadBalancingPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.LoadBalancingPolicy</span></tt></a> or
+one of its subclasses.  Defaults to <a class="reference internal" href="policies.html#cassandra.policies.RoundRobinPolicy" title="cassandra.policies.RoundRobinPolicy"><tt class="xref py py-class docutils literal"><span class="pre">RoundRobinPolicy</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.reconnection_policy">
+<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0xa1a390c&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
+<dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.ReconnectionPolicy</span></tt></a>. Defaults to an instance
+of <a class="reference internal" href="policies.html#cassandra.policies.ExponentialReconnectionPolicy" title="cassandra.policies.ExponentialReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ExponentialReconnectionPolicy</span></tt></a> with a base delay of one second and
+a max delay of ten minutes.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.default_retry_policy">
+<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0xa1a392c&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A default <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> instance to use for all
+<a class="reference internal" href="query.html#cassandra.query.Query" title="cassandra.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a> objects which do not have a <a class="reference internal" href="query.html#cassandra.query.Query.retry_policy" title="cassandra.query.Query.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">retry_policy</span></tt></a>
+explicitly set.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.conviction_policy_factory">
+<tt class="descname">conviction_policy_factory</tt><a class="headerlink" href="#cassandra.cluster.Cluster.conviction_policy_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>A factory function which creates instances of
+<a class="reference internal" href="policies.html#cassandra.policies.ConvictionPolicy" title="cassandra.policies.ConvictionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.ConvictionPolicy</span></tt></a>.  Defaults to
+<a class="reference internal" href="policies.html#cassandra.policies.SimpleConvictionPolicy" title="cassandra.policies.SimpleConvictionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.SimpleConvictionPolicy</span></tt></a>.</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">SimpleConvictionPolicy</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.connection_class">
+<tt class="descname">connection_class</tt><a class="headerlink" href="#cassandra.cluster.Cluster.connection_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>This determines what event loop system will be used for managing
+I/O with Cassandra.  These are the current options:</p>
+<ul class="simple">
+<li><a class="reference internal" href="io/asyncorereactor.html#cassandra.io.asyncorereactor.AsyncoreConnection" title="cassandra.io.asyncorereactor.AsyncoreConnection"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.asyncorereactor.AsyncoreConnection</span></tt></a></li>
+<li><a class="reference internal" href="io/libevreactor.html#cassandra.io.libevreactor.LibevConnection" title="cassandra.io.libevreactor.LibevConnection"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.LibevConnection</span></tt></a></li>
+</ul>
+<p>By default, <tt class="docutils literal"><span class="pre">AsyncoreConnection</span></tt> will be used, which uses
+the <tt class="docutils literal"><span class="pre">asyncore</span></tt> module in the Python standard library.  The
+performance is slightly worse than with <tt class="docutils literal"><span class="pre">libev</span></tt>, but it is
+supported on a wider range of systems.</p>
+<p>alias of <tt class="xref py py-class docutils literal"><span class="pre">AsyncoreConnection</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.metrics_enabled">
+<tt class="descname">metrics_enabled</tt><em class="property"> = False</em><a class="headerlink" href="#cassandra.cluster.Cluster.metrics_enabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not metric collection is enabled.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.sockopts">
+<tt class="descname">sockopts</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.sockopts" title="Permalink to this definition">¶</a></dt>
+<dd><p>An optional list of tuples which will be used as arguments to
+<tt class="docutils literal"><span class="pre">socket.setsockopt()</span></tt> for all created sockets.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.max_schema_agreement_wait">
+<tt class="descname">max_schema_agreement_wait</tt><em class="property"> = 10</em><a class="headerlink" href="#cassandra.cluster.Cluster.max_schema_agreement_wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>The maximum duration (in seconds) that the driver will wait for schema
+agreement across the cluster. Defaults to ten seconds.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.metadata">
+<tt class="descname">metadata</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>An instance of <a class="reference internal" href="metadata.html#cassandra.metadata.Metadata" title="cassandra.metadata.Metadata"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.metadata.Metadata</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.connect">
+<tt class="descname">connect</tt><big>(</big><em>keyspace=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and returns a new <a class="reference internal" href="#cassandra.cluster.Session" title="cassandra.cluster.Session"><tt class="xref py py-class docutils literal"><span class="pre">Session</span></tt></a> object.  If <cite>keyspace</cite>
+is specified, that keyspace will be the default keyspace for
+operations on the <tt class="docutils literal"><span class="pre">Session</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.shutdown">
+<tt class="descname">shutdown</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Closes all sessions and connection associated with this Cluster.
+Once shutdown, a Cluster should not be used for any purpose.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.ensure_core_connections">
+<tt class="descname">ensure_core_connections</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.ensure_core_connections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.ensure_core_connections" title="Permalink to this definition">¶</a></dt>
+<dd><p>If any host has fewer than the configured number of core connections
+open, attempt to open connections until that number is met.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.submit_schema_refresh">
+<tt class="descname">submit_schema_refresh</tt><big>(</big><em>keyspace=None</em>, <em>table=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.submit_schema_refresh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.submit_schema_refresh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Schedule a refresh of the internal representation of the current
+schema for this cluster.  If <cite>keyspace</cite> is specified, only that
+keyspace will be refreshed, and likewise for <cite>table</cite>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cluster.Session">
+<em class="property">class </em><tt class="descclassname">cassandra.cluster.</tt><tt class="descname">Session</tt><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session" title="Permalink to this definition">¶</a></dt>
+<dd><p>A collection of connection pools for each host in the cluster.
+Instances of this class should not be created directly, only
+using <a class="reference internal" href="#cassandra.cluster.Cluster.connect" title="cassandra.cluster.Cluster.connect"><tt class="xref py py-meth docutils literal"><span class="pre">Cluster.connect()</span></tt></a>.</p>
+<p>Queries and statements can be executed through <tt class="docutils literal"><span class="pre">Session</span></tt> instances
+using the <a class="reference internal" href="#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><tt class="xref py py-meth docutils literal"><span class="pre">execute()</span></tt></a> and <a class="reference internal" href="#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><tt class="xref py py-meth docutils literal"><span class="pre">execute_async()</span></tt></a>
+method.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s">&quot;mykeyspace&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="staticmethod">
+<dt id="cassandra.cluster.Session.row_factory">
+<em class="property">static </em><tt class="descname">row_factory</tt><big>(</big><em>colnames</em>, <em>rows</em><big>)</big><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>The format to return row results in.  By default, each
+returned row will be a named tuple.  You can alternatively
+use any of the following:</p>
+<blockquote>
+<div><ul class="simple">
+<li><tt class="xref py py-func docutils literal"><span class="pre">cassandra.decoder.tuple_factory()</span></tt></li>
+<li><tt class="xref py py-func docutils literal"><span class="pre">cassandra.decoder.named_tuple_factory()</span></tt></li>
+<li><tt class="xref py py-func docutils literal"><span class="pre">cassandra.decoder.dict_factory()</span></tt></li>
+<li><tt class="xref py py-func docutils literal"><span class="pre">cassandra.decoder.ordered_dict_factory()</span></tt></li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Session.execute">
+<tt class="descname">execute</tt><big>(</big><em>query</em>, <em>parameters=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the given query and synchronously wait for the response.</p>
+<p>If an error is encountered while executing the query, an Exception
+will be raised.</p>
+<p><cite>query</cite> may be a query string or an instance of <a class="reference internal" href="query.html#cassandra.query.Query" title="cassandra.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.query.Query</span></tt></a>.</p>
+<p><cite>parameters</cite> may be a sequence or dict of parameters to bind.  If a
+sequence is used, <tt class="docutils literal"><span class="pre">%s</span></tt> should be used the placeholder for each
+argument.  If a dict is used, <tt class="docutils literal"><span class="pre">%(name)s</span></tt> style placeholders must
+be used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Session.execute_async">
+<tt class="descname">execute_async</tt><big>(</big><em>query</em>, <em>parameters=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.execute_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.execute_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the given query and return a <a class="reference internal" href="#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><tt class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></tt></a> object
+which callbacks may be attached to for asynchronous response
+delivery.  You may also call <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><tt class="xref py py-meth docutils literal"><span class="pre">result()</span></tt></a>
+on the <tt class="docutils literal"><span class="pre">ResponseFuture</span></tt> to syncronously block for results at
+any time.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">log_results</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Results: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">log_error</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Operation failed: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">future</span><span class="o">.</span><span class="n">add_callbacks</span><span class="p">(</span><span class="n">log_results</span><span class="p">,</span> <span class="n">log_error</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Async execution with blocking wait for results:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># do other stuff...</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">results</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+<span class="gp">... </span><span class="k">except</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Operation failed:&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Session.prepare">
+<tt class="descname">prepare</tt><big>(</big><em>query</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.prepare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepares a query string, returing a <a class="reference internal" href="query.html#cassandra.query.PreparedStatement" title="cassandra.query.PreparedStatement"><tt class="xref py py-class docutils literal"><span class="pre">PreparedStatement</span></tt></a>
+instance which can be used as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">&quot;mykeyspace&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="s">&quot;INSERT INTO users (id, name, age) VALUES (?, ?, ?)&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">prepared</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">prepared</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">age</span><span class="p">)))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Session.shutdown">
+<tt class="descname">shutdown</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close all connections.  <tt class="docutils literal"><span class="pre">Session</span></tt> instances should not be used
+for any purpose after being shutdown.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Session.set_keyspace">
+<tt class="descname">set_keyspace</tt><big>(</big><em>keyspace</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.set_keyspace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.set_keyspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the default keyspace for all queries made through this Session.
+This operation blocks until complete.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cluster.ResponseFuture">
+<em class="property">class </em><tt class="descclassname">cassandra.cluster.</tt><tt class="descname">ResponseFuture</tt><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResponseFuture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResponseFuture" title="Permalink to this definition">¶</a></dt>
+<dd><p>An asynchronous response delivery mechanism that is returned from calls
+to <a class="reference internal" href="#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><tt class="xref py py-meth docutils literal"><span class="pre">Session.execute_async()</span></tt></a>.</p>
+<dl class="docutils">
+<dt>There are two ways for results to be delivered:</dt>
+<dd><ul class="first last simple">
+<li>Synchronously, by calling <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><tt class="xref py py-meth docutils literal"><span class="pre">result()</span></tt></a></li>
+<li>Asynchronously, by attaching callback and errback functions via
+<a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></tt></a>, <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_errback" title="cassandra.cluster.ResponseFuture.add_errback"><tt class="xref py py-meth docutils literal"><span class="pre">add_errback()</span></tt></a>, and
+<a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_callbacks" title="cassandra.cluster.ResponseFuture.add_callbacks"><tt class="xref py py-meth docutils literal"><span class="pre">add_callbacks()</span></tt></a>.</li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="cassandra.cluster.ResponseFuture.result">
+<tt class="descname">result</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResponseFuture.result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResponseFuture.result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the final result or raise an Exception if errors were
+encountered.  If the final result or error has not been set
+yet, this method will block until that time.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># do other stuff...</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">rows</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="o">...</span> <span class="c"># process results</span>
+<span class="gp">... </span><span class="k">except</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Operation failed:&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.ResponseFuture.add_callback">
+<tt class="descname">add_callback</tt><big>(</big><em>fn</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResponseFuture.add_callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResponseFuture.add_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attaches a callback function to be called when the final results arrive.</p>
+<p>By default, <cite>fn</cite> will be called with the results as the first and only
+argument.  If <cite>*args</cite> or <cite>**kwargs</cite> are supplied, they will be passed
+through as additional positional or keyword arguments to <cite>fn</cite>.</p>
+<p>If an error is hit while executing the operation, a callback attached
+here will not be called.  Use <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_errback" title="cassandra.cluster.ResponseFuture.add_errback"><tt class="xref py py-meth docutils literal"><span class="pre">add_errback()</span></tt></a> or <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_callbacks" title="cassandra.cluster.ResponseFuture.add_callbacks"><tt class="xref py py-meth docutils literal"><span class="pre">add_callbacks()</span></tt></a>
+if you wish to handle that case.</p>
+<p>If the final result has already been seen when this method is called,
+the callback will be called immediately (before this method returns).</p>
+<p>Usage example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">&quot;mykeyspace&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">handle_results</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">should_log</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="n">should_log</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Total time: </span><span class="si">%f</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="o">...</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">future</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="n">handle_results</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span> <span class="n">should_log</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.ResponseFuture.add_errback">
+<tt class="descname">add_errback</tt><big>(</big><em>fn</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResponseFuture.add_errback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResponseFuture.add_errback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></tt></a>, but handles error cases.
+An Exception instance will be passed as the first positional argument
+to <cite>fn</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.ResponseFuture.add_callbacks">
+<tt class="descname">add_callbacks</tt><big>(</big><em>callback</em>, <em>errback</em>, <em>callback_args=()</em>, <em>callback_kwargs=None</em>, <em>errback_args=()</em>, <em>errback_kwargs=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResponseFuture.add_callbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResponseFuture.add_callbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>A convenient combination of <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></tt></a> and
+<a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_errback" title="cassandra.cluster.ResponseFuture.add_errback"><tt class="xref py py-meth docutils literal"><span class="pre">add_errback()</span></tt></a>.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM mycf&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">log_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;debug&#39;</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">log</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="s">&quot;Result: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">log_error</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Query &#39;</span><span class="si">%s</span><span class="s">&#39; failed: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">future</span><span class="o">.</span><span class="n">add_callbacks</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">callback</span><span class="o">=</span><span class="n">log_results</span><span class="p">,</span> <span class="n">callback_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;level&#39;</span><span class="p">:</span> <span class="s">&#39;info&#39;</span><span class="p">},</span>
+<span class="gp">... </span>    <span class="n">errback</span><span class="o">=</span><span class="n">log_error</span><span class="p">,</span> <span class="n">errback_args</span><span class="o">=</span><span class="p">(</span><span class="n">query</span><span class="p">,))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="cassandra.cluster.NoHostAvailable">
+<em class="property">exception </em><tt class="descclassname">cassandra.cluster.</tt><tt class="descname">NoHostAvailable</tt><a class="reference internal" href="../../_modules/cassandra/cluster.html#NoHostAvailable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.NoHostAvailable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when an operation is attempted but all connections are
+busy, defunct, closed, or resulted in errors when used.</p>
+<dl class="attribute">
+<dt id="cassandra.cluster.NoHostAvailable.errors">
+<tt class="descname">errors</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.NoHostAvailable.errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>A map of the form <tt class="docutils literal"><span class="pre">{ip:</span> <span class="pre">exception}</span></tt> which details the particular
+Exception that was caught for each host the operation was attempted
+against.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="policies.html" title="cassandra.policies - Load balancing and Failure Handling Policies"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
+             >previous</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Tyler Hobbs.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

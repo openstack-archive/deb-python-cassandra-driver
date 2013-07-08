@@ -1,0 +1,405 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.metadata - Schema and Ring Topology &mdash; Cassandra Driver 0.1.4 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 0.1.4 documentation" href="../../index.html" />
+    <link rel="up" title="API Documentation" href="../index.html" />
+    <link rel="next" title="cassandra.query - Prepared Statements and Query Policies" href="query.html" />
+    <link rel="prev" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="query.html" title="cassandra.query - Prepared Statements and Query Policies"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="policies.html" title="cassandra.policies - Load balancing and Failure Handling Policies"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">cassandra.metadata</span></tt> - Schema and Ring Topology</a><ul>
+<li><a class="reference internal" href="#schemas">Schemas</a></li>
+<li><a class="reference internal" href="#tokens-and-ring-topology">Tokens and Ring Topology</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="policies.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="query.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.query</span></tt> - Prepared Statements and Query Policies</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/api/cassandra/metadata.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-cassandra.metadata">
+<span id="cassandra-metadata-schema-and-ring-topology"></span><h1><tt class="docutils literal"><span class="pre">cassandra.metadata</span></tt> - Schema and Ring Topology<a class="headerlink" href="#module-cassandra.metadata" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="cassandra.metadata.Metadata">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">Metadata</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#Metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.Metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Holds a representation of the cluster schema and topology.</p>
+<dl class="attribute">
+<dt id="cassandra.metadata.Metadata.cluster_name">
+<tt class="descname">cluster_name</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Metadata.cluster_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The string name of the cluster.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Metadata.token_map">
+<tt class="descname">token_map</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Metadata.token_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#cassandra.metadata.TokenMap" title="cassandra.metadata.TokenMap"><tt class="xref py py-class docutils literal"><span class="pre">TokenMap</span></tt></a> instance describing the ring topology.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Metadata.keyspaces">
+<tt class="descname">keyspaces</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Metadata.keyspaces" title="Permalink to this definition">¶</a></dt>
+<dd><p>A map from keyspace names to matching <a class="reference internal" href="#cassandra.metadata.KeyspaceMetadata" title="cassandra.metadata.KeyspaceMetadata"><tt class="xref py py-class docutils literal"><span class="pre">KeyspaceMetadata</span></tt></a> instances.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.metadata.Metadata.export_schema_as_string">
+<tt class="descname">export_schema_as_string</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#Metadata.export_schema_as_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.Metadata.export_schema_as_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a string that can be executed as a query in order to recreate
+the entire schema.  The string is formatted to be human readable.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.metadata.Metadata.get_replicas">
+<tt class="descname">get_replicas</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#Metadata.get_replicas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.Metadata.get_replicas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> instances that are replicas for a given
+partition key.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.metadata.Metadata.all_hosts">
+<tt class="descname">all_hosts</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#Metadata.all_hosts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.Metadata.all_hosts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all known <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> instances in the cluster.</p>
+</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="schemas">
+<h2>Schemas<a class="headerlink" href="#schemas" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="cassandra.metadata.KeyspaceMetadata">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">KeyspaceMetadata</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#KeyspaceMetadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.KeyspaceMetadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A representation of the schema for a single keyspace.</p>
+<dl class="attribute">
+<dt id="cassandra.metadata.KeyspaceMetadata.name">
+<tt class="descname">name</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.KeyspaceMetadata.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The string name of the keyspace</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.KeyspaceMetadata.durable_writes">
+<tt class="descname">durable_writes</tt><em class="property"> = True</em><a class="headerlink" href="#cassandra.metadata.KeyspaceMetadata.durable_writes" title="Permalink to this definition">¶</a></dt>
+<dd><p>A boolean indicating whether durable writes are enabled for this keyspace
+or not</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.KeyspaceMetadata.replication">
+<tt class="descname">replication</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.KeyspaceMetadata.replication" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dict holding the replication settings for this keyspace. Typically,
+there will be a &#8220;class&#8221; entry with the name of the replication strategy
+class.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.KeyspaceMetadata.tables">
+<tt class="descname">tables</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.KeyspaceMetadata.tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>A map from table names to instances of <a class="reference internal" href="#cassandra.metadata.TableMetadata" title="cassandra.metadata.TableMetadata"><tt class="xref py py-class docutils literal"><span class="pre">TableMetadata</span></tt></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.metadata.TableMetadata">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">TableMetadata</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#TableMetadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.TableMetadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A representation of the schema for a single table.</p>
+<dl class="attribute">
+<dt id="cassandra.metadata.TableMetadata.primary_key">
+<tt class="descname">primary_key</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#TableMetadata.primary_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.TableMetadata.primary_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of <a class="reference internal" href="#cassandra.metadata.ColumnMetadata" title="cassandra.metadata.ColumnMetadata"><tt class="xref py py-class docutils literal"><span class="pre">ColumnMetadata</span></tt></a> representing the components of
+the primary key for this table.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.TableMetadata.keyspace">
+<tt class="descname">keyspace</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.TableMetadata.keyspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>An instance of <a class="reference internal" href="#cassandra.metadata.KeyspaceMetadata" title="cassandra.metadata.KeyspaceMetadata"><tt class="xref py py-class docutils literal"><span class="pre">KeyspaceMetadata</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.TableMetadata.name">
+<tt class="descname">name</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.TableMetadata.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The string name of the table</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.TableMetadata.partition_key">
+<tt class="descname">partition_key</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.TableMetadata.partition_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of <a class="reference internal" href="#cassandra.metadata.ColumnMetadata" title="cassandra.metadata.ColumnMetadata"><tt class="xref py py-class docutils literal"><span class="pre">ColumnMetadata</span></tt></a> instances representing the columns in
+the partition key for this table.  This will always hold at least one
+column.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.TableMetadata.clustering_key">
+<tt class="descname">clustering_key</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.TableMetadata.clustering_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of <a class="reference internal" href="#cassandra.metadata.ColumnMetadata" title="cassandra.metadata.ColumnMetadata"><tt class="xref py py-class docutils literal"><span class="pre">ColumnMetadata</span></tt></a> instances representing the columns
+in the clustering key for this table.  These are all of the
+<a class="reference internal" href="#cassandra.metadata.TableMetadata.primary_key" title="cassandra.metadata.TableMetadata.primary_key"><tt class="xref py py-attr docutils literal"><span class="pre">primary_key</span></tt></a> columns that are not in the <a class="reference internal" href="#cassandra.metadata.TableMetadata.partition_key" title="cassandra.metadata.TableMetadata.partition_key"><tt class="xref py py-attr docutils literal"><span class="pre">partition_key</span></tt></a>.</p>
+<p>Note that a table may have no clustering keys, in which case this will
+be an empty list.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.TableMetadata.columns">
+<tt class="descname">columns</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.TableMetadata.columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dict mapping column names to <a class="reference internal" href="#cassandra.metadata.ColumnMetadata" title="cassandra.metadata.ColumnMetadata"><tt class="xref py py-class docutils literal"><span class="pre">ColumnMetadata</span></tt></a> instances.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.TableMetadata.options">
+<tt class="descname">options</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.TableMetadata.options" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dict mapping table option names to their specific settings for this
+table.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.metadata.TableMetadata.export_as_string">
+<tt class="descname">export_as_string</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#TableMetadata.export_as_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.TableMetadata.export_as_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a string of CQL queries that can be used to recreate this table
+along with all indexes on it.  The returned string is formatted to
+be human readable.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.metadata.TableMetadata.as_cql_query">
+<tt class="descname">as_cql_query</tt><big>(</big><em>formatted=False</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#TableMetadata.as_cql_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.TableMetadata.as_cql_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a CQL query that can be used to recreate this table (index
+creations are not included).  If <cite>formatted</cite> is set to <tt class="xref py py-const docutils literal"><span class="pre">True</span></tt>,
+extra whitespace will be added to make the query human readable.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.metadata.ColumnMetadata">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">ColumnMetadata</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#ColumnMetadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.ColumnMetadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A representation of a single column in a table.</p>
+<dl class="attribute">
+<dt id="cassandra.metadata.ColumnMetadata.table">
+<tt class="descname">table</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.ColumnMetadata.table" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#cassandra.metadata.TableMetadata" title="cassandra.metadata.TableMetadata"><tt class="xref py py-class docutils literal"><span class="pre">TableMetadata</span></tt></a> this column belongs to.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.ColumnMetadata.name">
+<tt class="descname">name</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.ColumnMetadata.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The string name of this column.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.ColumnMetadata.index">
+<tt class="descname">index</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.ColumnMetadata.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>If an index exists on this column, this is an instance of
+<a class="reference internal" href="#cassandra.metadata.IndexMetadata" title="cassandra.metadata.IndexMetadata"><tt class="xref py py-class docutils literal"><span class="pre">IndexMetadata</span></tt></a>, otherwise <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.ColumnMetadata.typestring">
+<tt class="descname">typestring</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#ColumnMetadata.typestring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.ColumnMetadata.typestring" title="Permalink to this definition">¶</a></dt>
+<dd><p>A string representation of the type for this column, such as &#8220;varchar&#8221;
+or &#8220;map&lt;string, int&gt;&#8221;.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.metadata.IndexMetadata">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">IndexMetadata</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#IndexMetadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.IndexMetadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A representation of a secondary index on a column.</p>
+<dl class="attribute">
+<dt id="cassandra.metadata.IndexMetadata.column">
+<tt class="descname">column</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.IndexMetadata.column" title="Permalink to this definition">¶</a></dt>
+<dd><p>The column (<a class="reference internal" href="#cassandra.metadata.ColumnMetadata" title="cassandra.metadata.ColumnMetadata"><tt class="xref py py-class docutils literal"><span class="pre">ColumnMetadata</span></tt></a>) this index is on.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.IndexMetadata.name">
+<tt class="descname">name</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.IndexMetadata.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>A string name for the index.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.IndexMetadata.index_type">
+<tt class="descname">index_type</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.IndexMetadata.index_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A string representing the type of index.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.metadata.IndexMetadata.as_cql_query">
+<tt class="descname">as_cql_query</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#IndexMetadata.as_cql_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.IndexMetadata.as_cql_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a CQL query that can be used to recreate this index.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="tokens-and-ring-topology">
+<h2>Tokens and Ring Topology<a class="headerlink" href="#tokens-and-ring-topology" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="cassandra.metadata.TokenMap">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">TokenMap</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#TokenMap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.TokenMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Information about the layout of the ring.</p>
+<dl class="attribute">
+<dt id="cassandra.metadata.TokenMap.token_class">
+<tt class="descname">token_class</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.TokenMap.token_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>A subclass of <a class="reference internal" href="#cassandra.metadata.Token" title="cassandra.metadata.Token"><tt class="xref py py-class docutils literal"><span class="pre">Token</span></tt></a>, depending on what partitioner the cluster uses.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.TokenMap.tokens_to_hosts">
+<tt class="descname">tokens_to_hosts</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.TokenMap.tokens_to_hosts" title="Permalink to this definition">¶</a></dt>
+<dd><p>A map of <a class="reference internal" href="#cassandra.metadata.Token" title="cassandra.metadata.Token"><tt class="xref py py-class docutils literal"><span class="pre">Token</span></tt></a> objects to <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> objects.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.TokenMap.ring">
+<tt class="descname">ring</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.TokenMap.ring" title="Permalink to this definition">¶</a></dt>
+<dd><p>An ordered list of <a class="reference internal" href="#cassandra.metadata.Token" title="cassandra.metadata.Token"><tt class="xref py py-class docutils literal"><span class="pre">Token</span></tt></a> instances in the ring.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.metadata.TokenMap.get_replicas">
+<tt class="descname">get_replicas</tt><big>(</big><em>token</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#TokenMap.get_replicas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.TokenMap.get_replicas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> instances representing all of the replica nodes
+for a given <a class="reference internal" href="#cassandra.metadata.Token" title="cassandra.metadata.Token"><tt class="xref py py-class docutils literal"><span class="pre">Token</span></tt></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.metadata.Token">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">Token</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#Token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.Token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstract class representing a token.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.metadata.Murmur3Token">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">Murmur3Token</tt><big>(</big><em>token</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#Murmur3Token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.Murmur3Token" title="Permalink to this definition">¶</a></dt>
+<dd><p>A token for <tt class="docutils literal"><span class="pre">Murmur3Partitioner</span></tt>.</p>
+<p><cite>token</cite> should be an int or string representing the token</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.metadata.MD5Token">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">MD5Token</tt><big>(</big><em>token</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#MD5Token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.MD5Token" title="Permalink to this definition">¶</a></dt>
+<dd><p>A token for <tt class="docutils literal"><span class="pre">RandomPartitioner</span></tt>.</p>
+<p><cite>token</cite> should be an int or string representing the token</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.metadata.BytesToken">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">BytesToken</tt><big>(</big><em>token_string</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#BytesToken"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.BytesToken" title="Permalink to this definition">¶</a></dt>
+<dd><p>A token for <tt class="docutils literal"><span class="pre">ByteOrderedPartitioner</span></tt>.</p>
+<p><cite>token_string</cite> should be string representing the token</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="query.html" title="cassandra.query - Prepared Statements and Query Policies"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="policies.html" title="cassandra.policies - Load balancing and Failure Handling Policies"
+             >previous</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Tyler Hobbs.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

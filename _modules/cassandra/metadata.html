@@ -1,0 +1,826 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.metadata &mdash; Cassandra Driver 0.1.4 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 0.1.4 documentation" href="../../index.html" />
+    <link rel="up" title="cassandra" href="../cassandra.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for cassandra.metadata</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">bisect</span> <span class="kn">import</span> <span class="n">bisect_left</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">md5</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">RLock</span>
+<span class="kn">import</span> <span class="nn">weakref</span>
+
+<span class="n">murmur3</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">murmur3</span> <span class="kn">import</span> <span class="n">murmur3</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="kn">import</span> <span class="nn">cassandra.cqltypes</span> <span class="kn">as</span> <span class="nn">types</span>
+<span class="kn">from</span> <span class="nn">cassandra.marshal</span> <span class="kn">import</span> <span class="n">varint_unpack</span>
+<span class="kn">from</span> <span class="nn">cassandra.pool</span> <span class="kn">import</span> <span class="n">Host</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+<span class="n">_keywords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span>
+    <span class="s">&#39;select&#39;</span><span class="p">,</span> <span class="s">&#39;from&#39;</span><span class="p">,</span> <span class="s">&#39;where&#39;</span><span class="p">,</span> <span class="s">&#39;and&#39;</span><span class="p">,</span> <span class="s">&#39;key&#39;</span><span class="p">,</span> <span class="s">&#39;insert&#39;</span><span class="p">,</span> <span class="s">&#39;update&#39;</span><span class="p">,</span> <span class="s">&#39;with&#39;</span><span class="p">,</span>
+    <span class="s">&#39;limit&#39;</span><span class="p">,</span> <span class="s">&#39;using&#39;</span><span class="p">,</span> <span class="s">&#39;use&#39;</span><span class="p">,</span> <span class="s">&#39;count&#39;</span><span class="p">,</span> <span class="s">&#39;set&#39;</span><span class="p">,</span>
+    <span class="s">&#39;begin&#39;</span><span class="p">,</span> <span class="s">&#39;apply&#39;</span><span class="p">,</span> <span class="s">&#39;batch&#39;</span><span class="p">,</span> <span class="s">&#39;truncate&#39;</span><span class="p">,</span> <span class="s">&#39;delete&#39;</span><span class="p">,</span> <span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="s">&#39;create&#39;</span><span class="p">,</span>
+    <span class="s">&#39;keyspace&#39;</span><span class="p">,</span> <span class="s">&#39;schema&#39;</span><span class="p">,</span> <span class="s">&#39;columnfamily&#39;</span><span class="p">,</span> <span class="s">&#39;table&#39;</span><span class="p">,</span> <span class="s">&#39;index&#39;</span><span class="p">,</span> <span class="s">&#39;on&#39;</span><span class="p">,</span> <span class="s">&#39;drop&#39;</span><span class="p">,</span>
+    <span class="s">&#39;primary&#39;</span><span class="p">,</span> <span class="s">&#39;into&#39;</span><span class="p">,</span> <span class="s">&#39;values&#39;</span><span class="p">,</span> <span class="s">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s">&#39;ttl&#39;</span><span class="p">,</span> <span class="s">&#39;alter&#39;</span><span class="p">,</span> <span class="s">&#39;add&#39;</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">,</span>
+    <span class="s">&#39;compact&#39;</span><span class="p">,</span> <span class="s">&#39;storage&#39;</span><span class="p">,</span> <span class="s">&#39;order&#39;</span><span class="p">,</span> <span class="s">&#39;by&#39;</span><span class="p">,</span> <span class="s">&#39;asc&#39;</span><span class="p">,</span> <span class="s">&#39;desc&#39;</span><span class="p">,</span> <span class="s">&#39;clustering&#39;</span><span class="p">,</span>
+    <span class="s">&#39;token&#39;</span><span class="p">,</span> <span class="s">&#39;writetime&#39;</span><span class="p">,</span> <span class="s">&#39;map&#39;</span><span class="p">,</span> <span class="s">&#39;list&#39;</span><span class="p">,</span> <span class="s">&#39;to&#39;</span>
+<span class="p">))</span>
+
+<span class="n">_unreserved_keywords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span>
+    <span class="s">&#39;key&#39;</span><span class="p">,</span> <span class="s">&#39;clustering&#39;</span><span class="p">,</span> <span class="s">&#39;ttl&#39;</span><span class="p">,</span> <span class="s">&#39;compact&#39;</span><span class="p">,</span> <span class="s">&#39;storage&#39;</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;values&#39;</span>
+<span class="p">))</span>
+
+
+<div class="viewcode-block" id="Metadata"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Metadata">[docs]</a><span class="k">class</span> <span class="nc">Metadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Holds a representation of the cluster schema and topology.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cluster_name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The string name of the cluster. &quot;&quot;&quot;</span>
+
+    <span class="n">keyspaces</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A map from keyspace names to matching :class:`~.KeyspaceMetadata` instances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">token_map</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; A :class:`~.TokenMap` instance describing the ring topology. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">):</span>
+        <span class="c"># use a weak reference so that the Cluster object can be GC&#39;ed.</span>
+        <span class="c"># Normally the cycle detector would handle this, but implementing</span>
+        <span class="c"># __del__ disables that.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster_ref</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Metadata.export_schema_as_string"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Metadata.export_schema_as_string">[docs]</a>    <span class="k">def</span> <span class="nf">export_schema_as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a string that can be executed as a query in order to recreate</span>
+<span class="sd">        the entire schema.  The string is formatted to be human readable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ks</span><span class="o">.</span><span class="n">export_as_string</span><span class="p">()</span> <span class="k">for</span> <span class="n">ks</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+</div>
+    <span class="k">def</span> <span class="nf">rebuild_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">ks_results</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Rebuild the view of the current schema from a fresh set of rows from</span>
+<span class="sd">        the system schema tables.</span>
+
+<span class="sd">        For internal use only.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cf_def_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="n">col_def_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cf_results</span><span class="p">:</span>
+            <span class="n">cf_def_rows</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">col_results</span><span class="p">:</span>
+            <span class="n">ksname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]</span>
+            <span class="n">cfname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;columnfamily_name&quot;</span><span class="p">]</span>
+            <span class="n">col_def_rows</span><span class="p">[</span><span class="n">ksname</span><span class="p">][</span><span class="n">cfname</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+        <span class="c"># either table or ks_results must be None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">table</span><span class="p">:</span>
+            <span class="c"># ks_results is not None</span>
+            <span class="n">added_keyspaces</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">ks_results</span><span class="p">:</span>
+                <span class="n">keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_keyspace_metadata</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">table_row</span> <span class="ow">in</span> <span class="n">cf_def_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span>
+                        <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">table_row</span><span class="p">,</span> <span class="n">col_def_rows</span><span class="p">[</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+                    <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_meta</span>
+
+                <span class="n">added_keyspaces</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">keyspace_meta</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">keyspace</span><span class="p">:</span>
+                <span class="c"># remove not-just-added keyspaces</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                                      <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">added_keyspaces</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># keyspace is not None, table is not None</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="c"># we&#39;re trying to update a table in a keyspace we don&#39;t know</span>
+                <span class="c"># about, something went wrong.</span>
+                <span class="c"># TODO log error, submit schema refresh</span>
+                <span class="k">pass</span>
+            <span class="k">if</span> <span class="n">keyspace</span> <span class="ow">in</span> <span class="n">cf_def_rows</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">table_row</span> <span class="ow">in</span> <span class="n">cf_def_rows</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]:</span>
+                    <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span>
+                        <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">table_row</span><span class="p">,</span> <span class="n">col_def_rows</span><span class="p">[</span><span class="n">keyspace</span><span class="p">])</span>
+                    <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_meta</span>
+
+    <span class="k">def</span> <span class="nf">_build_keyspace_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]</span>
+        <span class="n">durable_writes</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;durable_writes&quot;</span><span class="p">]</span>
+        <span class="n">strategy_class</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;strategy_class&quot;</span><span class="p">]</span>
+        <span class="n">strategy_options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;strategy_options&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">KeyspaceMetadata</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_build_table_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace_metadata</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col_rows</span><span class="p">):</span>
+        <span class="n">cfname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;columnfamily_name&quot;</span><span class="p">]</span>
+
+        <span class="n">comparator</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;comparator&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">comparator</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">CompositeType</span><span class="p">):</span>
+            <span class="n">column_name_types</span> <span class="o">=</span> <span class="n">comparator</span><span class="o">.</span><span class="n">subtypes</span>
+            <span class="n">is_composite</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">column_name_types</span> <span class="o">=</span> <span class="p">(</span><span class="n">comparator</span><span class="p">,)</span>
+            <span class="n">is_composite</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="n">num_column_name_components</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_name_types</span><span class="p">)</span>
+        <span class="n">last_col</span> <span class="o">=</span> <span class="n">column_name_types</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">column_aliases</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;column_aliases&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">is_composite</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">last_col</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ColumnToCollectionType</span><span class="p">):</span>
+                <span class="c"># collections</span>
+                <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="n">has_value</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span> <span class="o">-</span> <span class="mi">2</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">column_aliases</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_column_name_components</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">last_col</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">UTF8Type</span><span class="p">)):</span>
+                <span class="c"># aliases?</span>
+                <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="n">has_value</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c"># compact table</span>
+                <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">has_value</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">if</span> <span class="n">column_aliases</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">col_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cfname</span><span class="p">):</span>
+                <span class="n">has_value</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">has_value</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="n">clustering_size</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">table_meta</span> <span class="o">=</span> <span class="n">TableMetadata</span><span class="p">(</span><span class="n">keyspace_metadata</span><span class="p">,</span> <span class="n">cfname</span><span class="p">)</span>
+        <span class="n">table_meta</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="n">comparator</span>
+
+        <span class="c"># partition key</span>
+        <span class="n">key_aliases</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;key_aliases&quot;</span><span class="p">)</span>
+        <span class="n">key_aliases</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">key_aliases</span><span class="p">)</span> <span class="k">if</span> <span class="n">key_aliases</span> <span class="k">else</span> <span class="p">[]</span>
+
+        <span class="n">key_type</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;key_validator&quot;</span><span class="p">])</span>
+        <span class="n">key_types</span> <span class="o">=</span> <span class="n">key_type</span><span class="o">.</span><span class="n">subtypes</span> <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">key_type</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">CompositeType</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">key_type</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">col_type</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">key_types</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_aliases</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">:</span>
+                <span class="n">column_name</span> <span class="o">=</span> <span class="n">key_aliases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">column_name</span> <span class="o">=</span> <span class="s">&quot;key&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">column_name</span> <span class="o">=</span> <span class="s">&quot;key</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">i</span>
+
+            <span class="n">col</span> <span class="o">=</span> <span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">col_type</span><span class="p">)</span>
+            <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span>
+            <span class="n">table_meta</span><span class="o">.</span><span class="n">partition_key</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+
+        <span class="c"># clustering key</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clustering_size</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_aliases</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">:</span>
+                <span class="n">column_name</span> <span class="o">=</span> <span class="n">column_aliases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">column_name</span> <span class="o">=</span> <span class="s">&quot;column</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">i</span>
+
+            <span class="n">col</span> <span class="o">=</span> <span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">column_name_types</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span>
+            <span class="n">table_meta</span><span class="o">.</span><span class="n">clustering_key</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+
+        <span class="c"># value alias (if present)</span>
+        <span class="k">if</span> <span class="n">has_value</span><span class="p">:</span>
+            <span class="n">validator</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;default_validator&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">key_aliases</span><span class="p">:</span>  <span class="c"># TODO are we checking the right thing here?</span>
+                <span class="n">value_alias</span> <span class="o">=</span> <span class="s">&quot;value&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">value_alias</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;value_alias&quot;</span><span class="p">]</span>
+
+            <span class="n">col</span> <span class="o">=</span> <span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">value_alias</span><span class="p">,</span> <span class="n">validator</span><span class="p">)</span>
+            <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">value_alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span>
+
+        <span class="c"># other normal columns</span>
+        <span class="k">if</span> <span class="n">col_rows</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">col_row</span> <span class="ow">in</span> <span class="n">col_rows</span><span class="p">[</span><span class="n">cfname</span><span class="p">]:</span>
+                <span class="n">column_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_column_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">col_row</span><span class="p">)</span>
+                <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">column_meta</span>
+
+        <span class="n">table_meta</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_options</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">is_compact</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">table_meta</span>
+
+    <span class="k">def</span> <span class="nf">_build_table_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">is_compact_storage</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Setup the mostly-non-schema table options, like caching settings &quot;&quot;&quot;</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">o</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">o</span><span class="p">))</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">TableMetadata</span><span class="o">.</span><span class="n">recognized_options</span><span class="p">)</span>
+        <span class="n">options</span><span class="p">[</span><span class="s">&quot;is_compact_storage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">is_compact_storage</span>
+        <span class="k">return</span> <span class="n">options</span>
+
+    <span class="k">def</span> <span class="nf">_build_column_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_metadata</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;column_name&quot;</span><span class="p">]</span>
+        <span class="n">data_type</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;validator&quot;</span><span class="p">])</span>
+        <span class="n">column_meta</span> <span class="o">=</span> <span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">table_metadata</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data_type</span><span class="p">)</span>
+        <span class="n">index_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_index_metadata</span><span class="p">(</span><span class="n">column_meta</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
+        <span class="n">column_meta</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index_meta</span>
+        <span class="k">return</span> <span class="n">column_meta</span>
+
+    <span class="k">def</span> <span class="nf">_build_index_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="n">index_name</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;index_name&quot;</span><span class="p">)</span>
+        <span class="n">index_type</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;index_type&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">index_name</span> <span class="ow">or</span> <span class="n">index_type</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">IndexMetadata</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">index_name</span><span class="p">,</span> <span class="n">index_type</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">rebuild_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partitioner</span><span class="p">,</span> <span class="n">token_map</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Rebuild our view of the topology from fresh rows from the</span>
+<span class="sd">        system topology tables.</span>
+<span class="sd">        For internal use only.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">partitioner</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;RandomPartitioner&#39;</span><span class="p">):</span>
+            <span class="n">token_class</span> <span class="o">=</span> <span class="n">MD5Token</span>
+        <span class="k">elif</span> <span class="n">partitioner</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;Murmur3Partitioner&#39;</span><span class="p">):</span>
+            <span class="n">token_class</span> <span class="o">=</span> <span class="n">Murmur3Token</span>
+            <span class="k">if</span> <span class="n">murmur3</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s">&quot;The murmur3 C extension is not available, token awareness &quot;</span>
+                    <span class="s">&quot;cannot be supported for the Murmur3Partitioner&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">partitioner</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;ByteOrderedPartitioner&#39;</span><span class="p">):</span>
+            <span class="n">token_class</span> <span class="o">=</span> <span class="n">BytesToken</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">return</span>
+
+        <span class="n">tokens_to_hosts</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="n">ring</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">host</span><span class="p">,</span> <span class="n">token_strings</span> <span class="ow">in</span> <span class="n">token_map</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">token_string</span> <span class="ow">in</span> <span class="n">token_strings</span><span class="p">:</span>
+                <span class="n">token</span> <span class="o">=</span> <span class="n">token_class</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span>
+                <span class="n">ring</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+                <span class="n">tokens_to_hosts</span><span class="p">[</span><span class="n">token</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+
+        <span class="n">ring</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ring</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span> <span class="o">=</span> <span class="n">TokenMap</span><span class="p">(</span><span class="n">token_class</span><span class="p">,</span> <span class="n">tokens_to_hosts</span><span class="p">,</span> <span class="n">ring</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Metadata.get_replicas"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Metadata.get_replicas">[docs]</a>    <span class="k">def</span> <span class="nf">get_replicas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a list of :class:`.Host` instances that are replicas for a given</span>
+<span class="sd">        partition key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">t</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">get_replicas</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">token_class</span><span class="o">.</span><span class="n">from_key</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">NoMurmur3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+</div>
+    <span class="k">def</span> <span class="nf">add_host</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">):</span>
+        <span class="n">cluster</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_ref</span><span class="p">()</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">address</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">:</span>
+                <span class="n">new_host</span> <span class="o">=</span> <span class="n">Host</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">cluster</span><span class="o">.</span><span class="n">conviction_policy_factory</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">[</span><span class="n">address</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_host</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="n">new_host</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_host</span>
+
+    <span class="k">def</span> <span class="nf">remove_host</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="bp">False</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">get_host</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Metadata.all_hosts"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Metadata.all_hosts">[docs]</a>    <span class="k">def</span> <span class="nf">all_hosts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a list of all known :class:`.Host` instances in the cluster.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+
+</div></div>
+<div class="viewcode-block" id="KeyspaceMetadata"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.KeyspaceMetadata">[docs]</a><span class="k">class</span> <span class="nc">KeyspaceMetadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A representation of the schema for a single keyspace.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The string name of the keyspace &quot;&quot;&quot;</span>
+
+    <span class="n">durable_writes</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A boolean indicating whether durable writes are enabled for this keyspace</span>
+<span class="sd">    or not</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">replication</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A dict holding the replication settings for this keyspace. Typically,</span>
+<span class="sd">    there will be a &quot;class&quot; entry with the name of the replication strategy</span>
+<span class="sd">    class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tables</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A map from table names to instances of :class:`~.TableMetadata`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">durable_writes</span> <span class="o">=</span> <span class="n">durable_writes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">replication</span> <span class="o">=</span> <span class="n">strategy_options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">replication</span><span class="p">[</span><span class="s">&quot;class&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">strategy_class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tables</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">export_as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">()]</span> <span class="o">+</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+
+    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="s">&quot;CREATE KEYSPACE </span><span class="si">%s</span><span class="s"> WITH REPLICATION = { &#39;class&#39; : &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> \
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">replication</span><span class="p">[</span><span class="s">&quot;class&quot;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">replication</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s">&quot;class&quot;</span><span class="p">:</span>
+                <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;, &#39;</span><span class="si">%s</span><span class="s">&#39;: &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="n">ret</span> <span class="o">+=</span> <span class="s">&#39; } AND DURABLE_WRITES = </span><span class="si">%s</span><span class="s">;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&quot;true&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">durable_writes</span> <span class="k">else</span> <span class="s">&quot;false&quot;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="TableMetadata"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TableMetadata">[docs]</a><span class="k">class</span> <span class="nc">TableMetadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A representation of the schema for a single table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; An instance of :class:`~.KeyspaceMetadata` &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The string name of the table &quot;&quot;&quot;</span>
+
+    <span class="n">partition_key</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A list of :class:`.ColumnMetadata` instances representing the columns in</span>
+<span class="sd">    the partition key for this table.  This will always hold at least one</span>
+<span class="sd">    column.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">clustering_key</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A list of :class:`.ColumnMetadata` instances representing the columns</span>
+<span class="sd">    in the clustering key for this table.  These are all of the</span>
+<span class="sd">    :attr:`.primary_key` columns that are not in the :attr:`.partition_key`.</span>
+
+<span class="sd">    Note that a table may have no clustering keys, in which case this will</span>
+<span class="sd">    be an empty list.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="TableMetadata.primary_key"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TableMetadata.primary_key">[docs]</a>    <span class="k">def</span> <span class="nf">primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A list of :class:`.ColumnMetadata` representing the components of</span>
+<span class="sd">        the primary key for this table.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span>
+</div>
+    <span class="n">columns</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A dict mapping column names to :class:`.ColumnMetadata` instances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">options</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A dict mapping table option names to their specific settings for this</span>
+<span class="sd">    table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">recognized_options</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s">&quot;comment&quot;</span><span class="p">,</span> <span class="s">&quot;read_repair_chance&quot;</span><span class="p">,</span>  <span class="c"># &quot;local_read_repair_chance&quot;,</span>
+            <span class="s">&quot;replicate_on_write&quot;</span><span class="p">,</span> <span class="s">&quot;gc_grace_seconds&quot;</span><span class="p">,</span> <span class="s">&quot;bloom_filter_fp_chance&quot;</span><span class="p">,</span>
+            <span class="s">&quot;caching&quot;</span><span class="p">,</span> <span class="s">&quot;compaction_strategy_class&quot;</span><span class="p">,</span> <span class="s">&quot;compaction_strategy_options&quot;</span><span class="p">,</span>
+            <span class="s">&quot;min_compaction_threshold&quot;</span><span class="p">,</span> <span class="s">&quot;max_compression_threshold&quot;</span><span class="p">,</span>
+            <span class="s">&quot;compression_parameters&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace_metadata</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">partition_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">clustering_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace_metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">partition_key</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">partition_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">clustering_key</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">clustering_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span> <span class="k">if</span> <span class="n">columns</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="TableMetadata.export_as_string"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TableMetadata.export_as_string">[docs]</a>    <span class="k">def</span> <span class="nf">export_as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a string of CQL queries that can be used to recreate this table</span>
+<span class="sd">        along with all indexes on it.  The returned string is formatted to</span>
+<span class="sd">        be human readable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(</span><span class="n">formatted</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;;&quot;</span>
+
+        <span class="k">for</span> <span class="n">col_meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">col_meta</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+                <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="si">%s</span><span class="s">;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">col_meta</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(),)</span>
+
+        <span class="k">return</span> <span class="n">ret</span>
+</div>
+<div class="viewcode-block" id="TableMetadata.as_cql_query"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TableMetadata.as_cql_query">[docs]</a>    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formatted</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a CQL query that can be used to recreate this table (index</span>
+<span class="sd">        creations are not included).  If `formatted` is set to :const:`True`,</span>
+<span class="sd">        extra whitespace will be added to make the query human readable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="s">&quot;CREATE TABLE </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="k">if</span> <span class="n">formatted</span> <span class="k">else</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">formatted</span><span class="p">:</span>
+            <span class="n">column_join</span> <span class="o">=</span> <span class="s">&quot;,</span><span class="se">\n</span><span class="s">&quot;</span>
+            <span class="n">padding</span> <span class="o">=</span> <span class="s">&quot;    &quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">column_join</span> <span class="o">=</span> <span class="s">&quot;, &quot;</span>
+            <span class="n">padding</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">typestring</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span><span class="p">:</span>
+            <span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="s">&quot; PRIMARY KEY&quot;</span>
+
+        <span class="n">ret</span> <span class="o">+=</span> <span class="n">column_join</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">padding</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">)</span>
+
+        <span class="c"># primary key</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span><span class="p">:</span>
+            <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%s%s</span><span class="s">PRIMARY KEY (&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">column_join</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="s">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ret</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span><span class="p">:</span>
+                <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;, </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span><span class="p">)</span>
+
+            <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;)&quot;</span>
+
+        <span class="c"># options</span>
+        <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">) WITH &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="k">if</span> <span class="n">formatted</span> <span class="k">else</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="n">option_strings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;is_compact_storage&quot;</span><span class="p">):</span>
+            <span class="n">option_strings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;COMPACT STORAGE&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span><span class="p">:</span>
+            <span class="n">cluster_str</span> <span class="o">=</span> <span class="s">&quot;CLUSTERING ORDER BY &quot;</span>
+
+            <span class="n">clustering_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">protect_names</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;is_compact_storage&quot;</span><span class="p">)</span> <span class="ow">and</span> \
+                    <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comparator</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">CompositeType</span><span class="p">):</span>
+                <span class="n">subtypes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">comparator</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">subtypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">subtypes</span>
+
+            <span class="n">inner</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">colname</span><span class="p">,</span> <span class="n">coltype</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">clustering_names</span><span class="p">,</span> <span class="n">subtypes</span><span class="p">):</span>
+                <span class="n">ordering</span> <span class="o">=</span> <span class="s">&quot;DESC&quot;</span> <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">coltype</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ReversedType</span><span class="p">)</span> <span class="k">else</span> <span class="s">&quot;ASC&quot;</span>
+                <span class="n">inner</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">colname</span><span class="p">,</span> <span class="n">ordering</span><span class="p">))</span>
+
+            <span class="n">cluster_str</span> <span class="o">+=</span> <span class="s">&quot;(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="s">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+            <span class="n">option_strings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cluster_str</span><span class="p">)</span>
+
+        <span class="n">option_strings</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_make_option_str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">recognized_options</span><span class="p">))</span>
+        <span class="n">option_strings</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">,</span> <span class="n">option_strings</span><span class="p">)</span>
+
+        <span class="n">join_str</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">    AND &quot;</span> <span class="k">if</span> <span class="n">formatted</span> <span class="k">else</span> <span class="s">&quot; AND &quot;</span>
+        <span class="n">ret</span> <span class="o">+=</span> <span class="n">join_str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">option_strings</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ret</span>
+</div>
+    <span class="k">def</span> <span class="nf">_make_option_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&quot;comment&quot;</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">value</span> <span class="ow">or</span> <span class="s">&quot;&quot;</span>
+            <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> = </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">protect_value</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf8&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">maybe_escape_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">protect_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protect_name</span><span class="p">,</span> <span class="n">names</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">protect_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;NULL&#39;</span> <span class="c"># this totally won&#39;t work</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s">&#39;</span><span class="si">%f</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s">&quot;&#39;&#39;&quot;</span><span class="p">)</span>
+
+    <span class="n">valid_cql3_word_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;^[a-z][0-9a-z_]*$&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_valid_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">_keywords</span> <span class="o">-</span> <span class="n">_unreserved_keywords</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_cql3_word_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">maybe_escape_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">name</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">escape_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">escape_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;&quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&#39;&quot;&quot;&#39;</span><span class="p">),)</span>
+
+</div>
+<div class="viewcode-block" id="ColumnMetadata"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.ColumnMetadata">[docs]</a><span class="k">class</span> <span class="nc">ColumnMetadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A representation of a single column in a table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">table</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The :class:`.TableMetadata` this column belongs to. &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The string name of this column. &quot;&quot;&quot;</span>
+
+    <span class="n">data_type</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">index</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If an index exists on this column, this is an instance of</span>
+<span class="sd">    :class:`.IndexMetadata`, otherwise :const:`None`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_metadata</span><span class="p">,</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="n">index_metadata</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">table_metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">column_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span> <span class="o">=</span> <span class="n">data_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index_metadata</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="ColumnMetadata.typestring"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.ColumnMetadata.typestring">[docs]</a>    <span class="k">def</span> <span class="nf">typestring</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A string representation of the type for this column, such as &quot;varchar&quot;</span>
+<span class="sd">        or &quot;map&lt;string, int&gt;&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ReversedType</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="o">.</span><span class="n">subtypes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">cql_parameterized_type</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="o">.</span><span class="n">cql_parameterized_type</span><span class="p">()</span>
+</div>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="IndexMetadata"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.IndexMetadata">[docs]</a><span class="k">class</span> <span class="nc">IndexMetadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A representation of a secondary index on a column.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">column</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The column (:class:`.ColumnMetadata`) this index is on.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; A string name for the index. &quot;&quot;&quot;</span>
+
+    <span class="n">index_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; A string representing the type of index. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">index_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">index_type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column</span> <span class="o">=</span> <span class="n">column_metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">index_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_type</span> <span class="o">=</span> <span class="n">index_type</span>
+
+<div class="viewcode-block" id="IndexMetadata.as_cql_query"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.IndexMetadata.as_cql_query">[docs]</a>    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a CQL query that can be used to recreate this index.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">table</span>
+        <span class="k">return</span> <span class="s">&quot;CREATE INDEX </span><span class="si">%s</span><span class="s"> ON </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">table</span><span class="o">.</span><span class="n">keyspace</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">table</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="TokenMap"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TokenMap">[docs]</a><span class="k">class</span> <span class="nc">TokenMap</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Information about the layout of the ring.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">token_class</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A subclass of :class:`.Token`, depending on what partitioner the cluster uses.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tokens_to_hosts</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A map of :class:`.Token` objects to :class:`.Host` objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ring</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An ordered list of :class:`.Token` instances in the ring.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_class</span><span class="p">,</span> <span class="n">tokens_to_hosts</span><span class="p">,</span> <span class="n">ring</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">token_class</span> <span class="o">=</span> <span class="n">token_class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts</span> <span class="o">=</span> <span class="n">tokens_to_hosts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ring</span> <span class="o">=</span> <span class="n">ring</span>
+
+<div class="viewcode-block" id="TokenMap.get_replicas"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TokenMap.get_replicas">[docs]</a>    <span class="k">def</span> <span class="nf">get_replicas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get :class:`.Host` instances representing all of the replica nodes</span>
+<span class="sd">        for a given :class:`.Token`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># TODO depending on keyspace and replication strategy options,</span>
+        <span class="c"># return full set of replicas</span>
+        <span class="n">point</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">point</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">token</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="k">elif</span> <span class="n">point</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">[</span><span class="n">point</span><span class="p">]]</span>
+
+</div></div>
+<div class="viewcode-block" id="Token"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Token">[docs]</a><span class="k">class</span> <span class="nc">Token</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract class representing a token.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">hash_fn</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">key</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_key</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">hash_fn</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__cmp__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">1</span>
+</div>
+<span class="n">MIN_LONG</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">63</span><span class="p">)</span>
+<span class="n">MAX_LONG</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">63</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+
+<span class="k">class</span> <span class="nc">NoMurmur3</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="Murmur3Token"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Murmur3Token">[docs]</a><span class="k">class</span> <span class="nc">Murmur3Token</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A token for ``Murmur3Partitioner``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">hash_fn</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">murmur3</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">murmur3</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">h</span> <span class="k">if</span> <span class="n">h</span> <span class="o">!=</span> <span class="n">MIN_LONG</span> <span class="k">else</span> <span class="n">MAX_LONG</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NoMurmur3</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; `token` should be an int or string representing the token &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="MD5Token"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.MD5Token">[docs]</a><span class="k">class</span> <span class="nc">MD5Token</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A token for ``RandomPartitioner``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">hash_fn</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">varint_unpack</span><span class="p">(</span><span class="n">md5</span><span class="p">(</span><span class="s">&#39;foo&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; `token` should be an int or string representing the token &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BytesToken"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.BytesToken">[docs]</a><span class="k">class</span> <span class="nc">BytesToken</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A token for ``ByteOrderedPartitioner``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; `token_string` should be string representing the token &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">token_string</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Tyler Hobbs.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

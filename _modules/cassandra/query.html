@@ -1,0 +1,353 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.query &mdash; Cassandra Driver 0.1.4 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 0.1.4 documentation" href="../../index.html" />
+    <link rel="up" title="cassandra" href="../cassandra.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for cassandra.query</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module holds classes for working with prepared statements and</span>
+<span class="sd">specifying consistency levels and retry policies for individual</span>
+<span class="sd">queries.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">struct</span>
+
+<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span>
+<span class="kn">from</span> <span class="nn">cassandra.decoder</span> <span class="kn">import</span> <span class="p">(</span><span class="n">cql_encoders</span><span class="p">,</span> <span class="n">cql_encode_object</span><span class="p">,</span>
+                               <span class="n">cql_encode_sequence</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Query"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.Query">[docs]</a><span class="k">class</span> <span class="nc">Query</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An abstract class representing a single query. There are two subclasses:</span>
+<span class="sd">    :class:`.SimpleStatement` and :class:`.BoundStatement`.  These can</span>
+<span class="sd">    be passed to :meth:`.Session.execute()`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">retry_policy</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An instance of a :class:`cassandra.policies.RetryPolicy` or one of its</span>
+<span class="sd">    subclasses.  This controls when a query will be retried and how it</span>
+<span class="sd">    will be retried.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tracing_enabled</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A boolean flag that may be set to :const:`True` to enable tracing on this</span>
+<span class="sd">    query only.</span>
+
+<span class="sd">    **Note**: query tracing is not yet supported by this driver</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">consistency_level</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The :class:`.ConsistencyLevel` to be used for this operation.  Defaults</span>
+<span class="sd">    to :attr:`.ConsistencyLevel.ONE`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_routing_key</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tracing_enabled</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retry_policy</span> <span class="o">=</span> <span class="n">retry_policy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tracing_enabled</span> <span class="o">=</span> <span class="n">tracing_enabled</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span> <span class="o">=</span> <span class="n">consistency_level</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="n">routing_key</span>
+
+    <span class="k">def</span> <span class="nf">_get_routing_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span>
+
+    <span class="k">def</span> <span class="nf">_set_routing_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s">&quot;HsB&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">component</span><span class="p">),</span> <span class="n">component</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                                        <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="n">key</span>
+
+    <span class="k">def</span> <span class="nf">_del_routing_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">routing_key</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span>
+        <span class="n">_get_routing_key</span><span class="p">,</span>
+        <span class="n">_set_routing_key</span><span class="p">,</span>
+        <span class="n">_del_routing_key</span><span class="p">,</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The :attr:`~.TableMetadata.partition_key` portion of the primary key,</span>
+<span class="sd">        which can be used to determine which nodes are replicas for the query.</span>
+
+<span class="sd">        If the partition key is a composite, a list or tuple must be passed in.</span>
+<span class="sd">        Each key component should be in its packed (binary) format, so all</span>
+<span class="sd">        components should be strings.</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SimpleStatement"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.SimpleStatement">[docs]</a><span class="k">class</span> <span class="nc">SimpleStatement</span><span class="p">(</span><span class="n">Query</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simple, un-prepared query.  All attributes of :class:`Query` apply</span>
+<span class="sd">    to this class as well.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        `query_string` should be a literal CQL statement with the exception</span>
+<span class="sd">        of parameter placeholders that will be filled through the</span>
+<span class="sd">        `parameters` argument of :meth:`.Session.execute()`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Query</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_query_string</span> <span class="o">=</span> <span class="n">query_string</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">query_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_string</span>
+
+</div>
+<div class="viewcode-block" id="PreparedStatement"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.PreparedStatement">[docs]</a><span class="k">class</span> <span class="nc">PreparedStatement</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A statement that has been prepared against at least one Cassandra node.</span>
+<span class="sd">    Instances of this class should not be created directly, but through</span>
+<span class="sd">    :meth:`.Session.prepare()`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">column_metadata</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">query_id</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">md5_id</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">query_string</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">consistency_level</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">md5_id</span><span class="p">,</span> <span class="n">routing_key_indexes</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column_metadata</span> <span class="o">=</span> <span class="n">column_metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query_id</span> <span class="o">=</span> <span class="n">query_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">md5_id</span> <span class="o">=</span> <span class="n">md5_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="n">routing_key_indexes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query_string</span> <span class="o">=</span> <span class="n">query</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_message</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">md5_id</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">cluster_metadata</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">column_metadata</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PreparedStatement</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">md5_id</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">)</span>
+
+        <span class="n">partition_key_columns</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">ks_name</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">column_metadata</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ks_meta</span> <span class="o">=</span> <span class="n">cluster_metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ks_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ks_meta</span><span class="p">:</span>
+            <span class="n">table_meta</span> <span class="o">=</span> <span class="n">ks_meta</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">table_meta</span><span class="p">:</span>
+                <span class="n">partition_key_columns</span> <span class="o">=</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">partition_key</span>
+
+                <span class="c"># make a map of {column_name: index} for each column in the statement</span>
+                <span class="n">statement_indexes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">c</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">))</span>
+
+                <span class="c"># a list of which indexes in the statement correspond to partition key items</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">statement_indexes</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+                                           <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">partition_key_columns</span><span class="p">]</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="k">pass</span>  <span class="c"># we&#39;re missing a partition key component in the prepared</span>
+                          <span class="c"># statement; just leave routing_key_indexes as None</span>
+
+        <span class="k">return</span> <span class="n">PreparedStatement</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">md5_id</span><span class="p">,</span> <span class="n">routing_key_indexes</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PreparedStatement.bind"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.PreparedStatement.bind">[docs]</a>    <span class="k">def</span> <span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates and returns a :class:`BoundStatement` instance using `values`.</span>
+<span class="sd">        The `values` parameter *must* be a sequence, such as a tuple or list,</span>
+<span class="sd">        even if there is only one value to bind.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">BoundStatement</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="BoundStatement"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.BoundStatement">[docs]</a><span class="k">class</span> <span class="nc">BoundStatement</span><span class="p">(</span><span class="n">Query</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A prepared statement that has been bound to a particular set of values.</span>
+<span class="sd">    These may be created directly or through :meth:`.PreparedStatement.bind()`.</span>
+
+<span class="sd">    All attributes of :class:`Query` apply to this class as well.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">prepared_statement</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The :class:`PreparedStatement` instance that this was created from.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">values</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The sequence of values that were bound to the prepared statement.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prepared_statement</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        `prepared_statement` should be an instance of :class:`PreparedStatement`.</span>
+<span class="sd">        All other ``*args`` and ``**kwargs`` will be passed to :class:`.Query`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span> <span class="o">=</span> <span class="n">prepared_statement</span><span class="o">.</span><span class="n">consistency_level</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span> <span class="o">=</span> <span class="n">prepared_statement</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">Query</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BoundStatement.bind"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.BoundStatement.bind">[docs]</a>    <span class="k">def</span> <span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Binds a sequence of values for the prepared statement parameters</span>
+<span class="sd">        and returns this instance.  Note that `values` *must* be a</span>
+<span class="sd">        sequence, even if you are only binding one value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">col_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">column_metadata</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_meta</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s">&quot;Too many arguments provided to bind() (got </span><span class="si">%d</span><span class="s">, expected </span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span>
+                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_meta</span><span class="p">)))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">col_spec</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">col_meta</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">col_type</span> <span class="o">=</span> <span class="n">col_spec</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col_type</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">routing_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">routing_key_indexes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span>
+
+        <span class="n">routing_indexes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">routing_key_indexes</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">routing_indexes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">routing_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">components</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">statement_index</span> <span class="ow">in</span> <span class="n">routing_indexes</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">statement_index</span><span class="p">]</span>
+                <span class="n">components</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s">&quot;HsB&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">),</span> <span class="n">val</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">components</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span>
+
+</div>
+<div class="viewcode-block" id="ValueSequence"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.ValueSequence">[docs]</a><span class="k">class</span> <span class="nc">ValueSequence</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A wrapper class that is used to specify that a sequence of values should</span>
+<span class="sd">    be treated as a CQL list of values instead of a single column collection when used</span>
+<span class="sd">    as part of the `parameters` argument for :meth:`.Session.execute()`.</span>
+
+<span class="sd">    This is typically needed when supplying a list of keys to select.</span>
+<span class="sd">    For example::</span>
+
+<span class="sd">        &gt;&gt;&gt; my_user_ids = (&#39;alice&#39;, &#39;bob&#39;, &#39;charles&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; query = &quot;SELECT * FROM users WHERE user_id IN ?&quot;</span>
+<span class="sd">        &gt;&gt;&gt; session.execute(query, parameters=[ValueSequence(my_user_ids)])</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sequence</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sequence</span> <span class="o">=</span> <span class="n">sequence</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cql_encode_sequence</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sequence</span><span class="p">)</span>
+
+</div>
+<span class="k">def</span> <span class="nf">bind_params</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">query</span> <span class="o">%</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">cql_encoders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">))</span>
+                            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">iteritems</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">query</span> <span class="o">%</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">cql_encoders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">)</span>
+                             <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Tyler Hobbs.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
