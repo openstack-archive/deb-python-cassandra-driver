@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -80,7 +78,6 @@
 
 <span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="n">ResponseWaiter</span><span class="p">,</span> <span class="n">ConnectionException</span><span class="p">,</span>
                                   <span class="n">ConnectionBusy</span><span class="p">,</span> <span class="n">NONBLOCKING</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">cassandra.decoder</span> <span class="kn">import</span> <span class="n">RegisterMessage</span>
 <span class="kn">from</span> <span class="nn">cassandra.marshal</span> <span class="kn">import</span> <span class="n">int32_unpack</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
@@ -91,9 +88,7 @@
 <span class="k">def</span> <span class="nf">_run_loop</span><span class="p">():</span>
     <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Starting asyncore event loop&quot;</span><span class="p">)</span>
     <span class="n">asyncore</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">use_poll</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">log</span><span class="p">:</span>
-        <span class="c"># this can happen during interpreter shutdown</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Asyncore event loop ended&quot;</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Asyncore event loop ended&quot;</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">_loop_lock</span><span class="p">:</span>
         <span class="k">global</span> <span class="n">_loop_started</span>
         <span class="n">_loop_started</span> <span class="o">=</span> <span class="bp">False</span>
@@ -260,13 +255,13 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_readable</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;connection closed by server&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">handle_pushed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Message pushed from server: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">cb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_push_watchers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">event_type</span><span class="p">,</span> <span class="p">[]):</span>
+        <span class="k">for</span> <span class="n">cb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_push_watchers</span><span class="p">[</span><span class="n">response</span><span class="o">.</span><span class="n">type</span><span class="p">]:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">cb</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">event_args</span><span class="p">)</span>
+                <span class="n">cb</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
             <span class="k">except</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Pushed event handler errored, ignoring:&quot;</span><span class="p">)</span>
 
@@ -288,7 +283,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_writable</span>
 
     <span class="k">def</span> <span class="nf">readable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readable</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_have_listeners</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readable</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_have_listeners</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">send_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">cb</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_defunct</span><span class="p">:</span>
@@ -319,13 +314,10 @@
     <span class="k">def</span> <span class="nf">register_watcher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_push_watchers</span><span class="p">[</span><span class="n">event_type</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_have_listeners</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_response</span><span class="p">(</span><span class="n">RegisterMessage</span><span class="p">(</span><span class="n">event_list</span><span class="o">=</span><span class="p">[</span><span class="n">event_type</span><span class="p">]))</span>
 
     <span class="k">def</span> <span class="nf">register_watchers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_callback_dict</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">callback</span> <span class="ow">in</span> <span class="n">type_callback_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_push_watchers</span><span class="p">[</span><span class="n">event_type</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_have_listeners</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_response</span><span class="p">(</span><span class="n">RegisterMessage</span><span class="p">(</span><span class="n">event_list</span><span class="o">=</span><span class="n">type_callback_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_watcher</span><span class="p">(</span><span class="n">event_type</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -349,7 +341,7 @@
     </div>
     <div class="footer">
         &copy; Copyright 2013, DataStax.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

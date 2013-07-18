@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -159,7 +157,7 @@
     <span class="n">compression</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Whether or not compression should be enabled when possible. Defaults to</span>
-<span class="sd">    :const:`True` and attempts to use snappy compression.</span>
+<span class="sd">    ``True`` and attempts to use snappy compression.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">auth_provider</span> <span class="o">=</span> <span class="bp">None</span>
@@ -168,31 +166,32 @@
 <span class="sd">    and returns a dict of credentials for that node.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">load_balancing_policy</span> <span class="o">=</span> <span class="n">RoundRobinPolicy</span><span class="p">()</span>
+    <span class="n">load_balancing_policy_factory</span> <span class="o">=</span> <span class="n">RoundRobinPolicy</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    An instance of :class:`.policies.LoadBalancingPolicy` or</span>
-<span class="sd">    one of its subclasses.  Defaults to :class:`~.RoundRobinPolicy`.</span>
+<span class="sd">    A factory function which creates instances of subclasses of</span>
+<span class="sd">    :class:`policies.LoadBalancingPolicy`.  Defaults to</span>
+<span class="sd">    :class:`policies.RoundRobinPolicy`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">reconnection_policy</span> <span class="o">=</span> <span class="n">ExponentialReconnectionPolicy</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">600.0</span><span class="p">)</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    An instance of :class:`.policies.ReconnectionPolicy`. Defaults to an instance</span>
-<span class="sd">    of :class:`.ExponentialReconnectionPolicy` with a base delay of one second and</span>
+<span class="sd">    An instance of :class:`policies.ReconnectionPolicy`. Defaults to an instance</span>
+<span class="sd">    of :class:`ExponentialReconnectionPolicy` with a base delay of one second and</span>
 <span class="sd">    a max delay of ten minutes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">default_retry_policy</span> <span class="o">=</span> <span class="n">RetryPolicy</span><span class="p">()</span>
+    <span class="n">retry_policy_factory</span> <span class="o">=</span> <span class="n">RetryPolicy</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A default :class:`.policies.RetryPolicy` instance to use for all</span>
-<span class="sd">    :class:`.Query` objects which do not have a :attr:`~.Query.retry_policy`</span>
-<span class="sd">    explicitly set.</span>
+<span class="sd">    A factory function which creates instances of</span>
+<span class="sd">    :class:`policies.RetryPolicy`.  Defaults to</span>
+<span class="sd">    :class:`policies.RetryPolicy`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">conviction_policy_factory</span> <span class="o">=</span> <span class="n">SimpleConvictionPolicy</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A factory function which creates instances of</span>
-<span class="sd">    :class:`.policies.ConvictionPolicy`.  Defaults to</span>
-<span class="sd">    :class:`.policies.SimpleConvictionPolicy`.</span>
+<span class="sd">    :class:`policies.ConvictionPolicy`.  Defaults to</span>
+<span class="sd">    :class:`policies.SimpleConvictionPolicy`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">metrics_enabled</span> <span class="o">=</span> <span class="bp">False</span>
@@ -236,7 +235,6 @@
     <span class="n">scheduler</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">executor</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_is_shutdown</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="n">_is_setup</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">_prepared_statements</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -244,9 +242,9 @@
                  <span class="n">port</span><span class="o">=</span><span class="mi">9042</span><span class="p">,</span>
                  <span class="n">compression</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                  <span class="n">auth_provider</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">load_balancing_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">load_balancing_policy_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">reconnection_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">default_retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">retry_policy_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">conviction_policy_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">metrics_enabled</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
                  <span class="n">connection_class</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
@@ -267,14 +265,18 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;auth_provider must be callable&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auth_provider</span> <span class="o">=</span> <span class="n">auth_provider</span>
 
-        <span class="k">if</span> <span class="n">load_balancing_policy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy</span> <span class="o">=</span> <span class="n">load_balancing_policy</span>
+        <span class="k">if</span> <span class="n">load_balancing_policy_factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">load_balancing_policy_factory</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;load_balancing_policy_factory must be callable&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy_factory</span> <span class="o">=</span> <span class="n">load_balancing_policy_factory</span>
 
         <span class="k">if</span> <span class="n">reconnection_policy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reconnection_policy</span> <span class="o">=</span> <span class="n">reconnection_policy</span>
 
-        <span class="k">if</span> <span class="n">default_retry_policy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">default_retry_policy</span> <span class="o">=</span> <span class="n">default_retry_policy</span>
+        <span class="k">if</span> <span class="n">retry_policy_factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">retry_policy_factory</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;retry_policy_factory must be callable&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">retry_policy_factory</span> <span class="o">=</span> <span class="n">retry_policy_factory</span>
 
         <span class="k">if</span> <span class="n">conviction_policy_factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">conviction_policy_factory</span><span class="p">):</span>
@@ -383,11 +385,6 @@
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_shutdown</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Cluster is already shut down&quot;</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_setup</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span>
-                    <span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">())</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_is_setup</span> <span class="o">=</span> <span class="bp">True</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
@@ -557,7 +554,7 @@
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">response</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_response</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
                         <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">ResultMessage</span><span class="p">)</span> <span class="ow">or</span>
-                                <span class="n">response</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="n">ResultMessage</span><span class="o">.</span><span class="n">KIND_PREPARED</span><span class="p">):</span>
+                            <span class="n">response</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="n">ResultMessage</span><span class="o">.</span><span class="n">KIND_PREPARED</span><span class="p">):</span>
                             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Got unexpected response when preparing &quot;</span>
                                       <span class="s">&quot;statement on host </span><span class="si">%s</span><span class="s">: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">response</span><span class="p">))</span>
                     <span class="k">except</span><span class="p">:</span>
@@ -620,7 +617,8 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pools</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_load_balancer</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">load_balancing_policy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_load_balancer</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">load_balancing_policy_factory</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_load_balancer</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span><span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="n">cluster</span><span class="p">),</span> <span class="n">hosts</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">hosts</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
@@ -897,13 +895,11 @@
     <span class="c"># for testing purposes</span>
     <span class="n">_time</span> <span class="o">=</span> <span class="n">time</span>
 
-    <span class="n">_last_schema_version</span> <span class="o">=</span> <span class="bp">None</span>
-
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">):</span>
         <span class="c"># use a weak reference to allow the Cluster instance to be GC&#39;ed (and</span>
         <span class="c"># shutdown) since implementing __del__ disables the cycle detector</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_balancing_policy</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">load_balancing_policy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_balancing_policy</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">load_balancing_policy_factory</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_balancing_policy</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span><span class="n">cluster</span><span class="p">,</span> <span class="p">[])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reconnection_policy</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">reconnection_policy</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="bp">None</span>
@@ -960,12 +956,11 @@
 <span class="sd">        Creates a new Connection, registers for pushed events, and refreshes</span>
 <span class="sd">        node/token and schema metadata.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Opening new connection to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Opening new connection to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,))</span>
         <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Established new connection to </span><span class="si">%s</span><span class="s">, &quot;</span>
-                  <span class="s">&quot;registering watchers and refreshing schema and topology&quot;</span><span class="p">,</span>
-                  <span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Established new connection, registering &quot;</span>
+                  <span class="s">&quot;watchers and refreshing schema and topology&quot;</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">register_watchers</span><span class="p">({</span>
                 <span class="s">&quot;TOPOLOGY_CHANGE&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_topology_change</span><span class="p">,</span>
@@ -1038,17 +1033,16 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">expect_change</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">expect_change</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
         <span class="k">except</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Error refreshing schema: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
-                      <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">())</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;[control connection] Error refreshing schema:&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_signal_error</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">expect_change</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_schema_agreement</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">expect_change</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_schema_agreement</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
 
         <span class="n">where_clause</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
         <span class="k">if</span> <span class="n">keyspace</span><span class="p">:</span>
@@ -1172,14 +1166,13 @@
     <span class="k">def</span> <span class="nf">_handle_schema_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="n">keyspace</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&#39;keyspace&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="bp">None</span>
         <span class="n">table</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&#39;table&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="bp">None</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;TH submitting schema refresh from pushed event&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">event</span><span class="p">[</span><span class="s">&#39;change_type&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&quot;CREATED&quot;</span><span class="p">,</span> <span class="s">&quot;DROPPED&quot;</span><span class="p">):</span>
             <span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span> <span class="k">if</span> <span class="n">table</span> <span class="k">else</span> <span class="bp">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">event</span><span class="p">[</span><span class="s">&#39;change_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;UPDATED&quot;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">wait_for_schema_agreement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">expect_change</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">wait_for_schema_agreement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Waiting for schema agreement&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">connection</span><span class="p">:</span>
             <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
@@ -1211,11 +1204,7 @@
                 <span class="k">if</span> <span class="n">peer</span> <span class="ow">and</span> <span class="n">peer</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">is_up</span><span class="p">:</span>
                     <span class="n">versions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">))</span>
 
-            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;TH previous version: </span><span class="si">%s</span><span class="s">, new versions: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_schema_version</span><span class="p">,</span> <span class="n">versions</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">versions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">new_version</span> <span class="o">=</span> <span class="n">versions</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_last_schema_version</span> <span class="o">=</span> <span class="n">new_version</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;TH have schema agreement&quot;</span><span class="p">)</span>
                 <span class="k">return</span> <span class="bp">True</span>
 
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Schemas mismatched, trying again&quot;</span><span class="p">)</span>
@@ -1318,7 +1307,7 @@
 
 <span class="k">def</span> <span class="nf">refresh_schema_and_set_result</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">control_conn</span><span class="p">,</span> <span class="n">response_future</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">control_conn</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">expect_change</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">control_conn</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
     <span class="k">except</span><span class="p">:</span>
         <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Exception refreshing schema in response to schema change:&quot;</span><span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
@@ -1423,7 +1412,6 @@
                 <span class="k">elif</span> <span class="n">response</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">ResultMessage</span><span class="o">.</span><span class="n">KIND_SCHEMA_CHANGE</span><span class="p">:</span>
                     <span class="c"># refresh the schema before responding, but do it in another</span>
                     <span class="c"># thread instead of the event loop thread</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;TH: saw schema change, waiting for agreement&quot;</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
                         <span class="n">refresh_schema_and_set_result</span><span class="p">,</span>
                         <span class="n">response</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="s">&#39;keyspace&#39;</span><span class="p">],</span>
@@ -1440,7 +1428,7 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">:</span>
                     <span class="n">retry_policy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">retry_policy</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">retry_policy</span><span class="p">:</span>
-                    <span class="n">retry_policy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">default_retry_policy</span>
+                    <span class="n">retry_policy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">retry_policy_factory</span><span class="p">()</span>
 
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">ReadTimeoutErrorMessage</span><span class="p">):</span>
                     <span class="n">retry</span> <span class="o">=</span> <span class="n">retry_policy</span><span class="o">.</span><span class="n">on_read_timeout</span><span class="p">(</span>
@@ -1712,7 +1700,7 @@
     </div>
     <div class="footer">
         &copy; Copyright 2013, DataStax.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

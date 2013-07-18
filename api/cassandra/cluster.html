@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -54,7 +52,7 @@
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="../cassandra.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">cassandra</span></tt> - Exceptions and Enums</a></p>
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">cassandra</span></tt> - Exceptions and Enums</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="policies.html"
                         title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies</a></p>
@@ -125,14 +123,14 @@ and returns a dict of credentials for that node.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.load_balancing_policy">
-<tt class="descname">load_balancing_policy</tt><em class="property"> = &lt;cassandra.policies.RoundRobinPolicy object at 0xa06a8cc&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.load_balancing_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">load_balancing_policy</tt><em class="property"> = &lt;cassandra.policies.RoundRobinPolicy object at 0x2ae9f10&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.load_balancing_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.LoadBalancingPolicy" title="cassandra.policies.LoadBalancingPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.LoadBalancingPolicy</span></tt></a> or
 one of its subclasses.  Defaults to <a class="reference internal" href="policies.html#cassandra.policies.RoundRobinPolicy" title="cassandra.policies.RoundRobinPolicy"><tt class="xref py py-class docutils literal"><span class="pre">RoundRobinPolicy</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.reconnection_policy">
-<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0xa06a8ec&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x2ae9f50&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.ReconnectionPolicy</span></tt></a>. Defaults to an instance
 of <a class="reference internal" href="policies.html#cassandra.policies.ExponentialReconnectionPolicy" title="cassandra.policies.ExponentialReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ExponentialReconnectionPolicy</span></tt></a> with a base delay of one second and
 a max delay of ten minutes.</p>
@@ -140,7 +138,7 @@ a max delay of ten minutes.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.default_retry_policy">
-<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0xa06a90c&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x2ae9f90&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A default <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> instance to use for all
 <a class="reference internal" href="query.html#cassandra.query.Query" title="cassandra.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a> objects which do not have a <a class="reference internal" href="query.html#cassandra.query.Query.retry_policy" title="cassandra.query.Query.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">retry_policy</span></tt></a>
 explicitly set.</p>
@@ -262,7 +260,7 @@ use any of the following:</p>
 
 <dl class="method">
 <dt id="cassandra.cluster.Session.execute">
-<tt class="descname">execute</tt><big>(</big><em>query</em>, <em>parameters=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.execute" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">execute</tt><big>(</big><em>query</em>, <em>parameters=None</em>, <em>trace=False</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.execute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execute the given query and synchronously wait for the response.</p>
 <p>If an error is encountered while executing the query, an Exception
 will be raised.</p>
@@ -271,16 +269,26 @@ will be raised.</p>
 sequence is used, <tt class="docutils literal"><span class="pre">%s</span></tt> should be used the placeholder for each
 argument.  If a dict is used, <tt class="docutils literal"><span class="pre">%(name)s</span></tt> style placeholders must
 be used.</p>
+<p>If <cite>trace</cite> is set to <tt class="xref py py-const docutils literal"><span class="pre">True</span></tt>, an attempt will be made to
+fetch the trace details and attach them to the <cite>query</cite>&#8216;s
+<tt class="xref py py-attr docutils literal"><span class="pre">trace</span></tt> attribute in the form of a <a class="reference internal" href="query.html#cassandra.query.QueryTrace" title="cassandra.query.QueryTrace"><tt class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></tt></a>
+instance.  This requires that <cite>query</cite> be a <a class="reference internal" href="query.html#cassandra.query.Query" title="cassandra.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a> subclass
+instance and not just a string.  If there is an error fetching the
+trace details, the <tt class="xref py py-attr docutils literal"><span class="pre">trace</span></tt> attribute will be left as
+<tt class="xref py py-const docutils literal"><span class="pre">None</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="cassandra.cluster.Session.execute_async">
-<tt class="descname">execute_async</tt><big>(</big><em>query</em>, <em>parameters=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.execute_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.execute_async" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">execute_async</tt><big>(</big><em>query</em>, <em>parameters=None</em>, <em>trace=False</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.execute_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.execute_async" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execute the given query and return a <a class="reference internal" href="#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><tt class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></tt></a> object
 which callbacks may be attached to for asynchronous response
 delivery.  You may also call <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><tt class="xref py py-meth docutils literal"><span class="pre">result()</span></tt></a>
 on the <tt class="docutils literal"><span class="pre">ResponseFuture</span></tt> to syncronously block for results at
 any time.</p>
+<p>If <cite>trace</cite> is set to <tt class="xref py py-const docutils literal"><span class="pre">True</span></tt>, you may call
+<a class="reference internal" href="#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></tt></a> after the request
+completes to retrieve a <a class="reference internal" href="query.html#cassandra.query.QueryTrace" title="cassandra.query.QueryTrace"><tt class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></tt></a> instance.</p>
 <p>Example usage:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
@@ -369,6 +377,15 @@ yet, this method will block until that time.</p>
 <span class="gp">... </span>    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Operation failed:&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.ResponseFuture.get_query_trace">
+<tt class="descname">get_query_trace</tt><big>(</big><big>)</big><a class="headerlink" href="#cassandra.cluster.ResponseFuture.get_query_trace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the <a class="reference internal" href="query.html#cassandra.query.QueryTrace" title="cassandra.query.QueryTrace"><tt class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></tt></a> instance representing a trace
+of the last attempt for this operation, or <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt> if tracing was
+not enabled for this query.  Note that this may raise an exception if
+there are problems retrieving the trace details from Cassandra.</p>
 </dd></dl>
 
 <dl class="method">
@@ -475,7 +492,7 @@ against.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2013, DataStax.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

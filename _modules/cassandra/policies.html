@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -68,12 +66,9 @@
             
   <h1>Source code for cassandra.policies</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">islice</span><span class="p">,</span> <span class="n">cycle</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">repeat</span>
-<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">randint</span>
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span>
-
-<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
 <div class="viewcode-block" id="HostDistance"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.HostDistance">[docs]</a><span class="k">class</span> <span class="nc">HostDistance</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -140,14 +135,14 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 </div>
-<div class="viewcode-block" id="LoadBalancingPolicy.make_query_plan"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.LoadBalancingPolicy.make_query_plan">[docs]</a>    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="LoadBalancingPolicy.make_query_plan"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.LoadBalancingPolicy.make_query_plan">[docs]</a>    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a :class:`~.query.Query` instance, return a iterable</span>
 <span class="sd">        of :class:`.Host` instances which should be queried in that</span>
 <span class="sd">        order.  A generator may work well for custom implementations</span>
 <span class="sd">        of this method.</span>
 
-<span class="sd">        Note that the `query` argument may be :const:`None` when preparing</span>
+<span class="sd">        Note that the `query` argument may be ``None`` when preparing</span>
 <span class="sd">        statements.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
@@ -202,7 +197,7 @@
     <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">LOCAL</span>
 
-    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
         <span class="c"># not thread-safe, but we don&#39;t care much about lost increments</span>
         <span class="c"># for the purposes of load balancing</span>
         <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_position</span>
@@ -247,8 +242,8 @@
 <span class="sd">        `used_hosts_per_remote_dc` controls how many nodes in</span>
 <span class="sd">        each remote datacenter will have connections opened</span>
 <span class="sd">        against them. In other words, `used_hosts_per_remote_dc` hosts</span>
-<span class="sd">        will be considered :attr:`~.HostDistance.REMOTE` and the</span>
-<span class="sd">        rest will be considered :attr:`~.HostDistance.IGNORED`.</span>
+<span class="sd">        will be considered :data:`.HostDistance.REMOTE` and the</span>
+<span class="sd">        rest will be considered :data:`.HostDistance.IGNORED`.</span>
 <span class="sd">        By default, all remote hosts are ignored.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span> <span class="o">=</span> <span class="n">local_dc</span>
@@ -282,7 +277,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">IGNORED</span>
 
-    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
         <span class="c"># not thread-safe, but we don&#39;t care much about lost increments</span>
         <span class="c"># for the purposes of load balancing</span>
         <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_position</span>
@@ -341,28 +336,24 @@
     <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_policy</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
         <span class="n">child</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_policy</span>
-        <span class="k">if</span> <span class="n">query</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">routing_key</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">routing_key</span>
+        <span class="k">if</span> <span class="n">routing_key</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
                 <span class="k">yield</span> <span class="n">host</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">routing_key</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">routing_key</span>
-            <span class="k">if</span> <span class="n">routing_key</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
-                    <span class="k">yield</span> <span class="n">host</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">replicas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster_metadata</span><span class="o">.</span><span class="n">get_replicas</span><span class="p">(</span><span class="n">routing_key</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">replica</span> <span class="ow">in</span> <span class="n">replicas</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">replica</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">is_up</span> <span class="ow">and</span> \
-                            <span class="n">child</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">replica</span><span class="p">)</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">LOCAL</span><span class="p">:</span>
-                        <span class="k">yield</span> <span class="n">replica</span>
+            <span class="n">replicas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_replicas</span><span class="p">(</span><span class="n">routing_key</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">replica</span> <span class="ow">in</span> <span class="n">replicas</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">replica</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">is_up</span> <span class="ow">and</span> \
+                        <span class="n">child</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">replica</span><span class="p">)</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">LOCAL</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">replica</span>
 
-                <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
-                    <span class="c"># skip if we&#39;ve already listed this host</span>
-                    <span class="k">if</span> <span class="n">host</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">replicas</span> <span class="ow">or</span> \
-                            <span class="n">child</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">host</span><span class="p">)</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">REMOTE</span><span class="p">:</span>
-                        <span class="k">yield</span> <span class="n">host</span>
+            <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
+                <span class="c"># skip if we&#39;ve already listed this host</span>
+                <span class="k">if</span> <span class="n">host</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">replicas</span> <span class="ow">or</span> \
+                        <span class="n">child</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">replica</span><span class="p">)</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">REMOTE</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">host</span>
 
     <span class="k">def</span> <span class="nf">on_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_policy</span><span class="o">.</span><span class="n">on_up</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -393,8 +384,8 @@
 
 <div class="viewcode-block" id="ConvictionPolicy.add_failure"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ConvictionPolicy.add_failure">[docs]</a>    <span class="k">def</span> <span class="nf">add_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection_exc</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Implementations should return :const:`True` if the host should be</span>
-<span class="sd">        convicted, :const:`False` otherwise.</span>
+<span class="sd">        Implementations should return ``True`` if the host should be</span>
+<span class="sd">        convicted, ``False`` otherwise.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 </div>
@@ -450,7 +441,7 @@
 <span class="sd">        each attempt.</span>
 
 <span class="sd">        `max_attempts` should be a total number of attempts to be made before</span>
-<span class="sd">        giving up, or :const:`None` to continue reconnection attempts forever.</span>
+<span class="sd">        giving up, or ``None`` to continue reconnection attempts forever.</span>
 <span class="sd">        The default is 64.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">delay</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -531,8 +522,9 @@
 <span class="sd">    and unavailable failures.</span>
 
 <span class="sd">    To specify a default retry policy, set the</span>
-<span class="sd">    :attr:`.Cluster.default_retry_policy` attribute to an instance of this</span>
-<span class="sd">    class or one of its subclasses.</span>
+<span class="sd">    :attr:`.Cluster.retry_policy_factory` attribute to this class,</span>
+<span class="sd">    one of its subclasses, or a function that returns instances of this</span>
+<span class="sd">    class or a subclass.</span>
 
 <span class="sd">    To specify a retry policy per query, set the :attr:`.Query.retry_policy`</span>
 <span class="sd">    attribute to an instance of this class or one of its subclasses.</span>
@@ -566,7 +558,7 @@
 <span class="sd">        perspective (i.e. a replica did not respond to the coordinator in time).</span>
 <span class="sd">        It should return a tuple with two items: one of the class enums (such</span>
 <span class="sd">        as :attr:`.RETRY`) and a :class:`.ConsistencyLevel` to retry the</span>
-<span class="sd">        operation at or :const:`None` to keep the same consistency level.</span>
+<span class="sd">        operation at or ``None`` to keep the same consistency level.</span>
 
 <span class="sd">        `query` is the :class:`.Query` that timed out.</span>
 
@@ -676,7 +668,7 @@
 <span class="sd">    level than the one initially requested. By doing so, it may break</span>
 <span class="sd">    consistency guarantees. In other words, if you use this retry policy,</span>
 <span class="sd">    there is cases (documented below) where a read at :attr:`~.QUORUM`</span>
-<span class="sd">    *may not* see a preceding write at :attr:`~.QUORUM`. Do not use this</span>
+<span class="sd">    *may not* see a preceding write at :attr`~.QUORUM`. Do not use this</span>
 <span class="sd">    policy unless you have understood the cases where this can happen and</span>
 <span class="sd">    are ok with that. It is also recommended to subclass this class so</span>
 <span class="sd">    that queries that required a consistency level downgrade can be</span>
@@ -776,7 +768,7 @@
     </div>
     <div class="footer">
         &copy; Copyright 2013, DataStax.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>
