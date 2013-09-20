@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies &mdash; Cassandra Driver 0.1.4 documentation</title>
+    <title>cassandra.policies &mdash; Cassandra Driver 1.0.0-beta3 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.4',
+        VERSION:     '1.0.0-beta3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 0.1.4 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 1.0.0-beta3 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta3 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -66,9 +66,12 @@
             
   <h1>Source code for cassandra.policies</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">islice</span><span class="p">,</span> <span class="n">cycle</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">repeat</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">randint</span>
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
 <div class="viewcode-block" id="HostDistance"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.HostDistance">[docs]</a><span class="k">class</span> <span class="nc">HostDistance</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -135,15 +138,19 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 </div>
-<div class="viewcode-block" id="LoadBalancingPolicy.make_query_plan"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.LoadBalancingPolicy.make_query_plan">[docs]</a>    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+<div class="viewcode-block" id="LoadBalancingPolicy.make_query_plan"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.LoadBalancingPolicy.make_query_plan">[docs]</a>    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">working_keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Given a :class:`~.query.Query` instance, return a iterable</span>
+<span class="sd">        Given a :class:`~.query.Statement` instance, return a iterable</span>
 <span class="sd">        of :class:`.Host` instances which should be queried in that</span>
 <span class="sd">        order.  A generator may work well for custom implementations</span>
 <span class="sd">        of this method.</span>
 
-<span class="sd">        Note that the `query` argument may be ``None`` when preparing</span>
+<span class="sd">        Note that the `query` argument may be :const:`None` when preparing</span>
 <span class="sd">        statements.</span>
+
+<span class="sd">        `working_keyspace` should be the string name of the current keyspace,</span>
+<span class="sd">        as set through :meth:`.Session.set_keyspace()` or with a ``USE``</span>
+<span class="sd">        statement.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 </div>
@@ -197,7 +204,7 @@
     <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">LOCAL</span>
 
-    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">working_keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="c"># not thread-safe, but we don&#39;t care much about lost increments</span>
         <span class="c"># for the purposes of load balancing</span>
         <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_position</span>
@@ -242,33 +249,39 @@
 <span class="sd">        `used_hosts_per_remote_dc` controls how many nodes in</span>
 <span class="sd">        each remote datacenter will have connections opened</span>
 <span class="sd">        against them. In other words, `used_hosts_per_remote_dc` hosts</span>
-<span class="sd">        will be considered :data:`.HostDistance.REMOTE` and the</span>
-<span class="sd">        rest will be considered :data:`.HostDistance.IGNORED`.</span>
+<span class="sd">        will be considered :attr:`~.HostDistance.REMOTE` and the</span>
+<span class="sd">        rest will be considered :attr:`~.HostDistance.IGNORED`.</span>
 <span class="sd">        By default, all remote hosts are ignored.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span> <span class="o">=</span> <span class="n">local_dc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">used_hosts_per_remote_dc</span> <span class="o">=</span> <span class="n">used_hosts_per_remote_dc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span> <span class="o">=</span> <span class="p">{}</span>
 
+    <span class="k">def</span> <span class="nf">_dc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">host</span><span class="o">.</span><span class="n">datacenter</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span>
+
     <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">hosts</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">dc</span><span class="p">,</span> <span class="n">dc_hosts</span> <span class="ow">in</span> <span class="n">groupby</span><span class="p">(</span><span class="n">hosts</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">datacenter</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">dc</span><span class="p">,</span> <span class="n">dc_hosts</span> <span class="ow">in</span> <span class="n">groupby</span><span class="p">(</span><span class="n">hosts</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">h</span><span class="p">)):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">dc_hosts</span><span class="p">)</span>
 
         <span class="c"># position is currently only used for local hosts</span>
         <span class="n">local_live</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_live</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">local_live</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_live</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_live</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">datacenter</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span><span class="p">:</span>
+        <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dc</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">LOCAL</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_hosts_per_remote_dc</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">IGNORED</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">dc_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">datacenter</span><span class="p">)</span>
+            <span class="n">dc_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dc</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">dc_hosts</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">IGNORED</span>
 
@@ -277,14 +290,14 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">IGNORED</span>
 
-    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">working_keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="c"># not thread-safe, but we don&#39;t care much about lost increments</span>
         <span class="c"># for the purposes of load balancing</span>
         <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_position</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">+=</span> <span class="mi">1</span>
 
-        <span class="n">local_live</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span><span class="p">))</span>
-        <span class="n">pos</span> <span class="o">%=</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_live</span><span class="p">)</span>
+        <span class="n">local_live</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span><span class="p">,</span> <span class="p">()))</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_live</span><span class="p">))</span> <span class="k">if</span> <span class="n">local_live</span> <span class="k">else</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">islice</span><span class="p">(</span><span class="n">cycle</span><span class="p">(</span><span class="n">local_live</span><span class="p">),</span> <span class="n">pos</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_live</span><span class="p">)):</span>
             <span class="k">yield</span> <span class="n">host</span>
 
@@ -296,16 +309,16 @@
                 <span class="k">yield</span> <span class="n">host</span>
 
     <span class="k">def</span> <span class="nf">on_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">datacenter</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">datacenter</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">datacenter</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">datacenter</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="TokenAwarePolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.TokenAwarePolicy">[docs]</a><span class="k">class</span> <span class="nc">TokenAwarePolicy</span><span class="p">(</span><span class="n">LoadBalancingPolicy</span><span class="p">):</span>
@@ -315,11 +328,11 @@
 
 <span class="sd">    This alters the child policy&#39;s behavior so that it first attempts to</span>
 <span class="sd">    send queries to :attr:`~.HostDistance.LOCAL` replicas (as determined</span>
-<span class="sd">    by the child policy) based on the :class:`.Query`&#39;s</span>
-<span class="sd">    :attr:`~.Query.routing_key`.  Once those hosts are exhausted, the</span>
+<span class="sd">    by the child policy) based on the :class:`.Statement`&#39;s</span>
+<span class="sd">    :attr:`~.Statement.routing_key`.  Once those hosts are exhausted, the</span>
 <span class="sd">    remaining hosts in the child policy&#39;s query plan will be used.</span>
 
-<span class="sd">    If no :attr:`~.Query.routing_key` is set on the query, the child</span>
+<span class="sd">    If no :attr:`~.Statement.routing_key` is set on the query, the child</span>
 <span class="sd">    policy&#39;s query plan will be used as is.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -336,24 +349,33 @@
     <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_policy</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">working_keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">query</span> <span class="ow">and</span> <span class="n">query</span><span class="o">.</span><span class="n">keyspace</span><span class="p">:</span>
+            <span class="n">keyspace</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">keyspace</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">keyspace</span> <span class="o">=</span> <span class="n">working_keyspace</span>
+
         <span class="n">child</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_policy</span>
-        <span class="n">routing_key</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">routing_key</span>
-        <span class="k">if</span> <span class="n">routing_key</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">query</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
                 <span class="k">yield</span> <span class="n">host</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">replicas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_replicas</span><span class="p">(</span><span class="n">routing_key</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">replica</span> <span class="ow">in</span> <span class="n">replicas</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">replica</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">is_up</span> <span class="ow">and</span> \
-                        <span class="n">child</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">replica</span><span class="p">)</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">LOCAL</span><span class="p">:</span>
-                    <span class="k">yield</span> <span class="n">replica</span>
-
-            <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
-                <span class="c"># skip if we&#39;ve already listed this host</span>
-                <span class="k">if</span> <span class="n">host</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">replicas</span> <span class="ow">or</span> \
-                        <span class="n">child</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">replica</span><span class="p">)</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">REMOTE</span><span class="p">:</span>
+            <span class="n">routing_key</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">routing_key</span>
+            <span class="k">if</span> <span class="n">routing_key</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
                     <span class="k">yield</span> <span class="n">host</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">replicas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster_metadata</span><span class="o">.</span><span class="n">get_replicas</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">routing_key</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">replica</span> <span class="ow">in</span> <span class="n">replicas</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">replica</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">is_up</span> <span class="ow">and</span> \
+                            <span class="n">child</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">replica</span><span class="p">)</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">LOCAL</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">replica</span>
+
+                <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+                    <span class="c"># skip if we&#39;ve already listed this host</span>
+                    <span class="k">if</span> <span class="n">host</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">replicas</span> <span class="ow">or</span> \
+                            <span class="n">child</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">host</span><span class="p">)</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">REMOTE</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">host</span>
 
     <span class="k">def</span> <span class="nf">on_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_policy</span><span class="o">.</span><span class="n">on_up</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -384,8 +406,8 @@
 
 <div class="viewcode-block" id="ConvictionPolicy.add_failure"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ConvictionPolicy.add_failure">[docs]</a>    <span class="k">def</span> <span class="nf">add_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection_exc</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Implementations should return ``True`` if the host should be</span>
-<span class="sd">        convicted, ``False`` otherwise.</span>
+<span class="sd">        Implementations should return :const:`True` if the host should be</span>
+<span class="sd">        convicted, :const:`False` otherwise.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 </div>
@@ -441,11 +463,13 @@
 <span class="sd">        each attempt.</span>
 
 <span class="sd">        `max_attempts` should be a total number of attempts to be made before</span>
-<span class="sd">        giving up, or ``None`` to continue reconnection attempts forever.</span>
+<span class="sd">        giving up, or :const:`None` to continue reconnection attempts forever.</span>
 <span class="sd">        The default is 64.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">delay</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Delay may not be negative&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;delay must not be negative&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_attempts</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;max_attempts must not be negative&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="n">delay</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span> <span class="o">=</span> <span class="n">max_attempts</span>
@@ -522,11 +546,10 @@
 <span class="sd">    and unavailable failures.</span>
 
 <span class="sd">    To specify a default retry policy, set the</span>
-<span class="sd">    :attr:`.Cluster.retry_policy_factory` attribute to this class,</span>
-<span class="sd">    one of its subclasses, or a function that returns instances of this</span>
-<span class="sd">    class or a subclass.</span>
+<span class="sd">    :attr:`.Cluster.default_retry_policy` attribute to an instance of this</span>
+<span class="sd">    class or one of its subclasses.</span>
 
-<span class="sd">    To specify a retry policy per query, set the :attr:`.Query.retry_policy`</span>
+<span class="sd">    To specify a retry policy per query, set the :attr:`.Statement.retry_policy`</span>
 <span class="sd">    attribute to an instance of this class or one of its subclasses.</span>
 
 <span class="sd">    If custom behavior is needed for retrying certain operations,</span>
@@ -558,9 +581,9 @@
 <span class="sd">        perspective (i.e. a replica did not respond to the coordinator in time).</span>
 <span class="sd">        It should return a tuple with two items: one of the class enums (such</span>
 <span class="sd">        as :attr:`.RETRY`) and a :class:`.ConsistencyLevel` to retry the</span>
-<span class="sd">        operation at or ``None`` to keep the same consistency level.</span>
+<span class="sd">        operation at or :const:`None` to keep the same consistency level.</span>
 
-<span class="sd">        `query` is the :class:`.Query` that timed out.</span>
+<span class="sd">        `query` is the :class:`.Statement` that timed out.</span>
 
 <span class="sd">        `consistency` is the :class:`.ConsistencyLevel` that the operation was</span>
 <span class="sd">        attempted at.</span>
@@ -590,7 +613,7 @@
 <span class="sd">        This is called when a write operation times out from the coordinator&#39;s</span>
 <span class="sd">        perspective (i.e. a replica did not respond to the coordinator in time).</span>
 
-<span class="sd">        `query` is the :class:`.Query` that timed out.</span>
+<span class="sd">        `query` is the :class:`.Statement` that timed out.</span>
 
 <span class="sd">        `consistency` is the :class:`.ConsistencyLevel` that the operation was</span>
 <span class="sd">        attempted at.</span>
@@ -625,7 +648,7 @@
 <span class="sd">        This means that the read or write operation was never forwared to</span>
 <span class="sd">        any replicas.</span>
 
-<span class="sd">        `query` is the :class:`.Query` that failed.</span>
+<span class="sd">        `query` is the :class:`.Statement` that failed.</span>
 
 <span class="sd">        `consistency` is the :class:`.ConsistencyLevel` that the operation was</span>
 <span class="sd">        attempted at.</span>
@@ -668,7 +691,7 @@
 <span class="sd">    level than the one initially requested. By doing so, it may break</span>
 <span class="sd">    consistency guarantees. In other words, if you use this retry policy,</span>
 <span class="sd">    there is cases (documented below) where a read at :attr:`~.QUORUM`</span>
-<span class="sd">    *may not* see a preceding write at :attr`~.QUORUM`. Do not use this</span>
+<span class="sd">    *may not* see a preceding write at :attr:`~.QUORUM`. Do not use this</span>
 <span class="sd">    policy unless you have understood the cases where this can happen and</span>
 <span class="sd">    are ok with that. It is also recommended to subclass this class so</span>
 <span class="sd">    that queries that required a consistency level downgrade can be</span>
@@ -761,7 +784,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta3 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 0.1.4 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 1.0.0-beta3 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.4',
+        VERSION:     '1.0.0-beta3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 0.1.4 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 1.0.0-beta3 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta3 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -70,18 +70,22 @@
 <span class="sd">:class:`.Cluster` and :class:`.Session`.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">RLock</span><span class="p">,</span> <span class="n">Thread</span><span class="p">,</span> <span class="n">Event</span>
-<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Lock</span><span class="p">,</span> <span class="n">RLock</span><span class="p">,</span> <span class="n">Thread</span><span class="p">,</span> <span class="n">Event</span>
 <span class="kn">import</span> <span class="nn">Queue</span>
 <span class="kn">import</span> <span class="nn">weakref</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">weakref</span> <span class="kn">import</span> <span class="n">WeakSet</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">WeakSet</span>  <span class="c"># NOQA</span>
+
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">groupby</span>
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">AuthenticationFailed</span>
-<span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="n">ConnectionException</span>
+<span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="n">ConnectionException</span><span class="p">,</span> <span class="n">ConnectionShutdown</span>
 <span class="kn">from</span> <span class="nn">cassandra.decoder</span> <span class="kn">import</span> <span class="p">(</span><span class="n">QueryMessage</span><span class="p">,</span> <span class="n">ResultMessage</span><span class="p">,</span>
                                <span class="n">ErrorMessage</span><span class="p">,</span> <span class="n">ReadTimeoutErrorMessage</span><span class="p">,</span>
                                <span class="n">WriteTimeoutErrorMessage</span><span class="p">,</span>
@@ -91,14 +95,21 @@
                                <span class="n">PreparedQueryNotFound</span><span class="p">,</span>
                                <span class="n">IsBootstrappingErrorMessage</span><span class="p">,</span> <span class="n">named_tuple_factory</span><span class="p">,</span>
                                <span class="n">dict_factory</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">cassandra.io.asyncorereactor</span> <span class="kn">import</span> <span class="n">AsyncoreConnection</span>
 <span class="kn">from</span> <span class="nn">cassandra.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
+<span class="kn">from</span> <span class="nn">cassandra.metrics</span> <span class="kn">import</span> <span class="n">Metrics</span>
 <span class="kn">from</span> <span class="nn">cassandra.policies</span> <span class="kn">import</span> <span class="p">(</span><span class="n">RoundRobinPolicy</span><span class="p">,</span> <span class="n">SimpleConvictionPolicy</span><span class="p">,</span>
                                 <span class="n">ExponentialReconnectionPolicy</span><span class="p">,</span> <span class="n">HostDistance</span><span class="p">,</span>
                                 <span class="n">RetryPolicy</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="n">SimpleStatement</span><span class="p">,</span> <span class="n">PreparedStatement</span><span class="p">,</span> <span class="n">BoundStatement</span><span class="p">,</span> <span class="n">bind_params</span>
+<span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="p">(</span><span class="n">SimpleStatement</span><span class="p">,</span> <span class="n">PreparedStatement</span><span class="p">,</span> <span class="n">BoundStatement</span><span class="p">,</span>
+                             <span class="n">bind_params</span><span class="p">,</span> <span class="n">QueryTrace</span><span class="p">,</span> <span class="n">Statement</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.pool</span> <span class="kn">import</span> <span class="p">(</span><span class="n">_ReconnectionHandler</span><span class="p">,</span> <span class="n">_HostReconnectionHandler</span><span class="p">,</span>
                             <span class="n">HostConnectionPool</span><span class="p">)</span>
+
+<span class="c"># libev is all around faster, so we want to try and default to using that when we can</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">cassandra.io.libevreactor</span> <span class="kn">import</span> <span class="n">LibevConnection</span> <span class="k">as</span> <span class="n">DefaultConnection</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">cassandra.io.asyncorereactor</span> <span class="kn">import</span> <span class="n">AsyncoreConnection</span> <span class="k">as</span> <span class="n">DefaultConnection</span>  <span class="c"># NOQA</span>
 
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
@@ -157,7 +168,7 @@
     <span class="n">compression</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Whether or not compression should be enabled when possible. Defaults to</span>
-<span class="sd">    ``True`` and attempts to use snappy compression.</span>
+<span class="sd">    :const:`True` and attempts to use snappy compression.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">auth_provider</span> <span class="o">=</span> <span class="bp">None</span>
@@ -166,37 +177,42 @@
 <span class="sd">    and returns a dict of credentials for that node.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">load_balancing_policy_factory</span> <span class="o">=</span> <span class="n">RoundRobinPolicy</span>
+    <span class="n">load_balancing_policy</span> <span class="o">=</span> <span class="n">RoundRobinPolicy</span><span class="p">()</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A factory function which creates instances of subclasses of</span>
-<span class="sd">    :class:`policies.LoadBalancingPolicy`.  Defaults to</span>
-<span class="sd">    :class:`policies.RoundRobinPolicy`.</span>
+<span class="sd">    An instance of :class:`.policies.LoadBalancingPolicy` or</span>
+<span class="sd">    one of its subclasses.  Defaults to :class:`~.RoundRobinPolicy`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">reconnection_policy</span> <span class="o">=</span> <span class="n">ExponentialReconnectionPolicy</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">600.0</span><span class="p">)</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    An instance of :class:`policies.ReconnectionPolicy`. Defaults to an instance</span>
-<span class="sd">    of :class:`ExponentialReconnectionPolicy` with a base delay of one second and</span>
+<span class="sd">    An instance of :class:`.policies.ReconnectionPolicy`. Defaults to an instance</span>
+<span class="sd">    of :class:`.ExponentialReconnectionPolicy` with a base delay of one second and</span>
 <span class="sd">    a max delay of ten minutes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">retry_policy_factory</span> <span class="o">=</span> <span class="n">RetryPolicy</span>
+    <span class="n">default_retry_policy</span> <span class="o">=</span> <span class="n">RetryPolicy</span><span class="p">()</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A factory function which creates instances of</span>
-<span class="sd">    :class:`policies.RetryPolicy`.  Defaults to</span>
-<span class="sd">    :class:`policies.RetryPolicy`.</span>
+<span class="sd">    A default :class:`.policies.RetryPolicy` instance to use for all</span>
+<span class="sd">    :class:`.Statement` objects which do not have a :attr:`~.Statement.retry_policy`</span>
+<span class="sd">    explicitly set.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">conviction_policy_factory</span> <span class="o">=</span> <span class="n">SimpleConvictionPolicy</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A factory function which creates instances of</span>
-<span class="sd">    :class:`policies.ConvictionPolicy`.  Defaults to</span>
-<span class="sd">    :class:`policies.SimpleConvictionPolicy`.</span>
+<span class="sd">    :class:`.policies.ConvictionPolicy`.  Defaults to</span>
+<span class="sd">    :class:`.policies.SimpleConvictionPolicy`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">metrics_enabled</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Whether or not metric collection is enabled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">metrics</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An instance of :class:`.metrics.Metrics` if :attr:`.metrics_enabled` is</span>
+<span class="sd">    :const:`True`, else :const:`None`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">sockopts</span> <span class="o">=</span> <span class="bp">None</span>
@@ -216,7 +232,7 @@
 <span class="sd">    An instance of :class:`cassandra.metadata.Metadata`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">connection_class</span> <span class="o">=</span> <span class="n">AsyncoreConnection</span>
+    <span class="n">connection_class</span> <span class="o">=</span> <span class="n">DefaultConnection</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This determines what event loop system will be used for managing</span>
 <span class="sd">    I/O with Cassandra.  These are the current options:</span>
@@ -228,6 +244,8 @@
 <span class="sd">    the ``asyncore`` module in the Python standard library.  The</span>
 <span class="sd">    performance is slightly worse than with ``libev``, but it is</span>
 <span class="sd">    supported on a wider range of systems.</span>
+
+<span class="sd">    If ``libev`` is installed, ``LibevConnection`` will be used instead.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">sessions</span> <span class="o">=</span> <span class="bp">None</span>
@@ -235,6 +253,7 @@
     <span class="n">scheduler</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">executor</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_is_shutdown</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">_is_setup</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">_prepared_statements</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -242,9 +261,9 @@
                  <span class="n">port</span><span class="o">=</span><span class="mi">9042</span><span class="p">,</span>
                  <span class="n">compression</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                  <span class="n">auth_provider</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">load_balancing_policy_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">load_balancing_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">reconnection_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">retry_policy_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">default_retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">conviction_policy_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">metrics_enabled</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
                  <span class="n">connection_class</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
@@ -265,18 +284,14 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;auth_provider must be callable&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auth_provider</span> <span class="o">=</span> <span class="n">auth_provider</span>
 
-        <span class="k">if</span> <span class="n">load_balancing_policy_factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">load_balancing_policy_factory</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;load_balancing_policy_factory must be callable&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy_factory</span> <span class="o">=</span> <span class="n">load_balancing_policy_factory</span>
+        <span class="k">if</span> <span class="n">load_balancing_policy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy</span> <span class="o">=</span> <span class="n">load_balancing_policy</span>
 
         <span class="k">if</span> <span class="n">reconnection_policy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reconnection_policy</span> <span class="o">=</span> <span class="n">reconnection_policy</span>
 
-        <span class="k">if</span> <span class="n">retry_policy_factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">retry_policy_factory</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;retry_policy_factory must be callable&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">retry_policy_factory</span> <span class="o">=</span> <span class="n">retry_policy_factory</span>
+        <span class="k">if</span> <span class="n">default_retry_policy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">default_retry_policy</span> <span class="o">=</span> <span class="n">default_retry_policy</span>
 
         <span class="k">if</span> <span class="n">conviction_policy_factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">conviction_policy_factory</span><span class="p">):</span>
@@ -293,7 +308,7 @@
         <span class="c"># let Session objects be GC&#39;ed (and shutdown) when the user no longer</span>
         <span class="c"># holds a reference. Normally the cycle detector would handle this,</span>
         <span class="c"># but implementing __del__ prevents that.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">WeakSet</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span> <span class="o">=</span> <span class="n">WeakSet</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_prepared_statements</span> <span class="o">=</span> <span class="p">{}</span>
@@ -322,6 +337,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span> <span class="o">=</span> <span class="n">_Scheduler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">executor</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics_enabled</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="n">Metrics</span><span class="p">(</span><span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span> <span class="o">=</span> <span class="n">ControlConnection</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">address</span> <span class="ow">in</span> <span class="n">contact_points</span><span class="p">:</span>
@@ -362,6 +380,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_provider</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;credentials&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_provider</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
 
+        <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;compression&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;sockopts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sockopts</span>
 
@@ -371,6 +390,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_provider</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;credentials&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_provider</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
 
+        <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;compression&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;sockopts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sockopts</span>
 
@@ -386,11 +406,16 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_shutdown</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Cluster is already shut down&quot;</span><span class="p">)</span>
 
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_setup</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span>
+                    <span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_is_setup</span> <span class="o">=</span> <span class="bp">True</span>
+
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Control connection created&quot;</span><span class="p">)</span>
-                <span class="k">except</span><span class="p">:</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Control connection failed to connect, &quot;</span>
                                   <span class="s">&quot;shutting down Cluster:&quot;</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
@@ -408,7 +433,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_shutdown</span><span class="p">:</span>
-                <span class="k">return</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The Cluster was already shutdown&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_is_shutdown</span> <span class="o">=</span> <span class="bp">True</span>
 
@@ -538,7 +563,7 @@
             <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">wait_for_schema_agreement</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
-            <span class="k">except</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">pass</span>
 
             <span class="n">statements</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepared_statements</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
@@ -557,16 +582,16 @@
                             <span class="n">response</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="n">ResultMessage</span><span class="o">.</span><span class="n">KIND_PREPARED</span><span class="p">):</span>
                             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Got unexpected response when preparing &quot;</span>
                                       <span class="s">&quot;statement on host </span><span class="si">%s</span><span class="s">: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">response</span><span class="p">))</span>
-                    <span class="k">except</span><span class="p">:</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                         <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Error trying to prepare statement on &quot;</span>
                                       <span class="s">&quot;host </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,))</span>
 
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="c"># log and ignore</span>
             <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Error trying to prepare all statements on host </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,))</span>
 
-    <span class="k">def</span> <span class="nf">prepare_on_all_sessions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">md5_id</span><span class="p">,</span> <span class="n">prepared_statement</span><span class="p">,</span> <span class="n">excluded_host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_prepared_statements</span><span class="p">[</span><span class="n">md5_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">prepared_statement</span>
+    <span class="k">def</span> <span class="nf">prepare_on_all_sessions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">prepared_statement</span><span class="p">,</span> <span class="n">excluded_host</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prepared_statements</span><span class="p">[</span><span class="n">query_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">prepared_statement</span>
         <span class="k">for</span> <span class="n">session</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span><span class="p">:</span>
             <span class="n">session</span><span class="o">.</span><span class="n">prepare_on_all_hosts</span><span class="p">(</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">query_string</span><span class="p">,</span> <span class="n">excluded_host</span><span class="p">)</span>
 
@@ -610,6 +635,7 @@
     <span class="n">_lock</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_pools</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_load_balancer</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_metrics</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">hosts</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span> <span class="o">=</span> <span class="n">cluster</span>
@@ -617,35 +643,62 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pools</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_load_balancer</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">load_balancing_policy_factory</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_load_balancer</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span><span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="n">cluster</span><span class="p">),</span> <span class="n">hosts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_load_balancer</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">load_balancing_policy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metrics</span>
 
         <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">hosts</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Session.execute"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Session.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Session.execute"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Session.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Execute the given query and synchronously wait for the response.</span>
 
 <span class="sd">        If an error is encountered while executing the query, an Exception</span>
 <span class="sd">        will be raised.</span>
 
-<span class="sd">        `query` may be a query string or an instance of :class:`cassandra.query.Query`.</span>
+<span class="sd">        `query` may be a query string or an instance of :class:`cassandra.query.Statement`.</span>
 
 <span class="sd">        `parameters` may be a sequence or dict of parameters to bind.  If a</span>
 <span class="sd">        sequence is used, ``%s`` should be used the placeholder for each</span>
 <span class="sd">        argument.  If a dict is used, ``%(name)s`` style placeholders must</span>
 <span class="sd">        be used.</span>
+
+<span class="sd">        If `trace` is set to :const:`True`, an attempt will be made to</span>
+<span class="sd">        fetch the trace details and attach them to the `query`&#39;s</span>
+<span class="sd">        :attr:`~.Statement.trace` attribute in the form of a :class:`.QueryTrace`</span>
+<span class="sd">        instance.  This requires that `query` be a :class:`.Statement` subclass</span>
+<span class="sd">        instance and not just a string.  If there is an error fetching the</span>
+<span class="sd">        trace details, the :attr:`~.Statement.trace` attribute will be left as</span>
+<span class="sd">        :const:`None`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">trace</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">Statement</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s">&quot;The query argument must be an instance of a subclass of &quot;</span>
+                <span class="s">&quot;cassandra.query.Statement when trace=True&quot;</span><span class="p">)</span>
+
+        <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">trace</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">trace</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">query</span><span class="o">.</span><span class="n">trace</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">get_query_trace</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Unable to fetch query trace:&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
 </div>
-<div class="viewcode-block" id="Session.execute_async"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Session.execute_async">[docs]</a>    <span class="k">def</span> <span class="nf">execute_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Session.execute_async"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Session.execute_async">[docs]</a>    <span class="k">def</span> <span class="nf">execute_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Execute the given query and return a :class:`~.ResponseFuture` object</span>
 <span class="sd">        which callbacks may be attached to for asynchronous response</span>
 <span class="sd">        delivery.  You may also call :meth:`~.ResponseFuture.result()`</span>
 <span class="sd">        on the ``ResponseFuture`` to syncronously block for results at</span>
 <span class="sd">        any time.</span>
+
+<span class="sd">        If `trace` is set to :const:`True`, you may call</span>
+<span class="sd">        :meth:`.ResponseFuture.get_query_trace()` after the request</span>
+<span class="sd">        completes to retrieve a :class:`.QueryTrace` instance.</span>
 
 <span class="sd">        Example usage::</span>
 
@@ -668,7 +721,7 @@
 
 <span class="sd">            &gt;&gt;&gt; try:</span>
 <span class="sd">            ...     results = future.result()</span>
-<span class="sd">            ... except:</span>
+<span class="sd">            ... except Exception:</span>
 <span class="sd">            ...     log.exception(&quot;Operation failed:&quot;)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -680,7 +733,6 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">BoundStatement</span><span class="p">):</span>
             <span class="n">message</span> <span class="o">=</span> <span class="n">ExecuteMessage</span><span class="p">(</span>
                 <span class="n">query_id</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">query_id</span><span class="p">,</span>
-                <span class="n">md5_id</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">md5_id</span><span class="p">,</span>
                 <span class="n">query_params</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
                 <span class="n">consistency_level</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -689,11 +741,10 @@
                 <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
             <span class="n">message</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query_string</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">tracing_enabled</span><span class="p">:</span>
-            <span class="c"># TODO enable tracing on the message</span>
-            <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">trace</span><span class="p">:</span>
+            <span class="n">message</span><span class="o">.</span><span class="n">tracing</span> <span class="o">=</span> <span class="bp">True</span>
 
-        <span class="n">future</span> <span class="o">=</span> <span class="n">ResponseFuture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="n">ResponseFuture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="p">)</span>
         <span class="n">future</span><span class="o">.</span><span class="n">send_request</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">future</span>
 </div>
@@ -712,18 +763,18 @@
         <span class="n">future</span> <span class="o">=</span> <span class="n">ResponseFuture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">future</span><span class="o">.</span><span class="n">send_request</span><span class="p">()</span>
-            <span class="n">query_id</span><span class="p">,</span> <span class="n">md5_id</span><span class="p">,</span> <span class="n">column_metadata</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
-        <span class="k">except</span><span class="p">:</span>
+            <span class="n">query_id</span><span class="p">,</span> <span class="n">column_metadata</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Error preparing query:&quot;</span><span class="p">)</span>
             <span class="k">raise</span>
 
         <span class="n">prepared_statement</span> <span class="o">=</span> <span class="n">PreparedStatement</span><span class="o">.</span><span class="n">from_message</span><span class="p">(</span>
-            <span class="n">query_id</span><span class="p">,</span> <span class="n">md5_id</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span><span class="p">)</span>
+            <span class="n">query_id</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span><span class="p">)</span>
 
         <span class="n">host</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">_current_host</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">prepare_on_all_sessions</span><span class="p">(</span><span class="n">md5_id</span><span class="p">,</span> <span class="n">prepared_statement</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
-        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">prepare_on_all_sessions</span><span class="p">(</span><span class="n">query_id</span><span class="p">,</span> <span class="n">prepared_statement</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Error preparing query on all hosts:&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">prepared_statement</span>
@@ -742,7 +793,7 @@
                 <span class="c"># statement is used.  Just log errors and continue on.</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">request_id</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">_query</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
-                <span class="k">except</span><span class="p">:</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Error preparing query for host </span><span class="si">%s</span><span class="s">:&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,))</span>
                     <span class="k">continue</span>
 
@@ -753,7 +804,7 @@
 
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
-                <span class="k">except</span><span class="p">:</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Error preparing query for host </span><span class="si">%s</span><span class="s">:&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,))</span>
 
 <div class="viewcode-block" id="Session.shutdown"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Session.shutdown">[docs]</a>    <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -771,8 +822,11 @@
             <span class="n">pool</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
 </div>
     <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
-        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">add_host</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Internal &quot;&quot;&quot;</span>
@@ -782,11 +836,11 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">new_pool</span> <span class="o">=</span> <span class="n">HostConnectionPool</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">distance</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-            <span class="k">except</span> <span class="n">AuthenticationFailed</span><span class="p">,</span> <span class="n">auth_exc</span><span class="p">:</span>
+            <span class="k">except</span> <span class="n">AuthenticationFailed</span> <span class="k">as</span> <span class="n">auth_exc</span><span class="p">:</span>
                 <span class="n">conn_exc</span> <span class="o">=</span> <span class="n">ConnectionException</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">auth_exc</span><span class="p">),</span> <span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">)</span>
                 <span class="n">host</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">signal_connection_failure</span><span class="p">(</span><span class="n">conn_exc</span><span class="p">)</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">conn_exc</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">conn_exc</span><span class="p">:</span>
                 <span class="n">host</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">signal_connection_failure</span><span class="p">(</span><span class="n">conn_exc</span><span class="p">)</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
 
@@ -899,12 +953,13 @@
         <span class="c"># use a weak reference to allow the Cluster instance to be GC&#39;ed (and</span>
         <span class="c"># shutdown) since implementing __del__ disables the cycle detector</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_balancing_policy</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">load_balancing_policy_factory</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_balancing_policy</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">load_balancing_policy</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_balancing_policy</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span><span class="n">cluster</span><span class="p">,</span> <span class="p">[])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reconnection_policy</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">reconnection_policy</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="bp">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schema_agreement_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_reconnection_handler</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reconnection_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
@@ -941,13 +996,13 @@
         <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_balancing_policy</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">():</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_try_connect</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
-            <span class="k">except</span> <span class="n">ConnectionException</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">except</span> <span class="n">ConnectionException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="n">errors</span><span class="p">[</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">]</span> <span class="o">=</span> <span class="n">exc</span>
                 <span class="n">host</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">signal_connection_failure</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;[control connection] Error connecting to </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;[control connection] Error connecting to </span><span class="si">%s</span><span class="s">:&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="n">errors</span><span class="p">[</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">]</span> <span class="o">=</span> <span class="n">exc</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;[control connection] Error connecting to </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;[control connection] Error connecting to </span><span class="si">%s</span><span class="s">:&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
         <span class="k">raise</span> <span class="n">NoHostAvailable</span><span class="p">(</span><span class="s">&quot;Unable to connect to any servers&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="p">)</span>
 
@@ -956,11 +1011,12 @@
 <span class="sd">        Creates a new Connection, registers for pushed events, and refreshes</span>
 <span class="sd">        node/token and schema metadata.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Opening new connection to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,))</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Opening new connection to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
         <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Established new connection, registering &quot;</span>
-                  <span class="s">&quot;watchers and refreshing schema and topology&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Established new connection to </span><span class="si">%s</span><span class="s">, &quot;</span>
+                  <span class="s">&quot;registering watchers and refreshing schema and topology&quot;</span><span class="p">,</span>
+                  <span class="n">host</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">register_watchers</span><span class="p">({</span>
                 <span class="s">&quot;TOPOLOGY_CHANGE&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_topology_change</span><span class="p">,</span>
@@ -970,7 +1026,7 @@
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="k">raise</span>
 
@@ -1004,8 +1060,8 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">_get_and_set_reconnection_handler</span><span class="p">,</span>
                     <span class="n">new_handler</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_reconnection_handler</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;[control connection] error reconnecting&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] error reconnecting&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="k">raise</span>
 
     <span class="k">def</span> <span class="nf">_get_and_set_reconnection_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_handler</span><span class="p">):</span>
@@ -1037,8 +1093,8 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;[control connection] Error refreshing schema:&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Error refreshing schema&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_signal_error</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -1075,8 +1131,8 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">)</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;[control connection] Error refreshing node list and token map:&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Error refreshing node list and token map&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_signal_error</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
@@ -1173,45 +1229,50 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">wait_for_schema_agreement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Waiting for schema agreement&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">connection</span><span class="p">:</span>
-            <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
+        <span class="c"># Each schema change typically generates two schema refreshes, one</span>
+        <span class="c"># from the response type and one from the pushed notification. Holding</span>
+        <span class="c"># a lock is just a simple way to cut down on the number of schema queries</span>
+        <span class="c"># we&#39;ll make.</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema_agreement_lock</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Waiting for schema agreement&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">connection</span><span class="p">:</span>
+                <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
 
-        <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">elapsed</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">cl</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
-        <span class="k">while</span> <span class="n">elapsed</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">max_schema_agreement_wait</span><span class="p">:</span>
-            <span class="n">peers_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SCHEMA_PEERS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-            <span class="n">local_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SCHEMA_LOCAL</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-            <span class="n">peers_result</span><span class="p">,</span> <span class="n">local_result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span><span class="n">peers_query</span><span class="p">,</span> <span class="n">local_query</span><span class="p">)</span>
-            <span class="n">peers_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">peers_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">elapsed</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">cl</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
+            <span class="k">while</span> <span class="n">elapsed</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">max_schema_agreement_wait</span><span class="p">:</span>
+                <span class="n">peers_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SCHEMA_PEERS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
+                <span class="n">local_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SCHEMA_LOCAL</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
+                <span class="n">peers_result</span><span class="p">,</span> <span class="n">local_result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span><span class="n">peers_query</span><span class="p">,</span> <span class="n">local_query</span><span class="p">)</span>
+                <span class="n">peers_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">peers_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
 
-            <span class="n">versions</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">local_result</span><span class="o">.</span><span class="n">results</span><span class="p">:</span>
-                <span class="n">local_row</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">local_result</span><span class="o">.</span><span class="n">results</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">):</span>
-                    <span class="n">versions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">))</span>
+                <span class="n">versions</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">local_result</span><span class="o">.</span><span class="n">results</span><span class="p">:</span>
+                    <span class="n">local_row</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">local_result</span><span class="o">.</span><span class="n">results</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">):</span>
+                        <span class="n">versions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">))</span>
 
-            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">peers_result</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rpc_address&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">):</span>
-                    <span class="k">continue</span>
+                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">peers_result</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rpc_address&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">):</span>
+                        <span class="k">continue</span>
 
-                <span class="n">rpc</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rpc_address&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">rpc</span> <span class="o">==</span> <span class="s">&quot;0.0.0.0&quot;</span><span class="p">:</span>  <span class="c"># TODO ipv6 check</span>
-                    <span class="n">rpc</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;peer&quot;</span><span class="p">)</span>
+                    <span class="n">rpc</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rpc_address&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">rpc</span> <span class="o">==</span> <span class="s">&quot;0.0.0.0&quot;</span><span class="p">:</span>  <span class="c"># TODO ipv6 check</span>
+                        <span class="n">rpc</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;peer&quot;</span><span class="p">)</span>
 
-                <span class="n">peer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">rpc</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">peer</span> <span class="ow">and</span> <span class="n">peer</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">is_up</span><span class="p">:</span>
-                    <span class="n">versions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">))</span>
+                    <span class="n">peer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">rpc</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">peer</span> <span class="ow">and</span> <span class="n">peer</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">is_up</span><span class="p">:</span>
+                        <span class="n">versions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">))</span>
 
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">versions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">True</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">versions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">True</span>
 
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Schemas mismatched, trying again&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
-            <span class="n">elapsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Schemas mismatched, trying again&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
+                <span class="n">elapsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
 
-        <span class="k">return</span> <span class="bp">False</span>
+            <span class="k">return</span> <span class="bp">False</span>
 
     <span class="k">def</span> <span class="nf">_signal_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># try just signaling the host monitor, as this will trigger a reconnect</span>
@@ -1272,7 +1333,11 @@
         <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Shutting down Cluster Scheduler&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Shutting down Cluster Scheduler&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="c"># this can happen on interpreter shutdown</span>
+            <span class="k">pass</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span> <span class="o">=</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -1308,7 +1373,7 @@
 <span class="k">def</span> <span class="nf">refresh_schema_and_set_result</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">control_conn</span><span class="p">,</span> <span class="n">response_future</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">control_conn</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
-    <span class="k">except</span><span class="p">:</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Exception refreshing schema in response to schema change:&quot;</span><span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">response_future</span><span class="o">.</span><span class="n">_set_final_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
@@ -1336,23 +1401,30 @@
     <span class="n">_req_id</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_final_result</span> <span class="o">=</span> <span class="n">_NO_RESULT_YET</span>
     <span class="n">_final_exception</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_query_trace</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_callback</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_errback</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_current_host</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_current_pool</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_connection</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_query_retries</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">_start_time</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_metrics</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">row_factory</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">query</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="o">=</span> <span class="n">metrics</span>
+        <span class="k">if</span> <span class="n">metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
         <span class="c"># convert the list/generator/etc to an iterator so that subsequent</span>
         <span class="c"># calls to send_request (which retries may do) will resume where</span>
         <span class="c"># they last left off</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">query_plan</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">_load_balancer</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span><span class="n">query</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query_plan</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">_load_balancer</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span>
+            <span class="n">session</span><span class="o">.</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">query</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1391,8 +1463,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_current_pool</span> <span class="o">=</span> <span class="n">pool</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="n">connection</span>
             <span class="k">return</span> <span class="n">request_id</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Error querying host </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Error querying host </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span><span class="p">[</span><span class="n">host</span><span class="p">]</span> <span class="o">=</span> <span class="n">exc</span>
             <span class="k">if</span> <span class="n">connection</span><span class="p">:</span>
                 <span class="n">pool</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
@@ -1400,8 +1472,12 @@
 
     <span class="k">def</span> <span class="nf">_set_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_pool</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_pool</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_current_pool</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">)</span>
+
+            <span class="n">trace_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;trace_id&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">trace_id</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_query_trace</span> <span class="o">=</span> <span class="n">QueryTrace</span><span class="p">(</span><span class="n">trace_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">ResultMessage</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">ResultMessage</span><span class="o">.</span><span class="n">KIND_SET_KEYSPACE</span><span class="p">:</span>
@@ -1428,33 +1504,43 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">:</span>
                     <span class="n">retry_policy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">retry_policy</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">retry_policy</span><span class="p">:</span>
-                    <span class="n">retry_policy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">retry_policy_factory</span><span class="p">()</span>
+                    <span class="n">retry_policy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">default_retry_policy</span>
 
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">ReadTimeoutErrorMessage</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">on_read_timeout</span><span class="p">()</span>
                     <span class="n">retry</span> <span class="o">=</span> <span class="n">retry_policy</span><span class="o">.</span><span class="n">on_read_timeout</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="n">retry_num</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_query_retries</span><span class="p">,</span> <span class="o">**</span><span class="n">response</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">WriteTimeoutErrorMessage</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">on_write_timeout</span><span class="p">()</span>
                     <span class="n">retry</span> <span class="o">=</span> <span class="n">retry_policy</span><span class="o">.</span><span class="n">on_write_timeout</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="n">retry_num</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_query_retries</span><span class="p">,</span> <span class="o">**</span><span class="n">response</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">UnavailableErrorMessage</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">on_unavailable</span><span class="p">()</span>
                     <span class="n">retry</span> <span class="o">=</span> <span class="n">retry_policy</span><span class="o">.</span><span class="n">on_unavailable</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="n">retry_num</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_query_retries</span><span class="p">,</span> <span class="o">**</span><span class="n">response</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">OverloadedErrorMessage</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">on_other_error</span><span class="p">()</span>
                     <span class="c"># need to retry against a different host here</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Host </span><span class="si">%s</span><span class="s"> is overloaded, retrying against a different &quot;</span>
                              <span class="s">&quot;host&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_host</span><span class="p">))</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_retry</span><span class="p">(</span><span class="n">reuse_connection</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
                     <span class="k">return</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">IsBootstrappingErrorMessage</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">on_other_error</span><span class="p">()</span>
                     <span class="c"># need to retry against a different host here</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_retry</span><span class="p">(</span><span class="n">reuse_connection</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
                     <span class="k">return</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">PreparedQueryNotFound</span><span class="p">):</span>
-                    <span class="n">md5_id</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">info</span>
+                    <span class="n">query_id</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">info</span>
                     <span class="k">try</span><span class="p">:</span>
-                        <span class="n">prepared_statement</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">_prepared_statements</span><span class="p">[</span><span class="n">md5_id</span><span class="p">]</span>
+                        <span class="n">prepared_statement</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">_prepared_statements</span><span class="p">[</span><span class="n">query_id</span><span class="p">]</span>
                     <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Tried to execute unknown prepared statement </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">md5_id</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;hex&#39;</span><span class="p">),))</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Tried to execute unknown prepared statement </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">query_id</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;hex&#39;</span><span class="p">),))</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">_set_final_exception</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
                         <span class="k">return</span>
 
@@ -1489,9 +1575,14 @@
                 <span class="k">elif</span> <span class="n">retry_type</span> <span class="ow">is</span> <span class="n">RetryPolicy</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_set_final_exception</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">to_exception</span><span class="p">())</span>
                 <span class="k">else</span><span class="p">:</span>  <span class="c"># IGNORE</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">on_ignore</span><span class="p">()</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_set_final_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">ConnectionException</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">on_connection_error</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">ConnectionShutdown</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_retry</span><span class="p">(</span><span class="n">reuse_connection</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
                 <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;to_exception&#39;</span><span class="p">):</span>
@@ -1504,7 +1595,7 @@
                 <span class="n">exc</span> <span class="o">=</span> <span class="n">ConnectionException</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_host</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_set_final_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="c"># almost certainly caused by a bug, but we need to set something here</span>
             <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Unexpected exception while handling result in ResponseFuture:&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_set_final_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
@@ -1531,6 +1622,8 @@
                 <span class="s">&quot;statement on host </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">,</span> <span class="n">response</span><span class="p">)))</span>
 
     <span class="k">def</span> <span class="nf">_set_final_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">request_timer</span><span class="o">.</span><span class="n">addValue</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_time</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;session&#39;</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span>  <span class="c"># clear reference cycles</span>
@@ -1543,6 +1636,8 @@
             <span class="n">fn</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_set_final_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">request_timer</span><span class="o">.</span><span class="n">addValue</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_time</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span>  <span class="c"># clear reference cycles</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -1554,6 +1649,8 @@
             <span class="n">fn</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_retry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reuse_connection</span><span class="p">,</span> <span class="n">consistency_level</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">on_retry</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">consistency_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">consistency_level</span> <span class="o">=</span> <span class="n">consistency_level</span>
 
@@ -1561,6 +1658,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_retry_task</span><span class="p">,</span> <span class="n">reuse_connection</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_retry_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reuse_connection</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span><span class="p">:</span>
+            <span class="c"># the connection probably broke while we were waiting</span>
+            <span class="c"># to retry the operation</span>
+            <span class="k">return</span>
+
         <span class="k">if</span> <span class="n">reuse_connection</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_host</span><span class="p">):</span>
             <span class="k">return</span>
 
@@ -1582,7 +1684,7 @@
 <span class="sd">            ...     rows = future.result()</span>
 <span class="sd">            ...     for row in rows:</span>
 <span class="sd">            ...         ... # process results</span>
-<span class="sd">            ... except:</span>
+<span class="sd">            ... except Exception:</span>
 <span class="sd">            ...     log.exception(&quot;Operation failed:&quot;)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1598,6 +1700,19 @@
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">assert</span> <span class="bp">False</span>  <span class="c"># shouldn&#39;t get here</span>
+</div>
+<div class="viewcode-block" id="ResponseFuture.get_query_trace"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.get_query_trace">[docs]</a>    <span class="k">def</span> <span class="nf">get_query_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the :class:`~.query.QueryTrace` instance representing a trace</span>
+<span class="sd">        of the last attempt for this operation, or :const:`None` if tracing was</span>
+<span class="sd">        not enabled for this query.  Note that this may raise an exception if</span>
+<span class="sd">        there are problems retrieving the trace details from Cassandra.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_trace</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_query_trace</span><span class="o">.</span><span class="n">populate</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_trace</span>
 </div>
 <div class="viewcode-block" id="ResponseFuture.add_callback"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.add_callback">[docs]</a>    <span class="k">def</span> <span class="nf">add_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1693,7 +1808,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 0.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta3 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
