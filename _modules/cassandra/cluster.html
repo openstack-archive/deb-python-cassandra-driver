@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 1.0.0-beta3 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 1.0.0-beta4+ documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0-beta3',
+        VERSION:     '1.0.0-beta4+',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 1.0.0-beta3 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 1.0.0-beta4+ documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta4+ documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -72,6 +72,7 @@
 
 <span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Lock</span><span class="p">,</span> <span class="n">RLock</span><span class="p">,</span> <span class="n">Thread</span><span class="p">,</span> <span class="n">Event</span>
 <span class="kn">import</span> <span class="nn">Queue</span>
@@ -111,6 +112,11 @@
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">cassandra.io.asyncorereactor</span> <span class="kn">import</span> <span class="n">AsyncoreConnection</span> <span class="k">as</span> <span class="n">DefaultConnection</span>  <span class="c"># NOQA</span>
 
+<span class="c"># Forces load of utf8 encoding module to avoid deadlock that occurs</span>
+<span class="c"># if code that is being imported tries to import the module in a seperate</span>
+<span class="c"># thread.</span>
+<span class="c"># See http://bugs.python.org/issue10923</span>
+<span class="s">&quot;&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf8&#39;</span><span class="p">)</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
@@ -268,12 +274,19 @@
                  <span class="n">metrics_enabled</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
                  <span class="n">connection_class</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">sockopts</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">cql_version</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">executor_threads</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                  <span class="n">max_schema_agreement_wait</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Any of the mutable Cluster attributes may be set as keyword arguments</span>
 <span class="sd">        to the constructor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s">&#39;gevent.monkey&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s">&quot;gevent monkey-patching detected. This driver does not currently &quot;</span>
+                <span class="s">&quot;support gevent, and monkey patching will break the driver &quot;</span>
+                <span class="s">&quot;completely. You can track progress towards adding gevent &quot;</span>
+                <span class="s">&quot;support here: https://datastax-oss.atlassian.net/browse/PYTHON-7.&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">contact_points</span> <span class="o">=</span> <span class="n">contact_points</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
@@ -303,6 +316,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics_enabled</span> <span class="o">=</span> <span class="n">metrics_enabled</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sockopts</span> <span class="o">=</span> <span class="n">sockopts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cql_version</span> <span class="o">=</span> <span class="n">cql_version</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_schema_agreement_wait</span> <span class="o">=</span> <span class="n">max_schema_agreement_wait</span>
 
         <span class="c"># let Session objects be GC&#39;ed (and shutdown) when the user no longer</span>
@@ -383,6 +397,7 @@
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;compression&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;sockopts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sockopts</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;cql_version&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_version</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection_class</span><span class="o">.</span><span class="n">factory</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -393,6 +408,7 @@
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;compression&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;sockopts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sockopts</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;cql_version&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_version</span>
 
         <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connection_class</span><span class="o">.</span><span class="n">factory</span><span class="p">,</span> <span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -1808,7 +1824,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta4+ documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

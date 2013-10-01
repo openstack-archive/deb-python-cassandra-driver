@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies - Load balancing and Failure Handling Policies &mdash; Cassandra Driver 1.0.0-beta3 documentation</title>
+    <title>cassandra.policies - Load balancing and Failure Handling Policies &mdash; Cassandra Driver 1.0.0-beta4+ documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0-beta3',
+        VERSION:     '1.0.0-beta4+',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 1.0.0-beta3 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 1.0.0-beta4+ documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.metadata - Schema and Ring Topology" href="metadata.html" />
     <link rel="prev" title="cassandra.cluster - Clusters and Sessions" href="cluster.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta4+ documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -163,7 +163,7 @@ first use.  The <cite>cluster</cite> parameter is an instance of
 <dl class="method">
 <dt id="cassandra.policies.LoadBalancingPolicy.make_query_plan">
 <tt class="descname">make_query_plan</tt><big>(</big><em>working_keyspace=None</em>, <em>query=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.make_query_plan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.make_query_plan" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a <tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt> instance, return a iterable
+<dd><p>Given a <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> instance, return a iterable
 of <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> instances which should be queried in that
 order.  A generator may work well for custom implementations
 of this method.</p>
@@ -239,10 +239,10 @@ By default, all remote hosts are ignored.</p>
 a child policy.</p>
 <p>This alters the child policy&#8217;s behavior so that it first attempts to
 send queries to <a class="reference internal" href="#cassandra.policies.HostDistance.LOCAL" title="cassandra.policies.HostDistance.LOCAL"><tt class="xref py py-attr docutils literal"><span class="pre">LOCAL</span></tt></a> replicas (as determined
-by the child policy) based on the <tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt>&#8216;s
-<tt class="xref py py-attr docutils literal"><span class="pre">routing_key</span></tt>.  Once those hosts are exhausted, the
+by the child policy) based on the <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a>&#8216;s
+<a class="reference internal" href="query.html#cassandra.query.Statement.routing_key" title="cassandra.query.Statement.routing_key"><tt class="xref py py-attr docutils literal"><span class="pre">routing_key</span></tt></a>.  Once those hosts are exhausted, the
 remaining hosts in the child policy&#8217;s query plan will be used.</p>
-<p>If no <tt class="xref py py-attr docutils literal"><span class="pre">routing_key</span></tt> is set on the query, the child
+<p>If no <a class="reference internal" href="query.html#cassandra.query.Statement.routing_key" title="cassandra.query.Statement.routing_key"><tt class="xref py py-attr docutils literal"><span class="pre">routing_key</span></tt></a> is set on the query, the child
 policy&#8217;s query plan will be used as is.</p>
 </dd></dl>
 
@@ -376,7 +376,7 @@ and unavailable failures.</p>
 <p>To specify a default retry policy, set the
 <a class="reference internal" href="cluster.html#cassandra.cluster.Cluster.default_retry_policy" title="cassandra.cluster.Cluster.default_retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">Cluster.default_retry_policy</span></tt></a> attribute to an instance of this
 class or one of its subclasses.</p>
-<p>To specify a retry policy per query, set the <tt class="xref py py-attr docutils literal"><span class="pre">Statement.retry_policy</span></tt>
+<p>To specify a retry policy per query, set the <a class="reference internal" href="query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">Statement.retry_policy</span></tt></a>
 attribute to an instance of this class or one of its subclasses.</p>
 <p>If custom behavior is needed for retrying certain operations,
 this class may be subclassed.</p>
@@ -409,7 +409,7 @@ perspective (i.e. a replica did not respond to the coordinator in time).
 It should return a tuple with two items: one of the class enums (such
 as <a class="reference internal" href="#cassandra.policies.RetryPolicy.RETRY" title="cassandra.policies.RetryPolicy.RETRY"><tt class="xref py py-attr docutils literal"><span class="pre">RETRY</span></tt></a>) and a <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a> to retry the
 operation at or <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt> to keep the same consistency level.</p>
-<p><cite>query</cite> is the <tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt> that timed out.</p>
+<p><cite>query</cite> is the <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> that timed out.</p>
 <p><cite>consistency</cite> is the <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a> that the operation was
 attempted at.</p>
 <p>The <cite>required_responses</cite> and <cite>received_responses</cite> parameters describe
@@ -428,7 +428,7 @@ a sufficient number of replicas responded (with checksums).</p>
 <tt class="descname">on_write_timeout</tt><big>(</big><em>query</em>, <em>consistency</em>, <em>write_type</em>, <em>required_responses</em>, <em>received_responses</em>, <em>retry_num</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#RetryPolicy.on_write_timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.RetryPolicy.on_write_timeout" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is called when a write operation times out from the coordinator&#8217;s
 perspective (i.e. a replica did not respond to the coordinator in time).</p>
-<p><cite>query</cite> is the <tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt> that timed out.</p>
+<p><cite>query</cite> is the <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> that timed out.</p>
 <p><cite>consistency</cite> is the <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a> that the operation was
 attempted at.</p>
 <p><cite>write_type</cite> is one of the <a class="reference internal" href="#cassandra.policies.WriteType" title="cassandra.policies.WriteType"><tt class="xref py py-class docutils literal"><span class="pre">WriteType</span></tt></a> enums describing the
@@ -452,7 +452,7 @@ write operation cannot be successful because the number of live
 replicas are too low to meet the requested <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a>.
 This means that the read or write operation was never forwared to
 any replicas.</p>
-<p><cite>query</cite> is the <tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt> that failed.</p>
+<p><cite>query</cite> is the <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> that failed.</p>
 <p><cite>consistency</cite> is the <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a> that the operation was
 attempted at.</p>
 <p><cite>required_replicas</cite> is the number of replicas that would have needed to
@@ -544,7 +544,7 @@ than reading nothing, even if there is a risk of reading stale data.</p>
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              >previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta4+ documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

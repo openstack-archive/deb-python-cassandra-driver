@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query - Prepared Statements and Query Policies &mdash; Cassandra Driver 1.0.0-beta3 documentation</title>
+    <title>cassandra.query - Prepared Statements and Query Policies &mdash; Cassandra Driver 1.0.0-beta4+ documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0-beta3',
+        VERSION:     '1.0.0-beta4+',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 1.0.0-beta3 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 1.0.0-beta4+ documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.pool - Hosts and Connection Pools" href="pool.html" />
     <link rel="prev" title="cassandra.metadata - Schema and Ring Topology" href="metadata.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="metadata.html" title="cassandra.metadata - Schema and Ring Topology"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta4+ documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -52,10 +52,10 @@
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="metadata.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">cassandra.metadata</span></tt> - Schema and Ring Topology</a></p>
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">cassandra.metadata</span></tt> - Schema and Ring Topology</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="pool.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.pool</span></tt> - Hosts and Connection Pools</a></p>
+                        title="next chapter"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">cassandra.pool</span></tt> - Hosts and Connection Pools</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../_sources/api/cassandra/query.txt"
@@ -86,7 +86,7 @@
 <span id="cassandra-query-prepared-statements-and-query-policies"></span><h1><tt class="docutils literal"><span class="pre">cassandra.query</span></tt> - Prepared Statements and Query Policies<a class="headerlink" href="#module-cassandra.query" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="cassandra.query.Statement">
-<em class="property">class </em><tt class="descclassname">cassandra.query.</tt><tt class="descname">Statement</tt><big>(</big><em>retry_policy=None</em>, <em>tracing_enabled=False</em>, <em>consistency_level=1</em>, <em>routing_key=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/query.html#Statement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.Statement" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">cassandra.query.</tt><tt class="descname">Statement</tt><big>(</big><em>retry_policy=None</em>, <em>tracing_enabled=False</em>, <em>consistency_level=None</em>, <em>routing_key=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/query.html#Statement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.Statement" title="Permalink to this definition">¶</a></dt>
 <dd><p>An abstract class representing a single query. There are two subclasses:
 <a class="reference internal" href="#cassandra.query.SimpleStatement" title="cassandra.query.SimpleStatement"><tt class="xref py py-class docutils literal"><span class="pre">SimpleStatement</span></tt></a> and <a class="reference internal" href="#cassandra.query.BoundStatement" title="cassandra.query.BoundStatement"><tt class="xref py py-class docutils literal"><span class="pre">BoundStatement</span></tt></a>.  These can
 be passed to <a class="reference internal" href="cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><tt class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></tt></a>.</p>
@@ -195,7 +195,7 @@ as part of the <cite>parameters</cite> argument for <a class="reference internal
 <p>This is typically needed when supplying a list of keys to select.
 For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">my_user_ids</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;alice&#39;</span><span class="p">,</span> <span class="s">&#39;bob&#39;</span><span class="p">,</span> <span class="s">&#39;charles&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM users WHERE user_id IN ?&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM users WHERE user_id IN </span><span class="si">%s</span><span class="s">&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="n">ValueSequence</span><span class="p">(</span><span class="n">my_user_ids</span><span class="p">)])</span>
 </pre></div>
 </div>
@@ -341,7 +341,7 @@ invalid type.</p>
         <li class="right" >
           <a href="metadata.html" title="cassandra.metadata - Schema and Ring Topology"
              >previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta4+ documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>
