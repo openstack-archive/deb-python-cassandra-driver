@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies - Load balancing and Failure Handling Policies &mdash; Cassandra Driver 1.0.0-beta4+ documentation</title>
+    <title>cassandra.policies - Load balancing and Failure Handling Policies &mdash; Cassandra Driver 1.0.0b7.post documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0-beta4+',
+        VERSION:     '1.0.0b7.post',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 1.0.0-beta4+ documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 1.0.0b7.post documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.metadata - Schema and Ring Topology" href="metadata.html" />
     <link rel="prev" title="cassandra.cluster - Clusters and Sessions" href="cluster.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta4+ documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0b7.post documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -175,33 +175,12 @@ statement.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="cassandra.policies.LoadBalancingPolicy.on_up">
-<tt class="descname">on_up</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.on_up"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.on_up" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called when a <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a>&#8216;s <a class="reference internal" href="pool.html#cassandra.pool.HealthMonitor" title="cassandra.pool.HealthMonitor"><tt class="xref py py-class docutils literal"><span class="pre">HealthMonitor</span></tt></a>
-marks the node up.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="cassandra.policies.LoadBalancingPolicy.on_down">
-<tt class="descname">on_down</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.on_down"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.on_down" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called when a <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a>&#8216;s <a class="reference internal" href="pool.html#cassandra.pool.HealthMonitor" title="cassandra.pool.HealthMonitor"><tt class="xref py py-class docutils literal"><span class="pre">HealthMonitor</span></tt></a>
-marks the node down.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="cassandra.policies.LoadBalancingPolicy.on_add">
-<tt class="descname">on_add</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.on_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.on_add" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called when a <a class="reference internal" href="cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><tt class="xref py py-class docutils literal"><span class="pre">Cluster</span></tt></a> instance is first created and
-the initial contact points are added as well as when a new
-<a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> is discovered in the cluster, which may
-happen the first time the ring topology is examined or when
-a new node joins the cluster.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="cassandra.policies.LoadBalancingPolicy.on_remove">
-<tt class="descname">on_remove</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.on_remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.on_remove" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called when a <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt></a> leaves the cluster.</p>
+<dt id="cassandra.policies.LoadBalancingPolicy.check_supported">
+<tt class="descname">check_supported</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#LoadBalancingPolicy.check_supported"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.LoadBalancingPolicy.check_supported" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will be called after the cluster Metadata has been initialized.
+If the load balancing policy implementation cannot be supported for
+some reason (such as a missing C extension), this is the point at
+which it should raise an exception.</p>
 </dd></dl>
 
 </dd></dl>
@@ -416,11 +395,11 @@ attempted at.</p>
 how many replicas needed to respond to meet the requested consistency
 level and how many actually did respond before the coordinator timed
 out the request. <cite>data_retrieved</cite> is a boolean indicating whether
-any of those responses contained data (as opposed to just a checksum).</p>
+any of those responses contained data (as opposed to just a digest).</p>
 <p><cite>retry_num</cite> counts how many times the operation has been retried, so
 the first time this method is called, <cite>retry_num</cite> will be 0.</p>
 <p>By default, operations will be retried at most once, and only if
-a sufficient number of replicas responded (with checksums).</p>
+a sufficient number of replicas responded (with data digests).</p>
 </dd></dl>
 
 <dl class="method">
@@ -544,7 +523,7 @@ than reading nothing, even if there is a risk of reading stale data.</p>
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              >previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.0-beta4+ documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.0b7.post documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>
