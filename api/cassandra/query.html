@@ -52,10 +52,10 @@
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="metadata.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">cassandra.metadata</span></tt> - Schema and Ring Topology</a></p>
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">cassandra.metadata</span></tt> - Schema and Ring Topology</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="pool.html"
-                        title="next chapter"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">cassandra.pool</span></tt> - Hosts and Connection Pools</a></p>
+                        title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.pool</span></tt> - Hosts and Connection Pools</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../_sources/api/cassandra/query.txt"
@@ -257,12 +257,13 @@ the <tt class="docutils literal"><span class="pre">session_id</span></tt> column
 
 <dl class="method">
 <dt id="cassandra.query.QueryTrace.populate">
-<tt class="descname">populate</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/query.html#QueryTrace.populate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.QueryTrace.populate" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">populate</tt><big>(</big><em>max_wait=2.0</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/query.html#QueryTrace.populate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.QueryTrace.populate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieves the actual tracing details from Cassandra and populates the
 attributes of this instance.  Because tracing details are stored
 asynchronously by Cassandra, this may need to retry the session
-detail fetch up to five times before raising <a class="reference internal" href="#cassandra.query.TraceUnavailable" title="cassandra.query.TraceUnavailable"><tt class="xref py py-exc docutils literal"><span class="pre">TraceUnavailable</span></tt></a>.</p>
-<p>Currently intended for internal use only.</p>
+detail fetch.  If the trace is still not available after <cite>max_wait</cite>
+seconds, <a class="reference internal" href="#cassandra.query.TraceUnavailable" title="cassandra.query.TraceUnavailable"><tt class="xref py py-exc docutils literal"><span class="pre">TraceUnavailable</span></tt></a> will be raised; if <cite>max_wait</cite> is
+<tt class="xref py py-const docutils literal"><span class="pre">None</span></tt>, this will retry forever.</p>
 </dd></dl>
 
 </dd></dl>

@@ -52,7 +52,7 @@
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="../cassandra.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">cassandra</span></tt> - Exceptions and Enums</a></p>
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">cassandra</span></tt> - Exceptions and Enums</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="policies.html"
                         title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies</a></p>
@@ -138,7 +138,7 @@ one of its subclasses.  Defaults to <a class="reference internal" href="policies
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.reconnection_policy">
-<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x2768150&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x21cff10&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.ReconnectionPolicy</span></tt></a>. Defaults to an instance
 of <a class="reference internal" href="policies.html#cassandra.policies.ExponentialReconnectionPolicy" title="cassandra.policies.ExponentialReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ExponentialReconnectionPolicy</span></tt></a> with a base delay of one second and
 a max delay of ten minutes.</p>
@@ -146,7 +146,7 @@ a max delay of ten minutes.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.default_retry_policy">
-<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x2768190&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x21cff50&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A default <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> instance to use for all
 <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> objects which do not have a <a class="reference internal" href="query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">retry_policy</span></tt></a>
 explicitly set.</p>
@@ -330,7 +330,7 @@ timeout, neither the registered callback or errback will be called.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Session.row_factory">
-<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x1c79a28&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x22a50c8&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
 <dd><p>The format to return row results in.  By default, each
 returned row will be a named tuple.  You can alternatively
 use any of the following:</p>
@@ -501,7 +501,9 @@ operation.  If the timeout is exceeded, an
 <dd><p>Returns the <a class="reference internal" href="query.html#cassandra.query.QueryTrace" title="cassandra.query.QueryTrace"><tt class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></tt></a> instance representing a trace
 of the last attempt for this operation, or <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt> if tracing was
 not enabled for this query.  Note that this may raise an exception if
-there are problems retrieving the trace details from Cassandra.</p>
+there are problems retrieving the trace details from Cassandra. If the
+trace is not available after <cite>max_wait</cite> seconds,
+<a class="reference internal" href="query.html#cassandra.query.TraceUnavailable" title="cassandra.query.TraceUnavailable"><tt class="xref py py-exc docutils literal"><span class="pre">cassandra.query.TraceUnavailable</span></tt></a> will be raised.</p>
 </dd></dl>
 
 <dl class="method">
