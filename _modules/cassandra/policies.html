@@ -494,7 +494,7 @@
 <div class="viewcode-block" id="ReconnectionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ReconnectionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ReconnectionPolicy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This class and its subclasses govern how frequently an attempt is made</span>
-<span class="sd">    to reconnect to nodes that are marked dead.</span>
+<span class="sd">    to reconnect to nodes that are marked as dead.</span>
 
 <span class="sd">    If custom behavior is needed, this class may be subclassed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -748,7 +748,7 @@
 <span class="sd">    **BEWARE**: This policy may retry queries using a lower consistency</span>
 <span class="sd">    level than the one initially requested. By doing so, it may break</span>
 <span class="sd">    consistency guarantees. In other words, if you use this retry policy,</span>
-<span class="sd">    there is cases (documented below) where a read at :attr:`~.QUORUM`</span>
+<span class="sd">    there are cases (documented below) where a read at :attr:`~.QUORUM`</span>
 <span class="sd">    *may not* see a preceding write at :attr:`~.QUORUM`. Do not use this</span>
 <span class="sd">    policy unless you have understood the cases where this can happen and</span>
 <span class="sd">    are ok with that. It is also recommended to subclass this class so</span>
@@ -758,7 +758,7 @@
 <span class="sd">    This policy implements the same retries as :class:`.RetryPolicy`,</span>
 <span class="sd">    but on top of that, it also retries in the following cases:</span>
 
-<span class="sd">    * On a read timeout: if the number of replica that responded is</span>
+<span class="sd">    * On a read timeout: if the number of replicas that responded is</span>
 <span class="sd">      greater than one but lower than is required by the requested</span>
 <span class="sd">      consistency level, the operation is retried at a lower consistency</span>
 <span class="sd">      level.</span>
@@ -770,7 +770,7 @@
 <span class="sd">    * On an unavailable exception: if at least one replica is alive, the</span>
 <span class="sd">      operation is retried at a lower consistency level.</span>
 
-<span class="sd">    The reasoning being this retry policy is as follows:. If, based</span>
+<span class="sd">    The reasoning behind this retry policy is as follows: if, based</span>
 <span class="sd">    on the information the Cassandra coordinator node returns, retrying the</span>
 <span class="sd">    operation with the initially requested consistency has a chance to</span>
 <span class="sd">    succeed, do it. Otherwise, if based on that information we know the</span>

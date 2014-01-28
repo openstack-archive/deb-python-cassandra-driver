@@ -267,7 +267,7 @@ of any kind.</p>
 <dt id="cassandra.policies.ReconnectionPolicy">
 <em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">ReconnectionPolicy</tt><a class="reference internal" href="../../_modules/cassandra/policies.html#ReconnectionPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.ReconnectionPolicy" title="Permalink to this definition">¶</a></dt>
 <dd><p>This class and its subclasses govern how frequently an attempt is made
-to reconnect to nodes that are marked dead.</p>
+to reconnect to nodes that are marked as dead.</p>
 <p>If custom behavior is needed, this class may be subclassed.</p>
 <dl class="method">
 <dt id="cassandra.policies.ReconnectionPolicy.new_schedule">
@@ -460,7 +460,7 @@ the one initially requested.</p>
 <p><strong>BEWARE</strong>: This policy may retry queries using a lower consistency
 level than the one initially requested. By doing so, it may break
 consistency guarantees. In other words, if you use this retry policy,
-there is cases (documented below) where a read at <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.QUORUM" title="cassandra.ConsistencyLevel.QUORUM"><tt class="xref py py-attr docutils literal"><span class="pre">QUORUM</span></tt></a>
+there are cases (documented below) where a read at <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.QUORUM" title="cassandra.ConsistencyLevel.QUORUM"><tt class="xref py py-attr docutils literal"><span class="pre">QUORUM</span></tt></a>
 <em>may not</em> see a preceding write at <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.QUORUM" title="cassandra.ConsistencyLevel.QUORUM"><tt class="xref py py-attr docutils literal"><span class="pre">QUORUM</span></tt></a>. Do not use this
 policy unless you have understood the cases where this can happen and
 are ok with that. It is also recommended to subclass this class so
@@ -469,7 +469,7 @@ recorded (so that repairs can be made later, etc).</p>
 <p>This policy implements the same retries as <a class="reference internal" href="#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">RetryPolicy</span></tt></a>,
 but on top of that, it also retries in the following cases:</p>
 <ul class="simple">
-<li>On a read timeout: if the number of replica that responded is
+<li>On a read timeout: if the number of replicas that responded is
 greater than one but lower than is required by the requested
 consistency level, the operation is retried at a lower consistency
 level.</li>
@@ -481,7 +481,7 @@ timeout is ignored.</li>
 <li>On an unavailable exception: if at least one replica is alive, the
 operation is retried at a lower consistency level.</li>
 </ul>
-<p>The reasoning being this retry policy is as follows:. If, based
+<p>The reasoning behind this retry policy is as follows: if, based
 on the information the Cassandra coordinator node returns, retrying the
 operation with the initially requested consistency has a chance to
 succeed, do it. Otherwise, if based on that information we know the
