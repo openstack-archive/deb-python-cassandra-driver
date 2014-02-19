@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Performance Notes &mdash; Cassandra Driver 1.0.0 documentation</title>
+    <title>Performance Notes &mdash; Cassandra Driver 1.0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.0.0',
+        VERSION:     '1.0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 1.0.0 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 1.0.1 documentation" href="index.html" />
     <link rel="prev" title="Getting Started" href="getting_started.html" /> 
   </head>
   <body>
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="getting_started.html" title="Getting Started"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Cassandra Driver 1.0.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Cassandra Driver 1.0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar">
@@ -244,28 +244,26 @@ flight at any time:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Event</span>
 
+<span class="n">sentinel</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+<span class="n">num_queries</span> <span class="o">=</span> <span class="mi">100000</span>
 <span class="n">num_started</span> <span class="o">=</span> <span class="n">count</span><span class="p">()</span>
 <span class="n">num_finished</span> <span class="o">=</span> <span class="n">count</span><span class="p">()</span>
-<span class="n">initial</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
 <span class="n">finished_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
 
-<span class="k">def</span> <span class="nf">handle_error</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
-    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Error on insert: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-
-<span class="k">def</span> <span class="nf">insert_next</span><span class="p">(</span><span class="n">previous_result</span><span class="p">):</span>
-    <span class="n">current_num</span> <span class="o">=</span> <span class="n">num_started</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
-
-    <span class="k">if</span> <span class="n">previous_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">initial</span><span class="p">:</span>
-        <span class="n">num</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">num_finished</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">num</span> <span class="o">&gt;=</span> <span class="mi">100000</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">insert_next</span><span class="p">(</span><span class="n">previous_result</span><span class="o">=</span><span class="n">sentinel</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">previous_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">sentinel</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">previous_result</span><span class="p">,</span> <span class="ne">BaseException</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Error on insert: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">previous_result</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">num_finished</span><span class="o">.</span><span class="n">next</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">num_queries</span><span class="p">:</span>
             <span class="n">finished_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 
-    <span class="k">if</span> <span class="n">current_num</span> <span class="o">&lt;=</span> <span class="mi">100000</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">num_started</span><span class="o">.</span><span class="n">next</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">num_queries</span><span class="p">:</span>
         <span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-        <span class="n">future</span><span class="o">.</span><span class="n">add_callbacks</span><span class="p">(</span><span class="n">insert_next</span><span class="p">,</span> <span class="n">handle_error</span><span class="p">)</span>
+        <span class="c"># NOTE: this callback also handles errors</span>
+        <span class="n">future</span><span class="o">.</span><span class="n">add_callbacks</span><span class="p">(</span><span class="n">insert_next</span><span class="p">,</span> <span class="n">insert_next</span><span class="p">)</span>
 
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">120</span><span class="p">):</span>
-    <span class="n">insert_next</span><span class="p">(</span><span class="n">initial</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="n">num_queries</span><span class="p">)):</span>
+    <span class="n">insert_next</span><span class="p">()</span>
 
 <span class="n">finished_event</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
@@ -343,7 +341,7 @@ objects should all be created after forking the process, not before.</p>
         <li class="right" >
           <a href="getting_started.html" title="Getting Started"
              >previous</a> |</li>
-        <li><a href="index.html">Cassandra Driver 1.0.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Cassandra Driver 1.0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
