@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies &mdash; Cassandra Driver 1.0.1.post documentation</title>
+    <title>cassandra.policies &mdash; Cassandra Driver 1.0.2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.1.post',
+        VERSION:     '1.0.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 1.0.1.post documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 1.0.2 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.1.post documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -68,6 +68,7 @@
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">islice</span><span class="p">,</span> <span class="n">cycle</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">repeat</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">randint</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Lock</span>
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span>
 
@@ -145,6 +146,11 @@
 <span class="sd">    custom behavior.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">_hosts_lock</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
+
 <div class="viewcode-block" id="LoadBalancingPolicy.distance"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.LoadBalancingPolicy.distance">[docs]</a>    <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a measure of how remote a :class:`~.pool.Host` is in</span>
@@ -197,7 +203,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">hosts</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">else</span><span class="p">:</span>
@@ -212,24 +218,29 @@
         <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_position</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">+=</span> <span class="mi">1</span>
 
-        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="p">)</span>
+        <span class="n">hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">length</span><span class="p">:</span>
             <span class="n">pos</span> <span class="o">%=</span> <span class="n">length</span>
-            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">islice</span><span class="p">(</span><span class="n">cycle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="p">),</span> <span class="n">pos</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="n">length</span><span class="p">))</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">islice</span><span class="p">(</span><span class="n">cycle</span><span class="p">(</span><span class="n">hosts</span><span class="p">),</span> <span class="n">pos</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="n">length</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="nf">on_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">union</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">on_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">difference</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">union</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">on_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">difference</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="p">))</span>
 
 </div>
 <div class="viewcode-block" id="DCAwareRoundRobinPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.DCAwareRoundRobinPolicy">[docs]</a><span class="k">class</span> <span class="nc">DCAwareRoundRobinPolicy</span><span class="p">(</span><span class="n">LoadBalancingPolicy</span><span class="p">):</span>
@@ -258,13 +269,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span> <span class="o">=</span> <span class="n">local_dc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">used_hosts_per_remote_dc</span> <span class="o">=</span> <span class="n">used_hosts_per_remote_dc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">LoadBalancingPolicy</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_dc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">host</span><span class="o">.</span><span class="n">datacenter</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span>
 
     <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">hosts</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">dc</span><span class="p">,</span> <span class="n">dc_hosts</span> <span class="ow">in</span> <span class="n">groupby</span><span class="p">(</span><span class="n">hosts</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">h</span><span class="p">)):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">dc_hosts</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">dc_hosts</span><span class="p">)</span>
 
         <span class="c"># position is currently only used for local hosts</span>
         <span class="n">local_live</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span><span class="p">)</span>
@@ -311,16 +323,28 @@
                 <span class="k">yield</span> <span class="n">host</span>
 
     <span class="k">def</span> <span class="nf">on_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
+            <span class="n">current_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_hosts</span><span class="o">.</span><span class="n">union</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">on_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
+            <span class="n">current_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_hosts</span><span class="o">.</span><span class="n">difference</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
+            <span class="n">current_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_hosts</span><span class="o">.</span><span class="n">union</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">on_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
+            <span class="n">current_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_hosts</span><span class="o">.</span><span class="n">difference</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="p">))</span>
 
 </div>
 <div class="viewcode-block" id="TokenAwarePolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.TokenAwarePolicy">[docs]</a><span class="k">class</span> <span class="nc">TokenAwarePolicy</span><span class="p">(</span><span class="n">LoadBalancingPolicy</span><span class="p">):</span>
@@ -418,12 +442,10 @@
 <span class="sd">        :param hosts: List of hosts</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_hosts</span> <span class="o">=</span> <span class="n">hosts</span>
+        <span class="n">RoundRobinPolicy</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">hosts</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">hosts</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">address</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_hosts</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hosts</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">address</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_hosts</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="mi">0</span>
@@ -438,14 +460,11 @@
 
     <span class="k">def</span> <span class="nf">on_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">address</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_hosts</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+            <span class="n">RoundRobinPolicy</span><span class="o">.</span><span class="n">on_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">address</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_hosts</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">on_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+            <span class="n">RoundRobinPolicy</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ConvictionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ConvictionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ConvictionPolicy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -842,7 +861,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.1.post documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.0.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
