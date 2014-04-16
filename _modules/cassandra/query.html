@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query &mdash; Cassandra Driver 1.0.2 documentation</title>
+    <title>cassandra.query &mdash; Cassandra Driver 1.1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.2',
+        VERSION:     '1.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 1.0.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 1.1.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.1.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -65,6 +65,20 @@
           <div class="body">
             
   <h1>Source code for cassandra.query</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2013-2014 DataStax, Inc.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#</span>
+<span class="c"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
+
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">This module holds classes for working with prepared statements and</span>
 <span class="sd">specifying consistency levels and retry policies for individual</span>
@@ -281,10 +295,47 @@
 <div class="viewcode-block" id="BoundStatement.bind"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.BoundStatement.bind">[docs]</a>    <span class="k">def</span> <span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Binds a sequence of values for the prepared statement parameters</span>
-<span class="sd">        and returns this instance.  Note that `values` *must* be a</span>
-<span class="sd">        sequence, even if you are only binding one value.</span>
+<span class="sd">        and returns this instance.  Note that `values` *must* be:</span>
+<span class="sd">        * a sequence, even if you are only binding one value, or</span>
+<span class="sd">        * a dict that relates 1-to-1 between dict keys and columns</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">col_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">column_metadata</span>
+
+        <span class="c"># special case for binding dicts</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">dict_values</span> <span class="o">=</span> <span class="n">values</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="c"># sort values accordingly</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">col_meta</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dict_values</span><span class="p">[</span><span class="n">col</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                        <span class="s">&#39;Column name `</span><span class="si">%s</span><span class="s">` not found in bound dict.&#39;</span> <span class="o">%</span>
+                        <span class="p">(</span><span class="n">col</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+
+            <span class="c"># ensure a 1-to-1 dict keys to columns relationship</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dict_values</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_meta</span><span class="p">):</span>
+                <span class="c"># find expected columns</span>
+                <span class="n">columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">col_meta</span><span class="p">:</span>
+                    <span class="n">columns</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">col</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+                <span class="c"># generate error message</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dict_values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_meta</span><span class="p">):</span>
+                    <span class="n">difference</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">dict_values</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Too many arguments provided to bind() (got </span><span class="si">%d</span><span class="s">, expected </span><span class="si">%d</span><span class="s">). &quot;</span> <span class="o">+</span> \
+                          <span class="s">&quot;Unexpected keys </span><span class="si">%s</span><span class="s">.&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">difference</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">dict_values</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Too few arguments provided to bind() (got </span><span class="si">%d</span><span class="s">, expected </span><span class="si">%d</span><span class="s">). &quot;</span> <span class="o">+</span> \
+                          <span class="s">&quot;Expected keys </span><span class="si">%s</span><span class="s">.&quot;</span>
+
+                <span class="c"># exit with error message</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_meta</span><span class="p">),</span> <span class="n">difference</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_meta</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s">&quot;Too many arguments provided to bind() (got </span><span class="si">%d</span><span class="s">, expected </span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span>
@@ -457,8 +508,10 @@
         <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
             <span class="n">time_spent</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
             <span class="k">if</span> <span class="n">max_wait</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">time_spent</span> <span class="o">&gt;=</span> <span class="n">max_wait</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">TraceUnavailable</span><span class="p">(</span><span class="s">&quot;Trace information was not available within </span><span class="si">%f</span><span class="s"> seconds&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">max_wait</span><span class="p">,))</span>
+                <span class="k">raise</span> <span class="n">TraceUnavailable</span><span class="p">(</span>
+                    <span class="s">&quot;Trace information was not available within </span><span class="si">%f</span><span class="s"> seconds. Consider raising Session.max_trace_wait.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">max_wait</span><span class="p">,))</span>
 
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Attempting to fetch trace info for trace ID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">)</span>
             <span class="n">session_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SESSIONS_FORMAT</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,),</span> <span class="n">time_spent</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">)</span>
 
@@ -466,6 +519,7 @@
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_BASE_RETRY_SLEEP</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">attempt</span><span class="p">))</span>
                 <span class="n">attempt</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">continue</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Fetched trace info for trace ID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">)</span>
 
             <span class="n">session_row</span> <span class="o">=</span> <span class="n">session_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">request_type</span> <span class="o">=</span> <span class="n">session_row</span><span class="o">.</span><span class="n">request</span>
@@ -474,9 +528,11 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span> <span class="o">=</span> <span class="n">session_row</span><span class="o">.</span><span class="n">coordinator</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">session_row</span><span class="o">.</span><span class="n">parameters</span>
 
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Attempting to fetch trace events for trace ID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">)</span>
             <span class="n">time_spent</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
             <span class="n">event_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_EVENTS_FORMAT</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,),</span> <span class="n">time_spent</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Fetched trace events for trace ID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">TraceEvent</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">activity</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">event_id</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">source_elapsed</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">thread</span><span class="p">)</span>
                                 <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">event_results</span><span class="p">)</span>
             <span class="k">break</span>
@@ -559,7 +615,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.1.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

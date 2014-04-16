@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 1.0.2 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 1.1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.2',
+        VERSION:     '1.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 1.0.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 1.1.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.1.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -65,11 +65,27 @@
           <div class="body">
             
   <h1>Source code for cassandra.cluster</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2013-2014 DataStax, Inc.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#</span>
+<span class="c"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
+
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">This module houses the main classes you will interact with,</span>
 <span class="sd">:class:`.Cluster` and :class:`.Session`.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
 
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">socket</span>
@@ -98,21 +114,24 @@
                                <span class="n">PreparedQueryNotFound</span><span class="p">,</span>
                                <span class="n">IsBootstrappingErrorMessage</span><span class="p">,</span> <span class="n">named_tuple_factory</span><span class="p">,</span>
                                <span class="n">dict_factory</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">cassandra.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
-<span class="kn">from</span> <span class="nn">cassandra.metrics</span> <span class="kn">import</span> <span class="n">Metrics</span>
+<span class="kn">from</span> <span class="nn">cassandra.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span><span class="p">,</span> <span class="n">protect_name</span>
 <span class="kn">from</span> <span class="nn">cassandra.policies</span> <span class="kn">import</span> <span class="p">(</span><span class="n">RoundRobinPolicy</span><span class="p">,</span> <span class="n">SimpleConvictionPolicy</span><span class="p">,</span>
                                 <span class="n">ExponentialReconnectionPolicy</span><span class="p">,</span> <span class="n">HostDistance</span><span class="p">,</span>
                                 <span class="n">RetryPolicy</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.pool</span> <span class="kn">import</span> <span class="p">(</span><span class="n">_ReconnectionHandler</span><span class="p">,</span> <span class="n">_HostReconnectionHandler</span><span class="p">,</span>
-                            <span class="n">HostConnectionPool</span><span class="p">)</span>
+                            <span class="n">HostConnectionPool</span><span class="p">,</span> <span class="n">NoConnectionsAvailable</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="p">(</span><span class="n">SimpleStatement</span><span class="p">,</span> <span class="n">PreparedStatement</span><span class="p">,</span> <span class="n">BoundStatement</span><span class="p">,</span>
                              <span class="n">bind_params</span><span class="p">,</span> <span class="n">QueryTrace</span><span class="p">,</span> <span class="n">Statement</span><span class="p">)</span>
 
-<span class="c"># libev is all around faster, so we want to try and default to using that when we can</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">cassandra.io.libevreactor</span> <span class="kn">import</span> <span class="n">LibevConnection</span> <span class="k">as</span> <span class="n">DefaultConnection</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">cassandra.io.asyncorereactor</span> <span class="kn">import</span> <span class="n">AsyncoreConnection</span> <span class="k">as</span> <span class="n">DefaultConnection</span>  <span class="c"># NOQA</span>
+<span class="c"># default to gevent when we are monkey patched, otherwise if libev is available, use that as the</span>
+<span class="c"># default because it&#39;s faster than asyncore</span>
+<span class="k">if</span> <span class="s">&#39;gevent.monkey&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">cassandra.io.geventreactor</span> <span class="kn">import</span> <span class="n">GeventConnection</span> <span class="k">as</span> <span class="n">DefaultConnection</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">cassandra.io.libevreactor</span> <span class="kn">import</span> <span class="n">LibevConnection</span> <span class="k">as</span> <span class="n">DefaultConnection</span>  <span class="c"># NOQA</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">cassandra.io.asyncorereactor</span> <span class="kn">import</span> <span class="n">AsyncoreConnection</span> <span class="k">as</span> <span class="n">DefaultConnection</span>  <span class="c"># NOQA</span>
 
 <span class="c"># Forces load of utf8 encoding module to avoid deadlock that occurs</span>
 <span class="c"># if code that is being imported tries to import the module in a seperate</span>
@@ -343,13 +362,6 @@
 <span class="sd">        Any of the mutable Cluster attributes may be set as keyword arguments</span>
 <span class="sd">        to the constructor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s">&#39;gevent.monkey&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-                <span class="s">&quot;gevent monkey-patching detected. This driver does not currently &quot;</span>
-                <span class="s">&quot;support gevent, and monkey patching will break the driver &quot;</span>
-                <span class="s">&quot;completely. You can track progress towards adding gevent &quot;</span>
-                <span class="s">&quot;support here: https://datastax-oss.atlassian.net/browse/PYTHON-7.&quot;</span><span class="p">)</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">contact_points</span> <span class="o">=</span> <span class="n">contact_points</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="o">=</span> <span class="n">compression</span>
@@ -431,6 +443,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics_enabled</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">cassandra.metrics</span> <span class="kn">import</span> <span class="n">Metrics</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="n">Metrics</span><span class="p">(</span><span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span> <span class="o">=</span> <span class="n">ControlConnection</span><span class="p">(</span>
@@ -531,19 +544,20 @@
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span>
                     <span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">())</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Control connection created&quot;</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Control connection failed to connect, &quot;</span>
+                                      <span class="s">&quot;shutting down Cluster:&quot;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+                        <span class="k">raise</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">check_supported</span><span class="p">()</span>
+
                 <span class="bp">self</span><span class="o">.</span><span class="n">_is_setup</span> <span class="o">=</span> <span class="bp">True</span>
-
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="p">:</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Control connection created&quot;</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Control connection failed to connect, &quot;</span>
-                                  <span class="s">&quot;shutting down Cluster:&quot;</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
-                    <span class="k">raise</span>
-
-            <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">check_supported</span><span class="p">()</span>
 
         <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new_session</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">keyspace</span><span class="p">:</span>
@@ -825,13 +839,13 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">on_down</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="p">,</span> <span class="n">force_if_down</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">is_down</span>
 
-    <span class="k">def</span> <span class="nf">add_host</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">signal</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">add_host</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">datacenter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rack</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Called when adding initial contact points and when the control</span>
 <span class="sd">        connection subsequently discovers a new node.  Intended for internal</span>
 <span class="sd">        use only.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">new_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+        <span class="n">new_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">new_host</span> <span class="ow">and</span> <span class="n">signal</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;New Cassandra host </span><span class="si">%s</span><span class="s"> added&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="n">new_host</span><span class="p">)</span>
@@ -1319,7 +1333,7 @@
 <span class="sd">        Set the default keyspace for all queries made through this Session.</span>
 <span class="sd">        This operation blocks until complete.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;USE &quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">keyspace</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;USE </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">protect_name</span><span class="p">(</span><span class="n">keyspace</span><span class="p">),))</span>
 </div>
     <span class="k">def</span> <span class="nf">_set_keyspace_for_all_pools</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1390,8 +1404,8 @@
     <span class="n">_SELECT_COLUMN_FAMILIES</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_columnfamilies&quot;</span>
     <span class="n">_SELECT_COLUMNS</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_columns&quot;</span>
 
-    <span class="n">_SELECT_PEERS</span> <span class="o">=</span> <span class="s">&quot;SELECT peer, data_center, rack, tokens, rpc_address FROM system.peers&quot;</span>
-    <span class="n">_SELECT_LOCAL</span> <span class="o">=</span> <span class="s">&quot;SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key=&#39;local&#39;&quot;</span>
+    <span class="n">_SELECT_PEERS</span> <span class="o">=</span> <span class="s">&quot;SELECT peer, data_center, rack, tokens, rpc_address, schema_version FROM system.peers&quot;</span>
+    <span class="n">_SELECT_LOCAL</span> <span class="o">=</span> <span class="s">&quot;SELECT cluster_name, data_center, rack, tokens, partitioner, schema_version FROM system.local WHERE key=&#39;local&#39;&quot;</span>
 
     <span class="n">_SELECT_SCHEMA_PEERS</span> <span class="o">=</span> <span class="s">&quot;SELECT rpc_address, schema_version FROM system.peers&quot;</span>
     <span class="n">_SELECT_SCHEMA_LOCAL</span> <span class="o">=</span> <span class="s">&quot;SELECT schema_version FROM system.local WHERE key=&#39;local&#39;&quot;</span>
@@ -1474,8 +1488,13 @@
                 <span class="s">&quot;SCHEMA_CHANGE&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_schema_change</span>
             <span class="p">})</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+            <span class="n">peers_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_PEERS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span><span class="p">)</span>
+            <span class="n">local_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_LOCAL</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span><span class="p">)</span>
+            <span class="n">shared_results</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span>
+                <span class="n">peers_query</span><span class="p">,</span> <span class="n">local_query</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="n">shared_results</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="n">shared_results</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="k">raise</span>
@@ -1486,7 +1505,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_shutdown</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reconnect</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reconnect</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_reconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Attempting to reconnect&quot;</span><span class="p">)</span>
@@ -1525,6 +1544,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_reconnection_handler</span> <span class="o">=</span> <span class="n">new_handler</span>
             <span class="k">return</span> <span class="n">old</span>
 
+    <span class="k">def</span> <span class="nf">_submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">_is_shutdown</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ReferenceError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
     <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_shutdown</span><span class="p">:</span>
@@ -1543,12 +1570,17 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ReferenceError</span><span class="p">:</span>
+            <span class="k">pass</span>  <span class="c"># our weak reference to the Cluster is no good</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Error refreshing schema&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_signal_error</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_schema_agreement</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">_is_shutdown</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_schema_agreement</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="n">preloaded_results</span><span class="p">)</span>
 
         <span class="n">where_clause</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
         <span class="k">if</span> <span class="n">keyspace</span><span class="p">:</span>
@@ -1589,17 +1621,25 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ReferenceError</span><span class="p">:</span>
+            <span class="k">pass</span>  <span class="c"># our weak reference to the Cluster is no good</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Error refreshing node list and token map&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_signal_error</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Refreshing node list and token map&quot;</span><span class="p">)</span>
-        <span class="n">cl</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
-        <span class="n">peers_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_PEERS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-        <span class="n">local_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_LOCAL</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-        <span class="n">peers_result</span><span class="p">,</span> <span class="n">local_result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span>
-            <span class="n">peers_query</span><span class="p">,</span> <span class="n">local_query</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">preloaded_results</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Refreshing node list and token map using preloaded results&quot;</span><span class="p">)</span>
+            <span class="n">peers_result</span> <span class="o">=</span> <span class="n">preloaded_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">local_result</span> <span class="o">=</span> <span class="n">preloaded_results</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Refreshing node list and token map&quot;</span><span class="p">)</span>
+            <span class="n">cl</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
+            <span class="n">peers_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_PEERS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
+            <span class="n">local_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_LOCAL</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
+            <span class="n">peers_result</span><span class="p">,</span> <span class="n">local_result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span>
+                <span class="n">peers_query</span><span class="p">,</span> <span class="n">local_query</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">)</span>
+
         <span class="n">peers_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">peers_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
 
         <span class="n">partitioner</span> <span class="o">=</span> <span class="bp">None</span>
@@ -1613,7 +1653,9 @@
 
             <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">host</span><span class="p">:</span>
-                <span class="n">host</span><span class="o">.</span><span class="n">set_location_info</span><span class="p">(</span><span class="n">local_row</span><span class="p">[</span><span class="s">&quot;data_center&quot;</span><span class="p">],</span> <span class="n">local_row</span><span class="p">[</span><span class="s">&quot;rack&quot;</span><span class="p">])</span>
+                <span class="n">datacenter</span> <span class="o">=</span> <span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;data_center&quot;</span><span class="p">)</span>
+                <span class="n">rack</span> <span class="o">=</span> <span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rack&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_update_location_info</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
 
             <span class="n">partitioner</span> <span class="o">=</span> <span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;partitioner&quot;</span><span class="p">)</span>
             <span class="n">tokens</span> <span class="o">=</span> <span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;tokens&quot;</span><span class="p">)</span>
@@ -1631,10 +1673,13 @@
             <span class="n">found_hosts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
 
             <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+            <span class="n">datacenter</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;data_center&quot;</span><span class="p">)</span>
+            <span class="n">rack</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rack&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Found new host to connect to: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
-                <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-            <span class="n">host</span><span class="o">.</span><span class="n">set_location_info</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;data_center&quot;</span><span class="p">),</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rack&quot;</span><span class="p">))</span>
+                <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_update_location_info</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
 
             <span class="n">tokens</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;tokens&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">partitioner</span> <span class="ow">and</span> <span class="n">tokens</span><span class="p">:</span>
@@ -1651,11 +1696,22 @@
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Fetched ring info, rebuilding metadata&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">rebuild_token_map</span><span class="p">(</span><span class="n">partitioner</span><span class="p">,</span> <span class="n">token_map</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_update_location_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">datacenter</span> <span class="o">==</span> <span class="n">datacenter</span> <span class="ow">and</span> <span class="n">host</span><span class="o">.</span><span class="n">rack</span> <span class="o">==</span> <span class="n">rack</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># If the dc/rack information changes, we need to update the load balancing policy.</span>
+        <span class="c"># For that, we remove and re-add the node against the policy. Not the most elegant, and assumes</span>
+        <span class="c"># that the policy will update correctly, but in practice this should work.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">on_down</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">host</span><span class="o">.</span><span class="n">set_location_info</span><span class="p">(</span><span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">on_up</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">_handle_topology_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="n">change_type</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&quot;change_type&quot;</span><span class="p">]</span>
         <span class="n">addr</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&quot;address&quot;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;NEW_NODE&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">add_host</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;REMOVED_NODE&quot;</span><span class="p">:</span>
             <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">remove_host</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
@@ -1669,7 +1725,7 @@
         <span class="k">if</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;UP&quot;</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="c"># this is the first time we&#39;ve seen the node</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">add_host</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c"># this will be run by the scheduler</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">on_up</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
@@ -1687,11 +1743,11 @@
         <span class="n">table</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&#39;table&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">event</span><span class="p">[</span><span class="s">&#39;change_type&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&quot;CREATED&quot;</span><span class="p">,</span> <span class="s">&quot;DROPPED&quot;</span><span class="p">):</span>
             <span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span> <span class="k">if</span> <span class="n">table</span> <span class="k">else</span> <span class="bp">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">event</span><span class="p">[</span><span class="s">&#39;change_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;UPDATED&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">wait_for_schema_agreement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">wait_for_schema_agreement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="c"># Each schema change typically generates two schema refreshes, one</span>
         <span class="c"># from the response type and one from the pushed notification. Holding</span>
         <span class="c"># a lock is just a simple way to cut down on the number of schema queries</span>
@@ -1700,14 +1756,24 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_shutdown</span><span class="p">:</span>
                 <span class="k">return</span>
 
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Waiting for schema agreement&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">connection</span><span class="p">:</span>
                 <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
 
+            <span class="k">if</span> <span class="n">preloaded_results</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Attempting to use preloaded results for schema agreement&quot;</span><span class="p">)</span>
+
+                <span class="n">peers_result</span> <span class="o">=</span> <span class="n">preloaded_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">local_result</span> <span class="o">=</span> <span class="n">preloaded_results</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">schema_mismatches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_schema_mismatches</span><span class="p">(</span><span class="n">peers_result</span><span class="p">,</span> <span class="n">local_result</span><span class="p">,</span> <span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">schema_mismatches</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">True</span>
+
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Waiting for schema agreement&quot;</span><span class="p">)</span>
             <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
             <span class="n">elapsed</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">cl</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
             <span class="n">total_timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">max_schema_agreement_wait</span>
+            <span class="n">schema_mismatches</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">while</span> <span class="n">elapsed</span> <span class="o">&lt;</span> <span class="n">total_timeout</span><span class="p">:</span>
                 <span class="n">peers_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SCHEMA_PEERS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
                 <span class="n">local_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SCHEMA_LOCAL</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
@@ -1721,35 +1787,44 @@
                     <span class="n">elapsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
                     <span class="k">continue</span>
 
-                <span class="n">peers_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">peers_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
-
-                <span class="n">versions</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">local_result</span><span class="o">.</span><span class="n">results</span><span class="p">:</span>
-                    <span class="n">local_row</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">local_result</span><span class="o">.</span><span class="n">results</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">):</span>
-                        <span class="n">versions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">))</span>
-
-                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">peers_result</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rpc_address&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">):</span>
-                        <span class="k">continue</span>
-
-                    <span class="n">rpc</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rpc_address&quot;</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">rpc</span> <span class="o">==</span> <span class="s">&quot;0.0.0.0&quot;</span><span class="p">:</span>  <span class="c"># TODO ipv6 check</span>
-                        <span class="n">rpc</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;peer&quot;</span><span class="p">)</span>
-
-                    <span class="n">peer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">rpc</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">peer</span> <span class="ow">and</span> <span class="n">peer</span><span class="o">.</span><span class="n">is_up</span><span class="p">:</span>
-                        <span class="n">versions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">))</span>
-
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">versions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Schemas match&quot;</span><span class="p">)</span>
+                <span class="n">schema_mismatches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_schema_mismatches</span><span class="p">(</span><span class="n">peers_result</span><span class="p">,</span> <span class="n">local_result</span><span class="p">,</span> <span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">schema_mismatches</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="k">return</span> <span class="bp">True</span>
 
                 <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Schemas mismatched, trying again&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
                 <span class="n">elapsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
 
+            <span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Node </span><span class="si">%s</span><span class="s"> is reporting a schema disagreement: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
+                     <span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">schema_mismatches</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">_get_schema_mismatches</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">peers_result</span><span class="p">,</span> <span class="n">local_result</span><span class="p">,</span> <span class="n">local_address</span><span class="p">):</span>
+        <span class="n">peers_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">peers_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+
+        <span class="n">versions</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">local_result</span><span class="o">.</span><span class="n">results</span><span class="p">:</span>
+            <span class="n">local_row</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">local_result</span><span class="o">.</span><span class="n">results</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">):</span>
+                <span class="n">versions</span><span class="p">[</span><span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">)]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">local_address</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">peers_result</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rpc_address&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">rpc</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rpc_address&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">rpc</span> <span class="o">==</span> <span class="s">&quot;0.0.0.0&quot;</span><span class="p">:</span>  <span class="c"># TODO ipv6 check</span>
+                <span class="n">rpc</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;peer&quot;</span><span class="p">)</span>
+
+            <span class="n">peer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">rpc</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">peer</span> <span class="ow">and</span> <span class="n">peer</span><span class="o">.</span><span class="n">is_up</span><span class="p">:</span>
+                <span class="n">versions</span><span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;schema_version&quot;</span><span class="p">)]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">rpc</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">versions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Schemas match&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">((</span><span class="n">version</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">nodes</span><span class="p">))</span> <span class="k">for</span> <span class="n">version</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="n">versions</span><span class="o">.</span><span class="n">iteritems</span><span class="p">())</span>
 
     <span class="k">def</span> <span class="nf">_signal_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># try just signaling the cluster, as this will trigger a reconnect</span>
@@ -1907,6 +1982,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">default_timeout</span> <span class="o">=</span> <span class="n">default_timeout</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="o">=</span> <span class="n">metrics</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span> <span class="o">=</span> <span class="n">prepared_statement</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_callback_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
@@ -1958,9 +2034,15 @@
             <span class="c"># TODO get connectTimeout from cluster settings</span>
             <span class="n">connection</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">borrow_connection</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
             <span class="n">request_id</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">send_msg</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">cb</span><span class="o">=</span><span class="n">cb</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">NoConnectionsAvailable</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;All connections for host </span><span class="si">%s</span><span class="s"> are at capacity, moving to the next host&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span><span class="p">[</span><span class="n">host</span><span class="p">]</span> <span class="o">=</span> <span class="n">exc</span>
+            <span class="k">return</span> <span class="bp">None</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Error querying host </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span><span class="p">[</span><span class="n">host</span><span class="p">]</span> <span class="o">=</span> <span class="n">exc</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="o">.</span><span class="n">on_connection_error</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">connection</span><span class="p">:</span>
                 <span class="n">pool</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">None</span>
@@ -2177,7 +2259,8 @@
                 <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span>  <span class="c"># clear reference cycles</span>
             <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
                 <span class="k">pass</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span> <span class="o">=</span> <span class="n">response</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span> <span class="o">=</span> <span class="n">response</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span><span class="p">:</span>
             <span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span>
@@ -2190,7 +2273,8 @@
             <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span>  <span class="c"># clear reference cycles</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">pass</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span> <span class="o">=</span> <span class="n">response</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span> <span class="o">=</span> <span class="n">response</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_errback</span><span class="p">:</span>
             <span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_errback</span>
@@ -2310,10 +2394,14 @@
 <span class="sd">            &gt;&gt;&gt; future.add_callback(handle_results, time.time(), should_log=True)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_NOT_SET</span><span class="p">:</span>
+        <span class="n">run_now</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_NOT_SET</span><span class="p">:</span>
+                <span class="n">run_now</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span> <span class="o">=</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">run_now</span><span class="p">:</span>
             <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span> <span class="o">=</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 </div>
 <div class="viewcode-block" id="ResponseFuture.add_errback"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.add_errback">[docs]</a>    <span class="k">def</span> <span class="nf">add_errback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -2322,10 +2410,14 @@
 <span class="sd">        An Exception instance will be passed as the first positional argument</span>
 <span class="sd">        to `fn`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span><span class="p">:</span>
+        <span class="n">run_now</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span><span class="p">:</span>
+                <span class="n">run_now</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_errback</span> <span class="o">=</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">run_now</span><span class="p">:</span>
             <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_errback</span> <span class="o">=</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 </div>
 <div class="viewcode-block" id="ResponseFuture.add_callbacks"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.add_callbacks">[docs]</a>    <span class="k">def</span> <span class="nf">add_callbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">errback</span><span class="p">,</span>
@@ -2377,7 +2469,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.0.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.1.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
