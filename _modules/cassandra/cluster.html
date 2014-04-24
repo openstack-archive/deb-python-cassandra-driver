@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 1.1.0 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 1.1.1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.1.0',
+        VERSION:     '1.1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 1.1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 1.1.1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.1.1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -666,7 +666,7 @@
         <span class="n">host</span><span class="o">.</span><span class="n">_handle_node_up_condition</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
         <span class="k">while</span> <span class="n">host</span><span class="o">.</span><span class="n">_currently_handling_node_up</span><span class="p">:</span>
             <span class="n">host</span><span class="o">.</span><span class="n">_handle_node_up_condition</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-        <span class="n">host</span><span class="o">.</span><span class="n">handling_up_down</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">host</span><span class="o">.</span><span class="n">_currently_handling_node_up</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="n">host</span><span class="o">.</span><span class="n">_handle_node_up_condition</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">is_up</span><span class="p">:</span>
@@ -832,6 +832,7 @@
             <span class="n">session</span><span class="o">.</span><span class="n">on_remove</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="p">:</span>
             <span class="n">listener</span><span class="o">.</span><span class="n">on_remove</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">on_remove</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">signal_connection_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">connection_exc</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="p">):</span>
         <span class="n">is_down</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">signal_connection_failure</span><span class="p">(</span><span class="n">connection_exc</span><span class="p">)</span>
@@ -1725,10 +1726,10 @@
         <span class="k">if</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;UP&quot;</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="c"># this is the first time we&#39;ve seen the node</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c"># this will be run by the scheduler</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">on_up</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">on_up</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;DOWN&quot;</span><span class="p">:</span>
             <span class="c"># Note that there is a slight risk we can receive the event late and thus</span>
             <span class="c"># mark the host down even though we already had reconnected successfully.</span>
@@ -2469,7 +2470,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 1.1.1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
