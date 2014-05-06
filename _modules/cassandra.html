@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra &mdash; Cassandra Driver 1.1.1 documentation</title>
+    <title>cassandra &mdash; Cassandra Driver 2.0.0b1 documentation</title>
     
     <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.1',
+        VERSION:     '2.0.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 1.1.1 documentation" href="../index.html" />
+    <link rel="top" title="Cassandra Driver 2.0.0b1 documentation" href="../index.html" />
     <link rel="up" title="Module code" href="index.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../index.html">Cassandra Driver 1.1.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Cassandra Driver 2.0.0b1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -89,7 +89,7 @@
 <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;cassandra&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">NullHandler</span><span class="p">())</span>
 
 
-<span class="n">__version_info__</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">__version_info__</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;0b1&#39;</span><span class="p">)</span>
 <span class="n">__version__</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">__version_info__</span><span class="p">))</span>
 
 
@@ -140,6 +140,19 @@
 <span class="sd">    Requires a quorum of replicas in each datacenter</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">SERIAL</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For conditional inserts/updates that utilize Cassandra&#39;s lightweight</span>
+<span class="sd">    transactions, this requires consensus among all replicas for the</span>
+<span class="sd">    modified data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">LOCAL_SERIAL</span> <span class="o">=</span> <span class="mi">9</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Like :attr:`~ConsistencyLevel.SERIAL`, but only requires consensus</span>
+<span class="sd">    among replicas in the local datacenter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">LOCAL_ONE</span> <span class="o">=</span> <span class="mi">10</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Sends a request only to replicas in the local datacenter and waits for</span>
@@ -155,6 +168,8 @@
     <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ALL</span><span class="p">:</span> <span class="s">&#39;ALL&#39;</span><span class="p">,</span>
     <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">LOCAL_QUORUM</span><span class="p">:</span> <span class="s">&#39;LOCAL_QUORUM&#39;</span><span class="p">,</span>
     <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">EACH_QUORUM</span><span class="p">:</span> <span class="s">&#39;EACH_QUORUM&#39;</span><span class="p">,</span>
+    <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">SERIAL</span><span class="p">:</span> <span class="s">&#39;SERIAL&#39;</span><span class="p">,</span>
+    <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">LOCAL_SERIAL</span><span class="p">:</span> <span class="s">&#39;LOCAL_SERIAL&#39;</span><span class="p">,</span>
     <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">LOCAL_ONE</span><span class="p">:</span> <span class="s">&#39;LOCAL_ONE&#39;</span>
 <span class="p">}</span>
 
@@ -167,6 +182,8 @@
     <span class="s">&#39;ALL&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ALL</span><span class="p">,</span>
     <span class="s">&#39;LOCAL_QUORUM&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">LOCAL_QUORUM</span><span class="p">,</span>
     <span class="s">&#39;EACH_QUORUM&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">EACH_QUORUM</span><span class="p">,</span>
+    <span class="s">&#39;SERIAL&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">SERIAL</span><span class="p">,</span>
+    <span class="s">&#39;LOCAL_SERIAL&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">LOCAL_SERIAL</span><span class="p">,</span>
     <span class="s">&#39;LOCAL_ONE&#39;</span><span class="p">:</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">LOCAL_ONE</span>
 <span class="p">}</span>
 
@@ -321,7 +338,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="n">errors</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_host</span> <span class="o">=</span> <span class="n">last_host</span>
         <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;errors=</span><span class="si">%s</span><span class="s">, last_host=</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_host</span><span class="p">)</span>
-        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span></div>
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+
+</div>
+<span class="k">class</span> <span class="nc">UnsupportedOperation</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An attempt was made to use a feature that is not supported by the</span>
+<span class="sd">    selected protocol version.  See :attr:`Cluster.protocol_version`</span>
+<span class="sd">    for more details.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
 </pre></div>
 
           </div>
@@ -338,7 +364,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../index.html">Cassandra Driver 1.1.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Cassandra Driver 2.0.0b1 documentation</a> &raquo;</li>
           <li><a href="index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>

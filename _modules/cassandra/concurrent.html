@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.concurrent &mdash; Cassandra Driver 1.1.1 documentation</title>
+    <title>cassandra.concurrent &mdash; Cassandra Driver 2.0.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.1.1',
+        VERSION:     '2.0.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 1.1.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.0.0b1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.0.0b1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -79,9 +79,11 @@
 <span class="c"># See the License for the specific language governing permissions and</span>
 <span class="c"># limitations under the License.</span>
 
+<span class="kn">import</span> <span class="nn">six</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span><span class="p">,</span> <span class="n">cycle</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">xrange</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Event</span>
 
 
@@ -151,9 +153,9 @@
     <span class="n">event</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">first_error</span><span class="p">:</span>
         <span class="n">exc</span> <span class="o">=</span> <span class="n">first_error</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span> <span class="o">=</span> <span class="n">exc</span>
-            <span class="k">raise</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span>
+            <span class="n">six</span><span class="o">.</span><span class="n">reraise</span><span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">exc</span>
     <span class="k">else</span><span class="p">:</span>
@@ -172,7 +174,7 @@
 <span class="sd">        parameters = [(x,) for x in range(1000)]</span>
 <span class="sd">        execute_concurrent_with_args(session, statement, parameters)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">execute_concurrent</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cycle</span><span class="p">((</span><span class="n">statement</span><span class="p">,)),</span> <span class="n">parameters</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">execute_concurrent</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">cycle</span><span class="p">((</span><span class="n">statement</span><span class="p">,)),</span> <span class="n">parameters</span><span class="p">)),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 </div>
 <span class="n">_sentinel</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
@@ -185,12 +187,12 @@
         <span class="k">return</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">results</span><span class="p">[</span><span class="n">result_index</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">num_finished</span><span class="o">.</span><span class="n">next</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">to_execute</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">next</span><span class="p">(</span><span class="n">num_finished</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">to_execute</span><span class="p">:</span>
             <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
             <span class="k">return</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="p">(</span><span class="n">next_index</span><span class="p">,</span> <span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">))</span> <span class="o">=</span> <span class="n">statements</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        <span class="p">(</span><span class="n">next_index</span><span class="p">,</span> <span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">))</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">statements</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
         <span class="k">return</span>
 
@@ -201,12 +203,15 @@
             <span class="n">errback</span><span class="o">=</span><span class="n">_handle_error</span><span class="p">,</span> <span class="n">errback_args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">first_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">first_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+                <span class="n">first_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">first_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
             <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
             <span class="k">return</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">results</span><span class="p">[</span><span class="n">next_index</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">num_finished</span><span class="o">.</span><span class="n">next</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">to_execute</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">next</span><span class="p">(</span><span class="n">num_finished</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">to_execute</span><span class="p">:</span>
                 <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
                 <span class="k">return</span>
 
@@ -214,13 +219,13 @@
 <span class="k">def</span> <span class="nf">_execute_next</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">result_index</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">statements</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">num_finished</span><span class="p">,</span> <span class="n">to_execute</span><span class="p">,</span> <span class="n">first_error</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_sentinel</span><span class="p">:</span>
         <span class="n">results</span><span class="p">[</span><span class="n">result_index</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
-        <span class="n">finished</span> <span class="o">=</span> <span class="n">num_finished</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        <span class="n">finished</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">num_finished</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">finished</span> <span class="o">&gt;=</span> <span class="n">to_execute</span><span class="p">:</span>
             <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
             <span class="k">return</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="p">(</span><span class="n">next_index</span><span class="p">,</span> <span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">))</span> <span class="o">=</span> <span class="n">statements</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        <span class="p">(</span><span class="n">next_index</span><span class="p">,</span> <span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">))</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">statements</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
         <span class="k">return</span>
 
@@ -231,12 +236,15 @@
             <span class="n">errback</span><span class="o">=</span><span class="n">_handle_error</span><span class="p">,</span> <span class="n">errback_args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">first_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">first_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+                <span class="n">first_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">first_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
             <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
             <span class="k">return</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">results</span><span class="p">[</span><span class="n">next_index</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">num_finished</span><span class="o">.</span><span class="n">next</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">to_execute</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">next</span><span class="p">(</span><span class="n">num_finished</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">to_execute</span><span class="p">:</span>
                 <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
                 <span class="k">return</span>
 </pre></div>
@@ -255,7 +263,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 1.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.0.0b1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
