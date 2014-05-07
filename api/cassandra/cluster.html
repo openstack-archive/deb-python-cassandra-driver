@@ -149,7 +149,7 @@ one of its subclasses.  Defaults to <a class="reference internal" href="policies
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.reconnection_policy">
-<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x22dffd0&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x32bc710&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.ReconnectionPolicy</span></tt></a>. Defaults to an instance
 of <a class="reference internal" href="policies.html#cassandra.policies.ExponentialReconnectionPolicy" title="cassandra.policies.ExponentialReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ExponentialReconnectionPolicy</span></tt></a> with a base delay of one second and
 a max delay of ten minutes.</p>
@@ -157,7 +157,7 @@ a max delay of ten minutes.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.default_retry_policy">
-<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x22e8050&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x32bc750&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A default <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> instance to use for all
 <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> objects which do not have a <a class="reference internal" href="query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">retry_policy</span></tt></a>
 explicitly set.</p>
@@ -173,12 +173,12 @@ explicitly set.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.connection_class">
-<tt class="descname">connection_class</tt><em class="property"> = &lt;class 'cassandra.io.libevreactor.LibevConnection'&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.connection_class" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">connection_class</tt><em class="property"> = &lt;class 'cassandra.io.asyncorereactor.AsyncoreConnection'&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.connection_class" title="Permalink to this definition">¶</a></dt>
 <dd><p>This determines what event loop system will be used for managing
 I/O with Cassandra.  These are the current options:</p>
 <ul class="simple">
 <li><a class="reference internal" href="io/asyncorereactor.html#cassandra.io.asyncorereactor.AsyncoreConnection" title="cassandra.io.asyncorereactor.AsyncoreConnection"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.asyncorereactor.AsyncoreConnection</span></tt></a></li>
-<li><a class="reference internal" href="io/libevreactor.html#cassandra.io.libevreactor.LibevConnection" title="cassandra.io.libevreactor.LibevConnection"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.LibevConnection</span></tt></a></li>
+<li><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.LibevConnection</span></tt></li>
 </ul>
 <p>By default, <tt class="docutils literal"><span class="pre">AsyncoreConnection</span></tt> will be used, which uses
 the <tt class="docutils literal"><span class="pre">asyncore</span></tt> module in the Python standard library.  The
@@ -341,7 +341,7 @@ timeout, neither the registered callback or errback will be called.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Session.row_factory">
-<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x22d8c80&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x32a37d0&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
 <dd><p>The format to return row results in.  By default, each
 returned row will be a named tuple.  You can alternatively
 use any of the following:</p>
@@ -623,7 +623,7 @@ class will be returned.</p>
 </pre></div>
 </div>
 <p>Whenever there are no more rows in the current page, the next page will
-be fetched transparently.  However, note that it _is_ possible for
+be fetched transparently.  However, note that it <em>is</em> possible for
 an <tt class="xref py py-class docutils literal"><span class="pre">Exception</span></tt> to be raised while fetching the next page, just
 like you might see on a normal call to <tt class="docutils literal"><span class="pre">session.execute()</span></tt>.</p>
 </dd></dl>
@@ -631,8 +631,8 @@ like you might see on a normal call to <tt class="docutils literal"><span class=
 <dl class="exception">
 <dt id="cassandra.cluster.QueryExhausted">
 <em class="property">exception </em><tt class="descclassname">cassandra.cluster.</tt><tt class="descname">QueryExhausted</tt><a class="reference internal" href="../../_modules/cassandra/cluster.html#QueryExhausted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.QueryExhausted" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raised when <tt class="xref py py-meth docutils literal"><span class="pre">ResultSet.start_fetching_next_page()</span></tt> is called and
-there are no more pages.  You can check <tt class="xref py py-attr docutils literal"><span class="pre">ResultSet.has_more_pages</span></tt>
+<dd><p>Raised when <a class="reference internal" href="#cassandra.cluster.ResponseFuture.start_fetching_next_page" title="cassandra.cluster.ResponseFuture.start_fetching_next_page"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.start_fetching_next_page()</span></tt></a> is called and
+there are no more pages.  You can check <a class="reference internal" href="#cassandra.cluster.ResponseFuture.has_more_pages" title="cassandra.cluster.ResponseFuture.has_more_pages"><tt class="xref py py-attr docutils literal"><span class="pre">ResponseFuture.has_more_pages</span></tt></a>
 before calling to avoid this.</p>
 </dd></dl>
 
