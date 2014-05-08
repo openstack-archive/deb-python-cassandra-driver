@@ -152,9 +152,9 @@ so the order of the columns is preserved.</p>
 <dl class="class">
 <dt id="cassandra.query.Statement">
 <em class="property">class </em><tt class="descclassname">cassandra.query.</tt><tt class="descname">Statement</tt><big>(</big><em>retry_policy=None</em>, <em>consistency_level=None</em>, <em>routing_key=None</em>, <em>serial_consistency_level=None</em>, <em>fetch_size=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/query.html#Statement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.Statement" title="Permalink to this definition">¶</a></dt>
-<dd><p>An abstract class representing a single query. There are two subclasses:
-<a class="reference internal" href="#cassandra.query.SimpleStatement" title="cassandra.query.SimpleStatement"><tt class="xref py py-class docutils literal"><span class="pre">SimpleStatement</span></tt></a> and <a class="reference internal" href="#cassandra.query.BoundStatement" title="cassandra.query.BoundStatement"><tt class="xref py py-class docutils literal"><span class="pre">BoundStatement</span></tt></a>.  These can
-be passed to <a class="reference internal" href="cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><tt class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></tt></a>.</p>
+<dd><p>An abstract class representing a single query. There are three subclasses:
+<a class="reference internal" href="#cassandra.query.SimpleStatement" title="cassandra.query.SimpleStatement"><tt class="xref py py-class docutils literal"><span class="pre">SimpleStatement</span></tt></a>, <a class="reference internal" href="#cassandra.query.BoundStatement" title="cassandra.query.BoundStatement"><tt class="xref py py-class docutils literal"><span class="pre">BoundStatement</span></tt></a>, and <a class="reference internal" href="#cassandra.query.BatchStatement" title="cassandra.query.BatchStatement"><tt class="xref py py-class docutils literal"><span class="pre">BatchStatement</span></tt></a>.
+These can be passed to <a class="reference internal" href="cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><tt class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></tt></a>.</p>
 <dl class="attribute">
 <dt id="cassandra.query.Statement.trace">
 <tt class="descname">trace</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.query.Statement.trace" title="Permalink to this definition">¶</a></dt>
@@ -287,6 +287,88 @@ All other <tt class="docutils literal"><span class="pre">*args</span></tt> and <
 and returns this instance.  Note that <cite>values</cite> <em>must</em> be:
 * a sequence, even if you are only binding one value, or
 * a dict that relates 1-to-1 between dict keys and columns</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.query.BatchStatement">
+<em class="property">class </em><tt class="descclassname">cassandra.query.</tt><tt class="descname">BatchStatement</tt><big>(</big><em>batch_type=BatchType.LOGGED</em>, <em>retry_policy=None</em>, <em>consistency_level=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/query.html#BatchStatement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BatchStatement" title="Permalink to this definition">¶</a></dt>
+<dd><p>A protocol-level batch of operations which are applied atomically
+by default.</p>
+<p><cite>batch_type</cite> specifies The <a class="reference internal" href="#cassandra.query.BatchType" title="cassandra.query.BatchType"><tt class="xref py py-class docutils literal"><span class="pre">BatchType</span></tt></a> for the batch operation.
+Defaults to <a class="reference internal" href="#cassandra.query.BatchType.LOGGED" title="cassandra.query.BatchType.LOGGED"><tt class="xref py py-attr docutils literal"><span class="pre">BatchType.LOGGED</span></tt></a>.</p>
+<p><cite>retry_policy</cite> should be a <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">RetryPolicy</span></tt></a> instance for
+controlling retries on the operation.</p>
+<p><cite>consistency_level</cite> should be a <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a> value
+to be used for all operations in the batch.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">insert_user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span class="p">)</span>
+<span class="n">batch</span> <span class="o">=</span> <span class="n">BatchStatement</span><span class="p">(</span><span class="n">consistency_level</span><span class="o">=</span><span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">QUORUM</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">)</span> <span class="ow">in</span> <span class="n">users_to_insert</span><span class="p">:</span>
+    <span class="n">batch</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">insert_user</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">))</span>
+
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also mix different types of operations within a batch:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">batch</span> <span class="o">=</span> <span class="n">BatchStatement</span><span class="p">()</span>
+<span class="n">batch</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">SimpleStatement</span><span class="p">(</span><span class="s">&quot;INSERT INTO users (name, age) VALUES (</span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">)&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">))</span>
+<span class="n">batch</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">SimpleStatement</span><span class="p">(</span><span class="s">&quot;DELETE FROM pending_users WHERE name=</span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,))</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="versionadded">
+<p><span>New in version 2.0.0b1.</span></p>
+</div>
+<dl class="attribute">
+<dt id="cassandra.query.BatchStatement.batch_type">
+<tt class="descname">batch_type</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.query.BatchStatement.batch_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#cassandra.query.BatchType" title="cassandra.query.BatchType"><tt class="xref py py-class docutils literal"><span class="pre">BatchType</span></tt></a> for the batch operation.  Defaults to
+<a class="reference internal" href="#cassandra.query.BatchType.LOGGED" title="cassandra.query.BatchType.LOGGED"><tt class="xref py py-attr docutils literal"><span class="pre">BatchType.LOGGED</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.query.BatchStatement.add">
+<tt class="descname">add</tt><big>(</big><em>statement</em>, <em>parameters=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/query.html#BatchStatement.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BatchStatement.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a <a class="reference internal" href="#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> and optional sequence of parameters
+to be used with the statement to the batch.</p>
+<p>Like with other statements, parameters must be a sequence, even
+if there is only one item.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.query.BatchStatement.add_all">
+<tt class="descname">add_all</tt><big>(</big><em>statements</em>, <em>parameters</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/query.html#BatchStatement.add_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BatchStatement.add_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a sequence of <a class="reference internal" href="#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> objects and a matching sequence
+of parameters to the batch.  <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt> can be used in place of
+parameters when no parameters are needed.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.query.BatchType">
+<em class="property">class </em><tt class="descclassname">cassandra.query.</tt><tt class="descname">BatchType</tt><a class="reference internal" href="../../_modules/cassandra/query.html#BatchType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BatchType" title="Permalink to this definition">¶</a></dt>
+<dd><p>A BatchType is used with <a class="reference internal" href="#cassandra.query.BatchStatement" title="cassandra.query.BatchStatement"><tt class="xref py py-class docutils literal"><span class="pre">BatchStatement</span></tt></a> instances to control
+the atomicity of the batch operation.</p>
+<dl class="attribute">
+<dt id="cassandra.query.BatchType.LOGGED">
+<tt class="descname">LOGGED</tt><em class="property"> = BatchType&lt;LOGGED&gt;</em><a class="headerlink" href="#cassandra.query.BatchType.LOGGED" title="Permalink to this definition">¶</a></dt>
+<dd><p>Atomic batch operation.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.query.BatchType.UNLOGGED">
+<tt class="descname">UNLOGGED</tt><em class="property"> = BatchType&lt;UNLOGGED&gt;</em><a class="headerlink" href="#cassandra.query.BatchType.UNLOGGED" title="Permalink to this definition">¶</a></dt>
+<dd><p>Non-atomic batch operation.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.query.BatchType.COUNTER">
+<tt class="descname">COUNTER</tt><em class="property"> = BatchType&lt;COUNTER&gt;</em><a class="headerlink" href="#cassandra.query.BatchType.COUNTER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batches of counter operations.</p>
 </dd></dl>
 
 </dd></dl>

@@ -92,6 +92,7 @@
 <span class="k">else</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">six.moves.queue</span> <span class="kn">import</span> <span class="n">Queue</span><span class="p">,</span> <span class="n">Empty</span>  <span class="c"># noqa</span>
 
+<span class="kn">import</span> <span class="nn">six</span>
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span>
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">AuthenticationFailed</span><span class="p">,</span> <span class="n">OperationTimedOut</span>
@@ -100,24 +101,15 @@
                                 <span class="n">StartupMessage</span><span class="p">,</span> <span class="n">ErrorMessage</span><span class="p">,</span> <span class="n">CredentialsMessage</span><span class="p">,</span>
                                 <span class="n">QueryMessage</span><span class="p">,</span> <span class="n">ResultMessage</span><span class="p">,</span> <span class="n">decode_response</span><span class="p">,</span>
                                 <span class="n">InvalidRequestException</span><span class="p">,</span> <span class="n">SupportedMessage</span><span class="p">)</span>
-<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
-<span class="n">locally_supported_compressions</span> <span class="o">=</span> <span class="p">{}</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">snappy</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="k">pass</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="c"># work around apparently buggy snappy decompress</span>
-    <span class="k">def</span> <span class="nf">decompress</span><span class="p">(</span><span class="n">byts</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">byts</span> <span class="o">==</span> <span class="s">&#39;</span><span class="se">\x00</span><span class="s">&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">snappy</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">byts</span><span class="p">)</span>
-    <span class="n">locally_supported_compressions</span><span class="p">[</span><span class="s">&#39;snappy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">snappy</span><span class="o">.</span><span class="n">compress</span><span class="p">,</span> <span class="n">decompress</span><span class="p">)</span>
+<span class="c"># We use an ordered dictionary and specifically add lz4 before</span>
+<span class="c"># snappy so that lz4 will be preferred. Changing the order of this</span>
+<span class="c"># will change the compression preferences for the driver.</span>
+<span class="n">locally_supported_compressions</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">lz4</span>
@@ -138,6 +130,18 @@
         <span class="k">return</span> <span class="n">lz4</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">byts</span><span class="p">[</span><span class="mi">3</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">byts</span><span class="p">[</span><span class="mi">4</span><span class="p">:])</span>
 
     <span class="n">locally_supported_compressions</span><span class="p">[</span><span class="s">&#39;lz4&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">lz4_compress</span><span class="p">,</span> <span class="n">lz4_decompress</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">snappy</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c"># work around apparently buggy snappy decompress</span>
+    <span class="k">def</span> <span class="nf">decompress</span><span class="p">(</span><span class="n">byts</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">byts</span> <span class="o">==</span> <span class="s">&#39;</span><span class="se">\x00</span><span class="s">&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">snappy</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">byts</span><span class="p">)</span>
+    <span class="n">locally_supported_compressions</span><span class="p">[</span><span class="s">&#39;snappy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">snappy</span><span class="o">.</span><span class="n">compress</span><span class="p">,</span> <span class="n">decompress</span><span class="p">)</span>
 
 
 <span class="n">MAX_STREAM_PER_CONNECTION</span> <span class="o">=</span> <span class="mi">127</span>
@@ -447,7 +451,22 @@
                           <span class="n">locally_supported_compressions</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
                           <span class="n">remote_supported_compressions</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">compression_type</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">overlap</span><span class="p">))</span>  <span class="c"># choose any</span>
+                <span class="n">compression_type</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compression</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+                    <span class="c"># the user picked a specific compression type (&#39;snappy&#39; or &#39;lz4&#39;)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">remote_supported_compressions</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span>
+                            <span class="s">&quot;The requested compression type (</span><span class="si">%s</span><span class="s">) is not supported by the Cassandra server at </span><span class="si">%s</span><span class="s">&quot;</span>
+                            <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compression</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">))</span>
+                    <span class="n">compression_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c"># our locally supported compressions are ordered to prefer</span>
+                    <span class="c"># lz4, if available</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">locally_supported_compressions</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">overlap</span><span class="p">:</span>
+                            <span class="n">compression_type</span> <span class="o">=</span> <span class="n">k</span>
+                            <span class="k">break</span>
+
                 <span class="c"># set the decompressor here, but set the compressor only after</span>
                 <span class="c"># a successful Ready message</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_compressor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decompressor</span> <span class="o">=</span> \

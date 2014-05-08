@@ -252,8 +252,15 @@
 
     <span class="n">compression</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Whether or not compression should be enabled when possible. Defaults to</span>
-<span class="sd">    :const:`True` and attempts to use snappy compression.</span>
+<span class="sd">    Controls compression for communications between the driver and Cassandra.</span>
+<span class="sd">    If left as the default of :const:`True`, either lz4 or snappy compression</span>
+<span class="sd">    may be used, depending on what is supported by both the driver</span>
+<span class="sd">    and Cassandra.  If both are fully supported, lz4 will be preferred.</span>
+
+<span class="sd">    You may also set this to &#39;snappy&#39; or &#39;lz4&#39; to request that specific</span>
+<span class="sd">    compression type.</span>
+
+<span class="sd">    Setting this to :const:`False` disables compression.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">auth_provider</span> <span class="o">=</span> <span class="bp">None</span>
@@ -1024,6 +1031,8 @@
 <span class="sd">    on a :class:`~.ResponseFuture` through :meth:`.ResponseFuture.add_callback` or</span>
 <span class="sd">    :meth:`.ResponseFuture.add_errback`; even if a query exceeds this default</span>
 <span class="sd">    timeout, neither the registered callback or errback will be called.</span>
+
+<span class="sd">    .. versionadded:: 2.0.0b1</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">max_trace_wait</span> <span class="o">=</span> <span class="mf">2.0</span>
@@ -1043,6 +1052,8 @@
 
 <span class="sd">    This only takes effect when protocol version 2 or higher is used.</span>
 <span class="sd">    See :attr:`.Cluster.protocol_version` for details.</span>
+
+<span class="sd">    .. versionadded:: 2.0.0b1</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_lock</span> <span class="o">=</span> <span class="bp">None</span>
@@ -2583,8 +2594,8 @@
 </div>
 <div class="viewcode-block" id="QueryExhausted"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.QueryExhausted">[docs]</a><span class="k">class</span> <span class="nc">QueryExhausted</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Raised when :meth:`.ResultSet.start_fetching_next_page()` is called and</span>
-<span class="sd">    there are no more pages.  You can check :attr:`.ResultSet.has_more_pages`</span>
+<span class="sd">    Raised when :meth:`.ResponseFuture.start_fetching_next_page()` is called and</span>
+<span class="sd">    there are no more pages.  You can check :attr:`.ResponseFuture.has_more_pages`</span>
 <span class="sd">    before calling to avoid this.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
@@ -2605,9 +2616,11 @@
 <span class="sd">        ...     process_user(user_row)</span>
 
 <span class="sd">    Whenever there are no more rows in the current page, the next page will</span>
-<span class="sd">    be fetched transparently.  However, note that it _is_ possible for</span>
+<span class="sd">    be fetched transparently.  However, note that it *is* possible for</span>
 <span class="sd">    an :class:`Exception` to be raised while fetching the next page, just</span>
 <span class="sd">    like you might see on a normal call to ``session.execute()``.</span>
+
+<span class="sd">    .. versionadded: 2.0.0b1</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_future</span><span class="p">,</span> <span class="n">initial_response</span><span class="p">):</span>

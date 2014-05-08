@@ -183,9 +183,9 @@
 </div>
 <div class="viewcode-block" id="Statement"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.Statement">[docs]</a><span class="k">class</span> <span class="nc">Statement</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    An abstract class representing a single query. There are two subclasses:</span>
-<span class="sd">    :class:`.SimpleStatement` and :class:`.BoundStatement`.  These can</span>
-<span class="sd">    be passed to :meth:`.Session.execute()`.</span>
+<span class="sd">    An abstract class representing a single query. There are three subclasses:</span>
+<span class="sd">    :class:`.SimpleStatement`, :class:`.BoundStatement`, and :class:`.BatchStatement`.</span>
+<span class="sd">    These can be passed to :meth:`.Session.execute()`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">retry_policy</span> <span class="o">=</span> <span class="bp">None</span>
@@ -549,7 +549,11 @@
     <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
 
 </div>
-<span class="k">class</span> <span class="nc">BatchType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="BatchType"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.BatchType">[docs]</a><span class="k">class</span> <span class="nc">BatchType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A BatchType is used with :class:`.BatchStatement` instances to control</span>
+<span class="sd">    the atomicity of the batch operation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOGGED</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -576,25 +580,73 @@
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&quot;BatchType&lt;</span><span class="si">%s</span><span class="s">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">)</span>
 
-
+</div>
 <span class="n">BatchType</span><span class="o">.</span><span class="n">LOGGED</span> <span class="o">=</span> <span class="n">BatchType</span><span class="p">(</span><span class="s">&quot;LOGGED&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 <span class="n">BatchType</span><span class="o">.</span><span class="n">UNLOGGED</span> <span class="o">=</span> <span class="n">BatchType</span><span class="p">(</span><span class="s">&quot;UNLOGGED&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">BatchType</span><span class="o">.</span><span class="n">COUNTER</span> <span class="o">=</span> <span class="n">BatchType</span><span class="p">(</span><span class="s">&quot;COUNTER&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">BatchStatement</span><span class="p">(</span><span class="n">Statement</span><span class="p">):</span>
+<div class="viewcode-block" id="BatchStatement"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.BatchStatement">[docs]</a><span class="k">class</span> <span class="nc">BatchStatement</span><span class="p">(</span><span class="n">Statement</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A protocol-level batch of operations which are applied atomically</span>
+<span class="sd">    by default.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">batch_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The :class:`.BatchType` for the batch operation.  Defaults to</span>
+<span class="sd">    :attr:`.BatchType.LOGGED`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_statements_and_parameters</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_type</span><span class="o">=</span><span class="n">BatchType</span><span class="o">.</span><span class="n">LOGGED</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        `batch_type` specifies The :class:`.BatchType` for the batch operation.</span>
+<span class="sd">        Defaults to :attr:`.BatchType.LOGGED`.</span>
+
+<span class="sd">        `retry_policy` should be a :class:`~.RetryPolicy` instance for</span>
+<span class="sd">        controlling retries on the operation.</span>
+
+<span class="sd">        `consistency_level` should be a :class:`~.ConsistencyLevel` value</span>
+<span class="sd">        to be used for all operations in the batch.</span>
+
+<span class="sd">        Example usage:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            insert_user = session.prepare(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;)</span>
+<span class="sd">            batch = BatchStatement(consistency_level=ConsistencyLevel.QUORUM)</span>
+
+<span class="sd">            for (name, age) in users_to_insert:</span>
+<span class="sd">                batch.add(insert_user, (name, age))</span>
+
+<span class="sd">            session.execute(batch)</span>
+
+<span class="sd">        You can also mix different types of operations within a batch:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            batch = BatchStatement()</span>
+<span class="sd">            batch.add(SimpleStatement(&quot;INSERT INTO users (name, age) VALUES (%s, %s)&quot;, (name, age))</span>
+<span class="sd">            batch.add(SimpleStatement(&quot;DELETE FROM pending_users WHERE name=%s&quot;, (name,))</span>
+<span class="sd">            session.execute(batch)</span>
+
+<span class="sd">        .. versionadded:: 2.0.0b1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_type</span> <span class="o">=</span> <span class="n">batch_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">Statement</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="n">retry_policy</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">consistency_level</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="BatchStatement.add"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.BatchStatement.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a :class:`.Statement` and optional sequence of parameters</span>
+<span class="sd">        to be used with the statement to the batch.</span>
+
+<span class="sd">        Like with other statements, parameters must be a sequence, even</span>
+<span class="sd">        if there is only one item.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
                 <span class="n">statement</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
@@ -618,18 +670,23 @@
                 <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">False</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="p">()))</span>
         <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span> <span class="nf">add_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statements</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="BatchStatement.add_all"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.BatchStatement.add_all">[docs]</a>    <span class="k">def</span> <span class="nf">add_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statements</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a sequence of :class:`.Statement` objects and a matching sequence</span>
+<span class="sd">        of parameters to the batch.  :const:`None` can be used in place of</span>
+<span class="sd">        parameters when no parameters are needed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">statement</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">statements</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
-
+</div>
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">]</span>
         <span class="k">return</span> <span class="p">(</span><span class="s">u&#39;&lt;BatchStatement type=</span><span class="si">%s</span><span class="s">, statements=</span><span class="si">%d</span><span class="s">, consistency=</span><span class="si">%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span>
                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_type</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="p">),</span> <span class="n">consistency</span><span class="p">))</span>
     <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
 
-
+</div>
 <div class="viewcode-block" id="ValueSequence"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.ValueSequence">[docs]</a><span class="k">class</span> <span class="nc">ValueSequence</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A wrapper class that is used to specify that a sequence of values should</span>

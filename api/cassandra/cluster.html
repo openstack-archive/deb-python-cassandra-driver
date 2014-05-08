@@ -129,8 +129,13 @@ the version 2 protocol will not be enabled.</p>
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.compression">
 <tt class="descname">compression</tt><em class="property"> = True</em><a class="headerlink" href="#cassandra.cluster.Cluster.compression" title="Permalink to this definition">¶</a></dt>
-<dd><p>Whether or not compression should be enabled when possible. Defaults to
-<tt class="xref py py-const docutils literal"><span class="pre">True</span></tt> and attempts to use snappy compression.</p>
+<dd><p>Controls compression for communications between the driver and Cassandra.
+If left as the default of <tt class="xref py py-const docutils literal"><span class="pre">True</span></tt>, either lz4 or snappy compression
+may be used, depending on what is supported by both the driver
+and Cassandra.  If both are fully supported, lz4 will be preferred.</p>
+<p>You may also set this to &#8216;snappy&#8217; or &#8216;lz4&#8217; to request that specific
+compression type.</p>
+<p>Setting this to <tt class="xref py py-const docutils literal"><span class="pre">False</span></tt> disables compression.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -149,7 +154,7 @@ one of its subclasses.  Defaults to <a class="reference internal" href="policies
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.reconnection_policy">
-<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x32bc710&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x2e47f50&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.ReconnectionPolicy</span></tt></a>. Defaults to an instance
 of <a class="reference internal" href="policies.html#cassandra.policies.ExponentialReconnectionPolicy" title="cassandra.policies.ExponentialReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ExponentialReconnectionPolicy</span></tt></a> with a base delay of one second and
 a max delay of ten minutes.</p>
@@ -157,7 +162,7 @@ a max delay of ten minutes.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.default_retry_policy">
-<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x32bc750&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x2e47f90&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A default <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> instance to use for all
 <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> objects which do not have a <a class="reference internal" href="query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">retry_policy</span></tt></a>
 explicitly set.</p>
@@ -173,12 +178,12 @@ explicitly set.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.connection_class">
-<tt class="descname">connection_class</tt><em class="property"> = &lt;class 'cassandra.io.asyncorereactor.AsyncoreConnection'&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.connection_class" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">connection_class</tt><em class="property"> = &lt;class 'cassandra.io.libevreactor.LibevConnection'&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.connection_class" title="Permalink to this definition">¶</a></dt>
 <dd><p>This determines what event loop system will be used for managing
 I/O with Cassandra.  These are the current options:</p>
 <ul class="simple">
 <li><a class="reference internal" href="io/asyncorereactor.html#cassandra.io.asyncorereactor.AsyncoreConnection" title="cassandra.io.asyncorereactor.AsyncoreConnection"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.asyncorereactor.AsyncoreConnection</span></tt></a></li>
-<li><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.LibevConnection</span></tt></li>
+<li><a class="reference internal" href="io/libevreactor.html#cassandra.io.libevreactor.LibevConnection" title="cassandra.io.libevreactor.LibevConnection"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.LibevConnection</span></tt></a></li>
 </ul>
 <p>By default, <tt class="docutils literal"><span class="pre">AsyncoreConnection</span></tt> will be used, which uses
 the <tt class="docutils literal"><span class="pre">asyncore</span></tt> module in the Python standard library.  The
@@ -337,11 +342,14 @@ or the <cite>timeout</cite> parameter for <a class="reference internal" href="#c
 on a <a class="reference internal" href="#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><tt class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></tt></a> through <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_callback()</span></tt></a> or
 <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_errback" title="cassandra.cluster.ResponseFuture.add_errback"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_errback()</span></tt></a>; even if a query exceeds this default
 timeout, neither the registered callback or errback will be called.</p>
+<div class="versionadded">
+<p><span>New in version 2.0.0b1.</span></p>
+</div>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Session.row_factory">
-<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x32a37d0&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x2e3dde8&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
 <dd><p>The format to return row results in.  By default, each
 returned row will be a named tuple.  You can alternatively
 use any of the following:</p>
@@ -362,6 +370,9 @@ use any of the following:</p>
 specified per-query through <a class="reference internal" href="query.html#cassandra.query.Statement.fetch_size" title="cassandra.query.Statement.fetch_size"><tt class="xref py py-attr docutils literal"><span class="pre">Statement.fetch_size</span></tt></a>.</p>
 <p>This only takes effect when protocol version 2 or higher is used.
 See <a class="reference internal" href="#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">Cluster.protocol_version</span></tt></a> for details.</p>
+<div class="versionadded">
+<p><span>New in version 2.0.0b1.</span></p>
+</div>
 </dd></dl>
 
 <dl class="method">
