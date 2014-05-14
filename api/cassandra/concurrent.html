@@ -108,8 +108,8 @@ substantially impacting throughput.</p>
 
 <span class="n">statements_and_params</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="n">user_ids</span><span class="p">:</span>
-    <span class="n">statatements_and_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">select_statement</span><span class="p">,</span> <span class="n">user_id</span><span class="p">))</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="p">)</span>
+    <span class="n">statatements_and_params</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">select_statement</span><span class="p">,</span> <span class="n">params</span><span class="p">))</span>
 
 <span class="n">results</span> <span class="o">=</span> <span class="n">execute_concurrent</span><span class="p">(</span>
     <span class="n">session</span><span class="p">,</span> <span class="n">statements_and_params</span><span class="p">,</span> <span class="n">raise_on_first_error</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
@@ -126,9 +126,9 @@ substantially impacting throughput.</p>
 <dl class="function">
 <dt id="cassandra.concurrent.execute_concurrent_with_args">
 <tt class="descclassname">cassandra.concurrent.</tt><tt class="descname">execute_concurrent_with_args</tt><big>(</big><em>session</em>, <em>statement</em>, <em>parameters</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/concurrent.html#execute_concurrent_with_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.concurrent.execute_concurrent_with_args" title="Permalink to this definition">¶</a></dt>
-<dd><p>Like <tt class="xref py py-meth docutils literal"><span class="pre">execute_concurrent()</span></tt>, but takes a single statement and a
-sequence of parameters.  Each item in <tt class="docutils literal"><span class="pre">parameters</span></tt> should be a sequence
-or <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt>.</p>
+<dd><p>Like <a class="reference internal" href="#cassandra.concurrent.execute_concurrent" title="cassandra.concurrent.execute_concurrent"><tt class="xref py py-meth docutils literal"><span class="pre">execute_concurrent()</span></tt></a>, but takes a single
+statement and a sequence of parameters.  Each item in <tt class="docutils literal"><span class="pre">parameters</span></tt>
+should be a sequence or <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt>.</p>
 <p>Example usage:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s">&quot;INSERT INTO mytable (a, b) VALUES (1, ?)&quot;</span><span class="p">)</span>
 <span class="n">parameters</span> <span class="o">=</span> <span class="p">[(</span><span class="n">x</span><span class="p">,)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">)]</span>
