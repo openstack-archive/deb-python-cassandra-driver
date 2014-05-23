@@ -55,7 +55,7 @@
                         title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">cassandra</span></tt> - Exceptions and Enums</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="policies.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies</a></p>
+                        title="next chapter"><tt class="docutils literal docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../_sources/api/cassandra/cluster.txt"
@@ -141,8 +141,13 @@ compression type.</p>
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.auth_provider">
 <tt class="descname">auth_provider</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.auth_provider" title="Permalink to this definition">¶</a></dt>
-<dd><p>An optional function that accepts one argument, the IP address of a node,
+<dd><p>When <a class="reference internal" href="#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> is 2 or higher, this should
+be an instance of a subclass of <a class="reference internal" href="auth.html#cassandra.auth.AuthProvider" title="cassandra.auth.AuthProvider"><tt class="xref py py-class docutils literal"><span class="pre">AuthProvider</span></tt></a>,
+such ass <a class="reference internal" href="auth.html#cassandra.auth.PlainTextAuthProvider" title="cassandra.auth.PlainTextAuthProvider"><tt class="xref py py-class docutils literal"><span class="pre">PlainTextAuthProvider</span></tt></a>.</p>
+<p>When <a class="reference internal" href="#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> is 1, this should be
+a function that accepts one argument, the IP address of a node,
 and returns a dict of credentials for that node.</p>
+<p>When not using authentication, this should be left as <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -154,7 +159,7 @@ one of its subclasses.  Defaults to <a class="reference internal" href="policies
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.reconnection_policy">
-<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x3a69310&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x29ec910&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.ReconnectionPolicy</span></tt></a>. Defaults to an instance
 of <a class="reference internal" href="policies.html#cassandra.policies.ExponentialReconnectionPolicy" title="cassandra.policies.ExponentialReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ExponentialReconnectionPolicy</span></tt></a> with a base delay of one second and
 a max delay of ten minutes.</p>
@@ -162,7 +167,7 @@ a max delay of ten minutes.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.default_retry_policy">
-<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x3a69350&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x29ec950&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A default <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> instance to use for all
 <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> objects which do not have a <a class="reference internal" href="query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">retry_policy</span></tt></a>
 explicitly set.</p>
@@ -349,7 +354,7 @@ timeout, neither the registered callback or errback will be called.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Session.row_factory">
-<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x3a5e8c0&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x29ea758&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
 <dd><p>The format to return row results in.  By default, each
 returned row will be a named tuple.  You can alternatively
 use any of the following:</p>
