@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query - Prepared Statements and Query Policies &mdash; Cassandra Driver 2.0.0b1 documentation</title>
+    <title>cassandra.query - Prepared Statements, Batch Statements, Tracing, and Row Factories &mdash; Cassandra Driver 2.0.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -26,7 +26,7 @@
     <link rel="top" title="Cassandra Driver 2.0.0b1 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.pool - Hosts and Connection Pools" href="pool.html" />
-    <link rel="prev" title="cassandra.metadata - Schema and Ring Topology" href="metadata.html" /> 
+    <link rel="prev" title="cassandra.metrics - Performance Metrics" href="metrics.html" /> 
   </head>
   <body>
     <div class="related">
@@ -42,7 +42,7 @@
           <a href="pool.html" title="cassandra.pool - Hosts and Connection Pools"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="metadata.html" title="cassandra.metadata - Schema and Ring Topology"
+          <a href="metrics.html" title="cassandra.metrics - Performance Metrics"
              accesskey="P">previous</a> |</li>
         <li><a href="../../index.html">Cassandra Driver 2.0.0b1 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
@@ -51,8 +51,8 @@
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="metadata.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">cassandra.metadata</span></tt> - Schema and Ring Topology</a></p>
+  <p class="topless"><a href="metrics.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">cassandra.metrics</span></tt> - Performance Metrics</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="pool.html"
                         title="next chapter"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">cassandra.pool</span></tt> - Hosts and Connection Pools</a></p>
@@ -83,7 +83,7 @@
           <div class="body">
             
   <div class="section" id="module-cassandra.query">
-<span id="cassandra-query-prepared-statements-and-query-policies"></span><h1><tt class="docutils literal"><span class="pre">cassandra.query</span></tt> - Prepared Statements and Query Policies<a class="headerlink" href="#module-cassandra.query" title="Permalink to this headline">¶</a></h1>
+<span id="cassandra-query-prepared-statements-batch-statements-tracing-and-row-factories"></span><h1><tt class="docutils literal"><span class="pre">cassandra.query</span></tt> - Prepared Statements, Batch Statements, Tracing, and Row Factories<a class="headerlink" href="#module-cassandra.query" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="cassandra.query.tuple_factory">
 <tt class="descclassname">cassandra.query.</tt><tt class="descname">tuple_factory</tt><big>(</big><em>colnames</em>, <em>rows</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/query.html#tuple_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.tuple_factory" title="Permalink to this definition">¶</a></dt>
@@ -96,6 +96,9 @@
 <span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="go">(&#39;Bob&#39;, 42)</span>
 </pre></div>
+</div>
+<div class="versionchanged">
+<p><span>Changed in version 2.0.0: </span>moved from <tt class="docutils literal"><span class="pre">cassandra.decoder</span></tt> to <tt class="docutils literal"><span class="pre">cassandra.query</span></tt></p>
 </div>
 </dd></dl>
 
@@ -125,6 +128,9 @@ This is the default row factory.</p>
 <span class="go">name: Bob, age: 42</span>
 </pre></div>
 </div>
+<div class="versionchanged">
+<p><span>Changed in version 2.0.0: </span>moved from <tt class="docutils literal"><span class="pre">cassandra.decoder</span></tt> to <tt class="docutils literal"><span class="pre">cassandra.query</span></tt></p>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -140,6 +146,9 @@ This is the default row factory.</p>
 <span class="go">{&#39;age&#39;: 42, &#39;name&#39;: &#39;Bob&#39;}</span>
 </pre></div>
 </div>
+<div class="versionchanged">
+<p><span>Changed in version 2.0.0: </span>moved from <tt class="docutils literal"><span class="pre">cassandra.decoder</span></tt> to <tt class="docutils literal"><span class="pre">cassandra.query</span></tt></p>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -147,6 +156,9 @@ This is the default row factory.</p>
 <tt class="descclassname">cassandra.query.</tt><tt class="descname">ordered_dict_factory</tt><big>(</big><em>colnames</em>, <em>rows</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/query.html#ordered_dict_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.ordered_dict_factory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Like <a class="reference internal" href="#cassandra.query.dict_factory" title="cassandra.query.dict_factory"><tt class="xref py py-meth docutils literal"><span class="pre">dict_factory()</span></tt></a>, but returns each row as an OrderedDict,
 so the order of the columns is preserved.</p>
+<div class="versionchanged">
+<p><span>Changed in version 2.0.0: </span>moved from <tt class="docutils literal"><span class="pre">cassandra.decoder</span></tt> to <tt class="docutils literal"><span class="pre">cassandra.query</span></tt></p>
+</div>
 </dd></dl>
 
 <dl class="class">
@@ -185,6 +197,9 @@ the Session this is executed in will be used.</p>
 of <a class="reference internal" href="cluster.html#cassandra.cluster.Session.default_fetch_size" title="cassandra.cluster.Session.default_fetch_size"><tt class="xref py py-attr docutils literal"><span class="pre">Session.default_fetch_size</span></tt></a></p>
 <p>This only takes effect when protocol version 2 or higher is used.
 See <a class="reference internal" href="cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">Cluster.protocol_version</span></tt></a> for details.</p>
+<div class="versionadded">
+<p><span>New in version 2.0.0.</span></p>
+</div>
 </dd></dl>
 
 <dl class="attribute">
@@ -211,18 +226,21 @@ For example, if a conditional write has a <a class="reference internal" href="#c
 <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.QUORUM" title="cassandra.ConsistencyLevel.QUORUM"><tt class="xref py py-attr docutils literal"><span class="pre">QUORUM</span></tt></a> read is guaranteed to see that write.
 But if the regular <a class="reference internal" href="#cassandra.query.Statement.consistency_level" title="cassandra.query.Statement.consistency_level"><tt class="xref py py-attr docutils literal"><span class="pre">consistency_level</span></tt></a> of that write is
 <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.ANY" title="cassandra.ConsistencyLevel.ANY"><tt class="xref py py-attr docutils literal"><span class="pre">ANY</span></tt></a>, then only a read with a
-:attr`~.consistency_level` of <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.SERIAL" title="cassandra.ConsistencyLevel.SERIAL"><tt class="xref py py-attr docutils literal"><span class="pre">SERIAL</span></tt></a> is
+<a class="reference internal" href="#cassandra.query.Statement.consistency_level" title="cassandra.query.Statement.consistency_level"><tt class="xref py py-attr docutils literal"><span class="pre">consistency_level</span></tt></a> of <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.SERIAL" title="cassandra.ConsistencyLevel.SERIAL"><tt class="xref py py-attr docutils literal"><span class="pre">SERIAL</span></tt></a> is
 guaranteed to see it (even a read with consistency
 <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.ALL" title="cassandra.ConsistencyLevel.ALL"><tt class="xref py py-attr docutils literal"><span class="pre">ALL</span></tt></a> is not guaranteed to be enough).</p>
-<p>The serial consistency can only be one of <tt class="xref py py-attr docutils literal"><span class="pre">SERIAL</span></tt>
-or <tt class="xref py py-attr docutils literal"><span class="pre">LOCAL_SERIAL</span></tt>. While <tt class="docutils literal"><span class="pre">SERIAL</span></tt> guarantees full
+<p>The serial consistency can only be one of <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.SERIAL" title="cassandra.ConsistencyLevel.SERIAL"><tt class="xref py py-attr docutils literal"><span class="pre">SERIAL</span></tt></a>
+or <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel.LOCAL_SERIAL" title="cassandra.ConsistencyLevel.LOCAL_SERIAL"><tt class="xref py py-attr docutils literal"><span class="pre">LOCAL_SERIAL</span></tt></a>. While <tt class="docutils literal"><span class="pre">SERIAL</span></tt> guarantees full
 linearizability (with other <tt class="docutils literal"><span class="pre">SERIAL</span></tt> updates), <tt class="docutils literal"><span class="pre">LOCAL_SERIAL</span></tt> only
 guarantees it in the local data center.</p>
 <p>The serial consistency level is ignored for any query that is not a
 conditional update. Serial reads should use the regular
 <a class="reference internal" href="#cassandra.query.Statement.consistency_level" title="cassandra.query.Statement.consistency_level"><tt class="xref py py-attr docutils literal"><span class="pre">consistency_level</span></tt></a>.</p>
 <p>Serial consistency levels may only be used against Cassandra 2.0+
-and the <tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt> must be set to 2 or higher.</p>
+and the <a class="reference internal" href="cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> must be set to 2 or higher.</p>
+<div class="versionadded">
+<p><span>New in version 2.0.0.</span></p>
+</div>
 </dd></dl>
 
 <dl class="attribute">
@@ -297,6 +315,9 @@ and returns this instance.  Note that <cite>values</cite> <em>must</em> be:
 <em class="property">class </em><tt class="descclassname">cassandra.query.</tt><tt class="descname">BatchStatement</tt><big>(</big><em>batch_type=BatchType.LOGGED</em>, <em>retry_policy=None</em>, <em>consistency_level=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/query.html#BatchStatement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BatchStatement" title="Permalink to this definition">¶</a></dt>
 <dd><p>A protocol-level batch of operations which are applied atomically
 by default.</p>
+<div class="versionadded">
+<p><span>New in version 2.0.0.</span></p>
+</div>
 <p><cite>batch_type</cite> specifies The <a class="reference internal" href="#cassandra.query.BatchType" title="cassandra.query.BatchType"><tt class="xref py py-class docutils literal"><span class="pre">BatchType</span></tt></a> for the batch operation.
 Defaults to <a class="reference internal" href="#cassandra.query.BatchType.LOGGED" title="cassandra.query.BatchType.LOGGED"><tt class="xref py py-attr docutils literal"><span class="pre">BatchType.LOGGED</span></tt></a>.</p>
 <p><cite>retry_policy</cite> should be a <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">RetryPolicy</span></tt></a> instance for
@@ -321,7 +342,7 @@ to be used for all operations in the batch.</p>
 </pre></div>
 </div>
 <div class="versionadded">
-<p><span>New in version 2.0.0b1.</span></p>
+<p><span>New in version 2.0.0.</span></p>
 </div>
 <dl class="attribute">
 <dt id="cassandra.query.BatchStatement.batch_type">
@@ -354,6 +375,9 @@ parameters when no parameters are needed.</p>
 <em class="property">class </em><tt class="descclassname">cassandra.query.</tt><tt class="descname">BatchType</tt><a class="reference internal" href="../../_modules/cassandra/query.html#BatchType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BatchType" title="Permalink to this definition">¶</a></dt>
 <dd><p>A BatchType is used with <a class="reference internal" href="#cassandra.query.BatchStatement" title="cassandra.query.BatchStatement"><tt class="xref py py-class docutils literal"><span class="pre">BatchStatement</span></tt></a> instances to control
 the atomicity of the batch operation.</p>
+<div class="versionadded">
+<p><span>New in version 2.0.0.</span></p>
+</div>
 <dl class="attribute">
 <dt id="cassandra.query.BatchType.LOGGED">
 <tt class="descname">LOGGED</tt><em class="property"> = BatchType.LOGGED</em><a class="headerlink" href="#cassandra.query.BatchType.LOGGED" title="Permalink to this definition">¶</a></dt>
@@ -521,7 +545,7 @@ received the query.</p>
           <a href="pool.html" title="cassandra.pool - Hosts and Connection Pools"
              >next</a> |</li>
         <li class="right" >
-          <a href="metadata.html" title="cassandra.metadata - Schema and Ring Topology"
+          <a href="metrics.html" title="cassandra.metrics - Performance Metrics"
              >previous</a> |</li>
         <li><a href="../../index.html">Cassandra Driver 2.0.0b1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 

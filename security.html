@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Security &mdash; Cassandra Driver 2.0.0b1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0.0b1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 2.0.0b1 documentation" href="index.html" />
+    <link rel="prev" title="Paging Large Queries" href="query_paging.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="query_paging.html" title="Paging Large Queries"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Cassandra Driver 2.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Security</a><ul>
+<li><a class="reference internal" href="#authentication">Authentication</a><ul>
+<li><a class="reference internal" href="#custom-authenticators">Custom Authenticators</a></li>
+<li><a class="reference internal" href="#protocol-v1-authentication">Protocol v1 Authentication</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ssl">SSL</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="query_paging.html"
+                        title="previous chapter">Paging Large Queries</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/security.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="security">
+<span id="id1"></span><h1>Security<a class="headerlink" href="#security" title="Permalink to this headline">¶</a></h1>
+<p>The two main security components you will use with the
+Python driver are Authentication and SSL.</p>
+<div class="section" id="authentication">
+<h2>Authentication<a class="headerlink" href="#authentication" title="Permalink to this headline">¶</a></h2>
+<p>Versions 2.0 and higher of the driver support a SASL-based
+authentication mechanism when <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a>
+is set to 2 or higher.  To use this authentication, set
+<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.auth_provider" title="cassandra.cluster.Cluster.auth_provider"><tt class="xref py py-attr docutils literal"><span class="pre">auth_provider</span></tt></a> to an instance of a subclass
+of <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.AuthProvider" title="cassandra.auth.AuthProvider"><tt class="xref py py-class docutils literal"><span class="pre">AuthProvider</span></tt></a>.  When working
+with Cassandra&#8217;s <tt class="docutils literal"><span class="pre">PasswordAuthenticator</span></tt>, you can use
+the <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.PlainTextAuthProvider" title="cassandra.auth.PlainTextAuthProvider"><tt class="xref py py-class docutils literal"><span class="pre">PlainTextAuthProvider</span></tt></a> class.</p>
+<p>For example, suppose Cassandra is setup with its default
+&#8216;cassandra&#8217; user with a password of &#8216;cassandra&#8217;:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<span class="kn">from</span> <span class="nn">cassandra.auth</span> <span class="kn">import</span> <span class="n">PlainTextAuthProvider</span>
+
+<span class="n">auth_provider</span> <span class="o">=</span> <span class="n">PlainTextAuthProvider</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s">&#39;cassandra&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s">&#39;cassandra&#39;</span><span class="p">)</span>
+<span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">auth_provider</span><span class="o">=</span><span class="n">auth_provider</span><span class="p">,</span> <span class="n">protocol_version</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When working with version 2 or higher of the driver, the protocol
+version is set to 2 by default, but we&#8217;ve included it in the example
+to be explicit.</p>
+<div class="section" id="custom-authenticators">
+<h3>Custom Authenticators<a class="headerlink" href="#custom-authenticators" title="Permalink to this headline">¶</a></h3>
+<p>If you&#8217;re using something other than Cassandra&#8217;s <tt class="docutils literal"><span class="pre">PasswordAuthenticator</span></tt>,
+you may need to create your own subclasses of <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.AuthProvider" title="cassandra.auth.AuthProvider"><tt class="xref py py-class docutils literal"><span class="pre">AuthProvider</span></tt></a> and
+<a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.Authenticator" title="cassandra.auth.Authenticator"><tt class="xref py py-class docutils literal"><span class="pre">Authenticator</span></tt></a>.  You can use <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.PlainTextAuthProvider" title="cassandra.auth.PlainTextAuthProvider"><tt class="xref py py-class docutils literal"><span class="pre">PlainTextAuthProvider</span></tt></a>
+and <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.PlainTextAuthenticator" title="cassandra.auth.PlainTextAuthenticator"><tt class="xref py py-class docutils literal"><span class="pre">PlainTextAuthenticator</span></tt></a> as example implementations.</p>
+</div>
+<div class="section" id="protocol-v1-authentication">
+<h3>Protocol v1 Authentication<a class="headerlink" href="#protocol-v1-authentication" title="Permalink to this headline">¶</a></h3>
+<p>When working with Cassandra 1.2 (or a higher version with
+<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> set to <tt class="docutils literal"><span class="pre">1</span></tt>), you will not pass in
+an <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.AuthProvider" title="cassandra.auth.AuthProvider"><tt class="xref py py-class docutils literal"><span class="pre">AuthProvider</span></tt></a> instance.  Instead, you should pass a dict
+of credentials with a <tt class="docutils literal"><span class="pre">username</span></tt> and <tt class="docutils literal"><span class="pre">password</span></tt> key:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+
+<span class="n">credentials</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;username&#39;</span><span class="p">:</span> <span class="s">&#39;joe&#39;</span><span class="p">,</span> <span class="s">&#39;password&#39;</span><span class="p">:</span> <span class="s">&#39;1234&#39;</span><span class="p">}</span>
+<span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">auth_provider</span><span class="o">=</span><span class="n">credentials</span><span class="p">,</span> <span class="n">protocol_version</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="ssl">
+<h2>SSL<a class="headerlink" href="#ssl" title="Permalink to this headline">¶</a></h2>
+<p>To enable SSL you will need to set <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.ssl_options" title="cassandra.cluster.Cluster.ssl_options"><tt class="xref py py-attr docutils literal"><span class="pre">Cluster.ssl_options</span></tt></a> to a
+dict of options.  These will be passed as kwargs to <tt class="docutils literal"><span class="pre">ssl.wrap_socket()</span></tt>
+when new sockets are created.  This should be used when client encryption
+is enabled in Cassandra.</p>
+<p>By default, a <tt class="docutils literal"><span class="pre">ca_certs</span></tt> value should be supplied (the value should be
+a string pointing to the location of the CA certs file), and you probably
+want to specify <tt class="docutils literal"><span class="pre">ssl_version</span></tt> as <tt class="docutils literal"><span class="pre">ssl.PROTOCOL_TLSv1</span></tt> to match
+Cassandra&#8217;s default protocol.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<span class="kn">from</span> <span class="nn">ssl</span> <span class="kn">import</span> <span class="n">PROTOCOL_TLSv1</span>
+
+<span class="n">ssl_opts</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;ca_certs&#39;</span><span class="p">:</span> <span class="s">&#39;/path/to/my/ca.certs&#39;</span><span class="p">,</span>
+            <span class="s">&#39;ssl_version&#39;</span><span class="p">:</span> <span class="n">PROTOCOL_TLSv1</span><span class="p">}</span>
+<span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">ssl_options</span><span class="o">=</span><span class="n">ssl_opts</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For further reading, Andrew Mussey has published a thorough guide on
+<a class="reference external" href="http://blog.amussey.com/post/64036730812/cassandra-2-0-client-server-ssl-with-datastax-python">Using SSL with the DataStax Python driver</a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="query_paging.html" title="Paging Large Queries"
+             >previous</a> |</li>
+        <li><a href="index.html">Cassandra Driver 2.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

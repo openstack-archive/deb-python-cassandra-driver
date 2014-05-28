@@ -115,8 +115,8 @@
 
 <span class="sd">        statements_and_params = []</span>
 <span class="sd">        for user_id in user_ids:</span>
-<span class="sd">            statatements_and_params.append(</span>
-<span class="sd">                (select_statement, user_id))</span>
+<span class="sd">            params = (user_id, )</span>
+<span class="sd">            statatements_and_params.append((select_statement, params))</span>
 
 <span class="sd">        results = execute_concurrent(</span>
 <span class="sd">            session, statements_and_params, raise_on_first_error=False)</span>
@@ -164,9 +164,9 @@
 </div>
 <div class="viewcode-block" id="execute_concurrent_with_args"><a class="viewcode-back" href="../../api/cassandra/concurrent.html#cassandra.concurrent.execute_concurrent_with_args">[docs]</a><span class="k">def</span> <span class="nf">execute_concurrent_with_args</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Like :meth:`~.execute_concurrent`, but takes a single statement and a</span>
-<span class="sd">    sequence of parameters.  Each item in ``parameters`` should be a sequence</span>
-<span class="sd">    or :const:`None`.</span>
+<span class="sd">    Like :meth:`~cassandra.concurrent.execute_concurrent()`, but takes a single</span>
+<span class="sd">    statement and a sequence of parameters.  Each item in ``parameters``</span>
+<span class="sd">    should be a sequence or :const:`None`.</span>
 
 <span class="sd">    Example usage::</span>
 

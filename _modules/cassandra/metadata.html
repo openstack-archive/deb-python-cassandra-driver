@@ -246,11 +246,11 @@
 
     <span class="k">def</span> <span class="nf">_keyspace_added</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ksname</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span><span class="o">.</span><span class="n">rebuild_keyspace</span><span class="p">(</span><span class="n">ksname</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span><span class="o">.</span><span class="n">rebuild_keyspace</span><span class="p">(</span><span class="n">ksname</span><span class="p">,</span> <span class="n">build_if_absent</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_keyspace_updated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ksname</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span><span class="o">.</span><span class="n">rebuild_keyspace</span><span class="p">(</span><span class="n">ksname</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span><span class="o">.</span><span class="n">rebuild_keyspace</span><span class="p">(</span><span class="n">ksname</span><span class="p">,</span> <span class="n">build_if_absent</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_keyspace_removed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ksname</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span><span class="p">:</span>
@@ -527,7 +527,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dc_replication_factors</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dc_replication_factors</span> <span class="o">=</span> <span class="n">dc_replication_factors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dc_replication_factors</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dc_replication_factors</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
 
     <span class="k">def</span> <span class="nf">make_token_replica_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_to_host_owner</span><span class="p">,</span> <span class="n">ring</span><span class="p">):</span>
         <span class="c"># note: this does not account for hosts having different racks</span>
@@ -865,7 +866,7 @@
     <span class="k">def</span> <span class="nf">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">maybe_escape_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>  <span class="c"># NOQA</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">):</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf8&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">maybe_escape_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
@@ -1019,10 +1020,14 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">rebuild_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span> <span class="o">=</span> \
-            <span class="bp">self</span><span class="o">.</span><span class="n">replica_map_for_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">rebuild_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">build_if_absent</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_lock</span><span class="p">:</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">build_if_absent</span> <span class="ow">and</span> <span class="n">current</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">build_if_absent</span> <span class="ow">and</span> <span class="n">current</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
+                <span class="n">replica_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">replica_map_for_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span> <span class="o">=</span> <span class="n">replica_map</span>
 
     <span class="k">def</span> <span class="nf">replica_map_for_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ks_metadata</span><span class="p">):</span>
         <span class="n">strategy</span> <span class="o">=</span> <span class="n">ks_metadata</span><span class="o">.</span><span class="n">replication_strategy</span>
@@ -1041,7 +1046,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">tokens_to_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">tokens_to_hosts</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">rebuild_keyspace</span><span class="p">(</span><span class="n">keyspace</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rebuild_keyspace</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">build_if_absent</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="n">tokens_to_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">tokens_to_hosts</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">return</span> <span class="p">[]</span>

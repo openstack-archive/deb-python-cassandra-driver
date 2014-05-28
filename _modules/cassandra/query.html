@@ -102,12 +102,20 @@
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
 
-<span class="n">NON_ALPHA_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;\W&#39;</span><span class="p">)</span>
-<span class="n">END_UNDERSCORE_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;^_*(\w*[a-zA-Z0-9])_*$&#39;</span><span class="p">)</span>
+<span class="n">NON_ALPHA_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;[^a-zA-Z0-9]&#39;</span><span class="p">)</span>
+<span class="n">START_BADCHAR_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;^[^a-zA-Z0-9]*&#39;</span><span class="p">)</span>
+<span class="n">END_BADCHAR_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;[^a-zA-Z0-9_]*$&#39;</span><span class="p">)</span>
+
+<span class="n">_clean_name_cache</span> <span class="o">=</span> <span class="p">{}</span>
 
 
 <span class="k">def</span> <span class="nf">_clean_column_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">END_UNDERSCORE_REGEX</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&quot;\g&lt;1&gt;&quot;</span><span class="p">,</span> <span class="n">NON_ALPHA_REGEX</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&quot;_&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_clean_name_cache</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">clean</span> <span class="o">=</span> <span class="n">NON_ALPHA_REGEX</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&quot;_&quot;</span><span class="p">,</span> <span class="n">START_BADCHAR_REGEX</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">END_BADCHAR_REGEX</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)))</span>
+        <span class="n">_clean_name_cache</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">clean</span>
+        <span class="k">return</span> <span class="n">clean</span>
 
 
 <div class="viewcode-block" id="tuple_factory"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.tuple_factory">[docs]</a><span class="k">def</span> <span class="nf">tuple_factory</span><span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="n">rows</span><span class="p">):</span>
@@ -122,6 +130,9 @@
 <span class="sd">        &gt;&gt;&gt; rows = session.execute(&quot;SELECT name, age FROM users LIMIT 1&quot;)</span>
 <span class="sd">        &gt;&gt;&gt; print rows[0]</span>
 <span class="sd">        (&#39;Bob&#39;, 42)</span>
+
+<span class="sd">    .. versionchanged:: 2.0.0</span>
+<span class="sd">        moved from ``cassandra.decoder`` to ``cassandra.query``</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">rows</span>
 
@@ -151,6 +162,9 @@
 <span class="sd">        &gt;&gt;&gt; age = user[1]</span>
 <span class="sd">        &gt;&gt;&gt; print &quot;name: %s, age: %d&quot; % (name, age)</span>
 <span class="sd">        name: Bob, age: 42</span>
+
+<span class="sd">    .. versionchanged:: 2.0.0</span>
+<span class="sd">        moved from ``cassandra.decoder`` to ``cassandra.query``</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">Row</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Row&#39;</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">_clean_column_name</span><span class="p">,</span> <span class="n">colnames</span><span class="p">))</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">Row</span><span class="p">(</span><span class="o">*</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
@@ -169,6 +183,8 @@
 <span class="sd">        &gt;&gt;&gt; print rows[0]</span>
 <span class="sd">        {&#39;age&#39;: 42, &#39;name&#39;: &#39;Bob&#39;}</span>
 
+<span class="sd">    .. versionchanged:: 2.0.0</span>
+<span class="sd">        moved from ``cassandra.decoder`` to ``cassandra.query``</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
 
@@ -177,6 +193,9 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Like :meth:`~cassandra.query.dict_factory`, but returns each row as an OrderedDict,</span>
 <span class="sd">    so the order of the columns is preserved.</span>
+
+<span class="sd">    .. versionchanged:: 2.0.0</span>
+<span class="sd">        moved from ``cassandra.decoder`` to ``cassandra.query``</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">OrderedDict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
 
@@ -201,10 +220,11 @@
 <span class="sd">    this will be set to a :class:`.QueryTrace` instance.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">consistency_level</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
+    <span class="n">consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The :class:`.ConsistencyLevel` to be used for this operation.  Defaults</span>
-<span class="sd">    to :attr:`.ConsistencyLevel.ONE`.</span>
+<span class="sd">    to :const:`None`, which means that the default consistency level for</span>
+<span class="sd">    the Session this is executed in will be used.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">fetch_size</span> <span class="o">=</span> <span class="bp">None</span>
@@ -214,6 +234,8 @@
 
 <span class="sd">    This only takes effect when protocol version 2 or higher is used.</span>
 <span class="sd">    See :attr:`.Cluster.protocol_version` for details.</span>
+
+<span class="sd">    .. versionadded:: 2.0.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_serial_consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
@@ -285,12 +307,12 @@
 <span class="sd">        :attr:`~.ConsistencyLevel.QUORUM` read is guaranteed to see that write.</span>
 <span class="sd">        But if the regular :attr:`~.consistency_level` of that write is</span>
 <span class="sd">        :attr:`~.ConsistencyLevel.ANY`, then only a read with a</span>
-<span class="sd">        :attr`~.consistency_level` of :attr:`~.ConsistencyLevel.SERIAL` is</span>
+<span class="sd">        :attr:`~.consistency_level` of :attr:`~.ConsistencyLevel.SERIAL` is</span>
 <span class="sd">        guaranteed to see it (even a read with consistency</span>
 <span class="sd">        :attr:`~.ConsistencyLevel.ALL` is not guaranteed to be enough).</span>
 
-<span class="sd">        The serial consistency can only be one of :attr:`~ConsistencyLevel.SERIAL`</span>
-<span class="sd">        or :attr:`~ConsistencyLevel.LOCAL_SERIAL`. While ``SERIAL`` guarantees full</span>
+<span class="sd">        The serial consistency can only be one of :attr:`~.ConsistencyLevel.SERIAL`</span>
+<span class="sd">        or :attr:`~.ConsistencyLevel.LOCAL_SERIAL`. While ``SERIAL`` guarantees full</span>
 <span class="sd">        linearizability (with other ``SERIAL`` updates), ``LOCAL_SERIAL`` only</span>
 <span class="sd">        guarantees it in the local data center.</span>
 
@@ -299,7 +321,9 @@
 <span class="sd">        :attr:`consistency_level`.</span>
 
 <span class="sd">        Serial consistency levels may only be used against Cassandra 2.0+</span>
-<span class="sd">        and the :attr:`~Cluster.protocol_version` must be set to 2 or higher.</span>
+<span class="sd">        and the :attr:`~.Cluster.protocol_version` must be set to 2 or higher.</span>
+
+<span class="sd">        .. versionadded:: 2.0.0</span>
 <span class="sd">        &quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -330,7 +354,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_string</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">]</span>
+        <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">,</span> <span class="s">&#39;Not Set&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="s">u&#39;&lt;SimpleStatement query=&quot;</span><span class="si">%s</span><span class="s">&quot;, consistency=</span><span class="si">%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span>
                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query_string</span><span class="p">,</span> <span class="n">consistency</span><span class="p">))</span>
     <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
@@ -353,12 +377,11 @@
 
     <span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="n">consistency_level</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
+    <span class="n">consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">routing_key_indexes</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span>
-                 <span class="n">consistency_level</span><span class="o">=</span><span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span><span class="p">,</span> <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">fetch_size</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">column_metadata</span> <span class="o">=</span> <span class="n">column_metadata</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">query_id</span> <span class="o">=</span> <span class="n">query_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="n">routing_key_indexes</span>
@@ -405,7 +428,7 @@
         <span class="k">return</span> <span class="n">BoundStatement</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">]</span>
+        <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">,</span> <span class="s">&#39;Not Set&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="s">u&#39;&lt;PreparedStatement query=&quot;</span><span class="si">%s</span><span class="s">&quot;, consistency=</span><span class="si">%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span>
                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query_string</span><span class="p">,</span> <span class="n">consistency</span><span class="p">))</span>
     <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
@@ -543,7 +566,7 @@
             <span class="k">return</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">]</span>
+        <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">,</span> <span class="s">&#39;Not Set&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="s">u&#39;&lt;BoundStatement query=&quot;</span><span class="si">%s</span><span class="s">&quot;, values=</span><span class="si">%s</span><span class="s">, consistency=</span><span class="si">%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span>
                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">query_string</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_values</span><span class="p">,</span> <span class="n">consistency</span><span class="p">))</span>
     <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
@@ -553,6 +576,8 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A BatchType is used with :class:`.BatchStatement` instances to control</span>
 <span class="sd">    the atomicity of the batch operation.</span>
+
+<span class="sd">    .. versionadded:: 2.0.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOGGED</span> <span class="o">=</span> <span class="bp">None</span>
@@ -578,7 +603,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&quot;BatchType&lt;</span><span class="si">%s</span><span class="s">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="s">&quot;BatchType.</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">)</span>
 
 </div>
 <span class="n">BatchType</span><span class="o">.</span><span class="n">LOGGED</span> <span class="o">=</span> <span class="n">BatchType</span><span class="p">(</span><span class="s">&quot;LOGGED&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
@@ -590,6 +615,8 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A protocol-level batch of operations which are applied atomically</span>
 <span class="sd">    by default.</span>
+
+<span class="sd">    .. versionadded:: 2.0.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">batch_type</span> <span class="o">=</span> <span class="bp">None</span>
@@ -633,7 +660,7 @@
 <span class="sd">            batch.add(SimpleStatement(&quot;DELETE FROM pending_users WHERE name=%s&quot;, (name,))</span>
 <span class="sd">            session.execute(batch)</span>
 
-<span class="sd">        .. versionadded:: 2.0.0b1</span>
+<span class="sd">        .. versionadded:: 2.0.0</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_type</span> <span class="o">=</span> <span class="n">batch_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span> <span class="o">=</span> <span class="p">[]</span>
@@ -681,7 +708,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">]</span>
+        <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">,</span> <span class="s">&#39;Not Set&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="s">u&#39;&lt;BatchStatement type=</span><span class="si">%s</span><span class="s">, statements=</span><span class="si">%d</span><span class="s">, consistency=</span><span class="si">%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span>
                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_type</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="p">),</span> <span class="n">consistency</span><span class="p">))</span>
     <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>

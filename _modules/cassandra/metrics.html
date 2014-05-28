@@ -1,0 +1,260 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.metrics &mdash; Cassandra Driver 2.0.0b1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0.0b1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 2.0.0b1 documentation" href="../../index.html" />
+    <link rel="up" title="cassandra" href="../cassandra.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 2.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for cassandra.metrics</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2013-2014 DataStax, Inc.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#</span>
+<span class="c"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
+
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">greplin</span> <span class="kn">import</span> <span class="n">scales</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+        <span class="s">&quot;The scales library is required for metrics support: &quot;</span>
+        <span class="s">&quot;https://pypi.python.org/pypi/scales&quot;</span><span class="p">)</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Metrics"><a class="viewcode-back" href="../../api/cassandra/metrics.html#cassandra.metrics.Metrics">[docs]</a><span class="k">class</span> <span class="nc">Metrics</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A collection of timers and counters for various performance metrics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">request_timer</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`greplin.scales.PmfStat` timer for requests. This is a dict-like</span>
+<span class="sd">    object with the following keys:</span>
+
+<span class="sd">      * count - number of requests that have been timed</span>
+<span class="sd">      * min - min latency</span>
+<span class="sd">      * max - max latency</span>
+<span class="sd">      * mean - mean latency</span>
+<span class="sd">      * stdev - standard deviation for latencies</span>
+<span class="sd">      * median - median latency</span>
+<span class="sd">      * 75percentile - 75th percentile latencies</span>
+<span class="sd">      * 97percentile - 97th percentile latencies</span>
+<span class="sd">      * 98percentile - 98th percentile latencies</span>
+<span class="sd">      * 99percentile - 99th percentile latencies</span>
+<span class="sd">      * 999percentile - 99.9th percentile latencies</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">connection_errors</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`greplin.scales.IntStat` count of the number of times that a</span>
+<span class="sd">    request to a Cassandra node has failed due to a connection problem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">write_timeouts</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`greplin.scales.IntStat` count of write requests that resulted</span>
+<span class="sd">    in a timeout.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">read_timeouts</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`greplin.scales.IntStat` count of read requests that resulted</span>
+<span class="sd">    in a timeout.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">unavailables</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`greplin.scales.IntStat` count of write or read requests that</span>
+<span class="sd">    failed due to an insufficient number of replicas being alive to meet</span>
+<span class="sd">    the requested :class:`.ConsistencyLevel`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">other_errors</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`greplin.scales.IntStat` count of all other request failures,</span>
+<span class="sd">    including failures caused by invalid requests, bootstrapping nodes,</span>
+<span class="sd">    overloaded nodes, etc.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">retries</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`greplin.scales.IntStat` count of the number of times a</span>
+<span class="sd">    request was retried based on the :class:`.RetryPolicy` decision.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ignores</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`greplin.scales.IntStat` count of the number of times a</span>
+<span class="sd">    failed request was ignored based on the :class:`.RetryPolicy` decision.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">known_hosts</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`greplin.scales.IntStat` count of the number of nodes in</span>
+<span class="sd">    the cluster that the driver is aware of, regardless of whether any</span>
+<span class="sd">    connections are opened to those nodes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">connected_to</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`greplin.scales.IntStat` count of the number of nodes that</span>
+<span class="sd">    the driver currently has at least one connection open to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">open_connections</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`greplin.scales.IntStat` count of the number connections</span>
+<span class="sd">    the driver currently has open.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster_proxy</span><span class="p">):</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Starting metric capture&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">scales</span><span class="o">.</span><span class="n">collection</span><span class="p">(</span><span class="s">&#39;/cassandra&#39;</span><span class="p">,</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">PmfStat</span><span class="p">(</span><span class="s">&#39;request_timer&#39;</span><span class="p">),</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">IntStat</span><span class="p">(</span><span class="s">&#39;connection_errors&#39;</span><span class="p">),</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">IntStat</span><span class="p">(</span><span class="s">&#39;write_timeouts&#39;</span><span class="p">),</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">IntStat</span><span class="p">(</span><span class="s">&#39;read_timeouts&#39;</span><span class="p">),</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">IntStat</span><span class="p">(</span><span class="s">&#39;unavailables&#39;</span><span class="p">),</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">IntStat</span><span class="p">(</span><span class="s">&#39;other_errors&#39;</span><span class="p">),</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">IntStat</span><span class="p">(</span><span class="s">&#39;retries&#39;</span><span class="p">),</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">IntStat</span><span class="p">(</span><span class="s">&#39;ignores&#39;</span><span class="p">),</span>
+
+            <span class="c"># gauges</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">Stat</span><span class="p">(</span><span class="s">&#39;known_hosts&#39;</span><span class="p">,</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">cluster_proxy</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">())),</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">Stat</span><span class="p">(</span><span class="s">&#39;connected_to&#39;</span><span class="p">,</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">cluster_proxy</span><span class="o">.</span><span class="n">sessions</span><span class="p">)))),</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">Stat</span><span class="p">(</span><span class="s">&#39;open_connections&#39;</span><span class="p">,</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">open_count</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">cluster_proxy</span><span class="o">.</span><span class="n">sessions</span><span class="p">)))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_timer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">request_timer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connection_errors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">connection_errors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_timeouts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">write_timeouts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_timeouts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">read_timeouts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unavailables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">unavailables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">other_errors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">other_errors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">retries</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ignores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">ignores</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">known_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">known_hosts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connected_to</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">connected_to</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open_connections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">open_connections</span>
+
+    <span class="k">def</span> <span class="nf">on_connection_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">connection_errors</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">on_write_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">write_timeouts</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">on_read_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">read_timeouts</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">on_unavailable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">unavailables</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">on_other_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">other_errors</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">on_ignore</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">ignores</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">on_retry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">retries</span> <span class="o">+=</span> <span class="mi">1</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Cassandra Driver 2.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

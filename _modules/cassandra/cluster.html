@@ -197,6 +197,8 @@
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">new_f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_shutdown</span><span class="p">:</span>
+            <span class="k">return</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">_future_completed</span><span class="p">)</span>
@@ -263,12 +265,42 @@
 <span class="sd">    Setting this to :const:`False` disables compression.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">auth_provider</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    An optional function that accepts one argument, the IP address of a node,</span>
-<span class="sd">    and returns a dict of credentials for that node.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_auth_provider</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_auth_provider_callable</span> <span class="o">=</span> <span class="bp">None</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">auth_provider</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        When :attr:`~.Cluster.protocol_version` is 2 or higher, this should</span>
+<span class="sd">        be an instance of a subclass of :class:`~cassandra.auth.AuthProvider`,</span>
+<span class="sd">        such as :class:`~.PlainTextAuthProvider`.</span>
+
+<span class="sd">        When :attr:`~.Cluster.protocol_version` is 1, this should be</span>
+<span class="sd">        a function that accepts one argument, the IP address of a node,</span>
+<span class="sd">        and returns a dict of credentials for that node.</span>
+
+<span class="sd">        When not using authentication, this should be left as :const:`None`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auth_provider</span>
+
+    <span class="nd">@auth_provider.setter</span>  <span class="c"># noqa</span>
+<div class="viewcode-block" id="Cluster.auth_provider"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.auth_provider">[docs]</a>    <span class="k">def</span> <span class="nf">auth_provider</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_auth_provider</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">return</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_auth_provider_callable</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">new_authenticator</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;auth_provider must implement the cassandra.auth.AuthProvider &quot;</span>
+                                <span class="s">&quot;interface when protocol_version &gt;= 2&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;auth_provider must be callable when protocol_version == 1&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_auth_provider_callable</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_auth_provider</span> <span class="o">=</span> <span class="n">value</span>
+</div>
     <span class="n">load_balancing_policy</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An instance of :class:`.policies.LoadBalancingPolicy` or</span>
@@ -299,12 +331,12 @@
     <span class="n">metrics_enabled</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Whether or not metric collection is enabled.  If enabled, :attr:`.metrics`</span>
-<span class="sd">    will be an instance of :class:`.metrics.Metrics`.</span>
+<span class="sd">    will be an instance of :class:`~cassandra.metrics.Metrics`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">metrics</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    An instance of :class:`.metrics.Metrics` if :attr:`.metrics_enabled` is</span>
+<span class="sd">    An instance of :class:`cassandra.metrics.Metrics` if :attr:`.metrics_enabled` is</span>
 <span class="sd">    :const:`True`, else :const:`None`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -397,11 +429,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">contact_points</span> <span class="o">=</span> <span class="n">contact_points</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="o">=</span> <span class="n">compression</span>
-
-        <span class="k">if</span> <span class="n">auth_provider</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">auth_provider</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;auth_provider must be callable&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">auth_provider</span> <span class="o">=</span> <span class="n">auth_provider</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span> <span class="o">=</span> <span class="n">protocol_version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auth_provider</span> <span class="o">=</span> <span class="n">auth_provider</span>
 
         <span class="k">if</span> <span class="n">load_balancing_policy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">load_balancing_policy</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
@@ -435,7 +464,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ssl_options</span> <span class="o">=</span> <span class="n">ssl_options</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sockopts</span> <span class="o">=</span> <span class="n">sockopts</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cql_version</span> <span class="o">=</span> <span class="n">cql_version</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span> <span class="o">=</span> <span class="n">protocol_version</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_schema_agreement_wait</span> <span class="o">=</span> <span class="n">max_schema_agreement_wait</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">control_connection_timeout</span> <span class="o">=</span> <span class="n">control_connection_timeout</span>
 
@@ -546,8 +574,8 @@
         <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connection_class</span><span class="o">.</span><span class="n">factory</span><span class="p">,</span> <span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_make_connection_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">kwargs_dict</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_provider</span><span class="p">:</span>
-            <span class="n">kwargs_dict</span><span class="p">[</span><span class="s">&#39;credentials&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_provider</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auth_provider_callable</span><span class="p">:</span>
+            <span class="n">kwargs_dict</span><span class="p">[</span><span class="s">&#39;authenticator&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auth_provider_callable</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
 
         <span class="n">kwargs_dict</span><span class="p">[</span><span class="s">&#39;port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span>
         <span class="n">kwargs_dict</span><span class="p">[</span><span class="s">&#39;compression&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span>
@@ -796,12 +824,21 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Adding or renewing pools for new host </span><span class="si">%s</span><span class="s"> and notifying listeners&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_all_queries</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Done preparing queries for new host </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Handling new host </span><span class="si">%r</span><span class="s"> and notifying listeners&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+
+        <span class="n">distance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">distance</span> <span class="o">!=</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">IGNORED</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_all_queries</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Done preparing queries for new host </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">distance</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">IGNORED</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Not adding connection pool for new host </span><span class="si">%r</span><span class="s"> because the &quot;</span>
+                      <span class="s">&quot;load balancing policy has marked it as IGNORED&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+            <span class="k">return</span>
 
         <span class="n">futures_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
         <span class="n">futures_results</span> <span class="o">=</span> <span class="p">[]</span>
@@ -879,7 +916,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">new_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">new_host</span> <span class="ow">and</span> <span class="n">signal</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;New Cassandra host </span><span class="si">%s</span><span class="s"> added&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;New Cassandra host </span><span class="si">%r</span><span class="s"> discovered&quot;</span><span class="p">,</span> <span class="n">new_host</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="n">new_host</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">new_host</span>
@@ -1032,7 +1069,16 @@
 <span class="sd">    :meth:`.ResponseFuture.add_errback`; even if a query exceeds this default</span>
 <span class="sd">    timeout, neither the registered callback or errback will be called.</span>
 
-<span class="sd">    .. versionadded:: 2.0.0b1</span>
+<span class="sd">    .. versionadded:: 2.0.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_consistency_level</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The default :class:`~ConsistencyLevel` for operations executed through</span>
+<span class="sd">    this session.  This default may be overridden by setting the</span>
+<span class="sd">    :attr:`~.Statement.consistency_level` on individual statements.</span>
+
+<span class="sd">    .. versionadded:: 1.2.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">max_trace_wait</span> <span class="o">=</span> <span class="mf">2.0</span>
@@ -1053,7 +1099,7 @@
 <span class="sd">    This only takes effect when protocol version 2 or higher is used.</span>
 <span class="sd">    See :attr:`.Cluster.protocol_version` for details.</span>
 
-<span class="sd">    .. versionadded:: 2.0.0b1</span>
+<span class="sd">    .. versionadded:: 2.0.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_lock</span> <span class="o">=</span> <span class="bp">None</span>
@@ -1181,6 +1227,7 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">PreparedStatement</span><span class="p">):</span>
             <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
 
+        <span class="n">cl</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">consistency_level</span> <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">consistency_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_consistency_level</span>
         <span class="n">fetch_size</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">fetch_size</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">fetch_size</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_protocol_version</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="n">fetch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_fetch_size</span>
@@ -1190,11 +1237,11 @@
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
                 <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
             <span class="n">message</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span>
-                <span class="n">query_string</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">serial_consistency_level</span><span class="p">,</span>
+                <span class="n">query_string</span><span class="p">,</span> <span class="n">cl</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">serial_consistency_level</span><span class="p">,</span>
                 <span class="n">fetch_size</span><span class="o">=</span><span class="n">fetch_size</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">BoundStatement</span><span class="p">):</span>
             <span class="n">message</span> <span class="o">=</span> <span class="n">ExecuteMessage</span><span class="p">(</span>
-                <span class="n">query</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">query_id</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">,</span>
+                <span class="n">query</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">query_id</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">cl</span><span class="p">,</span>
                 <span class="n">query</span><span class="o">.</span><span class="n">serial_consistency_level</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="n">fetch_size</span><span class="p">)</span>
             <span class="n">prepared_statement</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">prepared_statement</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">BatchStatement</span><span class="p">):</span>
@@ -1204,8 +1251,7 @@
                     <span class="s">&quot;2 or higher (supported in Cassandra 2.0 and higher).  Consider &quot;</span>
                     <span class="s">&quot;setting Cluster.protocol_version to 2 to support this operation.&quot;</span><span class="p">)</span>
             <span class="n">message</span> <span class="o">=</span> <span class="n">BatchMessage</span><span class="p">(</span>
-                <span class="n">query</span><span class="o">.</span><span class="n">batch_type</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="p">,</span>
-                <span class="n">query</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">)</span>
+                <span class="n">query</span><span class="o">.</span><span class="n">batch_type</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="p">,</span> <span class="n">cl</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">trace</span><span class="p">:</span>
             <span class="n">message</span><span class="o">.</span><span class="n">tracing</span> <span class="o">=</span> <span class="bp">True</span>
@@ -1424,7 +1470,8 @@
 
     <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Internal &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_pool_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="n">pool</span><span class="o">.</span><span class="n">get_state</span><span class="p">())</span> <span class="k">for</span> <span class="n">host</span><span class="p">,</span> <span class="n">pool</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
@@ -1755,6 +1802,7 @@
             <span class="k">if</span> <span class="n">partitioner</span> <span class="ow">and</span> <span class="n">tokens</span><span class="p">:</span>
                 <span class="n">token_map</span><span class="p">[</span><span class="n">host</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span>
 
+        <span class="n">should_rebuild_token_map</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="n">found_hosts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">peers_result</span><span class="p">:</span>
             <span class="n">addr</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rpc_address&quot;</span><span class="p">)</span>
@@ -1771,8 +1819,9 @@
             <span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Found new host to connect to: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
                 <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="n">should_rebuild_token_map</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_update_location_info</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
+                <span class="n">should_rebuild_token_map</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_location_info</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
 
             <span class="n">tokens</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;tokens&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">partitioner</span> <span class="ow">and</span> <span class="n">tokens</span><span class="p">:</span>
@@ -1783,15 +1832,17 @@
                     <span class="n">old_host</span><span class="o">.</span><span class="n">address</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">found_hosts</span> <span class="ow">and</span> \
                     <span class="n">old_host</span><span class="o">.</span><span class="n">address</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">contact_points</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Found host that has been removed: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">old_host</span><span class="p">)</span>
+                <span class="n">should_rebuild_token_map</span> <span class="o">=</span> <span class="bp">True</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">remove_host</span><span class="p">(</span><span class="n">old_host</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">partitioner</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Fetched ring info, rebuilding metadata&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Finished fetching ring info&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">partitioner</span> <span class="ow">and</span> <span class="n">should_rebuild_token_map</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Rebuilding token map due to topology changes&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">rebuild_token_map</span><span class="p">(</span><span class="n">partitioner</span><span class="p">,</span> <span class="n">token_map</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_update_location_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">datacenter</span> <span class="o">==</span> <span class="n">datacenter</span> <span class="ow">and</span> <span class="n">host</span><span class="o">.</span><span class="n">rack</span> <span class="o">==</span> <span class="n">rack</span><span class="p">:</span>
-            <span class="k">return</span>
+            <span class="k">return</span> <span class="bp">False</span>
 
         <span class="c"># If the dc/rack information changes, we need to update the load balancing policy.</span>
         <span class="c"># For that, we remove and re-add the node against the policy. Not the most elegant, and assumes</span>
@@ -1799,6 +1850,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">on_down</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
         <span class="n">host</span><span class="o">.</span><span class="n">set_location_info</span><span class="p">(</span><span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">on_up</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">_handle_topology_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="n">change_type</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&quot;change_type&quot;</span><span class="p">]</span>
@@ -2167,6 +2219,8 @@
 <span class="sd">        Returns :const:`True` if there are more pages left in the</span>
 <span class="sd">        query results, :const:`False` otherwise.  This should only</span>
 <span class="sd">        be checked after the first page has been returned.</span>
+
+<span class="sd">        .. versionadded:: 2.0.0</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paging_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
 </div>
@@ -2177,6 +2231,8 @@
 <span class="sd">        is raised.  Also see :attr:`.has_more_pages`.</span>
 
 <span class="sd">        This should only be called after the first page has been returned.</span>
+
+<span class="sd">        .. versionadded:: 2.0.0</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paging_state</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">QueryExhausted</span><span class="p">()</span>
@@ -2597,6 +2653,8 @@
 <span class="sd">    Raised when :meth:`.ResponseFuture.start_fetching_next_page()` is called and</span>
 <span class="sd">    there are no more pages.  You can check :attr:`.ResponseFuture.has_more_pages`</span>
 <span class="sd">    before calling to avoid this.</span>
+
+<span class="sd">    .. versionadded:: 2.0.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 
@@ -2620,7 +2678,7 @@
 <span class="sd">    an :class:`Exception` to be raised while fetching the next page, just</span>
 <span class="sd">    like you might see on a normal call to ``session.execute()``.</span>
 
-<span class="sd">    .. versionadded: 2.0.0b1</span>
+<span class="sd">    .. versionadded: 2.0.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_future</span><span class="p">,</span> <span class="n">initial_response</span><span class="p">):</span>
