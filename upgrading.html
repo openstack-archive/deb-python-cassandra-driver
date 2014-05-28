@@ -57,6 +57,7 @@
 <li><a class="reference internal" href="#protocol-level-batch-statements">Protocol-Level Batch Statements</a></li>
 <li><a class="reference internal" href="#sasl-based-authentication">SASL-based Authentication</a></li>
 <li><a class="reference internal" href="#lightweight-transactions">Lightweight Transactions</a></li>
+<li><a class="reference internal" href="#calling-cluster-shutdown">Calling Cluster.shutdown()</a></li>
 <li><a class="reference internal" href="#deprecations">Deprecations</a></li>
 <li><a class="reference internal" href="#dependency-changes">Dependency Changes</a></li>
 </ul>
@@ -109,7 +110,14 @@ in 2.1 are not yet supported.</p>
 <div class="section" id="using-the-v2-native-protocol">
 <h3>Using the v2 Native Protocol<a class="headerlink" href="#using-the-v2-native-protocol" title="Permalink to this headline">¶</a></h3>
 <p>By default, the driver will attempt to use version 2 of Cassandra&#8217;s
-native protocol.  When working with Cassandra 1.2, you will need to
+native protocol. You can explicitly set the protocol version to
+2, though:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+
+<span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When working with Cassandra 1.2, you will need to
 explicitly set the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> to 1:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 
@@ -142,6 +150,13 @@ See the section on <a class="reference internal" href="security.html#security"><
 <p><a class="reference external" href="http://www.datastax.com/dev/blog/lightweight-transactions-in-cassandra-2-0">Lightweight transactions</a> are another new feature.  To use lightweight transactions, add <tt class="docutils literal"><span class="pre">IF</span></tt> clauses
 to your CQL queries and set the <a class="reference internal" href="api/cassandra/query.html#cassandra.query.Statement.serial_consistency_level" title="cassandra.query.Statement.serial_consistency_level"><tt class="xref py py-attr docutils literal"><span class="pre">serial_consistency_level</span></tt></a>
 on your statements.</p>
+</div>
+<div class="section" id="calling-cluster-shutdown">
+<h3>Calling Cluster.shutdown()<a class="headerlink" href="#calling-cluster-shutdown" title="Permalink to this headline">¶</a></h3>
+<p>In order to fix some issues around garbage collection and unclean interpreter
+shutdowns, version 2.0 of the driver requires you to call <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.shutdown" title="cassandra.cluster.Cluster.shutdown"><tt class="xref py py-meth docutils literal"><span class="pre">Cluster.shutdown()</span></tt></a>
+on your <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><tt class="xref py py-class docutils literal"><span class="pre">Cluster</span></tt></a> objects when you are through with them.
+This helps to guarantee a clean shutdown.</p>
 </div>
 <div class="section" id="deprecations">
 <h3>Deprecations<a class="headerlink" href="#deprecations" title="Permalink to this headline">¶</a></h3>
