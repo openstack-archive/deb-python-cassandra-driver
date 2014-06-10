@@ -23,6 +23,8 @@ Bug Fixes
   actually changed
 * Avoid preparing queries for hosts that should be ignored (such as
   remote hosts when using the DCAwareRoundRobinPolicy) (PYTHON-75)
+* Ensure token map is rebuilt when hosts are removed from
+  the cluster
 
 1.1.2
 =====
