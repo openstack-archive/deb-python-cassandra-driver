@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 2.0.1 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 2.0.2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.0.1',
+        VERSION:     '2.0.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.0.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.0.2 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.0.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.0.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -597,6 +597,7 @@
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Cluster is already shut down&quot;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_setup</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">connection_class</span><span class="o">.</span><span class="n">initialize_reactor</span><span class="p">()</span>
                 <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">_shutdown_cluster</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
                 <span class="k">for</span> <span class="n">address</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contact_points</span><span class="p">:</span>
                     <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
@@ -1757,17 +1758,18 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">rebuild_schema</span><span class="p">(</span><span class="n">ks_result</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">,</span> <span class="n">col_result</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_token_rebuild</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="n">force_token_rebuild</span><span class="o">=</span><span class="n">force_token_rebuild</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ReferenceError</span><span class="p">:</span>
             <span class="k">pass</span>  <span class="c"># our weak reference to the Cluster is no good</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Error refreshing node list and token map&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_signal_error</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                                         <span class="n">force_token_rebuild</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">preloaded_results</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Refreshing node list and token map using preloaded results&quot;</span><span class="p">)</span>
             <span class="n">peers_result</span> <span class="o">=</span> <span class="n">preloaded_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -1802,7 +1804,7 @@
             <span class="k">if</span> <span class="n">partitioner</span> <span class="ow">and</span> <span class="n">tokens</span><span class="p">:</span>
                 <span class="n">token_map</span><span class="p">[</span><span class="n">host</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span>
 
-        <span class="n">should_rebuild_token_map</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">should_rebuild_token_map</span> <span class="o">=</span> <span class="n">force_token_rebuild</span>
         <span class="n">found_hosts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">peers_result</span><span class="p">:</span>
             <span class="n">addr</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rpc_address&quot;</span><span class="p">)</span>
@@ -1828,12 +1830,11 @@
                 <span class="n">token_map</span><span class="p">[</span><span class="n">host</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span>
 
         <span class="k">for</span> <span class="n">old_host</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">old_host</span><span class="o">.</span><span class="n">address</span> <span class="o">!=</span> <span class="n">connection</span><span class="o">.</span><span class="n">host</span> <span class="ow">and</span> \
-                    <span class="n">old_host</span><span class="o">.</span><span class="n">address</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">found_hosts</span> <span class="ow">and</span> \
-                    <span class="n">old_host</span><span class="o">.</span><span class="n">address</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">contact_points</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Found host that has been removed: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">old_host</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">old_host</span><span class="o">.</span><span class="n">address</span> <span class="o">!=</span> <span class="n">connection</span><span class="o">.</span><span class="n">host</span> <span class="ow">and</span> <span class="n">old_host</span><span class="o">.</span><span class="n">address</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">found_hosts</span><span class="p">:</span>
                 <span class="n">should_rebuild_token_map</span> <span class="o">=</span> <span class="bp">True</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">remove_host</span><span class="p">(</span><span class="n">old_host</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">old_host</span><span class="o">.</span><span class="n">address</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">contact_points</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Found host that has been removed: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">old_host</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">remove_host</span><span class="p">(</span><span class="n">old_host</span><span class="p">)</span>
 
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Finished fetching ring info&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">partitioner</span> <span class="ow">and</span> <span class="n">should_rebuild_token_map</span><span class="p">:</span>
@@ -2012,10 +2013,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">(</span><span class="n">force_token_rebuild</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">(</span><span class="n">force_token_rebuild</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_stop_scheduler</span><span class="p">(</span><span class="n">scheduler</span><span class="p">,</span> <span class="n">thread</span><span class="p">):</span>
@@ -2721,7 +2722,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.0.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.0.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.io.asyncorereactor &mdash; Cassandra Driver 2.0.1 documentation</title>
+    <title>cassandra.io.asyncorereactor &mdash; Cassandra Driver 2.0.2 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '2.0.1',
+        VERSION:     '2.0.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.0.1 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.0.2 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.0.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.0.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -87,6 +87,7 @@
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">Lock</span><span class="p">,</span> <span class="n">Thread</span>
+<span class="kn">import</span> <span class="nn">weakref</span>
 
 <span class="kn">from</span> <span class="nn">six</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span>
@@ -113,6 +114,15 @@
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
 
+<span class="k">def</span> <span class="nf">_cleanup</span><span class="p">(</span><span class="n">loop_weakref</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">loop</span> <span class="o">=</span> <span class="n">loop_weakref</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ReferenceError</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">loop</span><span class="o">.</span><span class="n">_cleanup</span><span class="p">()</span>
+
+
 <span class="k">class</span> <span class="nc">AsyncoreLoop</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -122,6 +132,8 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_conns_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_conns</span> <span class="o">=</span> <span class="n">WeakSet</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">_cleanup</span><span class="p">,</span> <span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
 
     <span class="k">def</span> <span class="nf">maybe_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">should_start</span> <span class="o">=</span> <span class="bp">False</span>
@@ -136,10 +148,9 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_loop_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">should_start</span><span class="p">:</span>
-            <span class="n">thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_loop</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;cassandra_driver_event_loop&quot;</span><span class="p">)</span>
-            <span class="n">thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-            <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cleanup</span><span class="p">,</span> <span class="n">thread</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_loop</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;cassandra_driver_event_loop&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_run_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Starting asyncore event loop&quot;</span><span class="p">)</span>
@@ -162,11 +173,14 @@
 
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Asyncore event loop ended&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thread</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="p">:</span>
+            <span class="k">return</span>
+
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Waiting for event loop thread to join...&quot;</span><span class="p">)</span>
-        <span class="n">thread</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">thread</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
             <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="s">&quot;Event loop thread could not be joined, so shutdown may not be clean. &quot;</span>
                 <span class="s">&quot;Please call Cluster.shutdown() to avoid this.&quot;</span><span class="p">)</span>
@@ -188,11 +202,16 @@
 <span class="sd">    module in the Python standard library for its event loop.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_loop</span> <span class="o">=</span> <span class="n">AsyncoreLoop</span><span class="p">()</span>
+    <span class="n">_loop</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="n">_total_reqd_bytes</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">_writable</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">_readable</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">initialize_reactor</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cls</span><span class="o">.</span><span class="n">_loop</span><span class="p">:</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">AsyncoreLoop</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">factory</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -423,7 +442,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.0.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.0.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
