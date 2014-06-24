@@ -122,12 +122,15 @@ and <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.P
 <h3>Protocol v1 Authentication<a class="headerlink" href="#protocol-v1-authentication" title="Permalink to this headline">¶</a></h3>
 <p>When working with Cassandra 1.2 (or a higher version with
 <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> set to <tt class="docutils literal"><span class="pre">1</span></tt>), you will not pass in
-an <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.AuthProvider" title="cassandra.auth.AuthProvider"><tt class="xref py py-class docutils literal"><span class="pre">AuthProvider</span></tt></a> instance.  Instead, you should pass a dict
-of credentials with a <tt class="docutils literal"><span class="pre">username</span></tt> and <tt class="docutils literal"><span class="pre">password</span></tt> key:</p>
+an <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.AuthProvider" title="cassandra.auth.AuthProvider"><tt class="xref py py-class docutils literal"><span class="pre">AuthProvider</span></tt></a> instance.  Instead, you should pass in a
+function that takes one argument, the IP address of a host, and returns
+a dict of credentials with a <tt class="docutils literal"><span class="pre">username</span></tt> and <tt class="docutils literal"><span class="pre">password</span></tt> key:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 
-<span class="n">credentials</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;username&#39;</span><span class="p">:</span> <span class="s">&#39;joe&#39;</span><span class="p">,</span> <span class="s">&#39;password&#39;</span><span class="p">:</span> <span class="s">&#39;1234&#39;</span><span class="p">}</span>
-<span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">auth_provider</span><span class="o">=</span><span class="n">credentials</span><span class="p">,</span> <span class="n">protocol_version</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_credentials</span><span class="p">(</span><span class="n">host_address</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s">&#39;username&#39;</span><span class="p">:</span> <span class="s">&#39;joe&#39;</span><span class="p">,</span> <span class="s">&#39;password&#39;</span><span class="p">:</span> <span class="s">&#39;1234&#39;</span><span class="p">}</span>
+
+<span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">auth_provider</span><span class="o">=</span><span class="n">get_credentials</span><span class="p">,</span> <span class="n">protocol_version</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
