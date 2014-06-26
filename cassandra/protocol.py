@@ -88,6 +88,9 @@ class _MessageType(object):
 
         return msg.getvalue()
 
+    def finish_decode(self, *args, **kwargs):
+        pass
+
     def __repr__(self):
         return '<%s(%s)>' % (self.__class__.__name__, ', '.join('%s=%r' % i for i in _get_params(self)))
 
@@ -543,20 +546,37 @@ class ResultMessage(_MessageType):
     _HAS_MORE_PAGES_FLAG = 0x0002
     _NO_METADATA_FLAG = 0x0004
 
-    def __init__(self, kind, results, paging_state=None):
+    def __init__(self, kind, buf, results=None):
         self.kind = kind
+        self.buf = buf
         self.results = results
-        self.paging_state = paging_state
+
+    def finish_decode(self, column_metadata, protocol_version, user_type_map):
+        if self.kind != RESULT_KIND_ROWS:
+            return
+
+        self.paging_state, returned_metadata = self.recv_results_metadata(self.buf, user_type_map)
+        if column_metadata is None:
+            column_metadata = returned_metadata
+
+        rowcount = read_int(self.buf)
+        rows = [self.recv_row(self.buf, len(column_metadata)) for _ in range(rowcount)]
+        colnames = [c[2] for c in column_metadata]
+        coltypes = [c[3] for c in column_metadata]
+        parsed_rows = [
+            tuple(ctype.from_binary(val, protocol_version)
+                  for ctype, val in zip(coltypes, row))
+            for row in rows]
+        self.results = (colnames, parsed_rows)
 
     @classmethod
     def recv_body(cls, f, protocol_version, user_type_map):
         kind = read_int(f)
-        paging_state = None
-        if kind == RESULT_KIND_VOID:
+        if kind in (RESULT_KIND_VOID, RESULT_KIND_ROWS):
             results = None
-        elif kind == RESULT_KIND_ROWS:
-            paging_state, results = cls.recv_results_rows(
-                f, protocol_version, user_type_map)
+        # elif kind == RESULT_KIND_ROWS:
+        #     paging_state, results = cls.recv_results_rows(
+        #         f, protocol_version, user_type_map)
         elif kind == RESULT_KIND_SET_KEYSPACE:
             ksname = read_string(f)
             results = ksname
@@ -564,7 +584,7 @@ class ResultMessage(_MessageType):
             results = cls.recv_results_prepared(f, user_type_map)
         elif kind == RESULT_KIND_SCHEMA_CHANGE:
             results = cls.recv_results_schema_change(f, protocol_version)
-        return cls(kind, results, paging_state)
+        return cls(kind, f, results)
 
     @classmethod
     def recv_results_rows(cls, f, protocol_version, user_type_map):
@@ -594,20 +614,24 @@ class ResultMessage(_MessageType):
             paging_state = read_binary_longstring(f)
         else:
             paging_state = None
-        if glob_tblspec:
-            ksname = read_string(f)
-            cfname = read_string(f)
-        column_metadata = []
-        for _ in range(colcount):
+
+        if flags & cls._NO_METADATA_FLAG:
+            column_metadata = None
+        else:
             if glob_tblspec:
-                colksname = ksname
-                colcfname = cfname
-            else:
-                colksname = read_string(f)
-                colcfname = read_string(f)
-            colname = read_string(f)
-            coltype = cls.read_type(f, user_type_map)
-            column_metadata.append((colksname, colcfname, colname, coltype))
+                ksname = read_string(f)
+                cfname = read_string(f)
+            column_metadata = []
+            for _ in range(colcount):
+                if glob_tblspec:
+                    colksname = ksname
+                    colcfname = cfname
+                else:
+                    colksname = read_string(f)
+                    colcfname = read_string(f)
+                colname = read_string(f)
+                coltype = cls.read_type(f, user_type_map)
+                column_metadata.append((colksname, colcfname, colname, coltype))
         return paging_state, column_metadata
 
     @classmethod
@@ -697,7 +721,7 @@ class ExecuteMessage(_MessageType):
             write_consistency_level(f, self.consistency_level)
         else:
             write_consistency_level(f, self.consistency_level)
-            flags = _VALUES_FLAG
+            flags = _VALUES_FLAG | _SKIP_METADATA_FLAG
             if self.serial_consistency_level:
                 flags |= _WITH_SERIAL_CONSISTENCY_FLAG
             if self.fetch_size:

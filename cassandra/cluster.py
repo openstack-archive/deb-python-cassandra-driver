@@ -2587,6 +2587,13 @@ class ResponseFuture(object):
             timeout = self.default_timeout
 
         if self._final_result is not _NOT_SET:
+            if isinstance(self._final_result, ResultMessage):
+                try:
+                    column_metadata = self.query.column_metadata
+                except AttributeError:
+                    column_metadata = None
+                self._final_result = self._final_result.finish_decode(
+                    column_metadata, self.session.protocol_version, self.session.cluster._user_types)
             if self._paging_state is None:
                 return self._final_result
             else:
@@ -2596,6 +2603,13 @@ class ResponseFuture(object):
         else:
             self._event.wait(timeout=timeout)
             if self._final_result is not _NOT_SET:
+                if isinstance(self._final_result, ResultMessage):
+                    try:
+                        column_metadata = self.query.column_metadata
+                    except AttributeError:
+                        column_metadata = None
+                    self._final_result = self._final_result.finish_decode(
+                        column_metadata, self.session.protocol_version, self.session.cluster._user_types)
                 if self._paging_state is None:
                     return self._final_result
                 else:
