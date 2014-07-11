@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 2.0.2 documentation</title>
+    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 2.1.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.0.2',
+        VERSION:     '2.1.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.0.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.0b1 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" />
     <link rel="prev" title="cassandra - Exceptions and Enums" href="../cassandra.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.0.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -55,7 +55,7 @@
                         title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">cassandra</span></tt> - Exceptions and Enums</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="policies.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies</a></p>
+                        title="next chapter"><tt class="docutils literal docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../_sources/api/cassandra/cluster.txt"
@@ -159,7 +159,7 @@ one of its subclasses.  Defaults to <a class="reference internal" href="policies
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.reconnection_policy">
-<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x3dd7b10&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x302b710&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.ReconnectionPolicy</span></tt></a>. Defaults to an instance
 of <a class="reference internal" href="policies.html#cassandra.policies.ExponentialReconnectionPolicy" title="cassandra.policies.ExponentialReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ExponentialReconnectionPolicy</span></tt></a> with a base delay of one second and
 a max delay of ten minutes.</p>
@@ -167,7 +167,7 @@ a max delay of ten minutes.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.default_retry_policy">
-<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x3dd7b50&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x302b750&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A default <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> instance to use for all
 <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> objects which do not have a <a class="reference internal" href="query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">retry_policy</span></tt></a>
 explicitly set.</p>
@@ -293,6 +293,8 @@ marked up, or marked down.</p>
 for each host with <a class="reference internal" href="policies.html#cassandra.policies.HostDistance" title="cassandra.policies.HostDistance"><tt class="xref py py-class docutils literal"><span class="pre">HostDistance</span></tt></a> equal to <cite>host_distance</cite>.
 The default is 2 for <tt class="xref py py-attr docutils literal"><span class="pre">LOCAL</span></tt> and 1 for
 <tt class="xref py py-attr docutils literal"><span class="pre">REMOTE</span></tt>.</p>
+<p>This property is ignored if <a class="reference internal" href="#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> is
+3 or higher.</p>
 </dd></dl>
 
 <dl class="method">
@@ -302,6 +304,10 @@ The default is 2 for <tt class="xref py py-attr docutils literal"><span class="p
 for each host with <a class="reference internal" href="policies.html#cassandra.policies.HostDistance" title="cassandra.policies.HostDistance"><tt class="xref py py-class docutils literal"><span class="pre">HostDistance</span></tt></a> equal to <cite>host_distance</cite>.
 The default is 2 for <tt class="xref py py-attr docutils literal"><span class="pre">LOCAL</span></tt> and 1 for
 <tt class="xref py py-attr docutils literal"><span class="pre">REMOTE</span></tt>.</p>
+<p>If <a class="reference internal" href="#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> is set to 3 or higher, this
+is not supported (there is always one connection per host, unless
+the host is remote and <tt class="xref py py-attr docutils literal"><span class="pre">connect_to_remote_hosts</span></tt> is <tt class="xref py py-const docutils literal"><span class="pre">False</span></tt>)
+and using this will result in an <tt class="xref py py-exc docutils literal"><span class="pre">UnsupporteOperation</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -311,6 +317,8 @@ The default is 2 for <tt class="xref py py-attr docutils literal"><span class="p
 for each host with <a class="reference internal" href="policies.html#cassandra.policies.HostDistance" title="cassandra.policies.HostDistance"><tt class="xref py py-class docutils literal"><span class="pre">HostDistance</span></tt></a> equal to <cite>host_distance</cite>.
 The default is 8 for <tt class="xref py py-attr docutils literal"><span class="pre">LOCAL</span></tt> and 2 for
 <tt class="xref py py-attr docutils literal"><span class="pre">REMOTE</span></tt>.</p>
+<p>This property is ignored if <a class="reference internal" href="#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> is
+3 or higher.</p>
 </dd></dl>
 
 <dl class="method">
@@ -320,6 +328,10 @@ The default is 8 for <tt class="xref py py-attr docutils literal"><span class="p
 for each host with <a class="reference internal" href="policies.html#cassandra.policies.HostDistance" title="cassandra.policies.HostDistance"><tt class="xref py py-class docutils literal"><span class="pre">HostDistance</span></tt></a> equal to <cite>host_distance</cite>.
 The default is 2 for <tt class="xref py py-attr docutils literal"><span class="pre">LOCAL</span></tt> and 1 for
 <tt class="xref py py-attr docutils literal"><span class="pre">REMOTE</span></tt>.</p>
+<p>If <a class="reference internal" href="#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> is set to 3 or higher, this
+is not supported (there is always one connection per host, unless
+the host is remote and <tt class="xref py py-attr docutils literal"><span class="pre">connect_to_remote_hosts</span></tt> is <tt class="xref py py-const docutils literal"><span class="pre">False</span></tt>)
+and using this will result in an <tt class="xref py py-exc docutils literal"><span class="pre">UnsupporteOperation</span></tt>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -358,7 +370,7 @@ timeout, neither the registered callback or errback will be called.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Session.row_factory">
-<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x3dcd9b0&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x3020758&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
 <dd><p>The format to return row results in.  By default, each
 returned row will be a named tuple.  You can alternatively
 use any of the following:</p>
@@ -375,8 +387,10 @@ use any of the following:</p>
 <dl class="attribute">
 <dt id="cassandra.cluster.Session.default_fetch_size">
 <tt class="descname">default_fetch_size</tt><em class="property"> = 5000</em><a class="headerlink" href="#cassandra.cluster.Session.default_fetch_size" title="Permalink to this definition">¶</a></dt>
-<dd><p>By default, this many rows will be fetched at a time.  This can be
-specified per-query through <a class="reference internal" href="query.html#cassandra.query.Statement.fetch_size" title="cassandra.query.Statement.fetch_size"><tt class="xref py py-attr docutils literal"><span class="pre">Statement.fetch_size</span></tt></a>.</p>
+<dd><p>By default, this many rows will be fetched at a time. Setting
+this to <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt> will disable automatic paging for large query
+results.  The fetch size can be also specified per-query through
+<a class="reference internal" href="query.html#cassandra.query.Statement.fetch_size" title="cassandra.query.Statement.fetch_size"><tt class="xref py py-attr docutils literal"><span class="pre">Statement.fetch_size</span></tt></a>.</p>
 <p>This only takes effect when protocol version 2 or higher is used.
 See <a class="reference internal" href="#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">Cluster.protocol_version</span></tt></a> for details.</p>
 <div class="versionadded">
@@ -703,7 +717,7 @@ against.</p>
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              >previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.0.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

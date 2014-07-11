@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query &mdash; Cassandra Driver 2.0.2 documentation</title>
+    <title>cassandra.query &mdash; Cassandra Driver 2.1.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.0.2',
+        VERSION:     '2.1.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.0.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.0b1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.0.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -176,12 +176,12 @@
 
 <span class="sd">    Example::</span>
 
-<span class="sd">        &gt;&gt;&gt; from cassandra.query import named_tuple_factory</span>
+<span class="sd">        &gt;&gt;&gt; from cassandra.query import dict_factory</span>
 <span class="sd">        &gt;&gt;&gt; session = cluster.connect(&#39;mykeyspace&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; session.row_factory = dict_factory</span>
 <span class="sd">        &gt;&gt;&gt; rows = session.execute(&quot;SELECT name, age FROM users LIMIT 1&quot;)</span>
 <span class="sd">        &gt;&gt;&gt; print rows[0]</span>
-<span class="sd">        {&#39;age&#39;: 42, &#39;name&#39;: &#39;Bob&#39;}</span>
+<span class="sd">        {u&#39;age&#39;: 42, u&#39;name&#39;: u&#39;Bob&#39;}</span>
 
 <span class="sd">    .. versionchanged:: 2.0.0</span>
 <span class="sd">        moved from ``cassandra.decoder`` to ``cassandra.query``</span>
@@ -380,21 +380,25 @@
     <span class="n">consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
 
+    <span class="n">_protocol_version</span> <span class="o">=</span> <span class="bp">None</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">routing_key_indexes</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span>
-                 <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">protocol_version</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">fetch_size</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">column_metadata</span> <span class="o">=</span> <span class="n">column_metadata</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">query_id</span> <span class="o">=</span> <span class="n">query_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="n">routing_key_indexes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">query_string</span> <span class="o">=</span> <span class="n">query</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_protocol_version</span> <span class="o">=</span> <span class="n">protocol_version</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span> <span class="o">=</span> <span class="n">consistency_level</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="n">serial_consistency_level</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fetch_size</span> <span class="o">=</span> <span class="n">fetch_size</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_message</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">cluster_metadata</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">from_message</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">cluster_metadata</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">column_metadata</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">PreparedStatement</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">PreparedStatement</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">)</span>
 
         <span class="n">partition_key_columns</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="bp">None</span>
@@ -417,7 +421,8 @@
                     <span class="k">pass</span>  <span class="c"># we&#39;re missing a partition key component in the prepared</span>
                           <span class="c"># statement; just leave routing_key_indexes as None</span>
 
-        <span class="k">return</span> <span class="n">PreparedStatement</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">routing_key_indexes</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">PreparedStatement</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">routing_key_indexes</span><span class="p">,</span>
+                                 <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PreparedStatement.bind"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.PreparedStatement.bind">[docs]</a>    <span class="k">def</span> <span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -459,6 +464,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span> <span class="o">=</span> <span class="n">prepared_statement</span><span class="o">.</span><span class="n">consistency_level</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="n">prepared_statement</span><span class="o">.</span><span class="n">serial_consistency_level</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fetch_size</span> <span class="o">=</span> <span class="n">prepared_statement</span><span class="o">.</span><span class="n">fetch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span> <span class="o">=</span> <span class="n">prepared_statement</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -474,6 +480,8 @@
         <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">()</span>
         <span class="n">col_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">column_metadata</span>
+
+        <span class="n">proto_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">_protocol_version</span>
 
         <span class="c"># special case for binding dicts</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -524,7 +532,7 @@
                 <span class="n">col_type</span> <span class="o">=</span> <span class="n">col_spec</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col_type</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col_type</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">proto_version</span><span class="p">))</span>
                 <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="n">struct</span><span class="o">.</span><span class="n">error</span><span class="p">):</span>
                     <span class="n">col_name</span> <span class="o">=</span> <span class="n">col_spec</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
                     <span class="n">expected_type</span> <span class="o">=</span> <span class="n">col_type</span>
@@ -626,9 +634,10 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_statements_and_parameters</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_session</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_type</span><span class="o">=</span><span class="n">BatchType</span><span class="o">.</span><span class="n">LOGGED</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        `batch_type` specifies The :class:`.BatchType` for the batch operation.</span>
 <span class="sd">        Defaults to :attr:`.BatchType.LOGGED`.</span>
@@ -664,6 +673,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_type</span> <span class="o">=</span> <span class="n">batch_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">session</span>
         <span class="n">Statement</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="n">retry_policy</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">consistency_level</span><span class="p">)</span>
 
 <div class="viewcode-block" id="BatchStatement.add"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.BatchStatement.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -676,7 +686,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
-                <span class="n">statement</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+                <span class="n">encoders</span> <span class="o">=</span> <span class="n">cql_encoders</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoders</span>
+                <span class="n">statement</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">encoders</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">False</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="p">()))</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">PreparedStatement</span><span class="p">):</span>
             <span class="n">query_id</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">query_id</span>
@@ -694,7 +705,8 @@
             <span class="c"># it must be a SimpleStatement</span>
             <span class="n">query_string</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">query_string</span>
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
-                <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+                <span class="n">encoders</span> <span class="o">=</span> <span class="n">cql_encoders</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoders</span>
+                <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">encoders</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">False</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="p">()))</span>
         <span class="k">return</span> <span class="bp">self</span>
 </div>
@@ -736,11 +748,11 @@
         <span class="k">return</span> <span class="n">cql_encode_sequence</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sequence</span><span class="p">)</span>
 
 </div>
-<span class="k">def</span> <span class="nf">bind_params</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">bind_params</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">encoders</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">query</span> <span class="o">%</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">cql_encoders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">query</span> <span class="o">%</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">encoders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">query</span> <span class="o">%</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">cql_encoders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">query</span> <span class="o">%</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">encoders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="TraceUnavailable"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.TraceUnavailable">[docs]</a><span class="k">class</span> <span class="nc">TraceUnavailable</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -929,7 +941,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.0.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

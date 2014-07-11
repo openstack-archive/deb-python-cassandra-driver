@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata &mdash; Cassandra Driver 2.0.2 documentation</title>
+    <title>cassandra.metadata &mdash; Cassandra Driver 2.1.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.0.2',
+        VERSION:     '2.1.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.0.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.0b1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.0.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -155,7 +155,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ks</span><span class="o">.</span><span class="n">export_as_string</span><span class="p">()</span> <span class="k">for</span> <span class="n">ks</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 </div>
-    <span class="k">def</span> <span class="nf">rebuild_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ks_results</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">rebuild_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ks_results</span><span class="p">,</span> <span class="n">type_results</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Rebuild the view of the current schema from a fresh set of rows from</span>
 <span class="sd">        the system schema tables.</span>
@@ -164,6 +164,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cf_def_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         <span class="n">col_def_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">))</span>
+        <span class="n">usertype_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cf_results</span><span class="p">:</span>
             <span class="n">cf_def_rows</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
@@ -173,6 +174,9 @@
             <span class="n">cfname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;columnfamily_name&quot;</span><span class="p">]</span>
             <span class="n">col_def_rows</span><span class="p">[</span><span class="n">ksname</span><span class="p">][</span><span class="n">cfname</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
 
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">type_results</span><span class="p">:</span>
+            <span class="n">usertype_rows</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
         <span class="n">current_keyspaces</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">ks_results</span><span class="p">:</span>
             <span class="n">keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_keyspace_metadata</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
@@ -180,6 +184,10 @@
                 <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span>
                     <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">table_row</span><span class="p">,</span> <span class="n">col_def_rows</span><span class="p">[</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
                 <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_meta</span>
+
+            <span class="k">for</span> <span class="n">usertype_row</span> <span class="ow">in</span> <span class="n">usertype_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
+                <span class="n">usertype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_usertype</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">usertype_row</span><span class="p">)</span>
+                <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">user_types</span><span class="p">[</span><span class="n">usertype</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">usertype</span>
 
             <span class="n">current_keyspaces</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="n">old_keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
@@ -197,35 +205,30 @@
         <span class="k">for</span> <span class="n">ksname</span> <span class="ow">in</span> <span class="n">removed_keyspaces</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_keyspace_removed</span><span class="p">(</span><span class="n">ksname</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">keyspace_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">ks_results</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">keyspace_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">ks_results</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">ks_results</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">keyspace</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">:</span>
                 <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_keyspace_removed</span><span class="p">(</span><span class="n">keyspace</span><span class="p">)</span>
             <span class="k">return</span>
 
-        <span class="n">col_def_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">col_results</span><span class="p">:</span>
-            <span class="n">cfname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;columnfamily_name&quot;</span><span class="p">]</span>
-            <span class="n">col_def_rows</span><span class="p">[</span><span class="n">cfname</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
-
         <span class="n">keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_keyspace_metadata</span><span class="p">(</span><span class="n">ks_results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">old_keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-
-        <span class="n">new_table_metas</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">table_row</span> <span class="ow">in</span> <span class="n">cf_results</span><span class="p">:</span>
-            <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span>
-                <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">table_row</span><span class="p">,</span> <span class="n">col_def_rows</span><span class="p">)</span>
-            <span class="n">new_table_metas</span><span class="p">[</span><span class="n">table_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_meta</span>
-
-        <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">tables</span> <span class="o">=</span> <span class="n">new_table_metas</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span> <span class="o">=</span> <span class="n">keyspace_meta</span>
         <span class="k">if</span> <span class="n">old_keyspace_meta</span><span class="p">:</span>
+            <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">user_types</span> <span class="o">=</span> <span class="n">old_keyspace_meta</span><span class="o">.</span><span class="n">user_types</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">replication_strategy</span> <span class="o">!=</span> <span class="n">old_keyspace_meta</span><span class="o">.</span><span class="n">replication_strategy</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_keyspace_updated</span><span class="p">(</span><span class="n">keyspace</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_keyspace_added</span><span class="p">(</span><span class="n">keyspace</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">usertype_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">type_results</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">type_results</span><span class="p">:</span>
+            <span class="n">new_usertype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_usertype</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">type_results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">user_types</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_usertype</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># the type was deleted</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">user_types</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">table_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
@@ -242,7 +245,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">cf_results</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
             <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span>
-                    <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">col_results</span><span class="p">})</span>
+                <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">col_results</span><span class="p">})</span>
 
     <span class="k">def</span> <span class="nf">_keyspace_added</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ksname</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span><span class="p">:</span>
@@ -262,6 +265,11 @@
         <span class="n">strategy_class</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;strategy_class&quot;</span><span class="p">]</span>
         <span class="n">strategy_options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;strategy_options&quot;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">KeyspaceMetadata</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_build_usertype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">usertype_row</span><span class="p">):</span>
+        <span class="n">type_classes</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">,</span> <span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;field_types&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">UserType</span><span class="p">(</span><span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;keyspace_name&#39;</span><span class="p">],</span> <span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;type_name&#39;</span><span class="p">],</span>
+                        <span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;field_names&#39;</span><span class="p">],</span> <span class="n">type_classes</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_build_table_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace_metadata</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col_rows</span><span class="p">):</span>
         <span class="n">cfname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;columnfamily_name&quot;</span><span class="p">]</span>
@@ -360,6 +368,16 @@
     <span class="k">def</span> <span class="nf">_build_table_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Setup the mostly-non-schema table options, like caching settings &quot;&quot;&quot;</span>
         <span class="n">options</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">o</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">o</span><span class="p">))</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">TableMetadata</span><span class="o">.</span><span class="n">recognized_options</span> <span class="k">if</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">row</span><span class="p">)</span>
+
+        <span class="c"># the option name when creating tables is &quot;dclocal_read_repair_chance&quot;,</span>
+        <span class="c"># but the column name in system.schema_columnfamilies is</span>
+        <span class="c"># &quot;local_read_repair_chance&quot;.  We&#39;ll store this as dclocal_read_repair_chance,</span>
+        <span class="c"># since that&#39;s probably what users are expecting (and we need it for the</span>
+        <span class="c"># CREATE TABLE statement anyway).</span>
+        <span class="k">if</span> <span class="s">&quot;local_read_repair_chance&quot;</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;local_read_repair_chance&quot;</span><span class="p">)</span>
+            <span class="n">options</span><span class="p">[</span><span class="s">&quot;dclocal_read_repair_chance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
         <span class="k">return</span> <span class="n">options</span>
 
     <span class="k">def</span> <span class="nf">_build_column_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_metadata</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
@@ -406,7 +424,7 @@
 
         <span class="n">all_tokens</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ring</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span> <span class="o">=</span> <span class="n">TokenMap</span><span class="p">(</span>
-                <span class="n">token_class</span><span class="p">,</span> <span class="n">token_to_host_owner</span><span class="p">,</span> <span class="n">all_tokens</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="n">token_class</span><span class="p">,</span> <span class="n">token_to_host_owner</span><span class="p">,</span> <span class="n">all_tokens</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Metadata.get_replicas"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Metadata.get_replicas">[docs]</a>    <span class="k">def</span> <span class="nf">get_replicas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -528,7 +546,7 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dc_replication_factors</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dc_replication_factors</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-                <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dc_replication_factors</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dc_replication_factors</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
 
     <span class="k">def</span> <span class="nf">make_token_replica_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_to_host_owner</span><span class="p">,</span> <span class="n">ring</span><span class="p">):</span>
         <span class="c"># note: this does not account for hosts having different racks</span>
@@ -636,11 +654,14 @@
 <span class="sd">    A map from table names to instances of :class:`~.TableMetadata`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">user_types</span> <span class="o">=</span> <span class="bp">None</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">durable_writes</span> <span class="o">=</span> <span class="n">durable_writes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">replication_strategy</span> <span class="o">=</span> <span class="n">ReplicationStrategy</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_types</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span> <span class="nf">export_as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">()]</span> <span class="o">+</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">export_as_string</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
@@ -652,6 +673,20 @@
         <span class="k">return</span> <span class="n">ret</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39; AND durable_writes = </span><span class="si">%s</span><span class="s">;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&quot;true&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">durable_writes</span> <span class="k">else</span> <span class="s">&quot;false&quot;</span><span class="p">))</span>
 
 </div>
+<span class="k">class</span> <span class="nc">UserType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">field_names</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">field_types</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">field_names</span><span class="p">,</span> <span class="n">field_types</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">field_names</span> <span class="o">=</span> <span class="n">field_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">field_types</span> <span class="o">=</span> <span class="n">field_types</span>
+
+
 <div class="viewcode-block" id="TableMetadata"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TableMetadata">[docs]</a><span class="k">class</span> <span class="nc">TableMetadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A representation of the schema for a single table.</span>
@@ -704,7 +739,8 @@
     <span class="n">recognized_options</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s">&quot;comment&quot;</span><span class="p">,</span>
         <span class="s">&quot;read_repair_chance&quot;</span><span class="p">,</span>
-        <span class="s">&quot;dclocal_read_repair_chance&quot;</span><span class="p">,</span>
+        <span class="s">&quot;dclocal_read_repair_chance&quot;</span><span class="p">,</span>  <span class="c"># kept to be safe, but see _build_table_options()</span>
+        <span class="s">&quot;local_read_repair_chance&quot;</span><span class="p">,</span>
         <span class="s">&quot;replicate_on_write&quot;</span><span class="p">,</span>
         <span class="s">&quot;gc_grace_seconds&quot;</span><span class="p">,</span>
         <span class="s">&quot;bloom_filter_fp_chance&quot;</span><span class="p">,</span>
@@ -1165,7 +1201,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.0.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
