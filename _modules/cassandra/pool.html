@@ -84,7 +84,6 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Lock</span><span class="p">,</span> <span class="n">RLock</span><span class="p">,</span> <span class="n">Condition</span>
@@ -108,14 +107,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 
-
-<span class="c"># example matches:</span>
-<span class="c"># 1.0.0</span>
-<span class="c"># 1.0.0-beta1</span>
-<span class="c"># 2.0-SNAPSHOT</span></div>
-<span class="n">version_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&quot;(?P&lt;major&gt;\d+)\.(?P&lt;minor&gt;\d+)(?:\.(?P&lt;patch&gt;\d+))?(?:-(?P&lt;label&gt;\w+))?&quot;</span><span class="p">)</span>
-
-
+</div>
 <div class="viewcode-block" id="Host"><a class="viewcode-back" href="../../api/cassandra/pool.html#cassandra.pool.Host">[docs]</a><span class="k">class</span> <span class="nc">Host</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents a single Cassandra node.</span>
@@ -137,12 +129,6 @@
 <span class="sd">    :const:`True` if the node is considered up, :const:`False` if it is</span>
 <span class="sd">    considered down, and :const:`None` if it is not known if the node is</span>
 <span class="sd">    up or down.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">version</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A tuple representing the Cassandra version for this host.  This will</span>
-<span class="sd">    remain as :const:`None` if the version is unknown.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_datacenter</span> <span class="o">=</span> <span class="bp">None</span>
@@ -181,14 +167,6 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_datacenter</span> <span class="o">=</span> <span class="n">datacenter</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rack</span> <span class="o">=</span> <span class="n">rack</span>
-
-    <span class="k">def</span> <span class="nf">set_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version_string</span><span class="p">):</span>
-        <span class="n">match</span> <span class="o">=</span> <span class="n">version_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">version_string</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">version</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s">&#39;major&#39;</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s">&#39;minor&#39;</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s">&#39;patch&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)]</span>
-            <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s">&#39;label&#39;</span><span class="p">):</span>
-                <span class="n">version</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s">&#39;label&#39;</span><span class="p">))</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">set_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_up</span><span class="p">:</span>

@@ -200,6 +200,9 @@
     <span class="k">return</span> <span class="p">[</span><span class="n">OrderedDict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
 
 </div>
+<span class="n">FETCH_SIZE_UNSET</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+
+
 <div class="viewcode-block" id="Statement"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.Statement">[docs]</a><span class="k">class</span> <span class="nc">Statement</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An abstract class representing a single query. There are three subclasses:</span>
@@ -227,7 +230,7 @@
 <span class="sd">    the Session this is executed in will be used.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">fetch_size</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">fetch_size</span> <span class="o">=</span> <span class="n">FETCH_SIZE_UNSET</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    How many rows will be fetched at a time.  This overrides the default</span>
 <span class="sd">    of :attr:`.Session.default_fetch_size`</span>
@@ -242,14 +245,14 @@
     <span class="n">_routing_key</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="n">FETCH_SIZE_UNSET</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">retry_policy</span> <span class="o">=</span> <span class="n">retry_policy</span>
         <span class="k">if</span> <span class="n">consistency_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span> <span class="o">=</span> <span class="n">consistency_level</span>
         <span class="k">if</span> <span class="n">serial_consistency_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="n">serial_consistency_level</span>
-        <span class="k">if</span> <span class="n">fetch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">fetch_size</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">fetch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">FETCH_SIZE_UNSET</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fetch_size</span> <span class="o">=</span> <span class="n">fetch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="n">routing_key</span>
 
     <span class="k">def</span> <span class="nf">_get_routing_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -382,9 +385,11 @@
 
     <span class="n">_protocol_version</span> <span class="o">=</span> <span class="bp">None</span>
 
+    <span class="n">fetch_size</span> <span class="o">=</span> <span class="n">FETCH_SIZE_UNSET</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">routing_key_indexes</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span>
                  <span class="n">protocol_version</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">fetch_size</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">fetch_size</span><span class="o">=</span><span class="n">FETCH_SIZE_UNSET</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">column_metadata</span> <span class="o">=</span> <span class="n">column_metadata</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">query_id</span> <span class="o">=</span> <span class="n">query_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="n">routing_key_indexes</span>
@@ -393,7 +398,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_protocol_version</span> <span class="o">=</span> <span class="n">protocol_version</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span> <span class="o">=</span> <span class="n">consistency_level</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="n">serial_consistency_level</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fetch_size</span> <span class="o">=</span> <span class="n">fetch_size</span>
+        <span class="k">if</span> <span class="n">fetch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">FETCH_SIZE_UNSET</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fetch_size</span> <span class="o">=</span> <span class="n">fetch_size</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_message</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">cluster_metadata</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">):</span>

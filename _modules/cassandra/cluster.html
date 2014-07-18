@@ -109,7 +109,7 @@
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">groupby</span>
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">AuthenticationFailed</span><span class="p">,</span>
-                       <span class="n">OperationTimedOut</span><span class="p">,</span> <span class="n">UnsupportedOperation</span><span class="p">)</span>
+                       <span class="n">InvalidRequest</span><span class="p">,</span> <span class="n">OperationTimedOut</span><span class="p">,</span> <span class="n">UnsupportedOperation</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="n">ConnectionException</span><span class="p">,</span> <span class="n">ConnectionShutdown</span>
 <span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">cql_encode_all_types</span><span class="p">,</span> <span class="n">cql_encoders</span>
 <span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="kn">import</span> <span class="p">(</span><span class="n">QueryMessage</span><span class="p">,</span> <span class="n">ResultMessage</span><span class="p">,</span>
@@ -132,7 +132,7 @@
                             <span class="n">NoConnectionsAvailable</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="p">(</span><span class="n">SimpleStatement</span><span class="p">,</span> <span class="n">PreparedStatement</span><span class="p">,</span> <span class="n">BoundStatement</span><span class="p">,</span>
                              <span class="n">BatchStatement</span><span class="p">,</span> <span class="n">bind_params</span><span class="p">,</span> <span class="n">QueryTrace</span><span class="p">,</span> <span class="n">Statement</span><span class="p">,</span>
-                             <span class="n">named_tuple_factory</span><span class="p">,</span> <span class="n">dict_factory</span><span class="p">)</span>
+                             <span class="n">named_tuple_factory</span><span class="p">,</span> <span class="n">dict_factory</span><span class="p">,</span> <span class="n">FETCH_SIZE_UNSET</span><span class="p">)</span>
 
 <span class="c"># default to gevent when we are monkey patched, otherwise if libev is available, use that as the</span>
 <span class="c"># default because it&#39;s fastest. Otherwise, use asyncore.</span>
@@ -534,6 +534,53 @@
             <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection_timeout</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Cluster.register_user_type"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.register_user_type">[docs]</a>    <span class="k">def</span> <span class="nf">register_user_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">user_type</span><span class="p">,</span> <span class="n">klass</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Registers a class to use to represent a particular user-defined type.</span>
+<span class="sd">        Query parameters for this user-defined type will be assumed to be</span>
+<span class="sd">        instances of `klass`.  Result sets for this user-defined type will</span>
+<span class="sd">        be instances of `klass`.  If no class is registered for a user-defined</span>
+<span class="sd">        type, a namedtuple will be used for result sets, and non-prepared</span>
+<span class="sd">        statements may not encode parameters for this type correctly.</span>
+
+<span class="sd">        `keyspace` is the name of the keyspace that the UDT is defined in.</span>
+
+<span class="sd">        `user_type` is the string name of the UDT to register the mapping</span>
+<span class="sd">        for.</span>
+
+<span class="sd">        `klass` should be a class with attributes whose names match the</span>
+<span class="sd">        fields of the user-defined type.  The constructor must accepts kwargs</span>
+<span class="sd">        for each of the fields in the UDT.</span>
+
+<span class="sd">        This method should only be called after the type has been created</span>
+<span class="sd">        within Cassandra.</span>
+
+<span class="sd">        Example::</span>
+
+<span class="sd">            cluster = Cluster(protocol_version=3)</span>
+<span class="sd">            session = cluster.connect()</span>
+<span class="sd">            session.set_keyspace(&#39;mykeyspace&#39;)</span>
+<span class="sd">            session.execute(&quot;CREATE TYPE address (street text, zipcode int)&quot;)</span>
+<span class="sd">            session.execute(&quot;CREATE TABLE users (id int PRIMARY KEY, location address)&quot;)</span>
+
+<span class="sd">            # create a class to map to the &quot;address&quot; UDT</span>
+<span class="sd">            class Address(object):</span>
+
+<span class="sd">                def __init__(self, street, zipcode):</span>
+<span class="sd">                    self.street = street</span>
+<span class="sd">                    self.zipcode = zipcode</span>
+
+<span class="sd">            cluster.register_user_type(&#39;mykeyspace&#39;, &#39;address&#39;, Address)</span>
+
+<span class="sd">            # insert a row using an instance of Address</span>
+<span class="sd">            session.execute(&quot;INSERT INTO users (id, location) VALUES (%s, %s)&quot;,</span>
+<span class="sd">                            (0, Address(&quot;123 Main St.&quot;, 78723)))</span>
+
+<span class="sd">            # results will include Address instances</span>
+<span class="sd">            results = session.execute(&quot;SELECT * FROM users&quot;)</span>
+<span class="sd">            row = results[0]</span>
+<span class="sd">            print row.id, row.location.street, row.location.zipcode</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_user_types</span><span class="p">[</span><span class="n">keyspace</span><span class="p">][</span><span class="n">user_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">klass</span>
         <span class="k">for</span> <span class="n">session</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span><span class="p">:</span>
             <span class="n">session</span><span class="o">.</span><span class="n">user_type_registered</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">user_type</span><span class="p">,</span> <span class="n">klass</span><span class="p">)</span>
@@ -1182,13 +1229,35 @@
 <span class="sd">    .. versionadded:: 2.1.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">encoders</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A map of python types to CQL encoder functions that will be used when</span>
+<span class="sd">    formatting query parameters for non-prepared statements.  This mapping</span>
+<span class="sd">    is not used for prepared statements (because prepared statements</span>
+<span class="sd">    give the driver more information about what CQL types are expected, allowing</span>
+<span class="sd">    it to accept a wider range of python types).</span>
+
+<span class="sd">    This mapping can be be modified by users as they see fit.  Functions from</span>
+<span class="sd">    :mod:`cassandra.encoder` should be used, if possible, because they take</span>
+<span class="sd">    precautions to avoid injections and properly sanitize data.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        from cassandra.encoder import cql_encode_tuple</span>
+
+<span class="sd">        cluster = Cluster()</span>
+<span class="sd">        session = cluster.connect(&quot;mykeyspace&quot;)</span>
+<span class="sd">        session.encoders[tuple] = cql_encode_tuple</span>
+
+<span class="sd">        session.execute(&quot;CREATE TABLE mytable (k int PRIMARY KEY, col tuple&lt;int, ascii&gt;)&quot;)</span>
+<span class="sd">        session.execute(&quot;INSERT INTO mytable (k, col) VALUES (%s, %s)&quot;, [0, (123, &#39;abc&#39;)])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">_lock</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_pools</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_load_balancer</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_metrics</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_protocol_version</span> <span class="o">=</span> <span class="bp">None</span>
-
-    <span class="n">encoders</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">hosts</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span> <span class="o">=</span> <span class="n">cluster</span>
@@ -1313,7 +1382,7 @@
 
         <span class="n">cl</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">consistency_level</span> <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">consistency_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_consistency_level</span>
         <span class="n">fetch_size</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">fetch_size</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">fetch_size</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_protocol_version</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">fetch_size</span> <span class="ow">is</span> <span class="n">FETCH_SIZE_UNSET</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_protocol_version</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="n">fetch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_fetch_size</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_protocol_version</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_client_timestamp</span><span class="p">:</span>
@@ -1571,7 +1640,17 @@
 <span class="sd">        mapping from a user-defined type to a class.  Intended for internal</span>
 <span class="sd">        use only.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">type_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">user_types</span><span class="p">[</span><span class="n">user_type</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ks_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UserTypeDoesNotExist</span><span class="p">(</span>
+                <span class="s">&#39;Keyspace </span><span class="si">%s</span><span class="s"> does not exist or has not been discovered by the driver&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">keyspace</span><span class="p">,))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">type_meta</span> <span class="o">=</span> <span class="n">ks_meta</span><span class="o">.</span><span class="n">user_types</span><span class="p">[</span><span class="n">user_type</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UserTypeDoesNotExist</span><span class="p">(</span>
+                <span class="s">&#39;User type </span><span class="si">%s</span><span class="s"> does not exist in keyspace </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">user_type</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">))</span>
 
         <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
             <span class="k">return</span> <span class="s">&#39;{ </span><span class="si">%s</span><span class="s"> }&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
@@ -1588,6 +1667,13 @@
 
     <span class="k">def</span> <span class="nf">get_pool_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="n">pool</span><span class="o">.</span><span class="n">get_state</span><span class="p">())</span> <span class="k">for</span> <span class="n">host</span><span class="p">,</span> <span class="n">pool</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+</div>
+<div class="viewcode-block" id="UserTypeDoesNotExist"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.UserTypeDoesNotExist">[docs]</a><span class="k">class</span> <span class="nc">UserTypeDoesNotExist</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An attempt was made to use a user-defined type that does not exist.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
 
 </div>
 <span class="k">class</span> <span class="nc">_ControlReconnectionHandler</span><span class="p">(</span><span class="n">_ReconnectionHandler</span><span class="p">):</span>
@@ -1874,19 +1960,37 @@
             <span class="n">queries</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_KEYSPACES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
                 <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_COLUMN_FAMILIES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
-                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_COLUMNS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
+                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_COLUMNS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
+                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_USERTYPES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
             <span class="p">]</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_protocol_version</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
-                <span class="n">queries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_USERTYPES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">))</span>
-                <span class="n">ks_result</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">,</span> <span class="n">col_result</span><span class="p">,</span> <span class="n">types_result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span><span class="o">*</span><span class="n">queries</span><span class="p">)</span>
+
+            <span class="n">responses</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span><span class="o">*</span><span class="n">queries</span><span class="p">,</span> <span class="n">fail_on_error</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">ks_success</span><span class="p">,</span> <span class="n">ks_result</span><span class="p">),</span> <span class="p">(</span><span class="n">cf_success</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">),</span> <span class="p">(</span><span class="n">col_success</span><span class="p">,</span> <span class="n">col_result</span><span class="p">),</span> <span class="p">(</span><span class="n">types_success</span><span class="p">,</span> <span class="n">types_result</span><span class="p">)</span> <span class="o">=</span> <span class="n">responses</span>
+
+            <span class="k">if</span> <span class="n">ks_success</span><span class="p">:</span>
+                <span class="n">ks_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">ks_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ks_result</span>
+
+            <span class="k">if</span> <span class="n">cf_success</span><span class="p">:</span>
+                <span class="n">cf_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">cf_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">cf_result</span>
+
+            <span class="k">if</span> <span class="n">col_success</span><span class="p">:</span>
+                <span class="n">col_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">col_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">col_result</span>
+
+            <span class="c"># if we&#39;re connected to Cassandra &lt; 2.1, the usertypes table will not exist</span>
+            <span class="k">if</span> <span class="n">types_success</span><span class="p">:</span>
                 <span class="n">types_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">types_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">types_result</span><span class="o">.</span><span class="n">results</span> <span class="k">else</span> <span class="p">{}</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">ks_result</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">,</span> <span class="n">col_result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span><span class="o">*</span><span class="n">queries</span><span class="p">)</span>
-                <span class="n">types_result</span> <span class="o">=</span> <span class="p">{}</span>
-
-            <span class="n">ks_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">ks_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
-            <span class="n">cf_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">cf_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
-            <span class="n">col_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">col_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">types_result</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">):</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] user types table not found&quot;</span><span class="p">)</span>
+                    <span class="n">types_result</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">types_result</span>
 
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Fetched schema, rebuilding metadata&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">rebuild_schema</span><span class="p">(</span><span class="n">ks_result</span><span class="p">,</span> <span class="n">types_result</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">,</span> <span class="n">col_result</span><span class="p">)</span>
@@ -2625,7 +2729,7 @@
             <span class="c"># to retry the operation</span>
             <span class="k">return</span>
 
-        <span class="k">if</span> <span class="n">reuse_connection</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_host</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">reuse_connection</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_host</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span>
 
         <span class="c"># otherwise, move onto another host</span>

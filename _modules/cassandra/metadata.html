@@ -674,17 +674,65 @@
 
 </div>
 <span class="k">class</span> <span class="nc">UserType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A user defined type, as created by ``CREATE TYPE`` statements.</span>
+
+<span class="sd">    User-defined types were introduced in Cassandra 2.1.</span>
+
+<span class="sd">    .. versionadded:: 2.1.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The string name of the keyspace in which this type is defined.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The name of this type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">field_names</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An ordered list of the names for each field in this user-defined type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">field_types</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An ordered list of the types for each field in this user-defined type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">field_names</span><span class="p">,</span> <span class="n">field_types</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">field_names</span> <span class="o">=</span> <span class="n">field_names</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">field_types</span> <span class="o">=</span> <span class="n">field_types</span>
+
+    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formatted</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a CQL query that can be used to recreate this type.</span>
+<span class="sd">        If `formatted` is set to :const:`True`, extra whitespace will</span>
+<span class="sd">        be added to make the query more readable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="s">&quot;CREATE TYPE </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span><span class="p">),</span>
+            <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+            <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="k">if</span> <span class="n">formatted</span> <span class="k">else</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">formatted</span><span class="p">:</span>
+            <span class="n">field_join</span> <span class="o">=</span> <span class="s">&quot;,</span><span class="se">\n</span><span class="s">&quot;</span>
+            <span class="n">padding</span> <span class="o">=</span> <span class="s">&quot;    &quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">field_join</span> <span class="o">=</span> <span class="s">&quot;, &quot;</span>
+            <span class="n">padding</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">field_type</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_types</span><span class="p">):</span>
+            <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">protect_name</span><span class="p">(</span><span class="n">field_name</span><span class="p">),</span> <span class="n">field_type</span><span class="o">.</span><span class="n">cql_parameterized_type</span><span class="p">()))</span>
+
+        <span class="n">ret</span> <span class="o">+=</span> <span class="n">field_join</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">padding</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">)</span>
+        <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">)&quot;</span> <span class="k">if</span> <span class="n">formatted</span> <span class="k">else</span> <span class="s">&quot;)&quot;</span>
+        <span class="k">return</span> <span class="n">ret</span>
 
 
 <div class="viewcode-block" id="TableMetadata"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TableMetadata">[docs]</a><span class="k">class</span> <span class="nc">TableMetadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>

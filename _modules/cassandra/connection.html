@@ -369,10 +369,19 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">wait_for_responses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">msgs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a list of (success, response) tuples.  If success</span>
+<span class="sd">        is False, response will be an Exception.  Otherwise, response</span>
+<span class="sd">        will be the normal query response.</span>
+
+<span class="sd">        If fail_on_error was left as True and one of the requests</span>
+<span class="sd">        failed, the corresponding Exception will be raised.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_defunct</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ConnectionShutdown</span><span class="p">(</span><span class="s">&quot;Connection </span><span class="si">%s</span><span class="s"> is already closed&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">))</span>
         <span class="n">timeout</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;timeout&#39;</span><span class="p">)</span>
-        <span class="n">waiter</span> <span class="o">=</span> <span class="n">ResponseWaiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">msgs</span><span class="p">))</span>
+        <span class="n">fail_on_error</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;fail_on_error&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="n">waiter</span> <span class="o">=</span> <span class="n">ResponseWaiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">msgs</span><span class="p">),</span> <span class="n">fail_on_error</span><span class="p">)</span>
 
         <span class="c"># busy wait for sufficient space on the connection</span>
         <span class="n">messages_sent</span> <span class="o">=</span> <span class="mi">0</span>
@@ -744,9 +753,10 @@
 
 <span class="k">class</span> <span class="nc">ResponseWaiter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">num_responses</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">num_responses</span><span class="p">,</span> <span class="n">fail_on_error</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="n">connection</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="o">=</span> <span class="n">num_responses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fail_on_error</span> <span class="o">=</span> <span class="n">fail_on_error</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">responses</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_responses</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
@@ -755,15 +765,33 @@
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">response</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">responses</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">response</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="o">-=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;to_exception&#39;</span><span class="p">):</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">to_exception</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fail_on_error</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">response</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">responses</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fail_on_error</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">responses</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">responses</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">response</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">deliver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        If fail_on_error was set to False, a list of (success, response)</span>
+<span class="sd">        tuples will be returned.  If success is False, response will be</span>
+<span class="sd">        an Exception.  Otherwise, response will be the normal query response.</span>
+
+<span class="sd">        If fail_on_error was left as True and one of the requests</span>
+<span class="sd">        failed, the corresponding Exception will be raised. Otherwise,</span>
+<span class="sd">        the normal response will be returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span>
