@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.encoder &mdash; Cassandra Driver 2.1.0b1 documentation</title>
+    <title>cassandra.encoder &mdash; Cassandra Driver 2.1.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.0b1',
+        VERSION:     '2.1.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.0b1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.0c1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -116,157 +116,159 @@
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">term</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="cql_encode_none"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_none">[docs]</a><span class="k">def</span> <span class="nf">cql_encode_none</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ValueSequence</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="Encoder"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder">[docs]</a><span class="k">class</span> <span class="nc">Encoder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts :const:`None` to the string &#39;NULL&#39;.</span>
+<span class="sd">    A container for mapping python types to CQL string literals when working</span>
+<span class="sd">    with non-prepared statements.  The type :attr:`~.Encoder.mapping` can be</span>
+<span class="sd">    directly customized by users.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="s">&#39;NULL&#39;</span>
 
-</div>
-<div class="viewcode-block" id="cql_encode_unicode"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_unicode">[docs]</a><span class="k">def</span> <span class="nf">cql_encode_unicode</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+    <span class="n">mapping</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts :class:`unicode` objects to UTF-8 encoded strings with quote escaping.</span>
+<span class="sd">    A map of python types to encoder functions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">cql_quote</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
 
-</div>
-<div class="viewcode-block" id="cql_encode_str"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_str">[docs]</a><span class="k">def</span> <span class="nf">cql_encode_str</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Escapes quotes in :class:`str` objects.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">cql_quote</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nb">float</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">,</span>
+            <span class="nb">bytearray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_bytes</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_str</span><span class="p">,</span>
+            <span class="nb">int</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">,</span>
+            <span class="n">UUID</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">,</span>
+            <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_datetime</span><span class="p">,</span>
+            <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_date</span><span class="p">,</span>
+            <span class="nb">dict</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_map_collection</span><span class="p">,</span>
+            <span class="n">OrderedDict</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_map_collection</span><span class="p">,</span>
+            <span class="nb">list</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_list_collection</span><span class="p">,</span>
+            <span class="nb">tuple</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_list_collection</span><span class="p">,</span>
+            <span class="nb">set</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_set_collection</span><span class="p">,</span>
+            <span class="nb">frozenset</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_set_collection</span><span class="p">,</span>
+            <span class="n">types</span><span class="o">.</span><span class="n">GeneratorType</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_list_collection</span><span class="p">,</span>
+            <span class="n">ValueSequence</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_sequence</span>
+        <span class="p">}</span>
 
-</div>
-<span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">cql_encode_bytes</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">b</span><span class="s">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">val</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
-<span class="k">elif</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">cql_encode_bytes</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>  <span class="c"># noqa</span>
-        <span class="k">return</span> <span class="n">b</span><span class="s">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="c"># python 2.6 requires string or read-only buffer for hexlify</span>
-<div class="viewcode-block" id="cql_encode_bytes"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_bytes">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_bytes</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>  <span class="c"># noqa</span>
-        <span class="k">return</span> <span class="n">b</span><span class="s">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="nb">buffer</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+                <span class="nb">unicode</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_unicode</span><span class="p">,</span>
+                <span class="nb">buffer</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_bytes</span><span class="p">,</span>
+                <span class="nb">long</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">,</span>
+                <span class="n">types</span><span class="o">.</span><span class="n">NoneType</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_none</span><span class="p">,</span>
+            <span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+                <span class="n">memoryview</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_bytes</span><span class="p">,</span>
+                <span class="nb">bytes</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_bytes</span><span class="p">,</span>
+                <span class="nb">type</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_none</span><span class="p">,</span>
+            <span class="p">})</span>
 
-</div>
-<div class="viewcode-block" id="cql_encode_object"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_object">[docs]</a><span class="k">def</span> <span class="nf">cql_encode_object</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Default encoder for all objects that do not have a specific encoder function</span>
-<span class="sd">    registered. This function simply calls :meth:`str()` on the object.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="c"># sortedset is optional</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">blist</span> <span class="kn">import</span> <span class="n">sortedset</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+                <span class="n">sortedset</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_set_collection</span>
+            <span class="p">})</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">pass</span>
 
+<div class="viewcode-block" id="Encoder.cql_encode_none"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_none">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_none</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts :const:`None` to the string &#39;NULL&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&#39;NULL&#39;</span>
 </div>
-<div class="viewcode-block" id="cql_encode_datetime"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_datetime">[docs]</a><span class="k">def</span> <span class="nf">cql_encode_datetime</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a :class:`datetime.datetime` object to a (string) integer timestamp</span>
-<span class="sd">    with millisecond precision.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">timestamp</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="n">timegm</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">utctimetuple</span><span class="p">())</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">long</span><span class="p">(</span><span class="n">timestamp</span> <span class="o">*</span> <span class="mf">1e3</span> <span class="o">+</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="s">&#39;microsecond&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">))</span>
-
+<div class="viewcode-block" id="Encoder.cql_encode_unicode"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_unicode">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_unicode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts :class:`unicode` objects to UTF-8 encoded strings with quote escaping.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">cql_quote</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
 </div>
-<div class="viewcode-block" id="cql_encode_date"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_date">[docs]</a><span class="k">def</span> <span class="nf">cql_encode_date</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a :class:`datetime.date` object to a string with format</span>
-<span class="sd">    ``YYYY-MM-DD-0000``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">-0000&#39;</span><span class="p">)</span>
-
+<div class="viewcode-block" id="Encoder.cql_encode_str"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_str">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Escapes quotes in :class:`str` objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">cql_quote</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="cql_encode_sequence"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_sequence">[docs]</a><span class="k">def</span> <span class="nf">cql_encode_sequence</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">cql_encode_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">b</span><span class="s">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">val</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">cql_encode_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>  <span class="c"># noqa</span>
+            <span class="k">return</span> <span class="n">b</span><span class="s">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c"># python 2.6 requires string or read-only buffer for hexlify</span>
+<div class="viewcode-block" id="Encoder.cql_encode_bytes"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_bytes">[docs]</a>        <span class="k">def</span> <span class="nf">cql_encode_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>  <span class="c"># noqa</span>
+            <span class="k">return</span> <span class="n">b</span><span class="s">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="nb">buffer</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="Encoder.cql_encode_object"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_object">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Default encoder for all objects that do not have a specific encoder function</span>
+<span class="sd">        registered. This function simply calls :meth:`str()` on the object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Encoder.cql_encode_datetime"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_datetime">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts a :class:`datetime.datetime` object to a (string) integer timestamp</span>
+<span class="sd">        with millisecond precision.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="n">timegm</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">utctimetuple</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">long</span><span class="p">(</span><span class="n">timestamp</span> <span class="o">*</span> <span class="mf">1e3</span> <span class="o">+</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="s">&#39;microsecond&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="Encoder.cql_encode_date"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_date">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts a :class:`datetime.date` object to a string with format</span>
+<span class="sd">        ``YYYY-MM-DD-0000``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">-0000&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Encoder.cql_encode_sequence"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_sequence">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts a sequence to a string of the form ``(item1, item2, ...)``.  This</span>
+<span class="sd">        is suitable for ``IN`` value lists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&#39;( </span><span class="si">%s</span><span class="s"> )&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">)</span>
+                                     <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="p">)</span>
+</div>
+    <span class="n">cql_encode_tuple</span> <span class="o">=</span> <span class="n">cql_encode_sequence</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts a sequence to a string of the form ``(item1, item2, ...)``.  This</span>
-<span class="sd">    is suitable for ``IN`` value lists.</span>
+<span class="sd">    is suitable for ``tuple`` type columns.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="s">&#39;( </span><span class="si">%s</span><span class="s"> )&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cql_encoders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">)</span>
-                                 <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="p">)</span>
 
+<div class="viewcode-block" id="Encoder.cql_encode_map_collection"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_map_collection">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_map_collection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts a dict into a string of the form ``{key1: val1, key2: val2, ...}``.</span>
+<span class="sd">        This is suitable for ``map`` type columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&#39;{ </span><span class="si">%s</span><span class="s"> }&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">k</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">)</span>
+        <span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
 </div>
-<span class="n">cql_encode_tuple</span> <span class="o">=</span> <span class="n">cql_encode_sequence</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Converts a sequence to a string of the form ``(item1, item2, ...)``.  This</span>
-<span class="sd">is suitable for ``tuple`` type columns.</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-
-<div class="viewcode-block" id="cql_encode_map_collection"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_map_collection">[docs]</a><span class="k">def</span> <span class="nf">cql_encode_map_collection</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a dict into a string of the form ``{key1: val1, key2: val2, ...}``.</span>
-<span class="sd">    This is suitable for ``map`` type columns.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="s">&#39;{ </span><span class="si">%s</span><span class="s"> }&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
-        <span class="n">cql_encode_all_types</span><span class="p">(</span><span class="n">k</span><span class="p">),</span>
-        <span class="n">cql_encode_all_types</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-    <span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
-
+<div class="viewcode-block" id="Encoder.cql_encode_list_collection"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_list_collection">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_list_collection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts a sequence to a string of the form ``[item1, item2, ...]``.  This</span>
+<span class="sd">        is suitable for ``list`` type columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&#39;[ </span><span class="si">%s</span><span class="s"> ]&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="cql_encode_list_collection"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_list_collection">[docs]</a><span class="k">def</span> <span class="nf">cql_encode_list_collection</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a sequence to a string of the form ``[item1, item2, ...]``.  This</span>
-<span class="sd">    is suitable for ``list`` type columns.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="s">&#39;[ </span><span class="si">%s</span><span class="s"> ]&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">cql_encode_all_types</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
-
+<div class="viewcode-block" id="Encoder.cql_encode_set_collection"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_set_collection">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_set_collection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts a sequence to a string of the form ``{item1, item2, ...}``.  This</span>
+<span class="sd">        is suitable for ``set`` type columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&#39;{ </span><span class="si">%s</span><span class="s"> }&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="cql_encode_set_collection"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_set_collection">[docs]</a><span class="k">def</span> <span class="nf">cql_encode_set_collection</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a sequence to a string of the form ``{item1, item2, ...}``.  This</span>
-<span class="sd">    is suitable for ``set`` type columns.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="s">&#39;{ </span><span class="si">%s</span><span class="s"> }&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">cql_encode_all_types</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
-
-</div>
-<div class="viewcode-block" id="cql_encode_all_types"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.cql_encode_all_types">[docs]</a><span class="k">def</span> <span class="nf">cql_encode_all_types</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts any type into a CQL string, defaulting to ``cql_encode_object``</span>
-<span class="sd">    if :attr:`~.cql_encoders` does not contain an entry for the type.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">cql_encoders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">),</span> <span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">val</span><span class="p">)</span>
-
-</div>
-<span class="n">cql_encoders</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="nb">float</span><span class="p">:</span> <span class="n">cql_encode_object</span><span class="p">,</span>
-    <span class="nb">bytearray</span><span class="p">:</span> <span class="n">cql_encode_bytes</span><span class="p">,</span>
-    <span class="nb">str</span><span class="p">:</span> <span class="n">cql_encode_str</span><span class="p">,</span>
-    <span class="nb">int</span><span class="p">:</span> <span class="n">cql_encode_object</span><span class="p">,</span>
-    <span class="n">UUID</span><span class="p">:</span> <span class="n">cql_encode_object</span><span class="p">,</span>
-    <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">:</span> <span class="n">cql_encode_datetime</span><span class="p">,</span>
-    <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">:</span> <span class="n">cql_encode_date</span><span class="p">,</span>
-    <span class="nb">dict</span><span class="p">:</span> <span class="n">cql_encode_map_collection</span><span class="p">,</span>
-    <span class="n">OrderedDict</span><span class="p">:</span> <span class="n">cql_encode_map_collection</span><span class="p">,</span>
-    <span class="nb">list</span><span class="p">:</span> <span class="n">cql_encode_list_collection</span><span class="p">,</span>
-    <span class="nb">tuple</span><span class="p">:</span> <span class="n">cql_encode_list_collection</span><span class="p">,</span>
-    <span class="nb">set</span><span class="p">:</span> <span class="n">cql_encode_set_collection</span><span class="p">,</span>
-    <span class="nb">frozenset</span><span class="p">:</span> <span class="n">cql_encode_set_collection</span><span class="p">,</span>
-    <span class="n">types</span><span class="o">.</span><span class="n">GeneratorType</span><span class="p">:</span> <span class="n">cql_encode_list_collection</span>
-<span class="p">}</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">A map of python types to encoder functions.</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
-    <span class="n">cql_encoders</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
-        <span class="nb">unicode</span><span class="p">:</span> <span class="n">cql_encode_unicode</span><span class="p">,</span>
-        <span class="nb">buffer</span><span class="p">:</span> <span class="n">cql_encode_bytes</span><span class="p">,</span>
-        <span class="nb">long</span><span class="p">:</span> <span class="n">cql_encode_object</span><span class="p">,</span>
-        <span class="n">types</span><span class="o">.</span><span class="n">NoneType</span><span class="p">:</span> <span class="n">cql_encode_none</span><span class="p">,</span>
-    <span class="p">})</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="n">cql_encoders</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
-        <span class="n">memoryview</span><span class="p">:</span> <span class="n">cql_encode_bytes</span><span class="p">,</span>
-        <span class="nb">bytes</span><span class="p">:</span> <span class="n">cql_encode_bytes</span><span class="p">,</span>
-        <span class="nb">type</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span> <span class="n">cql_encode_none</span><span class="p">,</span>
-    <span class="p">})</span>
-
-<span class="c"># sortedset is optional</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">blist</span> <span class="kn">import</span> <span class="n">sortedset</span>
-    <span class="n">cql_encoders</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
-        <span class="n">sortedset</span><span class="p">:</span> <span class="n">cql_encode_set_collection</span>
-    <span class="p">})</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="k">pass</span>
+<div class="viewcode-block" id="Encoder.cql_encode_all_types"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_all_types">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_all_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts any type into a CQL string, defaulting to ``cql_encode_object``</span>
+<span class="sd">        if :attr:`~Encoder.mapping` does not contain an entry for the type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">val</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>
@@ -283,7 +285,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 2.1.0b1 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 2.1.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.0b1',
+        VERSION:     '2.1.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.0b1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.0c1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -111,7 +111,7 @@
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">AuthenticationFailed</span><span class="p">,</span>
                        <span class="n">InvalidRequest</span><span class="p">,</span> <span class="n">OperationTimedOut</span><span class="p">,</span> <span class="n">UnsupportedOperation</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="n">ConnectionException</span><span class="p">,</span> <span class="n">ConnectionShutdown</span>
-<span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">cql_encode_all_types</span><span class="p">,</span> <span class="n">cql_encoders</span>
+<span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">Encoder</span>
 <span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="kn">import</span> <span class="p">(</span><span class="n">QueryMessage</span><span class="p">,</span> <span class="n">ResultMessage</span><span class="p">,</span>
                                 <span class="n">ErrorMessage</span><span class="p">,</span> <span class="n">ReadTimeoutErrorMessage</span><span class="p">,</span>
                                 <span class="n">WriteTimeoutErrorMessage</span><span class="p">,</span>
@@ -447,7 +447,12 @@
 <span class="sd">        Any of the mutable Cluster attributes may be set as keyword arguments</span>
 <span class="sd">        to the constructor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">contact_points</span> <span class="o">=</span> <span class="n">contact_points</span>
+        <span class="k">if</span> <span class="n">contact_points</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">contact_points</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;contact_points should not be a string, it should be a sequence (e.g. list) of strings&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">contact_points</span> <span class="o">=</span> <span class="n">contact_points</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="o">=</span> <span class="n">compression</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span> <span class="o">=</span> <span class="n">protocol_version</span>
@@ -705,6 +710,8 @@
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Cluster is already shut down&quot;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_setup</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Connecting to cluster, contact points: </span><span class="si">%s</span><span class="s">; protocol version: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">contact_points</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">connection_class</span><span class="o">.</span><span class="n">initialize_reactor</span><span class="p">()</span>
                 <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">_shutdown_cluster</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
                 <span class="k">for</span> <span class="n">address</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contact_points</span><span class="p">:</span>
@@ -1229,25 +1236,25 @@
 <span class="sd">    .. versionadded:: 2.1.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">encoders</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">encoder</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A map of python types to CQL encoder functions that will be used when</span>
-<span class="sd">    formatting query parameters for non-prepared statements.  This mapping</span>
-<span class="sd">    is not used for prepared statements (because prepared statements</span>
-<span class="sd">    give the driver more information about what CQL types are expected, allowing</span>
-<span class="sd">    it to accept a wider range of python types).</span>
+<span class="sd">    A :class:`~cassandra.encoder.Encoder` instance that will be used when</span>
+<span class="sd">    formatting query parameters for non-prepared statements.  This is not used</span>
+<span class="sd">    for prepared statements (because prepared statements give the driver more</span>
+<span class="sd">    information about what CQL types are expected, allowing it to accept a</span>
+<span class="sd">    wider range of python types).</span>
 
-<span class="sd">    This mapping can be be modified by users as they see fit.  Functions from</span>
-<span class="sd">    :mod:`cassandra.encoder` should be used, if possible, because they take</span>
-<span class="sd">    precautions to avoid injections and properly sanitize data.</span>
+<span class="sd">    The encoder uses a mapping from python types to encoder methods (for</span>
+<span class="sd">    specific CQL types).  This mapping can be be modified by users as they see</span>
+<span class="sd">    fit.  Methods of :class:`~cassandra.encoder.Encoder` should be used for mapping</span>
+<span class="sd">    values if possible, because they take precautions to avoid injections and</span>
+<span class="sd">    properly sanitize data.</span>
 
 <span class="sd">    Example::</span>
 
-<span class="sd">        from cassandra.encoder import cql_encode_tuple</span>
-
 <span class="sd">        cluster = Cluster()</span>
 <span class="sd">        session = cluster.connect(&quot;mykeyspace&quot;)</span>
-<span class="sd">        session.encoders[tuple] = cql_encode_tuple</span>
+<span class="sd">        session.encoder.mapping[tuple] = session.encoder.cql_encode_tuple</span>
 
 <span class="sd">        session.execute(&quot;CREATE TABLE mytable (k int PRIMARY KEY, col tuple&lt;int, ascii&gt;)&quot;)</span>
 <span class="sd">        session.execute(&quot;INSERT INTO mytable (k, col) VALUES (%s, %s)&quot;, [0, (123, &#39;abc&#39;)])</span>
@@ -1269,7 +1276,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metrics</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_protocol_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">protocol_version</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">encoders</span> <span class="o">=</span> <span class="n">cql_encoders</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span>
 
         <span class="c"># create connection pools in parallel</span>
         <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1384,6 +1391,8 @@
         <span class="n">fetch_size</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">fetch_size</span>
         <span class="k">if</span> <span class="n">fetch_size</span> <span class="ow">is</span> <span class="n">FETCH_SIZE_UNSET</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_protocol_version</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="n">fetch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_fetch_size</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_protocol_version</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">fetch_size</span> <span class="o">=</span> <span class="bp">None</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_protocol_version</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_client_timestamp</span><span class="p">:</span>
             <span class="n">timestamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span>
@@ -1395,7 +1404,7 @@
             <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">):</span>
                 <span class="n">query_string</span> <span class="o">=</span> <span class="n">query_string</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
-                <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoders</span><span class="p">)</span>
+                <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">)</span>
             <span class="n">message</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span>
                 <span class="n">query_string</span><span class="p">,</span> <span class="n">cl</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">serial_consistency_level</span><span class="p">,</span>
                 <span class="n">fetch_size</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">)</span>
@@ -1655,10 +1664,10 @@
         <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
             <span class="k">return</span> <span class="s">&#39;{ </span><span class="si">%s</span><span class="s"> }&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
                 <span class="n">field_name</span><span class="p">,</span>
-                <span class="n">cql_encode_all_types</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">field_name</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">cql_encode_all_types</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">field_name</span><span class="p">))</span>
             <span class="p">)</span> <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">type_meta</span><span class="o">.</span><span class="n">field_names</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="n">klass</span><span class="p">]</span> <span class="o">=</span> <span class="n">encode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">mapping</span><span class="p">[</span><span class="n">klass</span><span class="p">]</span> <span class="o">=</span> <span class="n">encode</span>
 
     <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Internal &quot;&quot;&quot;</span>
@@ -2970,7 +2979,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

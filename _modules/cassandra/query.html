@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query &mdash; Cassandra Driver 2.1.0b1 documentation</title>
+    <title>cassandra.query &mdash; Cassandra Driver 2.1.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.0b1',
+        VERSION:     '2.1.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.0b1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.0c1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -94,8 +94,8 @@
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">OperationTimedOut</span>
 <span class="kn">from</span> <span class="nn">cassandra.cqltypes</span> <span class="kn">import</span> <span class="n">unix_time_from_uuid1</span>
-<span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="p">(</span><span class="n">cql_encoders</span><span class="p">,</span> <span class="n">cql_encode_object</span><span class="p">,</span>
-                               <span class="n">cql_encode_sequence</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">Encoder</span>
+<span class="kn">import</span> <span class="nn">cassandra.encoder</span>
 <span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -124,7 +124,7 @@
 
 <span class="sd">    Example::</span>
 
-<span class="sd">        &gt;&gt;&gt; from cassandra.query import named_tuple_factory</span>
+<span class="sd">        &gt;&gt;&gt; from cassandra.query import tuple_factory</span>
 <span class="sd">        &gt;&gt;&gt; session = cluster.connect(&#39;mykeyspace&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; session.row_factory = tuple_factory</span>
 <span class="sd">        &gt;&gt;&gt; rows = session.execute(&quot;SELECT name, age FROM users LIMIT 1&quot;)</span>
@@ -692,8 +692,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
-                <span class="n">encoders</span> <span class="o">=</span> <span class="n">cql_encoders</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoders</span>
-                <span class="n">statement</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">encoders</span><span class="p">)</span>
+                <span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoder</span>
+                <span class="n">statement</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">encoder</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">False</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="p">()))</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">PreparedStatement</span><span class="p">):</span>
             <span class="n">query_id</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">query_id</span>
@@ -711,8 +711,8 @@
             <span class="c"># it must be a SimpleStatement</span>
             <span class="n">query_string</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">query_string</span>
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
-                <span class="n">encoders</span> <span class="o">=</span> <span class="n">cql_encoders</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoders</span>
-                <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">encoders</span><span class="p">)</span>
+                <span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoder</span>
+                <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">encoder</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">False</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="p">()))</span>
         <span class="k">return</span> <span class="bp">self</span>
 </div>
@@ -732,33 +732,27 @@
     <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
 
 </div>
-<div class="viewcode-block" id="ValueSequence"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.ValueSequence">[docs]</a><span class="k">class</span> <span class="nc">ValueSequence</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A wrapper class that is used to specify that a sequence of values should</span>
-<span class="sd">    be treated as a CQL list of values instead of a single column collection when used</span>
-<span class="sd">    as part of the `parameters` argument for :meth:`.Session.execute()`.</span>
+<span class="n">ValueSequence</span> <span class="o">=</span> <span class="n">cassandra</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">ValueSequence</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A wrapper class that is used to specify that a sequence of values should</span>
+<span class="sd">be treated as a CQL list of values instead of a single column collection when used</span>
+<span class="sd">as part of the `parameters` argument for :meth:`.Session.execute()`.</span>
 
-<span class="sd">    This is typically needed when supplying a list of keys to select.</span>
-<span class="sd">    For example::</span>
+<span class="sd">This is typically needed when supplying a list of keys to select.</span>
+<span class="sd">For example::</span>
 
-<span class="sd">        &gt;&gt;&gt; my_user_ids = (&#39;alice&#39;, &#39;bob&#39;, &#39;charles&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; query = &quot;SELECT * FROM users WHERE user_id IN %s&quot;</span>
-<span class="sd">        &gt;&gt;&gt; session.execute(query, parameters=[ValueSequence(my_user_ids)])</span>
+<span class="sd">    &gt;&gt;&gt; my_user_ids = (&#39;alice&#39;, &#39;bob&#39;, &#39;charles&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; query = &quot;SELECT * FROM users WHERE user_id IN %s&quot;</span>
+<span class="sd">    &gt;&gt;&gt; session.execute(query, parameters=[ValueSequence(my_user_ids)])</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sequence</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sequence</span> <span class="o">=</span> <span class="n">sequence</span>
 
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">cql_encode_sequence</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sequence</span><span class="p">)</span>
-
-</div>
-<span class="k">def</span> <span class="nf">bind_params</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">encoders</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">bind_params</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">encoder</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">query</span> <span class="o">%</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">encoders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">query</span> <span class="o">%</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">encoder</span><span class="o">.</span><span class="n">cql_encode_all_types</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">query</span> <span class="o">%</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">encoders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">cql_encode_object</span><span class="p">)(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">query</span> <span class="o">%</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">encoder</span><span class="o">.</span><span class="n">cql_encode_all_types</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="TraceUnavailable"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.query.TraceUnavailable">[docs]</a><span class="k">class</span> <span class="nc">TraceUnavailable</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -947,7 +941,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0b1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
