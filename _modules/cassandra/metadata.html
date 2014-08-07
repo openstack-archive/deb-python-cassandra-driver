@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata &mdash; Cassandra Driver 2.1.0c1 documentation</title>
+    <title>cassandra.metadata &mdash; Cassandra Driver 2.1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.0c1',
+        VERSION:     '2.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.0c1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -524,10 +524,14 @@
             <span class="n">replica_map</span><span class="p">[</span><span class="n">ring</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">hosts</span>
         <span class="k">return</span> <span class="n">replica_map</span>
 
-    <span class="k">def</span> <span class="nf">export_for_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SimpleStrategy.export_for_schema"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.SimpleStrategy.export_for_schema">[docs]</a>    <span class="k">def</span> <span class="nf">export_for_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a string version of these replication options which are</span>
+<span class="sd">        suitable for use in a CREATE KEYSPACE statement.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s">&quot;{&#39;class&#39;: &#39;SimpleStrategy&#39;, &#39;replication_factor&#39;: &#39;</span><span class="si">%d</span><span class="s">&#39;}&quot;</span> \
                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">replication_factor</span><span class="p">,)</span>
-
+</div>
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">SimpleStrategy</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">False</span>
@@ -603,12 +607,16 @@
 
         <span class="k">return</span> <span class="n">replica_map</span>
 
-    <span class="k">def</span> <span class="nf">export_for_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="NetworkTopologyStrategy.export_for_schema"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.NetworkTopologyStrategy.export_for_schema">[docs]</a>    <span class="k">def</span> <span class="nf">export_for_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a string version of these replication options which are</span>
+<span class="sd">        suitable for use in a CREATE KEYSPACE statement.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="s">&quot;{&#39;class&#39;: &#39;NetworkTopologyStrategy&#39;&quot;</span>
         <span class="k">for</span> <span class="n">dc</span><span class="p">,</span> <span class="n">repl_factor</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dc_replication_factors</span><span class="p">:</span>
             <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;, &#39;</span><span class="si">%s</span><span class="s">&#39;: &#39;</span><span class="si">%d</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">repl_factor</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ret</span> <span class="o">+</span> <span class="s">&quot;}&quot;</span>
-
+</div>
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">NetworkTopologyStrategy</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">False</span>
@@ -623,9 +631,13 @@
     <span class="k">def</span> <span class="nf">make_token_replica_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_to_host_owner</span><span class="p">,</span> <span class="n">ring</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{}</span>
 
-    <span class="k">def</span> <span class="nf">export_for_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="LocalStrategy.export_for_schema"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.LocalStrategy.export_for_schema">[docs]</a>    <span class="k">def</span> <span class="nf">export_for_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a string version of these replication options which are</span>
+<span class="sd">        suitable for use in a CREATE KEYSPACE statement.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s">&quot;{&#39;class&#39;: &#39;LocalStrategy&#39;}&quot;</span>
-
+</div>
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">LocalStrategy</span><span class="p">)</span>
 
@@ -655,6 +667,11 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">user_types</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A map from user-defined type names to instances of :class:`~cassandra.metadata..UserType`.</span>
+
+<span class="sd">    .. versionadded:: 2.1.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
@@ -663,15 +680,23 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">tables</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">user_types</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="k">def</span> <span class="nf">export_as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="KeyspaceMetadata.export_as_string"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.KeyspaceMetadata.export_as_string">[docs]</a>    <span class="k">def</span> <span class="nf">export_as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a CQL query string that can be used to recreate the entire keyspace,</span>
+<span class="sd">        including user-defined types and tables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">()]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_type_strings</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">export_as_string</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
-
-    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="KeyspaceMetadata.as_cql_query"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.KeyspaceMetadata.as_cql_query">[docs]</a>    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a CQL query string that can be used to recreate just this keyspace,</span>
+<span class="sd">        not including user-defined types and tables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="s">&quot;CREATE KEYSPACE </span><span class="si">%s</span><span class="s"> WITH replication = </span><span class="si">%s</span><span class="s"> &quot;</span> <span class="o">%</span> <span class="p">(</span>
             <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">replication_strategy</span><span class="o">.</span><span class="n">export_for_schema</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">ret</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39; AND durable_writes = </span><span class="si">%s</span><span class="s">;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&quot;true&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">durable_writes</span> <span class="k">else</span> <span class="s">&quot;false&quot;</span><span class="p">))</span>
-
+</div>
     <span class="k">def</span> <span class="nf">user_type_strings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">user_type_strings</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_types</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -1017,6 +1042,10 @@
     <span class="sd">&quot;&quot;&quot; The string name of this column. &quot;&quot;&quot;</span>
 
     <span class="n">data_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The data type for the column in the form of an instance of one of</span>
+<span class="sd">    the type classes in :mod:`cassandra.cqltypes`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">index</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1265,14 +1294,14 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2014, DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>

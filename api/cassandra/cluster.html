@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 2.1.0c1 documentation</title>
+    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 2.1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.0c1',
+        VERSION:     '2.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.0c1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.0 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" />
     <link rel="prev" title="cassandra - Exceptions and Enums" href="../cassandra.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -52,10 +52,10 @@
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="../cassandra.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">cassandra</span></tt> - Exceptions and Enums</a></p>
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">cassandra</span></tt> - Exceptions and Enums</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="policies.html"
-                        title="next chapter"><tt class="docutils literal docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies</a></p>
+                        title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.policies</span></tt> - Load balancing and Failure Handling Policies</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../_sources/api/cassandra/cluster.txt"
@@ -112,12 +112,38 @@ server will be automatically used.</p>
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.protocol_version">
 <tt class="descname">protocol_version</tt><em class="property"> = 2</em><a class="headerlink" href="#cassandra.cluster.Cluster.protocol_version" title="Permalink to this definition">¶</a></dt>
-<dd><p>The version of the native protocol to use.  The protocol version 2
-add support for lightweight transactions, batch operations, and
-automatic query paging, but is only supported by Cassandra 2.0+.  When
-working with Cassandra 1.2, this must be set to 1.  You can also set
-this to 1 when working with Cassandra 2.0+, but features that require
-the version 2 protocol will not be enabled.</p>
+<dd><p>The version of the native protocol to use.</p>
+<p>Version 2 of the native protocol adds support for lightweight transactions,
+batch operations, and automatic query paging. The v2 protocol is
+supported by Cassandra 2.0+.</p>
+<p>Version 3 of the native protocol adds support for protocol-level
+client-side timestamps (see <a class="reference internal" href="#cassandra.cluster.Session.use_client_timestamp" title="cassandra.cluster.Session.use_client_timestamp"><tt class="xref py py-attr docutils literal"><span class="pre">Session.use_client_timestamp</span></tt></a>),
+serial consistency levels for <a class="reference internal" href="query.html#cassandra.query.BatchStatement" title="cassandra.query.BatchStatement"><tt class="xref py py-class docutils literal"><span class="pre">BatchStatement</span></tt></a>, and an
+improved connection pool.</p>
+<p>The following table describes the native protocol versions that
+are supported by each version of Cassandra:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Cassandra Version</th>
+<th class="head">Protocol Versions</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>1.2</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>2.0</td>
+<td>1, 2</td>
+</tr>
+<tr class="row-even"><td>2.1</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
@@ -159,7 +185,7 @@ one of its subclasses.  Defaults to <a class="reference internal" href="policies
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.reconnection_policy">
-<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x3320790&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x7f1d6aeddad0&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.ReconnectionPolicy</span></tt></a>. Defaults to an instance
 of <a class="reference internal" href="policies.html#cassandra.policies.ExponentialReconnectionPolicy" title="cassandra.policies.ExponentialReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ExponentialReconnectionPolicy</span></tt></a> with a base delay of one second and
 a max delay of ten minutes.</p>
@@ -167,7 +193,7 @@ a max delay of ten minutes.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.default_retry_policy">
-<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x33207d0&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x7f1d6aeddb10&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A default <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> instance to use for all
 <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> objects which do not have a <a class="reference internal" href="query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">retry_policy</span></tt></a>
 explicitly set.</p>
@@ -189,8 +215,8 @@ I/O with Cassandra.  These are the current options:</p>
 <ul class="simple">
 <li><a class="reference internal" href="io/asyncorereactor.html#cassandra.io.asyncorereactor.AsyncoreConnection" title="cassandra.io.asyncorereactor.AsyncoreConnection"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.asyncorereactor.AsyncoreConnection</span></tt></a></li>
 <li><a class="reference internal" href="io/libevreactor.html#cassandra.io.libevreactor.LibevConnection" title="cassandra.io.libevreactor.LibevConnection"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.LibevConnection</span></tt></a></li>
-<li><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.GeventConnection</span></tt> (requires monkey-patching)</li>
-<li><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.TwistedConnection</span></tt></li>
+<li><a class="reference internal" href="io/geventreactor.html#cassandra.io.geventreactor.GeventConnection" title="cassandra.io.geventreactor.GeventConnection"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.geventreactor.GeventConnection</span></tt></a> (requires monkey-patching)</li>
+<li><a class="reference internal" href="io/twistedreactor.html#cassandra.io.twistedreactor.TwistedConnection" title="cassandra.io.twistedreactor.TwistedConnection"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.io.twistedreactor.TwistedConnection</span></tt></a></li>
 </ul>
 <p>By default, <tt class="docutils literal"><span class="pre">AsyncoreConnection</span></tt> will be used, which uses
 the <tt class="docutils literal"><span class="pre">asyncore</span></tt> module in the Python standard library.  The
@@ -409,13 +435,13 @@ on a <a class="reference internal" href="#cassandra.cluster.ResponseFuture" titl
 <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_errback" title="cassandra.cluster.ResponseFuture.add_errback"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_errback()</span></tt></a>; even if a query exceeds this default
 timeout, neither the registered callback or errback will be called.</p>
 <div class="versionadded">
-<p><span>New in version 2.0.0.</span></p>
+<p><span class="versionmodified">New in version 2.0.0.</span></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Session.row_factory">
-<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x32d6b90&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x7f1d6aed09b0&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
 <dd><p>The format to return row results in.  By default, each
 returned row will be a named tuple.  You can alternatively
 use any of the following:</p>
@@ -439,7 +465,7 @@ results.  The fetch size can be also specified per-query through
 <p>This only takes effect when protocol version 2 or higher is used.
 See <a class="reference internal" href="#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">Cluster.protocol_version</span></tt></a> for details.</p>
 <div class="versionadded">
-<p><span>New in version 2.0.0.</span></p>
+<p><span class="versionmodified">New in version 2.0.0.</span></p>
 </div>
 </dd></dl>
 
@@ -451,7 +477,7 @@ client-side at the protocol level.  (Normally they are generated
 server-side by the coordinator node.)  Note that timestamps specified
 within a CQL query will override this timestamp.</p>
 <div class="versionadded">
-<p><span>New in version 2.1.0.</span></p>
+<p><span class="versionmodified">New in version 2.1.0.</span></p>
 </div>
 </dd></dl>
 
@@ -476,6 +502,9 @@ properly sanitize data.</p>
 <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TABLE mytable (k int PRIMARY KEY, col tuple&lt;int, ascii&gt;)&quot;</span><span class="p">)</span>
 <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;INSERT INTO mytable (k, col) VALUES (</span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">)&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="mi">123</span><span class="p">,</span> <span class="s">&#39;abc&#39;</span><span class="p">)])</span>
 </pre></div>
+</div>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.1.0.</span></p>
 </div>
 </dd></dl>
 
@@ -650,7 +679,7 @@ trace is not available after <cite>max_wait</cite> seconds,
 query results, <tt class="xref py py-const docutils literal"><span class="pre">False</span></tt> otherwise.  This should only
 be checked after the first page has been returned.</p>
 <div class="versionadded">
-<p><span>New in version 2.0.0.</span></p>
+<p><span class="versionmodified">New in version 2.0.0.</span></p>
 </div>
 </dd></dl>
 
@@ -662,7 +691,7 @@ starts fetching the next page.  If there are no pages left, <a class="reference 
 is raised.  Also see <a class="reference internal" href="#cassandra.cluster.ResponseFuture.has_more_pages" title="cassandra.cluster.ResponseFuture.has_more_pages"><tt class="xref py py-attr docutils literal"><span class="pre">has_more_pages</span></tt></a>.</p>
 <p>This should only be called after the first page has been returned.</p>
 <div class="versionadded">
-<p><span>New in version 2.0.0.</span></p>
+<p><span class="versionmodified">New in version 2.0.0.</span></p>
 </div>
 </dd></dl>
 
@@ -756,7 +785,7 @@ like you might see on a normal call to <tt class="docutils literal"><span class=
 there are no more pages.  You can check <a class="reference internal" href="#cassandra.cluster.ResponseFuture.has_more_pages" title="cassandra.cluster.ResponseFuture.has_more_pages"><tt class="xref py py-attr docutils literal"><span class="pre">ResponseFuture.has_more_pages</span></tt></a>
 before calling to avoid this.</p>
 <div class="versionadded">
-<p><span>New in version 2.0.0.</span></p>
+<p><span class="versionmodified">New in version 2.0.0.</span></p>
 </div>
 </dd></dl>
 
@@ -779,6 +808,9 @@ against.</p>
 <dt id="cassandra.cluster.UserTypeDoesNotExist">
 <em class="property">exception </em><tt class="descclassname">cassandra.cluster.</tt><tt class="descname">UserTypeDoesNotExist</tt><a class="reference internal" href="../../_modules/cassandra/cluster.html#UserTypeDoesNotExist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.UserTypeDoesNotExist" title="Permalink to this definition">¶</a></dt>
 <dd><p>An attempt was made to use a user-defined type that does not exist.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.1.0.</span></p>
+</div>
 </dd></dl>
 
 </div>
@@ -804,13 +836,13 @@ against.</p>
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              >previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2014, DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>

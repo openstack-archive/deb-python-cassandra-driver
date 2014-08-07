@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 2.1.0c1 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 2.1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.0c1',
+        VERSION:     '2.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.0c1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -246,12 +246,29 @@
 
     <span class="n">protocol_version</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The version of the native protocol to use.  The protocol version 2</span>
-<span class="sd">    add support for lightweight transactions, batch operations, and</span>
-<span class="sd">    automatic query paging, but is only supported by Cassandra 2.0+.  When</span>
-<span class="sd">    working with Cassandra 1.2, this must be set to 1.  You can also set</span>
-<span class="sd">    this to 1 when working with Cassandra 2.0+, but features that require</span>
-<span class="sd">    the version 2 protocol will not be enabled.</span>
+<span class="sd">    The version of the native protocol to use.</span>
+
+<span class="sd">    Version 2 of the native protocol adds support for lightweight transactions,</span>
+<span class="sd">    batch operations, and automatic query paging. The v2 protocol is</span>
+<span class="sd">    supported by Cassandra 2.0+.</span>
+
+<span class="sd">    Version 3 of the native protocol adds support for protocol-level</span>
+<span class="sd">    client-side timestamps (see :attr:`.Session.use_client_timestamp`),</span>
+<span class="sd">    serial consistency levels for :class:`~.BatchStatement`, and an</span>
+<span class="sd">    improved connection pool.</span>
+
+<span class="sd">    The following table describes the native protocol versions that</span>
+<span class="sd">    are supported by each version of Cassandra:</span>
+
+<span class="sd">    +-------------------+-------------------+</span>
+<span class="sd">    | Cassandra Version | Protocol Versions |</span>
+<span class="sd">    +===================+===================+</span>
+<span class="sd">    | 1.2               | 1                 |</span>
+<span class="sd">    +-------------------+-------------------+</span>
+<span class="sd">    | 2.0               | 1, 2              |</span>
+<span class="sd">    +-------------------+-------------------+</span>
+<span class="sd">    | 2.1               | 1, 2, 3           |</span>
+<span class="sd">    +-------------------+-------------------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">compression</span> <span class="o">=</span> <span class="bp">True</span>
@@ -387,8 +404,8 @@
 
 <span class="sd">    * :class:`cassandra.io.asyncorereactor.AsyncoreConnection`</span>
 <span class="sd">    * :class:`cassandra.io.libevreactor.LibevConnection`</span>
-<span class="sd">    * :class:`cassandra.io.libevreactor.GeventConnection` (requires monkey-patching)</span>
-<span class="sd">    * :class:`cassandra.io.libevreactor.TwistedConnection`</span>
+<span class="sd">    * :class:`cassandra.io.geventreactor.GeventConnection` (requires monkey-patching)</span>
+<span class="sd">    * :class:`cassandra.io.twistedreactor.TwistedConnection`</span>
 
 <span class="sd">    By default, ``AsyncoreConnection`` will be used, which uses</span>
 <span class="sd">    the ``asyncore`` module in the Python standard library.  The</span>
@@ -1258,6 +1275,8 @@
 
 <span class="sd">        session.execute(&quot;CREATE TABLE mytable (k int PRIMARY KEY, col tuple&lt;int, ascii&gt;)&quot;)</span>
 <span class="sd">        session.execute(&quot;INSERT INTO mytable (k, col) VALUES (%s, %s)&quot;, [0, (123, &#39;abc&#39;)])</span>
+
+<span class="sd">    .. versionadded:: 2.1.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_lock</span> <span class="o">=</span> <span class="bp">None</span>
@@ -1681,6 +1700,8 @@
 <div class="viewcode-block" id="UserTypeDoesNotExist"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.UserTypeDoesNotExist">[docs]</a><span class="k">class</span> <span class="nc">UserTypeDoesNotExist</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An attempt was made to use a user-defined type that does not exist.</span>
+
+<span class="sd">    .. versionadded:: 2.1.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 
@@ -2979,14 +3000,14 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2014, DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>

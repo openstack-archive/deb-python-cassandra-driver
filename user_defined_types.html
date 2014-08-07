@@ -1,0 +1,197 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>User Defined Types &mdash; Cassandra Driver 2.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 2.1.0 documentation" href="index.html" />
+    <link rel="prev" title="Security" href="security.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="security.html" title="Security"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">User Defined Types</a><ul>
+<li><a class="reference internal" href="#registering-a-class-to-map-to-a-udt">Registering a Class to Map to a UDT</a></li>
+<li><a class="reference internal" href="#using-udts-without-registering-them">Using UDTs Without Registering Them</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="security.html"
+                        title="previous chapter">Security</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/user_defined_types.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="user-defined-types">
+<span id="udts"></span><h1>User Defined Types<a class="headerlink" href="#user-defined-types" title="Permalink to this headline">¶</a></h1>
+<p>Cassandra 2.1 introduced user-defined types (UDTs).  You can create a
+new type through <tt class="docutils literal"><span class="pre">CREATE</span> <span class="pre">TYPE</span></tt> statements in CQL:</p>
+<div class="highlight-python"><div class="highlight"><pre>CREATE TYPE address (street text, zip int);
+</pre></div>
+</div>
+<p>Version 2.1 of the python driver adds support for user-defined types.</p>
+<div class="section" id="registering-a-class-to-map-to-a-udt">
+<h2>Registering a Class to Map to a UDT<a class="headerlink" href="#registering-a-class-to-map-to-a-udt" title="Permalink to this headline">¶</a></h2>
+<p>You can tell the python driver to return columns of a specific UDT as
+instances of a class by registering them with your <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><tt class="xref py py-class docutils literal"><span class="pre">Cluster</span></tt></a>
+instance through <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.register_user_type" title="cassandra.cluster.Cluster.register_user_type"><tt class="xref py py-meth docutils literal"><span class="pre">Cluster.register_user_type()</span></tt></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s">&#39;mykeyspace&#39;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TYPE address (street text, zipcode int)&quot;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TABLE users (id int PRIMARY KEY, location address)&quot;</span><span class="p">)</span>
+
+<span class="c"># create a class to map to the &quot;address&quot; UDT</span>
+<span class="k">class</span> <span class="nc">Address</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">street</span><span class="p">,</span> <span class="n">zipcode</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">street</span> <span class="o">=</span> <span class="n">street</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zipcode</span> <span class="o">=</span> <span class="n">zipcode</span>
+
+<span class="n">cluster</span><span class="o">.</span><span class="n">register_user_type</span><span class="p">(</span><span class="s">&#39;mykeyspace&#39;</span><span class="p">,</span> <span class="s">&#39;address&#39;</span><span class="p">,</span> <span class="n">Address</span><span class="p">)</span>
+
+<span class="c"># insert a row using an instance of Address</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;INSERT INTO users (id, location) VALUES (</span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">)&quot;</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Address</span><span class="p">(</span><span class="s">&quot;123 Main St.&quot;</span><span class="p">,</span> <span class="mi">78723</span><span class="p">)))</span>
+
+<span class="c"># results will include Address instances</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+<span class="n">row</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">print</span> <span class="n">row</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">street</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">zipcode</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="using-udts-without-registering-them">
+<h2>Using UDTs Without Registering Them<a class="headerlink" href="#using-udts-without-registering-them" title="Permalink to this headline">¶</a></h2>
+<p>Although it is recommended to register your types with
+<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.register_user_type" title="cassandra.cluster.Cluster.register_user_type"><tt class="xref py py-meth docutils literal"><span class="pre">Cluster.register_user_type()</span></tt></a>, the driver gives you some options
+for working with unregistered UDTS.</p>
+<p>When you use prepared statements, the driver knows what data types to
+expect for each placeholder.  This allows you to pass any object you
+want for a UDT, as long as it has attributes that match the field names
+for the UDT:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s">&#39;mykeyspace&#39;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TYPE address (street text, zipcode int)&quot;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TABLE users (id int PRIMARY KEY, location address)&quot;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">street</span><span class="p">,</span> <span class="n">zipcode</span><span class="p">,</span> <span class="n">otherstuff</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">street</span> <span class="o">=</span> <span class="n">street</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zipcode</span> <span class="o">=</span> <span class="n">zipcode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">otherstuff</span> <span class="o">=</span> <span class="n">otherstuff</span>
+
+<span class="n">insert_statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s">&quot;INSERT INTO users (id, location) VALUES (?, ?)&quot;</span><span class="p">)</span>
+
+<span class="c"># since we&#39;re using a prepared statement, we don&#39;t *have* to register</span>
+<span class="c"># a class to map to the UDT to insert data.  The object just needs to have</span>
+<span class="c"># &quot;street&quot; and &quot;zipcode&quot; attributes (which Foo does):</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_statement</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">Foo</span><span class="p">(</span><span class="s">&quot;123 Main St.&quot;</span><span class="p">,</span> <span class="mi">78723</span><span class="p">,</span> <span class="s">&quot;some other stuff&quot;</span><span class="p">)]</span>
+
+<span class="c"># when we query data, UDT columns that don&#39;t have a class registered</span>
+<span class="c"># will be returned as namedtuples:</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+<span class="n">first_row</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">address</span> <span class="o">=</span> <span class="n">first_row</span><span class="o">.</span><span class="n">address</span>
+<span class="k">print</span> <span class="n">address</span>  <span class="c"># prints &quot;Address(street=&#39;123 Main St.&#39;, zipcode=78723)&quot;</span>
+<span class="n">street</span> <span class="o">=</span> <span class="n">address</span><span class="o">.</span><span class="n">street</span>
+<span class="n">zipcode</span> <span class="o">=</span> <span class="n">address</span><span class="o">.</span><span class="n">street</span>
+</pre></div>
+</div>
+<p>As shown in the code example, inserting data for UDT columns without registering
+a class works fine for prepared statements.  However, <strong>you must register a
+class to insert UDT columns with unprepared statements</strong>.  You can still query
+UDT columns without registered classes using unprepared statements, they will
+simply return <tt class="docutils literal"><span class="pre">namedtuple</span></tt> instances (just like prepared statements do).</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="security.html" title="Security"
+             >previous</a> |</li>
+        <li><a href="index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
