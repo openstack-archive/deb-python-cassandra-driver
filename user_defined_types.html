@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>User Defined Types &mdash; Cassandra Driver 2.1.0 documentation</title>
+    <title>User Defined Types &mdash; Cassandra Driver 2.1.1 documentation</title>
     
-    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '2.1.0',
+        VERSION:     '2.1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.0 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.1 documentation" href="index.html" />
     <link rel="prev" title="Security" href="security.html" /> 
   </head>
   <body>
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="security.html" title="Security"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar">
@@ -99,7 +99,7 @@ instance through <a class="reference internal" href="api/cassandra/cluster.html#
 <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s">&#39;mykeyspace&#39;</span><span class="p">)</span>
 <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TYPE address (street text, zipcode int)&quot;</span><span class="p">)</span>
-<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TABLE users (id int PRIMARY KEY, location address)&quot;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TABLE users (id int PRIMARY KEY, location frozen&lt;address&gt;)&quot;</span><span class="p">)</span>
 
 <span class="c"># create a class to map to the &quot;address&quot; UDT</span>
 <span class="k">class</span> <span class="nc">Address</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -134,7 +134,7 @@ for the UDT:</p>
 <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s">&#39;mykeyspace&#39;</span><span class="p">)</span>
 <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TYPE address (street text, zipcode int)&quot;</span><span class="p">)</span>
-<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TABLE users (id int PRIMARY KEY, location address)&quot;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TABLE users (id int PRIMARY KEY, location frozen&lt;address&gt;)&quot;</span><span class="p">)</span>
 
 <span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
@@ -148,13 +148,13 @@ for the UDT:</p>
 <span class="c"># since we&#39;re using a prepared statement, we don&#39;t *have* to register</span>
 <span class="c"># a class to map to the UDT to insert data.  The object just needs to have</span>
 <span class="c"># &quot;street&quot; and &quot;zipcode&quot; attributes (which Foo does):</span>
-<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_statement</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">Foo</span><span class="p">(</span><span class="s">&quot;123 Main St.&quot;</span><span class="p">,</span> <span class="mi">78723</span><span class="p">,</span> <span class="s">&quot;some other stuff&quot;</span><span class="p">)]</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_statement</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">Foo</span><span class="p">(</span><span class="s">&quot;123 Main St.&quot;</span><span class="p">,</span> <span class="mi">78723</span><span class="p">,</span> <span class="s">&quot;some other stuff&quot;</span><span class="p">)])</span>
 
 <span class="c"># when we query data, UDT columns that don&#39;t have a class registered</span>
 <span class="c"># will be returned as namedtuples:</span>
 <span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
 <span class="n">first_row</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">address</span> <span class="o">=</span> <span class="n">first_row</span><span class="o">.</span><span class="n">address</span>
+<span class="n">address</span> <span class="o">=</span> <span class="n">first_row</span><span class="o">.</span><span class="n">location</span>
 <span class="k">print</span> <span class="n">address</span>  <span class="c"># prints &quot;Address(street=&#39;123 Main St.&#39;, zipcode=78723)&quot;</span>
 <span class="n">street</span> <span class="o">=</span> <span class="n">address</span><span class="o">.</span><span class="n">street</span>
 <span class="n">zipcode</span> <span class="o">=</span> <span class="n">address</span><span class="o">.</span><span class="n">street</span>
@@ -186,7 +186,7 @@ simply return <tt class="docutils literal"><span class="pre">namedtuple</span></
         <li class="right" >
           <a href="security.html" title="Security"
              >previous</a> |</li>
-        <li><a href="index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

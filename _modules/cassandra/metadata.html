@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata &mdash; Cassandra Driver 2.1.0 documentation</title>
+    <title>cassandra.metadata &mdash; Cassandra Driver 2.1.1 documentation</title>
     
-    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.0',
+        VERSION:     '2.1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -155,7 +155,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ks</span><span class="o">.</span><span class="n">export_as_string</span><span class="p">()</span> <span class="k">for</span> <span class="n">ks</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 </div>
-    <span class="k">def</span> <span class="nf">rebuild_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ks_results</span><span class="p">,</span> <span class="n">type_results</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">rebuild_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ks_results</span><span class="p">,</span> <span class="n">type_results</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Rebuild the view of the current schema from a fresh set of rows from</span>
 <span class="sd">        the system schema tables.</span>
@@ -165,6 +165,7 @@
         <span class="n">cf_def_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         <span class="n">col_def_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">))</span>
         <span class="n">usertype_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="n">trigger_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">))</span>
 
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cf_results</span><span class="p">:</span>
             <span class="n">cf_def_rows</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
@@ -177,12 +178,18 @@
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">type_results</span><span class="p">:</span>
             <span class="n">usertype_rows</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
 
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">triggers_result</span><span class="p">:</span>
+            <span class="n">ksname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]</span>
+            <span class="n">cfname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;columnfamily_name&quot;</span><span class="p">]</span>
+            <span class="n">trigger_rows</span><span class="p">[</span><span class="n">ksname</span><span class="p">][</span><span class="n">cfname</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
         <span class="n">current_keyspaces</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">ks_results</span><span class="p">:</span>
             <span class="n">keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_keyspace_metadata</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">table_row</span> <span class="ow">in</span> <span class="n">cf_def_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
                 <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span>
-                    <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">table_row</span><span class="p">,</span> <span class="n">col_def_rows</span><span class="p">[</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+                    <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">table_row</span><span class="p">,</span> <span class="n">col_def_rows</span><span class="p">[</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">],</span>
+                    <span class="n">trigger_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{}))</span>
                 <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_meta</span>
 
             <span class="k">for</span> <span class="n">usertype_row</span> <span class="ow">in</span> <span class="n">usertype_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
@@ -230,7 +237,7 @@
             <span class="c"># the type was deleted</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">user_types</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">table_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">table_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
@@ -245,7 +252,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">cf_results</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
             <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span>
-                <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">col_results</span><span class="p">})</span>
+                <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">col_results</span><span class="p">},</span>
+                <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">triggers_result</span><span class="p">})</span>
 
     <span class="k">def</span> <span class="nf">_keyspace_added</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ksname</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span><span class="p">:</span>
@@ -271,7 +279,7 @@
         <span class="k">return</span> <span class="n">UserType</span><span class="p">(</span><span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;keyspace_name&#39;</span><span class="p">],</span> <span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;type_name&#39;</span><span class="p">],</span>
                         <span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;field_names&#39;</span><span class="p">],</span> <span class="n">type_classes</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_build_table_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace_metadata</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col_rows</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_build_table_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace_metadata</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col_rows</span><span class="p">,</span> <span class="n">trigger_rows</span><span class="p">):</span>
         <span class="n">cfname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;columnfamily_name&quot;</span><span class="p">]</span>
 
         <span class="n">comparator</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;comparator&quot;</span><span class="p">])</span>
@@ -361,6 +369,11 @@
                 <span class="n">column_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_column_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">col_row</span><span class="p">)</span>
                 <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">column_meta</span>
 
+        <span class="k">if</span> <span class="n">trigger_rows</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">trigger_row</span> <span class="ow">in</span> <span class="n">trigger_rows</span><span class="p">[</span><span class="n">cfname</span><span class="p">]:</span>
+                <span class="n">trigger_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_trigger_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">trigger_row</span><span class="p">)</span>
+                <span class="n">table_meta</span><span class="o">.</span><span class="n">triggers</span><span class="p">[</span><span class="n">trigger_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">trigger_meta</span>
+
         <span class="n">table_meta</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_options</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
         <span class="n">table_meta</span><span class="o">.</span><span class="n">is_compact_storage</span> <span class="o">=</span> <span class="n">is_compact</span>
         <span class="k">return</span> <span class="n">table_meta</span>
@@ -396,6 +409,12 @@
             <span class="k">return</span> <span class="n">IndexMetadata</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">index_name</span><span class="p">,</span> <span class="n">index_type</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">_build_trigger_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_metadata</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;trigger_name&quot;</span><span class="p">]</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;trigger_options&quot;</span><span class="p">]</span>
+        <span class="n">trigger_meta</span> <span class="o">=</span> <span class="n">TriggerMetadata</span><span class="p">(</span><span class="n">table_metadata</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">trigger_meta</span>
 
     <span class="k">def</span> <span class="nf">rebuild_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partitioner</span><span class="p">,</span> <span class="n">token_map</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -613,7 +632,7 @@
 <span class="sd">        suitable for use in a CREATE KEYSPACE statement.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="s">&quot;{&#39;class&#39;: &#39;NetworkTopologyStrategy&#39;&quot;</span>
-        <span class="k">for</span> <span class="n">dc</span><span class="p">,</span> <span class="n">repl_factor</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dc_replication_factors</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">dc</span><span class="p">,</span> <span class="n">repl_factor</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dc_replication_factors</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
             <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;, &#39;</span><span class="si">%s</span><span class="s">&#39;: &#39;</span><span class="si">%d</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">repl_factor</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ret</span> <span class="o">+</span> <span class="s">&quot;}&quot;</span>
 </div>
@@ -855,7 +874,12 @@
         <span class="s">&quot;max_compaction_threshold&quot;</span><span class="p">:</span> <span class="s">&quot;max_threshold&quot;</span><span class="p">,</span>
         <span class="s">&quot;compaction_strategy_class&quot;</span><span class="p">:</span> <span class="s">&quot;class&quot;</span><span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace_metadata</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">partition_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">clustering_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">triggers</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A dict mapping trigger names to :class:`.TriggerMetadata` instances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace_metadata</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">partition_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">clustering_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">triggers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace_metadata</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">partition_key</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">partition_key</span>
@@ -863,6 +887,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span> <span class="k">if</span> <span class="n">columns</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">columns</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">options</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">triggers</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span> <span class="k">if</span> <span class="n">triggers</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">triggers</span>
 
 <div class="viewcode-block" id="TableMetadata.export_as_string"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TableMetadata.export_as_string">[docs]</a>    <span class="k">def</span> <span class="nf">export_as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -876,6 +901,9 @@
         <span class="k">for</span> <span class="n">col_meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">col_meta</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
                 <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="si">%s</span><span class="s">;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">col_meta</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(),)</span>
+
+        <span class="k">for</span> <span class="n">trigger_meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">triggers</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="si">%s</span><span class="s">;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">trigger_meta</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(),)</span>
 
         <span class="k">return</span> <span class="n">ret</span>
 </div>
@@ -1277,7 +1305,38 @@
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="s">&quot;Tokens for ByteOrderedPartitioner should be strings (got </span><span class="si">%s</span><span class="s">)&quot;</span>
                 <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">token_string</span><span class="p">),))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">token_string</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">token_string</span>
+
+</div>
+<span class="k">class</span> <span class="nc">TriggerMetadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A representation of a trigger for a table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">table</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The :class:`.TableMetadata` this trigger belongs to. &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The string name of this trigger. &quot;&quot;&quot;</span>
+
+    <span class="n">options</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A dict mapping trigger option names to their specific settings for this</span>
+<span class="sd">    table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_metadata</span><span class="p">,</span> <span class="n">trigger_name</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">table_metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">trigger_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">options</span>
+
+    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="s">&quot;CREATE TRIGGER </span><span class="si">%s</span><span class="s"> ON </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> USING </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+            <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">keyspace</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+            <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+            <span class="n">protect_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;class&#39;</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span>
 </pre></div>
 
           </div>
@@ -1294,7 +1353,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

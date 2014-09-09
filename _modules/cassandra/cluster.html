@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 2.1.0 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 2.1.1 documentation</title>
     
-    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.0',
+        VERSION:     '2.1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -1762,6 +1762,7 @@
     <span class="n">_SELECT_COLUMN_FAMILIES</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_columnfamilies&quot;</span>
     <span class="n">_SELECT_COLUMNS</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_columns&quot;</span>
     <span class="n">_SELECT_USERTYPES</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_usertypes&quot;</span>
+    <span class="n">_SELECT_TRIGGERS</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_triggers&quot;</span>
 
     <span class="n">_SELECT_PEERS</span> <span class="o">=</span> <span class="s">&quot;SELECT peer, data_center, rack, tokens, rpc_address, schema_version FROM system.peers&quot;</span>
     <span class="n">_SELECT_LOCAL</span> <span class="o">=</span> <span class="s">&quot;SELECT cluster_name, data_center, rack, tokens, partitioner, schema_version FROM system.local WHERE key=&#39;local&#39;&quot;</span>
@@ -1958,17 +1959,31 @@
 
         <span class="n">cl</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
         <span class="k">if</span> <span class="n">table</span><span class="p">:</span>
+            <span class="k">def</span> <span class="nf">_handle_results</span><span class="p">(</span><span class="n">success</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="p">{}</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">result</span>
+
             <span class="c"># a particular table changed</span>
             <span class="n">where_clause</span> <span class="o">=</span> <span class="s">&quot; WHERE keyspace_name = &#39;</span><span class="si">%s</span><span class="s">&#39; AND columnfamily_name = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
             <span class="n">cf_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_COLUMN_FAMILIES</span> <span class="o">+</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
             <span class="n">col_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_COLUMNS</span> <span class="o">+</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-            <span class="n">cf_result</span><span class="p">,</span> <span class="n">col_result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span>
-                <span class="n">cf_query</span><span class="p">,</span> <span class="n">col_query</span><span class="p">)</span>
+            <span class="n">triggers_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_TRIGGERS</span> <span class="o">+</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">cf_success</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">),</span> <span class="p">(</span><span class="n">col_success</span><span class="p">,</span> <span class="n">col_result</span><span class="p">),</span> <span class="p">(</span><span class="n">triggers_success</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span> \
+                <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span><span class="n">cf_query</span><span class="p">,</span> <span class="n">col_query</span><span class="p">,</span> <span class="n">triggers_query</span><span class="p">,</span> <span class="n">fail_on_error</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Fetched table info for </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">, rebuilding metadata&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
-            <span class="n">cf_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">cf_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">cf_result</span> <span class="k">else</span> <span class="p">{}</span>
-            <span class="n">col_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">col_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">col_result</span> <span class="k">else</span> <span class="p">{}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">table_changed</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">,</span> <span class="n">col_result</span><span class="p">)</span>
+            <span class="n">cf_result</span> <span class="o">=</span> <span class="n">_handle_results</span><span class="p">(</span><span class="n">cf_success</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">)</span>
+            <span class="n">col_result</span> <span class="o">=</span> <span class="n">_handle_results</span><span class="p">(</span><span class="n">col_success</span><span class="p">,</span> <span class="n">col_result</span><span class="p">)</span>
+
+            <span class="c"># handle the triggers table not existing in Cassandra 1.2</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">triggers_success</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">triggers_result</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">):</span>
+                <span class="n">triggers_result</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">triggers_result</span> <span class="o">=</span> <span class="n">_handle_results</span><span class="p">(</span><span class="n">triggers_success</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">table_changed</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">,</span> <span class="n">col_result</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">usertype</span><span class="p">:</span>
             <span class="c"># user defined types within this keyspace changed</span>
             <span class="n">where_clause</span> <span class="o">=</span> <span class="s">&quot; WHERE keyspace_name = &#39;</span><span class="si">%s</span><span class="s">&#39; AND type_name = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">usertype</span><span class="p">)</span>
@@ -1991,11 +2006,14 @@
                 <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_KEYSPACES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
                 <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_COLUMN_FAMILIES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
                 <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_COLUMNS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
-                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_USERTYPES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
+                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_USERTYPES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
+                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_TRIGGERS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
             <span class="p">]</span>
 
             <span class="n">responses</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span><span class="o">*</span><span class="n">queries</span><span class="p">,</span> <span class="n">fail_on_error</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-            <span class="p">(</span><span class="n">ks_success</span><span class="p">,</span> <span class="n">ks_result</span><span class="p">),</span> <span class="p">(</span><span class="n">cf_success</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">),</span> <span class="p">(</span><span class="n">col_success</span><span class="p">,</span> <span class="n">col_result</span><span class="p">),</span> <span class="p">(</span><span class="n">types_success</span><span class="p">,</span> <span class="n">types_result</span><span class="p">)</span> <span class="o">=</span> <span class="n">responses</span>
+            <span class="p">(</span><span class="n">ks_success</span><span class="p">,</span> <span class="n">ks_result</span><span class="p">),</span> <span class="p">(</span><span class="n">cf_success</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">),</span> \
+            <span class="p">(</span><span class="n">col_success</span><span class="p">,</span> <span class="n">col_result</span><span class="p">),</span> <span class="p">(</span><span class="n">types_success</span><span class="p">,</span> <span class="n">types_result</span><span class="p">),</span> \
+            <span class="p">(</span><span class="n">trigger_success</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span> <span class="o">=</span> <span class="n">responses</span>
 
             <span class="k">if</span> <span class="n">ks_success</span><span class="p">:</span>
                 <span class="n">ks_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">ks_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
@@ -2012,6 +2030,16 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">col_result</span>
 
+            <span class="c"># if we&#39;re connected to Cassandra &lt; 2.0, the trigges table will not exist</span>
+            <span class="k">if</span> <span class="n">trigger_success</span><span class="p">:</span>
+                <span class="n">triggers_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">triggers_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">triggers_result</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">):</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] triggers table not found&quot;</span><span class="p">)</span>
+                    <span class="n">triggers_result</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">triggers_result</span>
+
             <span class="c"># if we&#39;re connected to Cassandra &lt; 2.1, the usertypes table will not exist</span>
             <span class="k">if</span> <span class="n">types_success</span><span class="p">:</span>
                 <span class="n">types_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">types_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">types_result</span><span class="o">.</span><span class="n">results</span> <span class="k">else</span> <span class="p">{}</span>
@@ -2023,7 +2051,7 @@
                     <span class="k">raise</span> <span class="n">types_result</span>
 
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Fetched schema, rebuilding metadata&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">rebuild_schema</span><span class="p">(</span><span class="n">ks_result</span><span class="p">,</span> <span class="n">types_result</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">,</span> <span class="n">col_result</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">rebuild_schema</span><span class="p">(</span><span class="n">ks_result</span><span class="p">,</span> <span class="n">types_result</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">,</span> <span class="n">col_result</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_token_rebuild</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
@@ -2079,8 +2107,7 @@
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">peers_result</span><span class="p">:</span>
             <span class="n">addr</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rpc_address&quot;</span><span class="p">)</span>
 
-            <span class="c"># TODO handle ipv6 equivalent</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">addr</span> <span class="ow">or</span> <span class="n">addr</span> <span class="o">==</span> <span class="s">&quot;0.0.0.0&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">addr</span> <span class="ow">or</span> <span class="n">addr</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&quot;0.0.0.0&quot;</span><span class="p">,</span> <span class="s">&quot;::&quot;</span><span class="p">]:</span>
                 <span class="n">addr</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;peer&quot;</span><span class="p">)</span>
 
             <span class="n">found_hosts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
@@ -2461,11 +2488,16 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span><span class="p">[</span><span class="n">host</span><span class="p">]</span> <span class="o">=</span> <span class="n">ConnectionException</span><span class="p">(</span><span class="s">&quot;Pool is shutdown&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">None</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_pool</span> <span class="o">=</span> <span class="n">pool</span>
+
         <span class="n">connection</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c"># TODO get connectTimeout from cluster settings</span>
             <span class="n">connection</span><span class="p">,</span> <span class="n">request_id</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">borrow_connection</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="n">connection</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">send_msg</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">request_id</span><span class="p">,</span> <span class="n">cb</span><span class="o">=</span><span class="n">cb</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">request_id</span>
         <span class="k">except</span> <span class="n">NoConnectionsAvailable</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;All connections for host </span><span class="si">%s</span><span class="s"> are at capacity, moving to the next host&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span><span class="p">[</span><span class="n">host</span><span class="p">]</span> <span class="o">=</span> <span class="n">exc</span>
@@ -2478,11 +2510,6 @@
             <span class="k">if</span> <span class="n">connection</span><span class="p">:</span>
                 <span class="n">pool</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">None</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_current_host</span> <span class="o">=</span> <span class="n">host</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_current_pool</span> <span class="o">=</span> <span class="n">pool</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="n">connection</span>
-        <span class="k">return</span> <span class="n">request_id</span>
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="ResponseFuture.has_more_pages"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.has_more_pages">[docs]</a>    <span class="k">def</span> <span class="nf">has_more_pages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2797,7 +2824,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paging_state</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">PagedResult</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">PagedResult</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2806,7 +2833,7 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paging_state</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">PagedResult</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">PagedResult</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span>
             <span class="k">else</span><span class="p">:</span>
@@ -2960,9 +2987,10 @@
 
     <span class="n">response_future</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_future</span><span class="p">,</span> <span class="n">initial_response</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_future</span><span class="p">,</span> <span class="n">initial_response</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">_NOT_SET</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span> <span class="o">=</span> <span class="n">response_future</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_response</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">initial_response</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span>
@@ -2975,7 +3003,7 @@
                 <span class="k">raise</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">start_fetching_next_page</span><span class="p">()</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">has_more_pages</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">current_response</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">current_response</span>
         <span class="k">else</span><span class="p">:</span>
@@ -3000,7 +3028,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
