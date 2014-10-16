@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata &mdash; Cassandra Driver 2.1.1 documentation</title>
+    <title>cassandra.metadata &mdash; Cassandra Driver 2.1.2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.1',
+        VERSION:     '2.1.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.2 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -406,7 +406,9 @@
         <span class="n">index_name</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;index_name&quot;</span><span class="p">)</span>
         <span class="n">index_type</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;index_type&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">index_name</span> <span class="ow">or</span> <span class="n">index_type</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">IndexMetadata</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">index_name</span><span class="p">,</span> <span class="n">index_type</span><span class="p">)</span>
+            <span class="n">options</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;index_options&quot;</span><span class="p">)</span>
+            <span class="n">index_options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="k">if</span> <span class="n">options</span> <span class="k">else</span> <span class="p">{}</span>
+            <span class="k">return</span> <span class="n">IndexMetadata</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">index_name</span><span class="p">,</span> <span class="n">index_type</span><span class="p">,</span> <span class="n">index_options</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span>
 
@@ -1125,21 +1127,33 @@
     <span class="n">index_type</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&quot;&quot;&quot; A string representing the type of index. &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">index_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">index_type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">index_options</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="sd">&quot;&quot;&quot; A dict of index options. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">index_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">index_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">index_options</span><span class="o">=</span><span class="p">{}):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">column</span> <span class="o">=</span> <span class="n">column_metadata</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">index_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index_type</span> <span class="o">=</span> <span class="n">index_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_options</span> <span class="o">=</span> <span class="n">index_options</span>
 
 <div class="viewcode-block" id="IndexMetadata.as_cql_query"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.IndexMetadata.as_cql_query">[docs]</a>    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a CQL query that can be used to recreate this index.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">table</span>
-        <span class="k">return</span> <span class="s">&quot;CREATE INDEX </span><span class="si">%s</span><span class="s"> ON </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>  <span class="c"># Cassandra doesn&#39;t like quoted index names for some reason</span>
-            <span class="n">protect_name</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">keyspace</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
-            <span class="n">protect_name</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
-            <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_type</span> <span class="o">!=</span> <span class="s">&quot;CUSTOM&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&quot;CREATE INDEX </span><span class="si">%s</span><span class="s"> ON </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>  <span class="c"># Cassandra doesn&#39;t like quoted index names for some reason</span>
+                <span class="n">protect_name</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">keyspace</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+                <span class="n">protect_name</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+                <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&quot;CREATE CUSTOM INDEX </span><span class="si">%s</span><span class="s"> ON </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">) USING &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>  <span class="c"># Cassandra doesn&#39;t like quoted index names for some reason</span>
+                <span class="n">protect_name</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">keyspace</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+                <span class="n">protect_name</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+                <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">index_options</span><span class="p">[</span><span class="s">&quot;class_name&quot;</span><span class="p">])</span>
 
 </div></div>
 <div class="viewcode-block" id="TokenMap"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TokenMap">[docs]</a><span class="k">class</span> <span class="nc">TokenMap</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -1353,7 +1367,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

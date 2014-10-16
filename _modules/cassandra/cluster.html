@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 2.1.1 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 2.1.2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.1',
+        VERSION:     '2.1.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.2 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -109,7 +109,8 @@
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">groupby</span>
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">AuthenticationFailed</span><span class="p">,</span>
-                       <span class="n">InvalidRequest</span><span class="p">,</span> <span class="n">OperationTimedOut</span><span class="p">,</span> <span class="n">UnsupportedOperation</span><span class="p">)</span>
+                       <span class="n">InvalidRequest</span><span class="p">,</span> <span class="n">OperationTimedOut</span><span class="p">,</span>
+                       <span class="n">UnsupportedOperation</span><span class="p">,</span> <span class="n">Unauthorized</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="n">ConnectionException</span><span class="p">,</span> <span class="n">ConnectionShutdown</span>
 <span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">Encoder</span>
 <span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="kn">import</span> <span class="p">(</span><span class="n">QueryMessage</span><span class="p">,</span> <span class="n">ResultMessage</span><span class="p">,</span>
@@ -230,6 +231,18 @@
 <span class="sd">        &gt;&gt;&gt; ...</span>
 <span class="sd">        &gt;&gt;&gt; cluster.shutdown()</span>
 
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">contact_points</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">]</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The list of contact points to try connecting for cluster discovery.</span>
+
+<span class="sd">    Defaults to loopback interface.</span>
+
+<span class="sd">    Note: When using :class:`.DCAwareLoadBalancingPolicy` with no explicit</span>
+<span class="sd">    local_dc set, the DC is chosen from an arbitrary host in contact_points.</span>
+<span class="sd">    In this case, contact_points should contain only nodes from a single,</span>
+<span class="sd">    local DC.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">port</span> <span class="o">=</span> <span class="mi">9042</span>
@@ -443,7 +456,7 @@
     <span class="n">_listener_lock</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                 <span class="n">contact_points</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,),</span>
+                 <span class="n">contact_points</span><span class="o">=</span><span class="p">[</span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">],</span>
                  <span class="n">port</span><span class="o">=</span><span class="mi">9042</span><span class="p">,</span>
                  <span class="n">compression</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                  <span class="n">auth_provider</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
@@ -2012,8 +2025,8 @@
 
             <span class="n">responses</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span><span class="o">*</span><span class="n">queries</span><span class="p">,</span> <span class="n">fail_on_error</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
             <span class="p">(</span><span class="n">ks_success</span><span class="p">,</span> <span class="n">ks_result</span><span class="p">),</span> <span class="p">(</span><span class="n">cf_success</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">),</span> \
-            <span class="p">(</span><span class="n">col_success</span><span class="p">,</span> <span class="n">col_result</span><span class="p">),</span> <span class="p">(</span><span class="n">types_success</span><span class="p">,</span> <span class="n">types_result</span><span class="p">),</span> \
-            <span class="p">(</span><span class="n">trigger_success</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span> <span class="o">=</span> <span class="n">responses</span>
+                <span class="p">(</span><span class="n">col_success</span><span class="p">,</span> <span class="n">col_result</span><span class="p">),</span> <span class="p">(</span><span class="n">types_success</span><span class="p">,</span> <span class="n">types_result</span><span class="p">),</span> \
+                <span class="p">(</span><span class="n">trigger_success</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span> <span class="o">=</span> <span class="n">responses</span>
 
             <span class="k">if</span> <span class="n">ks_success</span><span class="p">:</span>
                 <span class="n">ks_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">ks_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
@@ -2036,6 +2049,10 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">triggers_result</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">):</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] triggers table not found&quot;</span><span class="p">)</span>
+                    <span class="n">triggers_result</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">triggers_result</span><span class="p">,</span> <span class="n">Unauthorized</span><span class="p">):</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;[control connection] this version of Cassandra does not allow access to schema_triggers metadata with authorization enabled (CASSANDRA-7967); &quot;</span>
+                             <span class="s">&quot;The driver will operate normally, but will not reflect triggers in the local metadata model, or schema strings.&quot;</span><span class="p">)</span>
                     <span class="n">triggers_result</span> <span class="o">=</span> <span class="p">{}</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">triggers_result</span>
@@ -3028,7 +3045,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

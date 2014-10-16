@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies - Load balancing and Failure Handling Policies &mdash; Cassandra Driver 2.1.1 documentation</title>
+    <title>cassandra.policies - Load balancing and Failure Handling Policies &mdash; Cassandra Driver 2.1.2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.1',
+        VERSION:     '2.1.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.2 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.auth - Authentication" href="auth.html" />
     <link rel="prev" title="cassandra.cluster - Clusters and Sessions" href="cluster.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -196,13 +196,16 @@ regardless of what datacenter the nodes may be in.</p>
 
 <dl class="class">
 <dt id="cassandra.policies.DCAwareRoundRobinPolicy">
-<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">DCAwareRoundRobinPolicy</tt><big>(</big><em>local_dc</em>, <em>used_hosts_per_remote_dc=0</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#DCAwareRoundRobinPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.DCAwareRoundRobinPolicy" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">cassandra.policies.</tt><tt class="descname">DCAwareRoundRobinPolicy</tt><big>(</big><em>local_dc=''</em>, <em>used_hosts_per_remote_dc=0</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/policies.html#DCAwareRoundRobinPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.DCAwareRoundRobinPolicy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Similar to <a class="reference internal" href="#cassandra.policies.RoundRobinPolicy" title="cassandra.policies.RoundRobinPolicy"><tt class="xref py py-class docutils literal"><span class="pre">RoundRobinPolicy</span></tt></a>, but prefers hosts
 in the local datacenter and only uses nodes in remote
 datacenters as a last resort.</p>
 <p>The <cite>local_dc</cite> parameter should be the name of the datacenter
 (such as is reported by <tt class="docutils literal"><span class="pre">nodetool</span> <span class="pre">ring</span></tt>) that should
-be considered local.</p>
+be considered local. If not specified, the driver will choose
+a local_dc based on the first host among <tt class="xref py py-attr docutils literal"><span class="pre">Cluster.contact_points</span></tt>
+having a valid DC. If relying on this mechanism, all specified
+contact points should be nodes in a single, local DC.</p>
 <p><cite>used_hosts_per_remote_dc</cite> controls how many nodes in
 each remote datacenter will have connections opened
 against them. In other words, <cite>used_hosts_per_remote_dc</cite> hosts
@@ -544,7 +547,7 @@ than reading nothing, even if there is a risk of reading stale data.</p>
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              >previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

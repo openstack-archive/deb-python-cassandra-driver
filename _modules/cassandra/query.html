@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query &mdash; Cassandra Driver 2.1.1 documentation</title>
+    <title>cassandra.query &mdash; Cassandra Driver 2.1.2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.1',
+        VERSION:     '2.1.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.2 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -166,7 +166,17 @@
 <span class="sd">    .. versionchanged:: 2.0.0</span>
 <span class="sd">        moved from ``cassandra.decoder`` to ``cassandra.query``</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">Row</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Row&#39;</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">_clean_column_name</span><span class="p">,</span> <span class="n">colnames</span><span class="p">))</span>
+    <span class="n">clean_column_names</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">_clean_column_name</span><span class="p">,</span> <span class="n">colnames</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">Row</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Row&#39;</span><span class="p">,</span> <span class="n">clean_column_names</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Failed creating named tuple for results with column names </span><span class="si">%s</span><span class="s"> (cleaned: </span><span class="si">%s</span><span class="s">) (see Python &#39;namedtuple&#39; documentation for details on name rules). &quot;</span>
+                 <span class="s">&quot;Results will be returned with positional names. &quot;</span>
+                 <span class="s">&quot;Avoid this by choosing different names, using SELECT </span><span class="se">\&quot;</span><span class="s">&lt;col name&gt;</span><span class="se">\&quot;</span><span class="s"> AS aliases, &quot;</span>
+                 <span class="s">&quot;or specifying a different row_factory on your Session&quot;</span> <span class="o">%</span>
+                 <span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="n">clean_column_names</span><span class="p">))</span>
+        <span class="n">Row</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Row&#39;</span><span class="p">,</span> <span class="n">clean_column_names</span><span class="p">,</span> <span class="n">rename</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
     <span class="k">return</span> <span class="p">[</span><span class="n">Row</span><span class="p">(</span><span class="o">*</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
 
 </div>
@@ -295,9 +305,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_serial_consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span>
-         <span class="n">_get_serial_consistency_level</span><span class="p">,</span>
-         <span class="n">_set_serial_consistency_level</span><span class="p">,</span>
-         <span class="n">_del_serial_consistency_level</span><span class="p">,</span>
+        <span class="n">_get_serial_consistency_level</span><span class="p">,</span>
+        <span class="n">_set_serial_consistency_level</span><span class="p">,</span>
+        <span class="n">_del_serial_consistency_level</span><span class="p">,</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The serial consistency level is only used by conditional updates</span>
 <span class="sd">        (``INSERT``, ``UPDATE`` and ``DELETE`` with an ``IF`` condition).  For</span>
@@ -423,9 +433,8 @@
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">statement_indexes</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
                                            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">partition_key_columns</span><span class="p">]</span>
-                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                    <span class="k">pass</span>  <span class="c"># we&#39;re missing a partition key component in the prepared</span>
-                          <span class="c"># statement; just leave routing_key_indexes as None</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>  <span class="c"># we&#39;re missing a partition key component in the prepared</span>
+                    <span class="k">pass</span>          <span class="c"># statement; just leave routing_key_indexes as None</span>
 
         <span class="k">return</span> <span class="n">PreparedStatement</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">routing_key_indexes</span><span class="p">,</span>
                                  <span class="n">query</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">)</span>
@@ -708,6 +717,7 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">PreparedStatement</span><span class="p">):</span>
             <span class="n">query_id</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">query_id</span>
             <span class="n">bound_statement</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">bind</span><span class="p">(()</span> <span class="k">if</span> <span class="n">parameters</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">parameters</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_set_routing_key</span><span class="p">(</span><span class="n">bound_statement</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">bound_statement</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">BoundStatement</span><span class="p">):</span>
@@ -715,6 +725,7 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s">&quot;Parameters cannot be passed with a BoundStatement &quot;</span>
                     <span class="s">&quot;to BatchStatement.add()&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_set_routing_key</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">statement</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">query_id</span><span class="p">,</span> <span class="n">statement</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
@@ -723,6 +734,7 @@
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
                 <span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoder</span>
                 <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">encoder</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_set_routing_key</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">False</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="p">()))</span>
         <span class="k">return</span> <span class="bp">self</span>
 </div>
@@ -735,6 +747,10 @@
         <span class="k">for</span> <span class="n">statement</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">statements</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
 </div>
+    <span class="k">def</span> <span class="nf">_maybe_set_routing_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing_key</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">statement</span><span class="o">.</span><span class="n">routing_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">routing_key</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">routing_key</span>
+
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">,</span> <span class="s">&#39;Not Set&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="s">u&#39;&lt;BatchStatement type=</span><span class="si">%s</span><span class="s">, statements=</span><span class="si">%d</span><span class="s">, consistency=</span><span class="si">%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span>
@@ -951,7 +967,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

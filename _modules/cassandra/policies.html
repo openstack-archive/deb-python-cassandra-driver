@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies &mdash; Cassandra Driver 2.1.1 documentation</title>
+    <title>cassandra.policies &mdash; Cassandra Driver 2.1.2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.1',
+        VERSION:     '2.1.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.2 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -271,11 +271,14 @@
     <span class="n">local_dc</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">used_hosts_per_remote_dc</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_dc</span><span class="p">,</span> <span class="n">used_hosts_per_remote_dc</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_dc</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">used_hosts_per_remote_dc</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The `local_dc` parameter should be the name of the datacenter</span>
 <span class="sd">        (such as is reported by ``nodetool ring``) that should</span>
-<span class="sd">        be considered local.</span>
+<span class="sd">        be considered local. If not specified, the driver will choose</span>
+<span class="sd">        a local_dc based on the first host among :attr:`.Cluster.contact_points`</span>
+<span class="sd">        having a valid DC. If relying on this mechanism, all specified</span>
+<span class="sd">        contact points should be nodes in a single, local DC.</span>
 
 <span class="sd">        `used_hosts_per_remote_dc` controls how many nodes in</span>
 <span class="sd">        each remote datacenter will have connections opened</span>
@@ -287,6 +290,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span> <span class="o">=</span> <span class="n">local_dc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">used_hosts_per_remote_dc</span> <span class="o">=</span> <span class="n">used_hosts_per_remote_dc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contact_points</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">LoadBalancingPolicy</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_dc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
@@ -296,14 +301,10 @@
         <span class="k">for</span> <span class="n">dc</span><span class="p">,</span> <span class="n">dc_hosts</span> <span class="ow">in</span> <span class="n">groupby</span><span class="p">(</span><span class="n">hosts</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">h</span><span class="p">)):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dc_hosts</span><span class="p">))</span>
 
-        <span class="c"># position is currently only used for local hosts</span>
-        <span class="n">local_live</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">local_live</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_live</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_live</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_contact_points</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">contact_points</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">hosts</span> <span class="k">else</span> <span class="mi">0</span>
 
     <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
@@ -341,32 +342,39 @@
                 <span class="k">yield</span> <span class="n">host</span>
 
     <span class="k">def</span> <span class="nf">on_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
+        <span class="c"># not worrying about threads because this will happen during</span>
+        <span class="c"># control connection startup/refresh</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span> <span class="ow">and</span> <span class="n">host</span><span class="o">.</span><span class="n">datacenter</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">address</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contact_points</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">datacenter</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Using datacenter &#39;</span><span class="si">%s</span><span class="s">&#39; for DCAwareRoundRobinPolicy (via host &#39;</span><span class="si">%s</span><span class="s">&#39;); &quot;</span>
+                         <span class="s">&quot;if incorrect, please specify a local_dc to the constructor, &quot;</span>
+                         <span class="s">&quot;or limit contact points to local cluster nodes&quot;</span> <span class="o">%</span>
+                         <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span><span class="p">,</span> <span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">))</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contact_points</span>
+
         <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
-            <span class="n">current_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="p">())</span>
+            <span class="n">current_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="p">())</span>
             <span class="k">if</span> <span class="n">host</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_hosts</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_hosts</span> <span class="o">+</span> <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
-            <span class="n">current_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="p">())</span>
+            <span class="n">current_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="p">())</span>
             <span class="k">if</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">current_hosts</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">current_hosts</span> <span class="k">if</span> <span class="n">h</span> <span class="o">!=</span> <span class="n">host</span><span class="p">)</span>
+                <span class="n">hosts</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">current_hosts</span> <span class="k">if</span> <span class="n">h</span> <span class="o">!=</span> <span class="n">host</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">hosts</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="n">hosts</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
-            <span class="n">current_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="p">())</span>
-            <span class="k">if</span> <span class="n">host</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_hosts</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_hosts</span> <span class="o">+</span> <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_up</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
-            <span class="n">current_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="p">())</span>
-            <span class="k">if</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">current_hosts</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">current_hosts</span> <span class="k">if</span> <span class="n">h</span> <span class="o">!=</span> <span class="n">host</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_down</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="TokenAwarePolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.TokenAwarePolicy">[docs]</a><span class="k">class</span> <span class="nc">TokenAwarePolicy</span><span class="p">(</span><span class="n">LoadBalancingPolicy</span><span class="p">):</span>
@@ -400,8 +408,8 @@
                 <span class="s">&#39;</span><span class="si">%s</span><span class="s"> cannot be used with the cluster partitioner (</span><span class="si">%s</span><span class="s">) because &#39;</span>
                 <span class="s">&#39;the relevant C extension for this driver was not compiled. &#39;</span>
                 <span class="s">&#39;See the installation instructions for details on building &#39;</span>
-                <span class="s">&#39;and installing the C extensions.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster_metadata</span><span class="o">.</span><span class="n">partitioner</span><span class="p">))</span>
+                <span class="s">&#39;and installing the C extensions.&#39;</span> <span class="o">%</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster_metadata</span><span class="o">.</span><span class="n">partitioner</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_policy</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -898,7 +906,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
