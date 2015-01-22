@@ -1798,9 +1798,7 @@ class ControlConnection(object):
         self_weakref = weakref.ref(self, callback=partial(_clear_watcher, weakref.proxy(connection)))
         try:
             connection.register_watchers({
-                "TOPOLOGY_CHANGE": partial(_watch_callback, self_weakref, '_handle_topology_change'),
-                "STATUS_CHANGE": partial(_watch_callback, self_weakref, '_handle_status_change'),
-                "SCHEMA_CHANGE": partial(_watch_callback, self_weakref, '_handle_schema_change')
+                "STATUS_CHANGE": partial(_watch_callback, self_weakref, '_handle_status_change')
             }, register_timeout=self._timeout)
 
             peers_query = QueryMessage(query=self._SELECT_PEERS, consistency_level=ConsistencyLevel.ONE)
