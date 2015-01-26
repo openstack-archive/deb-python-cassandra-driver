@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.auth - Authentication &mdash; Cassandra Driver 2.1.3 documentation</title>
+    <title>cassandra.auth - Authentication &mdash; Cassandra Driver 2.1.4 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.3',
+        VERSION:     '2.1.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.3 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.4 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.metadata - Schema and Ring Topology" href="metadata.html" />
     <link rel="prev" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="policies.html" title="cassandra.policies - Load balancing and Failure Handling Policies"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -179,6 +179,38 @@ or a string.</p>
 </div>
 </dd></dl>
 
+<dl class="class">
+<dt id="cassandra.auth.SaslAuthProvider">
+<em class="property">class </em><tt class="descclassname">cassandra.auth.</tt><tt class="descname">SaslAuthProvider</tt><big>(</big><em>**sasl_kwargs</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/auth.html#SaslAuthProvider"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.auth.SaslAuthProvider" title="Permalink to this definition">¶</a></dt>
+<dd><p>An <a class="reference internal" href="#cassandra.auth.AuthProvider" title="cassandra.auth.AuthProvider"><tt class="xref py py-class docutils literal"><span class="pre">AuthProvider</span></tt></a> supporting general SASL auth mechanisms</p>
+<p>Suitable for GSSAPI or other SASL mechanisms</p>
+<p>Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<span class="kn">from</span> <span class="nn">cassandra.auth</span> <span class="kn">import</span> <span class="n">SaslAuthProvider</span>
+
+<span class="n">sasl_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;host&#39;</span><span class="p">:</span> <span class="s">&#39;localhost&#39;</span><span class="p">,</span>
+               <span class="s">&#39;service&#39;</span><span class="p">:</span> <span class="s">&#39;dse&#39;</span><span class="p">,</span>
+               <span class="s">&#39;mechanism&#39;</span><span class="p">:</span> <span class="s">&#39;GSSAPI&#39;</span><span class="p">,</span>
+               <span class="s">&#39;qops&#39;</span><span class="p">:</span> <span class="s">&#39;auth&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)}</span>
+<span class="n">auth_provider</span> <span class="o">=</span> <span class="n">SaslAuthProvider</span><span class="p">(</span><span class="o">**</span><span class="n">sasl_kwargs</span><span class="p">)</span>
+<span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">auth_provider</span><span class="o">=</span><span class="n">auth_provider</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.1.4.</span></p>
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.auth.SaslAuthenticator">
+<em class="property">class </em><tt class="descclassname">cassandra.auth.</tt><tt class="descname">SaslAuthenticator</tt><big>(</big><em>host</em>, <em>service</em>, <em>mechanism='GSSAPI'</em>, <em>**sasl_kwargs</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/auth.html#SaslAuthenticator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.auth.SaslAuthenticator" title="Permalink to this definition">¶</a></dt>
+<dd><p>A pass-through <a class="reference internal" href="#cassandra.auth.Authenticator" title="cassandra.auth.Authenticator"><tt class="xref py py-class docutils literal"><span class="pre">Authenticator</span></tt></a> using the third party package
+&#8216;pure-sasl&#8217; for authentication</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.1.4.</span></p>
+</div>
+</dd></dl>
+
 </div>
 
 
@@ -202,7 +234,7 @@ or a string.</p>
         <li class="right" >
           <a href="policies.html" title="cassandra.policies - Load balancing and Failure Handling Policies"
              >previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

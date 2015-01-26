@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.connection &mdash; Cassandra Driver 2.1.3 documentation</title>
+    <title>cassandra.connection &mdash; Cassandra Driver 2.1.4 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.3',
+        VERSION:     '2.1.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.3 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.4 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -87,7 +87,7 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">RLock</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Thread</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">RLock</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
 <span class="k">if</span> <span class="s">&#39;gevent.monkey&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
@@ -226,7 +226,7 @@
     <span class="n">in_flight</span> <span class="o">=</span> <span class="mi">0</span>
 
     <span class="c"># A set of available request IDs.  When using the v3 protocol or higher,</span>
-    <span class="c"># this will no initially include all request IDs in order to save memory,</span>
+    <span class="c"># this will not initially include all request IDs in order to save memory,</span>
     <span class="c"># but the set will grow if it is exhausted.</span>
     <span class="n">request_ids</span> <span class="o">=</span> <span class="bp">None</span>
 
@@ -238,6 +238,8 @@
     <span class="n">is_closed</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">lock</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">user_type_map</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">msg_received</span> <span class="o">=</span> <span class="bp">False</span>
 
     <span class="n">is_control_connection</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">_iobuf</span> <span class="o">=</span> <span class="bp">None</span>
@@ -468,6 +470,8 @@
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">request_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stream_id</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg_received</span> <span class="o">=</span> <span class="bp">True</span>
+
         <span class="n">body</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c"># check that the protocol version is supported</span>
@@ -624,8 +628,8 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Sending SASL-based auth response on </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
                 <span class="n">initial_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">authenticator</span><span class="o">.</span><span class="n">initial_response</span><span class="p">()</span>
-                <span class="n">initial_response</span> <span class="o">=</span> <span class="s">&quot;&quot;</span> <span class="k">if</span> <span class="n">initial_response</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">initial_response</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">send_msg</span><span class="p">(</span><span class="n">AuthResponseMessage</span><span class="p">(</span><span class="n">initial_response</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_auth_response</span><span class="p">)</span>
+                <span class="n">initial_response</span> <span class="o">=</span> <span class="s">&quot;&quot;</span> <span class="k">if</span> <span class="n">initial_response</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">initial_response</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">send_msg</span><span class="p">(</span><span class="n">AuthResponseMessage</span><span class="p">(</span><span class="n">initial_response</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_id</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_auth_response</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">startup_response</span><span class="p">,</span> <span class="n">ErrorMessage</span><span class="p">):</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Received ErrorMessage on new connection (</span><span class="si">%s</span><span class="s">) from </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
                       <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">startup_response</span><span class="o">.</span><span class="n">summary_msg</span><span class="p">())</span>
@@ -740,6 +744,13 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">send_msg</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">request_id</span><span class="p">,</span> <span class="n">process_result</span><span class="p">)</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_idle</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg_received</span>
+
+    <span class="k">def</span> <span class="nf">reset_idle</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg_received</span> <span class="o">=</span> <span class="bp">False</span>
+
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">status</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_defunct</span><span class="p">:</span>
@@ -799,6 +810,99 @@
             <span class="k">raise</span> <span class="n">OperationTimedOut</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">responses</span>
+
+
+<span class="k">class</span> <span class="nc">HeartbeatFuture</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="n">connection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owner</span> <span class="o">=</span> <span class="n">owner</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Sending options message heartbeat on idle connection (</span><span class="si">%s</span><span class="s">) </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
+                  <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">&lt;</span> <span class="n">connection</span><span class="o">.</span><span class="n">max_request_id</span><span class="p">:</span>
+                <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">connection</span><span class="o">.</span><span class="n">send_msg</span><span class="p">(</span><span class="n">OptionsMessage</span><span class="p">(),</span> <span class="n">connection</span><span class="o">.</span><span class="n">get_request_id</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options_callback</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Failed to send heartbeat because connection &#39;in_flight&#39; exceeds threshold&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">OperationTimedOut</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_options_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">SupportedMessage</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">ConnectionException</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="n">response</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="n">ConnectionException</span><span class="p">(</span><span class="s">&quot;Received unexpected response to OptionsMessage: </span><span class="si">%s</span><span class="s">&quot;</span>
+                                                      <span class="o">%</span> <span class="p">(</span><span class="n">response</span><span class="p">,))</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Received options response on connection (</span><span class="si">%s</span><span class="s">) from </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
+                  <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">ConnectionHeartbeat</span><span class="p">(</span><span class="n">Thread</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval_sec</span><span class="p">,</span> <span class="n">get_connection_holders</span><span class="p">):</span>
+        <span class="n">Thread</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;Connection heartbeat&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interval</span> <span class="o">=</span> <span class="n">interval_sec</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_connection_holders</span> <span class="o">=</span> <span class="n">get_connection_holders</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_event</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interval</span><span class="p">)</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+            <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">failed_connections</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">connections</span><span class="p">,</span> <span class="n">owner</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">o</span><span class="o">.</span><span class="n">get_connections</span><span class="p">(),</span> <span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_connection_holders</span><span class="p">()]:</span>
+                    <span class="k">for</span> <span class="n">connection</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span><span class="p">)</span> <span class="ow">and</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_idle</span><span class="p">:</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">HeartbeatFuture</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">owner</span><span class="p">))</span>
+                            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Failed sending heartbeat message on connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
+                                            <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                                <span class="n">failed_connections</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">connection</span><span class="p">,</span> <span class="n">owner</span><span class="p">))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">connection</span><span class="o">.</span><span class="n">reset_idle</span><span class="p">()</span>
+
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">futures</span><span class="p">:</span>
+                    <span class="n">connection</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">connection</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">f</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interval</span><span class="p">)</span>
+                        <span class="c"># TODO: move this, along with connection locks in pool, down into Connection</span>
+                        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                            <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">-=</span> <span class="mi">1</span>
+                        <span class="n">connection</span><span class="o">.</span><span class="n">reset_idle</span><span class="p">()</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Heartbeat failed for connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
+                                    <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                        <span class="n">failed_connections</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">f</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">owner</span><span class="p">))</span>
+
+                <span class="k">for</span> <span class="n">connection</span><span class="p">,</span> <span class="n">owner</span> <span class="ow">in</span> <span class="n">failed_connections</span><span class="p">:</span>
+                    <span class="n">connection</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Connection heartbeat failure&#39;</span><span class="p">))</span>
+                    <span class="n">owner</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Failed connection heartbeat&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+            <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_event</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interval</span> <span class="o">-</span> <span class="n">elapsed</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 </pre></div>
 
           </div>
@@ -815,7 +919,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

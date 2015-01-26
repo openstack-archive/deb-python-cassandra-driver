@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Performance Notes &mdash; Cassandra Driver 2.1.3 documentation</title>
+    <title>Performance Notes &mdash; Cassandra Driver 2.1.4 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '2.1.3',
+        VERSION:     '2.1.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.3 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.4 documentation" href="index.html" />
     <link rel="next" title="Paging Large Queries" href="query_paging.html" />
     <link rel="prev" title="Upgrading" href="upgrading.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="upgrading.html" title="Upgrading"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Cassandra Driver 2.1.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar">
@@ -97,7 +97,7 @@
             
   <div class="section" id="performance-notes">
 <h1>Performance Notes<a class="headerlink" href="#performance-notes" title="Permalink to this headline">¶</a></h1>
-<p>The python driver for Cassandra offers several methods for executing queries.
+<p>The Python driver for Cassandra offers several methods for executing queries.
 You can synchronously block for queries to complete using
 <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><tt class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></tt></a>, you can use a future-like interface through
 <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><tt class="xref py py-meth docutils literal"><span class="pre">Session.execute_async()</span></tt></a>, or you can attach a callback to the future
@@ -109,7 +109,7 @@ multiple threads are used.</p>
 <p>All benchmarks were executed using the
 <a class="reference external" href="https://github.com/datastax/python-driver/tree/master/benchmarks">benchmark scripts</a>
 in the driver repository.  They were executed on a laptop with 16 GiB of RAM, an SSD,
-and a 2 GHz, four core CPU with hyperthreading.  The Cassandra cluster was a three
+and a 2 GHz, four core CPU with hyper-threading.  The Cassandra cluster was a three
 node <a class="reference external" href="https://github.com/pcmanus/ccm">ccm</a> cluster running on the same laptop
 with version 1.2.13 of Cassandra. I suggest testing these benchmarks against your
 own cluster when tuning the driver for optimal throughput or latency.</p>
@@ -119,6 +119,17 @@ the benchmarks using the <tt class="docutils literal"><span class="pre">asyncore
 by using the <tt class="docutils literal"><span class="pre">--asyncore-only</span></tt> command line option.</p>
 <p>Each benchmark completes 100,000 small inserts. The replication factor for the
 keyspace was three, so all nodes were replicas for the inserted rows.</p>
+<p>The benchmarks require the Python driver C extensions as well as a few additional
+Python packages. Follow these steps to install the prerequisites:</p>
+<ol class="arabic simple">
+<li>Install packages to support Python driver C extensions:<ul>
+<li>Debian/Ubuntu: <tt class="docutils literal"><span class="pre">sudo</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">gcc</span> <span class="pre">python-dev</span> <span class="pre">libev4</span> <span class="pre">libev-dev</span></tt></li>
+<li>RHEL/CentOS/Fedora: <tt class="docutils literal"><span class="pre">sudo</span> <span class="pre">yum</span> <span class="pre">install</span> <span class="pre">gcc</span> <span class="pre">python-dev</span> <span class="pre">libev4</span> <span class="pre">libev-dev</span></tt></li>
+</ul>
+</li>
+<li>Install Python packages: <tt class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">scales</span> <span class="pre">twisted</span> <span class="pre">blist</span></tt></li>
+<li>Re-install the Cassandra driver: <tt class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--upgrade</span> <span class="pre">cassandra-driver</span></tt></li>
+</ol>
 </div>
 <div class="section" id="synchronous-execution-sync-py">
 <h2>Synchronous Execution (<a class="reference external" href="https://github.com/datastax/python-driver/blob/master/benchmarks/sync.py">sync.py</a>)<a class="headerlink" href="#synchronous-execution-sync-py" title="Permalink to this headline">¶</a></h2>
@@ -245,7 +256,7 @@ Average throughput: 2165.29/sec
 <h2>Callback Chaining (<a class="reference external" href="https://github.com/datastax/python-driver/blob/master/benchmarks/callback_full_pipeline.py">callback_full_pipeline.py</a>)<a class="headerlink" href="#callback-chaining-callback-full-pipeline-py" title="Permalink to this headline">¶</a></h2>
 <p>This pattern is very different from the previous patterns.  Here we&#8217;re taking
 advantage of the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_callback()</span></tt></a> function to start
-another request as soon as one finishes.  Futhermore, we&#8217;re starting 120
+another request as soon as one finishes.  Furthermore, we&#8217;re starting 120
 of these callback chains, so we&#8217;ve always got about 120 operations in
 flight at any time:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
@@ -303,7 +314,7 @@ Average throughput: 679.61/sec
 </pre></div>
 </div>
 <p>When <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">Cluster.protocol_version</span></tt></a> is set to 1 or 2, you should limit the
-number of callback chains you run to rougly 100 per node in the cluster.
+number of callback chains you run to roughly 100 per node in the cluster.
 When <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> is 3 or higher, you can safely experiment
 with higher numbers of callback chains.</p>
 <p>For many use cases, you don&#8217;t need to implement this pattern yourself.  You can
@@ -358,7 +369,7 @@ objects should all be created after forking the process, not before.</p>
         <li class="right" >
           <a href="upgrading.html" title="Upgrading"
              >previous</a> |</li>
-        <li><a href="index.html">Cassandra Driver 2.1.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

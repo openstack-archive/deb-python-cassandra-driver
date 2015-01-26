@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.pool &mdash; Cassandra Driver 2.1.3 documentation</title>
+    <title>cassandra.pool &mdash; Cassandra Driver 2.1.4 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.3',
+        VERSION:     '2.1.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.3 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.4 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -250,7 +250,7 @@
             <span class="c"># call on_exception for logging purposes even if next_delay is None</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">next_delay</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">next_delay</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                         <span class="s">&quot;Will not continue to retry reconnection attempts &quot;</span>
                         <span class="s">&quot;due to an exhausted retry schedule&quot;</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -422,15 +422,21 @@
             <span class="k">return</span>
 
         <span class="k">def</span> <span class="nf">connection_finished_setting_keyspace</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
             <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">error</span> <span class="k">else</span> <span class="p">[</span><span class="n">error</span><span class="p">]</span>
             <span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">errors</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">set_keyspace_async</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">connection_finished_setting_keyspace</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">get_connections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">if</span> <span class="n">c</span> <span class="k">else</span> <span class="p">[]</span>
+
     <span class="k">def</span> <span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">have_conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
-        <span class="n">in_flight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="k">if</span> <span class="n">have_conn</span> <span class="k">else</span> <span class="mi">0</span>
-        <span class="k">return</span> <span class="s">&quot;shutdown: </span><span class="si">%s</span><span class="s">, open: </span><span class="si">%s</span><span class="s">, in_flights: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">,</span> <span class="n">have_conn</span><span class="p">,</span> <span class="n">in_flight</span><span class="p">)</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
+        <span class="n">open_count</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">connection</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">in_flights</span> <span class="o">=</span> <span class="p">[</span><span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span><span class="p">]</span> <span class="k">if</span> <span class="n">connection</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s">&#39;shutdown&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">,</span> <span class="s">&#39;open_count&#39;</span><span class="p">:</span> <span class="n">open_count</span><span class="p">,</span> <span class="s">&#39;in_flights&#39;</span><span class="p">:</span> <span class="n">in_flights</span><span class="p">}</span>
 
 
 <span class="n">_MAX_SIMULTANEOUS_CREATION</span> <span class="o">=</span> <span class="mi">1</span>
@@ -750,6 +756,7 @@
             <span class="k">return</span>
 
         <span class="k">def</span> <span class="nf">connection_finished_setting_keyspace</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
             <span class="n">remaining_callbacks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
                 <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
@@ -760,9 +767,12 @@
         <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">:</span>
             <span class="n">conn</span><span class="o">.</span><span class="n">set_keyspace_async</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">connection_finished_setting_keyspace</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">get_connections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span>
+
     <span class="k">def</span> <span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">in_flights</span> <span class="o">=</span> <span class="s">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">in_flight</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">])</span>
-        <span class="k">return</span> <span class="s">&quot;shutdown: </span><span class="si">%s</span><span class="s">, open_count: </span><span class="si">%d</span><span class="s">, in_flights: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span><span class="p">,</span> <span class="n">in_flights</span><span class="p">)</span>
+        <span class="n">in_flights</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">in_flight</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s">&#39;shutdown&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">,</span> <span class="s">&#39;open_count&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span><span class="p">,</span> <span class="s">&#39;in_flights&#39;</span><span class="p">:</span> <span class="n">in_flights</span><span class="p">}</span>
 </pre></div>
 
           </div>
@@ -779,7 +789,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

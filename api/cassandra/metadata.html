@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata - Schema and Ring Topology &mdash; Cassandra Driver 2.1.3 documentation</title>
+    <title>cassandra.metadata - Schema and Ring Topology &mdash; Cassandra Driver 2.1.4 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.3',
+        VERSION:     '2.1.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.3 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.1.4 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.metrics - Performance Metrics" href="metrics.html" />
     <link rel="prev" title="cassandra.auth - Authentication" href="auth.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="auth.html" title="cassandra.auth - Authentication"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -165,7 +165,7 @@ or not.</p>
 <dl class="attribute">
 <dt id="cassandra.metadata.KeyspaceMetadata.replication_strategy">
 <tt class="descname">replication_strategy</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.KeyspaceMetadata.replication_strategy" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#cassandra.metadata.ReplicationStrategy" title="cassandra.metadata.ReplicationStrategy"><tt class="xref py py-class docutils literal"><span class="pre">ReplicationStrategy</span></tt></a> subclass object.</p>
+<dd><p>A <tt class="xref py py-class docutils literal"><span class="pre">ReplicationStrategy</span></tt> subclass object.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -208,6 +208,12 @@ not including user-defined types and tables.</p>
 <tt class="descname">primary_key</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#TableMetadata.primary_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.TableMetadata.primary_key" title="Permalink to this definition">¶</a></dt>
 <dd><p>A list of <a class="reference internal" href="#cassandra.metadata.ColumnMetadata" title="cassandra.metadata.ColumnMetadata"><tt class="xref py py-class docutils literal"><span class="pre">ColumnMetadata</span></tt></a> representing the components of
 the primary key for this table.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.TableMetadata.is_cql_compatible">
+<tt class="descname">is_cql_compatible</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#TableMetadata.is_cql_compatible"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.TableMetadata.is_cql_compatible" title="Permalink to this definition">¶</a></dt>
+<dd><p>A boolean indicating if this table can be represented as CQL in export</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -427,14 +433,15 @@ replica nodes for a given <a class="reference internal" href="#cassandra.metadat
 <p><cite>token_string</cite> should be string representing the token.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="attribute">
 <dt id="cassandra.metadata.ReplicationStrategy">
-<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">ReplicationStrategy</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#ReplicationStrategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.ReplicationStrategy" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<tt class="descclassname">cassandra.metadata.</tt><tt class="descname">ReplicationStrategy</tt><a class="headerlink" href="#cassandra.metadata.ReplicationStrategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">_ReplicationStrategy</span></tt></p>
+</dd></dl>
 
 <dl class="class">
 <dt id="cassandra.metadata.SimpleStrategy">
-<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">SimpleStrategy</tt><big>(</big><em>replication_factor</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#SimpleStrategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.SimpleStrategy" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">SimpleStrategy</tt><big>(</big><em>options_map</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#SimpleStrategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.SimpleStrategy" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
 <dt id="cassandra.metadata.SimpleStrategy.replication_factor">
 <tt class="descname">replication_factor</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.SimpleStrategy.replication_factor" title="Permalink to this definition">¶</a></dt>
@@ -470,7 +477,7 @@ suitable for use in a CREATE KEYSPACE statement.</p>
 
 <dl class="class">
 <dt id="cassandra.metadata.LocalStrategy">
-<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">LocalStrategy</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#LocalStrategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.LocalStrategy" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">LocalStrategy</tt><big>(</big><em>options_map</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#LocalStrategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.LocalStrategy" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="cassandra.metadata.LocalStrategy.export_for_schema">
 <tt class="descname">export_for_schema</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#LocalStrategy.export_for_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.LocalStrategy.export_for_schema" title="Permalink to this definition">¶</a></dt>
@@ -504,7 +511,7 @@ suitable for use in a CREATE KEYSPACE statement.</p>
         <li class="right" >
           <a href="auth.html" title="cassandra.auth - Authentication"
              >previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>
