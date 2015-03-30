@@ -1,0 +1,1020 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.cqlengine.columns &mdash; Cassandra Driver 2.5.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../../index.html" />
+    <link rel="up" title="cassandra" href="../../cassandra.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for cassandra.cqlengine.columns</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2015 DataStax, Inc.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#</span>
+<span class="c"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span><span class="p">,</span> <span class="n">copy</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">cassandra.cqltypes</span> <span class="kn">import</span> <span class="n">DateType</span>
+<span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">cql_quote</span>
+
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">ValidationError</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">BaseValueManager</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column</span> <span class="o">=</span> <span class="n">column</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">previous_value</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explicit</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">deleted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Indicates whether or not this value has changed.</span>
+
+<span class="sd">        :rtype: boolean</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_value</span>
+
+    <span class="k">def</span> <span class="nf">reset_previous_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">previous_value</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">getval</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">setval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
+
+    <span class="k">def</span> <span class="nf">delval</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">get_property</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_get</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">slf</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getval</span><span class="p">()</span>
+        <span class="n">_set</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">slf</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">setval</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">_del</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">slf</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">delval</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">can_delete</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">property</span><span class="p">(</span><span class="n">_get</span><span class="p">,</span> <span class="n">_set</span><span class="p">,</span> <span class="n">_del</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">property</span><span class="p">(</span><span class="n">_get</span><span class="p">,</span> <span class="n">_set</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ValueQuoter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    contains a single value, which will quote itself for CQL insertion statements</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__str__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="bp">False</span>
+
+
+<div class="viewcode-block" id="Column"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Column">[docs]</a><span class="k">class</span> <span class="nc">Column</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="c"># the cassandra type this column maps to</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">value_manager</span> <span class="o">=</span> <span class="n">BaseValueManager</span>
+
+    <span class="n">instance_counter</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    bool flag, indicates this column is a primary key. The first primary key defined</span>
+<span class="sd">    on a model is the partition key (unless partition keys are set), all others are cluster keys</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">partition_key</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    indicates that this column should be the partition key, defining</span>
+<span class="sd">    more than one partition key column creates a compound partition key</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">index</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    bool flag, indicates an index should be created for this column</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">db_field</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    the fieldname this field will map to in the database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    the default value, can be a value or a callable (no args)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">required</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    boolean, is the field required? Model validation will raise and</span>
+<span class="sd">    exception if required is set to True and there is a None value assigned</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">clustering_order</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    only applicable on clustering keys (primary keys that are not partition keys)</span>
+<span class="sd">    determines the order that the clustering keys are sorted on disk</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">polymorphic_key</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    *Deprecated*</span>
+
+<span class="sd">    see :attr:`~.discriminator_column`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">discriminator_column</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    boolean, if set to True, this column will be used for discriminating records</span>
+<span class="sd">    of inherited models.</span>
+
+<span class="sd">    Should only be set on a column of an abstract model being used for inheritance.</span>
+
+<span class="sd">    There may only be one discriminator column per model. See :attr:`~.__discriminator_value__`</span>
+<span class="sd">    for how to specify the value of this column on specialized models.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">static</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    boolean, if set to True, this is a static column, with a single value per partition</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">primary_key</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">partition_key</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">db_field</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">clustering_order</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">polymorphic_key</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">discriminator_column</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">static</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span> <span class="o">=</span> <span class="n">partition_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span> <span class="o">=</span> <span class="n">partition_key</span> <span class="ow">or</span> <span class="n">primary_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_field</span> <span class="o">=</span> <span class="n">db_field</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="n">default</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="n">required</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clustering_order</span> <span class="o">=</span> <span class="n">clustering_order</span>
+
+        <span class="k">if</span> <span class="n">polymorphic_key</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;polymorphic_key is deprecated. Use discriminator_column instead.&quot;</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_column</span> <span class="o">=</span> <span class="n">discriminator_column</span> <span class="ow">or</span> <span class="n">polymorphic_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">polymorphic_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_column</span>
+
+        <span class="c"># the column name in the model definition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column_name</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">static</span> <span class="o">=</span> <span class="n">static</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># keep track of instantiation order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">Column</span><span class="o">.</span><span class="n">instance_counter</span>
+        <span class="n">Column</span><span class="o">.</span><span class="n">instance_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a cleaned and validated value. Raises a ValidationError</span>
+<span class="sd">        if there&#39;s a problem</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;{} - None values are not allowed&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_field</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts data from the database into python values</span>
+<span class="sd">        raises a ValidationError if the value can&#39;t be converted</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts python value into database value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_default</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_default</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">can_delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span>
+
+    <span class="k">def</span> <span class="nf">get_default</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_default</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span>
+
+    <span class="k">def</span> <span class="nf">get_column_def</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a column definition for CQL table definition</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">static</span> <span class="o">=</span> <span class="s">&quot;static&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">static</span> <span class="k">else</span> <span class="s">&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&#39;{} {} {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cql</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_type</span><span class="p">,</span> <span class="n">static</span><span class="p">)</span>
+
+    <span class="c"># TODO: make columns use cqltypes under the hood</span>
+    <span class="c"># until then, this bridges the gap in using types along with cassandra.metadata for CQL generation</span>
+    <span class="k">def</span> <span class="nf">cql_parameterized_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_type</span>
+
+    <span class="k">def</span> <span class="nf">set_column_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the column name during document class construction</span>
+<span class="sd">        This value will be ignored if db_field is set in __init__</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column_name</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">db_field_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the name of the cql name of this column &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_field</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">db_index_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the name of the cql index &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&#39;index_{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cql</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cql</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_cql</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;&quot;{}&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_val_is_null</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; determines if the given value equates to a null value for the given column type &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sub_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+</div>
+<div class="viewcode-block" id="Blob"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Blob">[docs]</a><span class="k">class</span> <span class="nc">Blob</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a raw binary value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;blob&#39;</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">six</span><span class="o">.</span><span class="n">binary_type</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;expecting a binary, got a </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Bytes</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span>
+</div>
+<span class="n">Bytes</span> <span class="o">=</span> <span class="n">Blob</span>
+
+
+<div class="viewcode-block" id="Ascii"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Ascii">[docs]</a><span class="k">class</span> <span class="nc">Ascii</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a US-ASCII character string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;ascii&#39;</span>
+
+</div>
+<span class="k">class</span> <span class="nc">Inet</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores an IP address in IPv4 or IPv6 format</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;inet&#39;</span>
+
+
+<div class="viewcode-block" id="Text"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Text">[docs]</a><span class="k">class</span> <span class="nc">Text</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a UTF-8 encoded string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;text&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param int min_length: Sets the minimum length of this string, for validation purposes.</span>
+<span class="sd">            Defaults to 1 if this is a ``required`` column. Otherwise, None.</span>
+<span class="sd">        :param int max_lemgth: Sets the maximum length of this string, for validation purposes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_length</span> <span class="o">=</span> <span class="n">min_length</span> <span class="ow">or</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;required&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="o">=</span> <span class="n">max_length</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Text</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Text</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">))</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;{} {} is not a string&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;{} is longer than {} characters&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_length</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_length</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;{} is shorter than {} characters&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_length</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+</div>
+<div class="viewcode-block" id="Integer"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Integer">[docs]</a><span class="k">class</span> <span class="nc">Integer</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a 32-bit signed integer value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;int&#39;</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} {} can&#39;t be converted to integral value&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BigInt"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.BigInt">[docs]</a><span class="k">class</span> <span class="nc">BigInt</span><span class="p">(</span><span class="n">Integer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a 64-bit signed long value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;bigint&#39;</span>
+
+</div>
+<div class="viewcode-block" id="VarInt"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.VarInt">[docs]</a><span class="k">class</span> <span class="nc">VarInt</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores an arbitrary-precision integer</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;varint&#39;</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">VarInt</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s">&quot;{} {} can&#39;t be converted to integral value&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+</div>
+<span class="k">class</span> <span class="nc">CounterValueManager</span><span class="p">(</span><span class="n">BaseValueManager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CounterValueManager</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">previous_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_value</span> <span class="ow">or</span> <span class="mi">0</span>
+
+
+<div class="viewcode-block" id="Counter"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Counter">[docs]</a><span class="k">class</span> <span class="nc">Counter</span><span class="p">(</span><span class="n">Integer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a counter that can be inremented and decremented</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;counter&#39;</span>
+
+    <span class="n">value_manager</span> <span class="o">=</span> <span class="n">CounterValueManager</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">db_field</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Counter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span>
+            <span class="n">primary_key</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+            <span class="n">partition_key</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span>
+            <span class="n">db_field</span><span class="o">=</span><span class="n">db_field</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">required</span><span class="o">=</span><span class="n">required</span><span class="p">,</span>
+        <span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="DateTime"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.DateTime">[docs]</a><span class="k">class</span> <span class="nc">DateTime</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a datetime value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;timestamp&#39;</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()[:</span><span class="mi">6</span><span class="p">]))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">DateType</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">DateTime</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">day</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} &#39;{}&#39; is not a datetime object&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+        <span class="n">epoch</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1970</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">tzinfo</span><span class="p">)</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">epoch</span><span class="o">.</span><span class="n">tzinfo</span><span class="o">.</span><span class="n">utcoffset</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="k">if</span> <span class="n">epoch</span><span class="o">.</span><span class="n">tzinfo</span> <span class="k">else</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(((</span><span class="n">value</span> <span class="o">-</span> <span class="n">epoch</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">-</span> <span class="n">offset</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Date"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Date">[docs]</a><span class="k">class</span> <span class="nc">Date</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    *Note: this type is overloaded, and will likely be changed or removed to accommodate distinct date type</span>
+<span class="sd">    in a future version*</span>
+
+<span class="sd">    Stores a date value, with no time-of-day</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;timestamp&#39;</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">DateType</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">value</span><span class="p">))</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Date</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} &#39;{}&#39; is not a date object&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="nb">int</span><span class="p">((</span><span class="n">value</span> <span class="o">-</span> <span class="n">date</span><span class="p">(</span><span class="mi">1970</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="UUID"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.UUID">[docs]</a><span class="k">class</span> <span class="nc">UUID</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a type 1 or 4 UUID</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;uuid&#39;</span>
+
+    <span class="n">re_uuid</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">UUID</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">UUID</span> <span class="k">as</span> <span class="n">_UUID</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">_UUID</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">val</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">re_uuid</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_UUID</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} {} is not a valid uuid&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</div>
+<span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">UUID</span> <span class="k">as</span> <span class="n">pyUUID</span><span class="p">,</span> <span class="n">getnode</span>
+
+
+<div class="viewcode-block" id="TimeUUID"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.TimeUUID">[docs]</a><span class="k">class</span> <span class="nc">TimeUUID</span><span class="p">(</span><span class="n">UUID</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    UUID containing timestamp</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;timeuuid&#39;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        generates a UUID for a given datetime</span>
+
+<span class="sd">        :param dt: datetime</span>
+<span class="sd">        :type dt: datetime</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">global</span> <span class="n">_last_timestamp</span>
+
+        <span class="n">epoch</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1970</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">dt</span><span class="o">.</span><span class="n">tzinfo</span><span class="p">)</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">epoch</span><span class="o">.</span><span class="n">tzinfo</span><span class="o">.</span><span class="n">utcoffset</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="k">if</span> <span class="n">epoch</span><span class="o">.</span><span class="n">tzinfo</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="p">(</span><span class="n">dt</span> <span class="o">-</span> <span class="n">epoch</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">-</span> <span class="n">offset</span>
+
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">clock_seq</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">nanoseconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">timestamp</span> <span class="o">*</span> <span class="mf">1e9</span><span class="p">)</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nanoseconds</span> <span class="o">//</span> <span class="mi">100</span><span class="p">)</span> <span class="o">+</span> <span class="mh">0x01b21dd213814000</span>
+
+        <span class="k">if</span> <span class="n">clock_seq</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">random</span>
+            <span class="n">clock_seq</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">14</span><span class="p">)</span>  <span class="c"># instead of stable storage</span>
+        <span class="n">time_low</span> <span class="o">=</span> <span class="n">timestamp</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
+        <span class="n">time_mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">timestamp</span> <span class="o">&gt;&gt;</span> <span class="mi">32</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xffff</span>
+        <span class="n">time_hi_version</span> <span class="o">=</span> <span class="p">(</span><span class="n">timestamp</span> <span class="o">&gt;&gt;</span> <span class="mi">48</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x0fff</span>
+        <span class="n">clock_seq_low</span> <span class="o">=</span> <span class="n">clock_seq</span> <span class="o">&amp;</span> <span class="mh">0xff</span>
+        <span class="n">clock_seq_hi_variant</span> <span class="o">=</span> <span class="p">(</span><span class="n">clock_seq</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x3f</span>
+        <span class="k">if</span> <span class="n">node</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">getnode</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">pyUUID</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">(</span><span class="n">time_low</span><span class="p">,</span> <span class="n">time_mid</span><span class="p">,</span> <span class="n">time_hi_version</span><span class="p">,</span>
+                              <span class="n">clock_seq_hi_variant</span><span class="p">,</span> <span class="n">clock_seq_low</span><span class="p">,</span> <span class="n">node</span><span class="p">),</span> <span class="n">version</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Boolean"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Boolean">[docs]</a><span class="k">class</span> <span class="nc">Boolean</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a boolean True or False value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;boolean&#39;</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Always returns a Python boolean. &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Boolean</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Float"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Float">[docs]</a><span class="k">class</span> <span class="nc">Float</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a floating point value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;double&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">double_precision</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;double&#39;</span> <span class="k">if</span> <span class="n">double_precision</span> <span class="k">else</span> <span class="s">&#39;float&#39;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} {} is not a valid float&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Decimal"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Decimal">[docs]</a><span class="k">class</span> <span class="nc">Decimal</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a variable precision decimal value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;decimal&#39;</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">Decimal</span> <span class="k">as</span> <span class="n">_Decimal</span>
+        <span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">InvalidOperation</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Decimal</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_Decimal</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">InvalidOperation</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} &#39;{}&#39; can&#39;t be coerced to decimal&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+</div>
+<span class="k">class</span> <span class="nc">BaseContainerColumn</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base Container type for collection-like columns.</span>
+
+<span class="sd">    https://cassandra.apache.org/doc/cql3/CQL.html#collections</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param value_type: a column class indicating the types of the value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">inheritance_comparator</span> <span class="o">=</span> <span class="nb">issubclass</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="k">else</span> <span class="nb">isinstance</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">inheritance_comparator</span><span class="p">(</span><span class="n">value_type</span><span class="p">,</span> <span class="n">Column</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;value_type must be a column class&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inheritance_comparator</span><span class="p">(</span><span class="n">value_type</span><span class="p">,</span> <span class="n">BaseContainerColumn</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;container types cannot be nested&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value_type</span><span class="o">.</span><span class="n">db_type</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;value_type cannot be an abstract column type&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value_type</span> <span class="o">=</span> <span class="n">value_type</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value_col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_type</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value_col</span> <span class="o">=</span> <span class="n">value_type</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">__class__</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">BaseContainerColumn</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">BaseContainerColumn</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="c"># It is dangerous to let collections have more than 65535.</span>
+        <span class="c"># See: https://issues.apache.org/jira/browse/CASSANDRA-5428</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">65535</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} Collection can&#39;t have more than 65535 elements.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">_val_is_null</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="n">val</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sub_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">BaseContainerQuoter</span><span class="p">(</span><span class="n">ValueQuoter</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__nonzero__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Set"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Set">[docs]</a><span class="k">class</span> <span class="nc">Set</span><span class="p">(</span><span class="n">BaseContainerColumn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a set of unordered, unique values</span>
+
+<span class="sd">    http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_set_t.html</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">class</span> <span class="nc">Quoter</span><span class="p">(</span><span class="n">BaseContainerQuoter</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">cq</span> <span class="o">=</span> <span class="n">cql_quote</span>
+            <span class="k">return</span> <span class="s">&#39;{&#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">cq</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">])</span> <span class="o">+</span> <span class="s">&#39;}&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_type</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">set</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param value_type: a column class indicating the types of the value</span>
+<span class="sd">        :param strict: sets whether non set values will be coerced to set</span>
+<span class="sd">            type on validation, or raise a validation error, defaults to True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strict</span> <span class="o">=</span> <span class="n">strict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;set&lt;{}&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value_type</span><span class="o">.</span><span class="n">db_type</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Set</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">value_type</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Set</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">types</span> <span class="o">=</span> <span class="p">(</span><span class="nb">set</span><span class="p">,)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strict</span> <span class="k">else</span> <span class="p">(</span><span class="nb">set</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">types</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strict</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;{} {} is not a set object&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;{} {} cannot be coerced to a set object&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">None</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} None not allowed in a set&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">})</span>
+
+</div>
+<div class="viewcode-block" id="List"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.List">[docs]</a><span class="k">class</span> <span class="nc">List</span><span class="p">(</span><span class="n">BaseContainerColumn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a list of ordered values</span>
+
+<span class="sd">    http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_list_t.html</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">class</span> <span class="nc">Quoter</span><span class="p">(</span><span class="n">BaseContainerQuoter</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">cq</span> <span class="o">=</span> <span class="n">cql_quote</span>
+            <span class="k">return</span> <span class="s">&#39;[&#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">cq</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">])</span> <span class="o">+</span> <span class="s">&#39;]&#39;</span>
+
+        <span class="k">def</span> <span class="nf">__nonzero__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_type</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param value_type: a column class indicating the types of the value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;list&lt;{}&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value_type</span><span class="o">.</span><span class="n">db_type</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">List</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">value_type</span><span class="o">=</span><span class="n">value_type</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">List</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="nb">set</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;{} {} is not a list object&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">None</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} None is not allowed in a list&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">])</span>
+
+</div>
+<div class="viewcode-block" id="Map"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Map">[docs]</a><span class="k">class</span> <span class="nc">Map</span><span class="p">(</span><span class="n">BaseContainerColumn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a key -&gt; value map (dictionary)</span>
+
+<span class="sd">    http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_map_t.html</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">class</span> <span class="nc">Quoter</span><span class="p">(</span><span class="n">BaseContainerQuoter</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">cq</span> <span class="o">=</span> <span class="n">cql_quote</span>
+            <span class="k">return</span> <span class="s">&#39;{&#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">cq</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;:&#39;</span> <span class="o">+</span> <span class="n">cq</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span> <span class="o">+</span> <span class="s">&#39;}&#39;</span>
+
+        <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_type</span><span class="p">,</span> <span class="n">value_type</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param key_type: a column class indicating the types of the key</span>
+<span class="sd">        :param value_type: a column class indicating the types of the value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;map&lt;{}, {}&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key_type</span><span class="o">.</span><span class="n">db_type</span><span class="p">,</span> <span class="n">value_type</span><span class="o">.</span><span class="n">db_type</span><span class="p">)</span>
+
+        <span class="n">inheritance_comparator</span> <span class="o">=</span> <span class="nb">issubclass</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="k">else</span> <span class="nb">isinstance</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">inheritance_comparator</span><span class="p">(</span><span class="n">key_type</span><span class="p">,</span> <span class="n">Column</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;key_type must be a column class&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inheritance_comparator</span><span class="p">(</span><span class="n">key_type</span><span class="p">,</span> <span class="n">BaseContainerColumn</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;container types cannot be nested&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key_type</span><span class="o">.</span><span class="n">db_type</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;key_type cannot be an abstract column type&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">key_type</span> <span class="o">=</span> <span class="n">key_type</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">key_col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_type</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">key_col</span> <span class="o">=</span> <span class="n">key_type</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">key_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_col</span><span class="o">.</span><span class="n">__class__</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Map</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">value_type</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Map</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;{} {} is not a dict object&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key_col</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key_col</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">key_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sub_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">key_col</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="p">]</span>
+
+</div>
+<span class="k">class</span> <span class="nc">UDTValueManager</span><span class="p">(</span><span class="n">BaseValueManager</span><span class="p">):</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_value</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">has_changed_fields</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">reset_previous_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">reset_changed_fields</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">previous_value</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="UserDefinedType"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.UserDefinedType">[docs]</a><span class="k">class</span> <span class="nc">UserDefinedType</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    User Defined Type column</span>
+
+<span class="sd">    http://www.datastax.com/documentation/cql/3.1/cql/cql_using/cqlUseUDT.html</span>
+
+<span class="sd">    These columns are represented by a specialization of :class:`cassandra.cqlengine.usertype.UserType`.</span>
+
+<span class="sd">    Please see :ref:`user_types` for examples and discussion.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">value_manager</span> <span class="o">=</span> <span class="n">UDTValueManager</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param type user_type: specifies the :class:`~.UserType` model of the column</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_type</span> <span class="o">=</span> <span class="n">user_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_type</span> <span class="o">=</span> <span class="s">&quot;frozen&lt;</span><span class="si">%s</span><span class="s">&gt;&quot;</span> <span class="o">%</span> <span class="n">user_type</span><span class="o">.</span><span class="n">type_name</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">UserDefinedType</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sub_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_type</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+</div>
+<span class="k">def</span> <span class="nf">resolve_udts</span><span class="p">(</span><span class="n">col_def</span><span class="p">,</span> <span class="n">out_list</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">col_def</span><span class="o">.</span><span class="n">sub_columns</span><span class="p">:</span>
+        <span class="n">resolve_udts</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">out_list</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">col_def</span><span class="p">,</span> <span class="n">UserDefinedType</span><span class="p">):</span>
+        <span class="n">out_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col_def</span><span class="o">.</span><span class="n">user_type</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_PartitionKeysToken</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    virtual column representing token of partition columns.</span>
+<span class="sd">    Used by filter(pk__token=Token(...)) filters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partition_columns</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_partition_keys</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">_PartitionKeysToken</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">partition_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">db_field_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;token({})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s">&#39;&quot;{}&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition_columns</span><span class="p">]))</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">cqlengine.functions</span> <span class="kn">import</span> <span class="n">Token</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Token</span><span class="p">)</span>
+        <span class="n">value</span><span class="o">.</span><span class="n">set_columns</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_columns</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">get_cql</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;token({})&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">cql</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition_columns</span><span class="p">))</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

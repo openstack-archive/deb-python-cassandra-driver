@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.encoder &mdash; Cassandra Driver 2.1.4 documentation</title>
+    <title>cassandra.encoder &mdash; Cassandra Driver 2.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.4',
+        VERSION:     '2.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.4 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -65,7 +65,7 @@
           <div class="body">
             
   <h1>Source code for cassandra.encoder</h1><div class="highlight"><pre>
-<span class="c"># Copyright 2013-2014 DataStax, Inc.</span>
+<span class="c"># Copyright 2013-2015 DataStax, Inc.</span>
 <span class="c">#</span>
 <span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c"># you may not use this file except in compliance with the License.</span>
@@ -95,7 +95,7 @@
 <span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">UUID</span>
 <span class="kn">import</span> <span class="nn">six</span>
 
-<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">OrderedMap</span><span class="p">,</span> <span class="n">sortedset</span>
+<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">OrderedMap</span><span class="p">,</span> <span class="n">sortedset</span><span class="p">,</span> <span class="n">Time</span>
 
 <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
     <span class="nb">long</span> <span class="o">=</span> <span class="nb">int</span>
@@ -134,13 +134,15 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="nb">float</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">,</span>
+            <span class="nb">float</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_float</span><span class="p">,</span>
             <span class="nb">bytearray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_bytes</span><span class="p">,</span>
             <span class="nb">str</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_str</span><span class="p">,</span>
             <span class="nb">int</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">,</span>
             <span class="n">UUID</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">,</span>
             <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_datetime</span><span class="p">,</span>
             <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_date</span><span class="p">,</span>
+            <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_time</span><span class="p">,</span>
+            <span class="n">Time</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_time</span><span class="p">,</span>
             <span class="nb">dict</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_map_collection</span><span class="p">,</span>
             <span class="n">OrderedDict</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_map_collection</span><span class="p">,</span>
             <span class="n">OrderedMap</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_map_collection</span><span class="p">,</span>
@@ -203,6 +205,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
 </div>
+    <span class="k">def</span> <span class="nf">cql_encode_float</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Encode floats using repr to preserve precision</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
 <div class="viewcode-block" id="Encoder.cql_encode_datetime"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_datetime">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Converts a :class:`datetime.datetime` object to a (string) integer timestamp</span>
@@ -214,10 +222,17 @@
 <div class="viewcode-block" id="Encoder.cql_encode_date"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_date">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Converts a :class:`datetime.date` object to a string with format</span>
-<span class="sd">        ``YYYY-MM-DD-0000``.</span>
+<span class="sd">        ``YYYY-MM-DD``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">-0000&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">&#39;</span><span class="p">)</span>
 </div>
+    <span class="k">def</span> <span class="nf">cql_encode_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts a :class:`datetime.date` object to a string with format</span>
+<span class="sd">        ``HH:MM:SS.mmmuuunnn``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">val</span>
+
 <div class="viewcode-block" id="Encoder.cql_encode_sequence"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_sequence">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Converts a sequence to a string of the form ``(item1, item2, ...)``.  This</span>
@@ -278,7 +293,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

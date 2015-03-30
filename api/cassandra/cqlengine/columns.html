@@ -1,0 +1,391 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.cqlengine.columns - Column types for object mapping models &mdash; Cassandra Driver 2.5.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../../index.html" />
+    <link rel="up" title="API Documentation" href="../../index.html" />
+    <link rel="next" title="cassandra.cqlengine.query - Query and filter model objects" href="query.html" />
+    <link rel="prev" title="cassandra.cqlengine.models - Table models for object mapping" href="models.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="query.html" title="cassandra.cqlengine.query - Query and filter model objects"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="models.html" title="cassandra.cqlengine.models - Table models for object mapping"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">cassandra.cqlengine.columns</span></tt> - Column types for object mapping models</a><ul>
+<li><a class="reference internal" href="#columns">Columns</a></li>
+<li><a class="reference internal" href="#column-types">Column Types</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="models.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">cassandra.cqlengine.models</span></tt> - Table models for object mapping</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="query.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.cqlengine.query</span></tt> - Query and filter model objects</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../../_sources/api/cassandra/cqlengine/columns.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-cassandra.cqlengine.columns">
+<span id="cassandra-cqlengine-columns-column-types-for-object-mapping-models"></span><h1><tt class="docutils literal"><span class="pre">cassandra.cqlengine.columns</span></tt> - Column types for object mapping models<a class="headerlink" href="#module-cassandra.cqlengine.columns" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="columns">
+<h2>Columns<a class="headerlink" href="#columns" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>Columns in your models map to columns in your CQL table. You define CQL columns by defining column attributes on your model classes.
+For a model to be valid it needs at least one primary key column and one non-primary key column.</p>
+<p>Just as in CQL, the order you define your columns in is important, and is the same order they are defined in on a model&#8217;s corresponding table.</p>
+<p>Each column on your model definitions needs to be an instance of a Column class.</p>
+</div></blockquote>
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Column">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Column</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Column"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Column" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="cassandra.cqlengine.columns.Column.primary_key">
+<tt class="descname">primary_key</tt><em class="property"> = False</em><a class="headerlink" href="#cassandra.cqlengine.columns.Column.primary_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>bool flag, indicates this column is a primary key. The first primary key defined
+on a model is the partition key (unless partition keys are set), all others are cluster keys</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.columns.Column.partition_key">
+<tt class="descname">partition_key</tt><em class="property"> = False</em><a class="headerlink" href="#cassandra.cqlengine.columns.Column.partition_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicates that this column should be the partition key, defining
+more than one partition key column creates a compound partition key</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.columns.Column.index">
+<tt class="descname">index</tt><em class="property"> = False</em><a class="headerlink" href="#cassandra.cqlengine.columns.Column.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>bool flag, indicates an index should be created for this column</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.columns.Column.db_field">
+<tt class="descname">db_field</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.cqlengine.columns.Column.db_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>the fieldname this field will map to in the database</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.columns.Column.default">
+<tt class="descname">default</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.cqlengine.columns.Column.default" title="Permalink to this definition">¶</a></dt>
+<dd><p>the default value, can be a value or a callable (no args)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.columns.Column.required">
+<tt class="descname">required</tt><em class="property"> = False</em><a class="headerlink" href="#cassandra.cqlengine.columns.Column.required" title="Permalink to this definition">¶</a></dt>
+<dd><p>boolean, is the field required? Model validation will raise and
+exception if required is set to True and there is a None value assigned</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.columns.Column.clustering_order">
+<tt class="descname">clustering_order</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.cqlengine.columns.Column.clustering_order" title="Permalink to this definition">¶</a></dt>
+<dd><p>only applicable on clustering keys (primary keys that are not partition keys)
+determines the order that the clustering keys are sorted on disk</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.columns.Column.polymorphic_key">
+<tt class="descname">polymorphic_key</tt><em class="property"> = False</em><a class="headerlink" href="#cassandra.cqlengine.columns.Column.polymorphic_key" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Deprecated</em></p>
+<p>see <a class="reference internal" href="#cassandra.cqlengine.columns.Column.discriminator_column" title="cassandra.cqlengine.columns.Column.discriminator_column"><tt class="xref py py-attr docutils literal"><span class="pre">discriminator_column</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.columns.Column.discriminator_column">
+<tt class="descname">discriminator_column</tt><em class="property"> = False</em><a class="headerlink" href="#cassandra.cqlengine.columns.Column.discriminator_column" title="Permalink to this definition">¶</a></dt>
+<dd><p>boolean, if set to True, this column will be used for discriminating records
+of inherited models.</p>
+<p>Should only be set on a column of an abstract model being used for inheritance.</p>
+<p>There may only be one discriminator column per model. See <a class="reference internal" href="models.html#cassandra.cqlengine.models.Model.__discriminator_value__" title="cassandra.cqlengine.models.Model.__discriminator_value__"><tt class="xref py py-attr docutils literal"><span class="pre">__discriminator_value__</span></tt></a>
+for how to specify the value of this column on specialized models.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.columns.Column.static">
+<tt class="descname">static</tt><em class="property"> = False</em><a class="headerlink" href="#cassandra.cqlengine.columns.Column.static" title="Permalink to this definition">¶</a></dt>
+<dd><p>boolean, if set to True, this is a static column, with a single value per partition</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="column-types">
+<h2>Column Types<a class="headerlink" href="#column-types" title="Permalink to this headline">¶</a></h2>
+<p>Columns of all types are initialized by passing <a class="reference internal" href="#cassandra.cqlengine.columns.Column" title="cassandra.cqlengine.columns.Column"><tt class="xref py py-class docutils literal"><span class="pre">Column</span></tt></a> attributes to the constructor by keyword.</p>
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Ascii">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Ascii</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Ascii"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Ascii" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a US-ASCII character string</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.BigInt">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">BigInt</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#BigInt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.BigInt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a 64-bit signed long value</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Blob">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Blob</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Blob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Blob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a raw binary value</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.columns.Bytes">
+<tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Bytes</tt><a class="headerlink" href="#cassandra.cqlengine.columns.Bytes" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#cassandra.cqlengine.columns.Blob" title="cassandra.cqlengine.columns.Blob"><tt class="xref py py-class docutils literal"><span class="pre">Blob</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Boolean">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Boolean</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Boolean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Boolean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a boolean True or False value</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Counter">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Counter</tt><big>(</big><em>index=False</em>, <em>db_field=None</em>, <em>required=False</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Counter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Counter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a counter that can be inremented and decremented</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Date">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Date</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Date"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Date" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Note: this type is overloaded, and will likely be changed or removed to accommodate distinct date type
+in a future version</em></p>
+<p>Stores a date value, with no time-of-day</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.DateTime">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">DateTime</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#DateTime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.DateTime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a datetime value</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Decimal">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Decimal</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Decimal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Decimal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a variable precision decimal value</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Float">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Float</tt><big>(</big><em>double_precision=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Float"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Float" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a floating point value</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Integer">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Integer</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Integer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Integer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a 32-bit signed integer value</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.List">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">List</tt><big>(</big><em>value_type</em>, <em>default=&lt;type 'list'&gt;</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#List"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.List" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a list of ordered values</p>
+<p><a class="reference external" href="http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_list_t.html">http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_list_t.html</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value_type</strong> &#8211; a column class indicating the types of the value</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Map">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Map</tt><big>(</big><em>key_type</em>, <em>value_type</em>, <em>default=&lt;type 'dict'&gt;</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a key -&gt; value map (dictionary)</p>
+<p><a class="reference external" href="http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_map_t.html">http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_map_t.html</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>key_type</strong> &#8211; a column class indicating the types of the key</li>
+<li><strong>value_type</strong> &#8211; a column class indicating the types of the value</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Set">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Set</tt><big>(</big><em>value_type</em>, <em>strict=True</em>, <em>default=&lt;type 'set'&gt;</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a set of unordered, unique values</p>
+<p><a class="reference external" href="http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_set_t.html">http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_set_t.html</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>value_type</strong> &#8211; a column class indicating the types of the value</li>
+<li><strong>strict</strong> &#8211; sets whether non set values will be coerced to set
+type on validation, or raise a validation error, defaults to True</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.Text">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Text</tt><big>(</big><em>min_length=None</em>, <em>max_length=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a UTF-8 encoded string</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>min_length</strong> (<em>int</em>) &#8211; Sets the minimum length of this string, for validation purposes.
+Defaults to 1 if this is a <tt class="docutils literal"><span class="pre">required</span></tt> column. Otherwise, None.</li>
+<li><strong>max_lemgth</strong> (<em>int</em>) &#8211; Sets the maximum length of this string, for validation purposes.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.TimeUUID">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">TimeUUID</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#TimeUUID"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.TimeUUID" title="Permalink to this definition">¶</a></dt>
+<dd><p>UUID containing timestamp</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.UserDefinedType">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">UserDefinedType</tt><big>(</big><em>user_type</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#UserDefinedType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.UserDefinedType" title="Permalink to this definition">¶</a></dt>
+<dd><p>User Defined Type column</p>
+<p><a class="reference external" href="http://www.datastax.com/documentation/cql/3.1/cql/cql_using/cqlUseUDT.html">http://www.datastax.com/documentation/cql/3.1/cql/cql_using/cqlUseUDT.html</a></p>
+<p>These columns are represented by a specialization of <a class="reference internal" href="usertype.html#cassandra.cqlengine.usertype.UserType" title="cassandra.cqlengine.usertype.UserType"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.cqlengine.usertype.UserType</span></tt></a>.</p>
+<p>Please see <a class="reference internal" href="../../../cqlengine/models.html#user-types"><em>User Defined Types</em></a> for examples and discussion.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>user_type</strong> (<em>type</em>) &#8211; specifies the <a class="reference internal" href="usertype.html#cassandra.cqlengine.usertype.UserType" title="cassandra.cqlengine.usertype.UserType"><tt class="xref py py-class docutils literal"><span class="pre">UserType</span></tt></a> model of the column</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.UUID">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">UUID</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#UUID"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.UUID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a type 1 or 4 UUID</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.VarInt">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">VarInt</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#VarInt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.VarInt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores an arbitrary-precision integer</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="query.html" title="cassandra.cqlengine.query - Query and filter model objects"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="models.html" title="cassandra.cqlengine.models - Table models for object mapping"
+             >previous</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

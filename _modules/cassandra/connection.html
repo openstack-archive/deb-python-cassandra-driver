@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.connection &mdash; Cassandra Driver 2.1.4 documentation</title>
+    <title>cassandra.connection &mdash; Cassandra Driver 2.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.4',
+        VERSION:     '2.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.4 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -65,7 +65,7 @@
           <div class="body">
             
   <h1>Source code for cassandra.connection</h1><div class="highlight"><pre>
-<span class="c"># Copyright 2013-2014 DataStax, Inc.</span>
+<span class="c"># Copyright 2013-2015 DataStax, Inc.</span>
 <span class="c">#</span>
 <span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c"># you may not use this file except in compliance with the License.</span>
@@ -859,6 +859,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
+    <span class="k">class</span> <span class="nc">ShutdownException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+        <span class="k">pass</span>
+
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_event</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interval</span><span class="p">)</span>
         <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
@@ -869,17 +872,24 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">connections</span><span class="p">,</span> <span class="n">owner</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">o</span><span class="o">.</span><span class="n">get_connections</span><span class="p">(),</span> <span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_connection_holders</span><span class="p">()]:</span>
                     <span class="k">for</span> <span class="n">connection</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span><span class="p">)</span> <span class="ow">and</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_idle</span><span class="p">:</span>
-                            <span class="k">try</span><span class="p">:</span>
-                                <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">HeartbeatFuture</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">owner</span><span class="p">))</span>
-                            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Failed sending heartbeat message on connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
-                                            <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-                                <span class="n">failed_connections</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">connection</span><span class="p">,</span> <span class="n">owner</span><span class="p">))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_raise_if_stopped</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_idle</span><span class="p">:</span>
+                                <span class="k">try</span><span class="p">:</span>
+                                    <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">HeartbeatFuture</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">owner</span><span class="p">))</span>
+                                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Failed sending heartbeat message on connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
+                                                <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                                    <span class="n">failed_connections</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">connection</span><span class="p">,</span> <span class="n">owner</span><span class="p">))</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">connection</span><span class="o">.</span><span class="n">reset_idle</span><span class="p">()</span>
                         <span class="k">else</span><span class="p">:</span>
-                            <span class="n">connection</span><span class="o">.</span><span class="n">reset_idle</span><span class="p">()</span>
+                            <span class="c"># make sure the owner sees this defunt/closed connection</span>
+                            <span class="n">owner</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_raise_if_stopped</span><span class="p">()</span>
 
                 <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">futures</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_raise_if_stopped</span><span class="p">()</span>
                     <span class="n">connection</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">connection</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">f</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interval</span><span class="p">)</span>
@@ -893,8 +903,11 @@
                         <span class="n">failed_connections</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">f</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">owner</span><span class="p">))</span>
 
                 <span class="k">for</span> <span class="n">connection</span><span class="p">,</span> <span class="n">owner</span> <span class="ow">in</span> <span class="n">failed_connections</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_raise_if_stopped</span><span class="p">()</span>
                     <span class="n">connection</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Connection heartbeat failure&#39;</span><span class="p">))</span>
                     <span class="n">owner</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+            <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">ShutdownException</span><span class="p">:</span>
+                <span class="k">pass</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Failed connection heartbeat&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
@@ -903,6 +916,11 @@
 
     <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_raise_if_stopped</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">ShutdownException</span><span class="p">()</span>
 </pre></div>
 
           </div>
@@ -919,7 +937,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

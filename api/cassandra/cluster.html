@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 2.1.4 documentation</title>
+    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 2.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.4',
+        VERSION:     '2.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.4 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" />
     <link rel="prev" title="cassandra - Exceptions and Enums" href="../cassandra.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -101,6 +101,7 @@ separate Cassandra cluster that your application interacts with.</p>
 </div>
 <p>Any of the mutable Cluster attributes may be set as keyword arguments
 to the constructor.</p>
+<p>Any of the mutable Cluster attributes may be set as keyword arguments to the constructor.</p>
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.cql_version">
 <tt class="descname">cql_version</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.cql_version" title="Permalink to this definition">¶</a></dt>
@@ -185,7 +186,7 @@ one of its subclasses.  Defaults to <a class="reference internal" href="policies
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.reconnection_policy">
-<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x7fcd10cbf950&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x105b7f9d0&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.ReconnectionPolicy</span></tt></a>. Defaults to an instance
 of <a class="reference internal" href="policies.html#cassandra.policies.ExponentialReconnectionPolicy" title="cassandra.policies.ExponentialReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ExponentialReconnectionPolicy</span></tt></a> with a base delay of one second and
 a max delay of ten minutes.</p>
@@ -193,7 +194,7 @@ a max delay of ten minutes.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.default_retry_policy">
-<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x7fcd10cbf990&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x105b7fa10&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A default <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> instance to use for all
 <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> objects which do not have a <a class="reference internal" href="query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">retry_policy</span></tt></a>
 explicitly set.</p>
@@ -289,6 +290,34 @@ If set to <tt class="xref py py-const docutils literal"><span class="pre">None</
 keep connections open through network devices that expire idle connections.
 It also helps discover bad connections early in low-traffic scenarios.
 Setting to zero disables heartbeats.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.schema_event_refresh_window">
+<tt class="descname">schema_event_refresh_window</tt><em class="property"> = 2</em><a class="headerlink" href="#cassandra.cluster.Cluster.schema_event_refresh_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Window, in seconds, within which a schema component will be refreshed after
+receiving a schema_change event.</p>
+<p>The driver delays a random amount of time in the range [0.0, window)
+before executing the refresh. This serves two purposes:</p>
+<p>1.) Spread the refresh for deployments with large fanout from C* to client tier,
+preventing a &#8216;thundering herd&#8217; problem with many clients refreshing simultaneously.</p>
+<p>2.) Remove redundant refreshes. Redundant events arriving within the delay period
+are discarded, and only one refresh is executed.</p>
+<p>Setting this to zero will execute refreshes immediately.</p>
+<p>Setting this negative will disable schema refreshes in response to push events
+(refreshes will still occur in response to schema change responses to DDL statements
+executed by Sessions of this Cluster).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.topology_event_refresh_window">
+<tt class="descname">topology_event_refresh_window</tt><em class="property"> = 10</em><a class="headerlink" href="#cassandra.cluster.Cluster.topology_event_refresh_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Window, in seconds, within which the node and token list will be refreshed after
+receiving a topology_change event.</p>
+<p>Setting this to zero will execute refreshes immediately.</p>
+<p>Setting this negative will disable node refreshes in response to push events
+(refreshes will still occur in response to new nodes observed on &#8220;UP&#8221; events).</p>
+<p>See <a class="reference internal" href="#cassandra.cluster.Cluster.schema_event_refresh_window" title="cassandra.cluster.Cluster.schema_event_refresh_window"><tt class="xref py py-attr docutils literal"><span class="pre">schema_event_refresh_window</span></tt></a> for discussion of rationale</p>
 </dd></dl>
 
 <dl class="method">
@@ -426,6 +455,23 @@ and <a class="reference internal" href="#cassandra.cluster.Cluster.control_conne
 <p>An Exception is raised if schema refresh fails for any reason.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.refresh_nodes">
+<tt class="descname">refresh_nodes</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Synchronously refresh the node list and token metadata</p>
+<p>An Exception is raised if node refresh fails for any reason.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.set_meta_refresh_enabled">
+<tt class="descname">set_meta_refresh_enabled</tt><big>(</big><em>enabled</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.set_meta_refresh_enabled"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.set_meta_refresh_enabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a flag to enable (True) or disable (False) all metadata refresh queries.
+This applies to both schema and node topology.</p>
+<p>Disabling this is useful to minimize refreshes during multiple changes.</p>
+<p>Meta refresh must be enabled for the driver to become aware of any cluster
+topology changes or schema updates.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
@@ -462,7 +508,7 @@ timeout, neither the registered callback or errback will be called.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Session.row_factory">
-<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x7fcd10cc3b18&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x105b34050&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
 <dd><p>The format to return row results in.  By default, each
 returned row will be a named tuple.  You can alternatively
 use any of the following:</p>
@@ -857,7 +903,7 @@ against.</p>
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              >previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

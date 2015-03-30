@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.util &mdash; Cassandra Driver 2.1.4 documentation</title>
+    <title>cassandra.util &mdash; Cassandra Driver 2.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.4',
+        VERSION:     '2.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.4 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -66,6 +66,132 @@
             
   <h1>Source code for cassandra.util</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">with_statement</span>
+<span class="kn">import</span> <span class="nn">calendar</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+
+<span class="n">DATETIME_EPOC</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1970</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="datetime_from_timestamp"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.datetime_from_timestamp">[docs]</a><span class="k">def</span> <span class="nf">datetime_from_timestamp</span><span class="p">(</span><span class="n">timestamp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a timezone-agnostic datetime from timestamp (in seconds) in a consistent manner.</span>
+<span class="sd">    Works around a Windows issue with large negative timestamps (PYTHON-119),</span>
+<span class="sd">    and rounding differences in Python 3.4 (PYTHON-340).</span>
+
+<span class="sd">    :param timestamp: a unix timestamp, in seconds</span>
+
+<span class="sd">    :rtype: datetime</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">DATETIME_EPOC</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">timestamp</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dt</span>
+
+</div>
+<div class="viewcode-block" id="unix_time_from_uuid1"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.unix_time_from_uuid1">[docs]</a><span class="k">def</span> <span class="nf">unix_time_from_uuid1</span><span class="p">(</span><span class="n">uuid_arg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a version 1 :class:`uuid.UUID` to a timestamp with the same precision</span>
+<span class="sd">    as :meth:`time.time()` returns.  This is useful for examining the</span>
+<span class="sd">    results of queries returning a v1 :class:`~uuid.UUID`.</span>
+
+<span class="sd">    :param uuid_arg: a version 1 :class:`~uuid.UUID`</span>
+
+<span class="sd">    :rtype: timestamp</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">uuid_arg</span><span class="o">.</span><span class="n">time</span> <span class="o">-</span> <span class="mh">0x01B21DD213814000</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e7</span>
+
+</div>
+<div class="viewcode-block" id="datetime_from_uuid1"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.datetime_from_uuid1">[docs]</a><span class="k">def</span> <span class="nf">datetime_from_uuid1</span><span class="p">(</span><span class="n">uuid_arg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a timezone-agnostic datetime from the timestamp in the</span>
+<span class="sd">    specified type-1 UUID.</span>
+
+<span class="sd">    :param uuid_arg: a version 1 :class:`~uuid.UUID`</span>
+
+<span class="sd">    :rtype: timestamp</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">datetime_from_timestamp</span><span class="p">(</span><span class="n">unix_time_from_uuid1</span><span class="p">(</span><span class="n">uuid_arg</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="min_uuid_from_time"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.min_uuid_from_time">[docs]</a><span class="k">def</span> <span class="nf">min_uuid_from_time</span><span class="p">(</span><span class="n">timestamp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates the minimum TimeUUID (type 1) for a given timestamp, as compared by Cassandra.</span>
+
+<span class="sd">    See :func:`uuid_from_time` for argument and return types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">uuid_from_time</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="mh">0x808080808080</span><span class="p">,</span> <span class="mh">0x80</span><span class="p">)</span>  <span class="c"># Cassandra does byte-wise comparison; fill with min signed bytes (0x80 = -128)</span>
+
+</div>
+<div class="viewcode-block" id="max_uuid_from_time"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.max_uuid_from_time">[docs]</a><span class="k">def</span> <span class="nf">max_uuid_from_time</span><span class="p">(</span><span class="n">timestamp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates the maximum TimeUUID (type 1) for a given timestamp, as compared by Cassandra.</span>
+
+<span class="sd">    See :func:`uuid_from_time` for argument and return types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">uuid_from_time</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="mh">0x7f7f7f7f7f7f</span><span class="p">,</span> <span class="mh">0x3f7f</span><span class="p">)</span>  <span class="c"># Max signed bytes (0x7f = 127)</span>
+
+</div>
+<div class="viewcode-block" id="uuid_from_time"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.uuid_from_time">[docs]</a><span class="k">def</span> <span class="nf">uuid_from_time</span><span class="p">(</span><span class="n">time_arg</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">clock_seq</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a datetime or timestamp to a type 1 :class:`uuid.UUID`.</span>
+
+<span class="sd">    :param time_arg:</span>
+<span class="sd">      The time to use for the timestamp portion of the UUID.</span>
+<span class="sd">      This can either be a :class:`datetime` object or a timestamp</span>
+<span class="sd">      in seconds (as returned from :meth:`time.time()`).</span>
+<span class="sd">    :type datetime: :class:`datetime` or timestamp</span>
+
+<span class="sd">    :param node:</span>
+<span class="sd">      None integer for the UUID (up to 48 bits). If not specified, this</span>
+<span class="sd">      field is randomized.</span>
+<span class="sd">    :type node: long</span>
+
+<span class="sd">    :param clock_seq:</span>
+<span class="sd">      Clock sequence field for the UUID (up to 14 bits). If not specified,</span>
+<span class="sd">      a random sequence is generated.</span>
+<span class="sd">    :type clock_seq: int</span>
+
+<span class="sd">    :rtype: :class:`uuid.UUID`</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">time_arg</span><span class="p">,</span> <span class="s">&#39;utctimetuple&#39;</span><span class="p">):</span>
+        <span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">calendar</span><span class="o">.</span><span class="n">timegm</span><span class="p">(</span><span class="n">time_arg</span><span class="o">.</span><span class="n">utctimetuple</span><span class="p">()))</span>
+        <span class="n">microseconds</span> <span class="o">=</span> <span class="p">(</span><span class="n">seconds</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span> <span class="o">+</span> <span class="n">time_arg</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">.</span><span class="n">microsecond</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">microseconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time_arg</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span>
+
+    <span class="c"># 0x01b21dd213814000 is the number of 100-ns intervals between the</span>
+    <span class="c"># UUID epoch 1582-10-15 00:00:00 and the Unix epoch 1970-01-01 00:00:00.</span>
+    <span class="n">intervals</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">microseconds</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span> <span class="o">+</span> <span class="mh">0x01b21dd213814000</span>
+
+    <span class="n">time_low</span> <span class="o">=</span> <span class="n">intervals</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
+    <span class="n">time_mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">intervals</span> <span class="o">&gt;&gt;</span> <span class="mi">32</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xffff</span>
+    <span class="n">time_hi_version</span> <span class="o">=</span> <span class="p">(</span><span class="n">intervals</span> <span class="o">&gt;&gt;</span> <span class="mi">48</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x0fff</span>
+
+    <span class="k">if</span> <span class="n">clock_seq</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">clock_seq</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">getrandbits</span><span class="p">(</span><span class="mi">14</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">clock_seq</span> <span class="o">&gt;</span> <span class="mh">0x3fff</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;clock_seq is out of range (need a 14-bit value)&#39;</span><span class="p">)</span>
+
+    <span class="n">clock_seq_low</span> <span class="o">=</span> <span class="n">clock_seq</span> <span class="o">&amp;</span> <span class="mh">0xff</span>
+    <span class="n">clock_seq_hi_variant</span> <span class="o">=</span> <span class="mh">0x80</span> <span class="o">|</span> <span class="p">((</span><span class="n">clock_seq</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x3f</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">node</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">getrandbits</span><span class="p">(</span><span class="mi">48</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">(</span><span class="n">time_low</span><span class="p">,</span> <span class="n">time_mid</span><span class="p">,</span> <span class="n">time_hi_version</span><span class="p">,</span>
+                             <span class="n">clock_seq_hi_variant</span><span class="p">,</span> <span class="n">clock_seq_low</span><span class="p">,</span> <span class="n">node</span><span class="p">),</span> <span class="n">version</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</div>
+<span class="n">LOWEST_TIME_UUID</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="s">&#39;00000000-0000-1000-8080-808080808080&#39;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot; The lowest possible TimeUUID, as sorted by Cassandra. &quot;&quot;&quot;</span>
+
+<span class="n">HIGHEST_TIME_UUID</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="s">&#39;ffffffff-ffff-1fff-bf7f-7f7f7f7f7f7f&#39;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot; The highest possible TimeUUID, as sorted by Cassandra. &quot;&quot;&quot;</span>
+
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
@@ -623,14 +749,14 @@
                         <span class="n">isect</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">isect</span>
 
+
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Mapping</span>
-<span class="kn">import</span> <span class="nn">six</span>
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="n">cPickle</span>
 
 
 <div class="viewcode-block" id="OrderedMap"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.OrderedMap">[docs]</a><span class="k">class</span> <span class="nc">OrderedMap</span><span class="p">(</span><span class="n">Mapping</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    An ordered map that accepts non-hashable types for keys. It also maintains the </span>
+<span class="sd">    An ordered map that accepts non-hashable types for keys. It also maintains the</span>
 <span class="sd">    insertion order of items, behaving as OrderedDict in that regard. These maps</span>
 <span class="sd">    are constructed and read just as normal mapping types, exept that they may</span>
 <span class="sd">    contain arbitrary collections and other non-hashable items as keys::</span>
@@ -659,6 +785,7 @@
 <span class="sd">    or higher.</span>
 
 <span class="sd">    &#39;&#39;&#39;</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;expected at most 1 arguments, got </span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
@@ -669,7 +796,7 @@
             <span class="n">e</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&#39;keys&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)):</span>
                 <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">e</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_insert</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">e</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">e</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_insert</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
@@ -687,8 +814,11 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">[</span><span class="n">flat_key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
 
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_serialize_key</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_serialize_key</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">:</span>
@@ -715,11 +845,227 @@
             <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;(</span><span class="si">%r</span><span class="s">, </span><span class="si">%r</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;{</span><span class="si">%s</span><span class="s">}&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39;{</span><span class="si">%s</span><span class="s">}&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%r</span><span class="s">: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">)</span>
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_serialize_key</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">cPickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">_serialize_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cPickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+</div>
+<span class="k">class</span> <span class="nc">OrderedMapSerializedKey</span><span class="p">(</span><span class="n">OrderedMap</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cass_type</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">OrderedMapSerializedKey</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cass_key_type</span> <span class="o">=</span> <span class="n">cass_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span> <span class="o">=</span> <span class="n">protocol_version</span>
+
+    <span class="k">def</span> <span class="nf">_insert_unchecked</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">flat_key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">[</span><span class="n">flat_key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">_serialize_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cass_key_type</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span><span class="p">)</span>
+
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
+    <span class="nb">long</span> <span class="o">=</span> <span class="nb">int</span>
+
+
+<div class="viewcode-block" id="Time"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.Time">[docs]</a><span class="k">class</span> <span class="nc">Time</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Idealized time, independent of day.</span>
+
+<span class="sd">    Up to nanosecond resolution</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">MICRO</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="n">MILLI</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="n">MICRO</span>
+    <span class="n">SECOND</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="n">MILLI</span>
+    <span class="n">MINUTE</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="n">SECOND</span>
+    <span class="n">HOUR</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="n">MINUTE</span>
+    <span class="n">DAY</span> <span class="o">=</span> <span class="mi">24</span> <span class="o">*</span> <span class="n">HOUR</span>
+
+    <span class="n">nanosecond_time</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializer value can be:</span>
+
+<span class="sd">            - integer_type: absolute nanoseconds in the day</span>
+<span class="sd">            - datetime.time: built-in time</span>
+<span class="sd">            - string_type: a string time of the form &quot;HH:MM:SS[.mmmuuunnn]&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">integer_types</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_from_timestamp</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_from_time</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_from_timestring</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Time arguments must be a whole number, datetime.time, or string&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Time.hour"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.Time.hour">[docs]</a>    <span class="k">def</span> <span class="nf">hour</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The hour component of this time (0-23)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">//</span> <span class="n">Time</span><span class="o">.</span><span class="n">HOUR</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Time.minute"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.Time.minute">[docs]</a>    <span class="k">def</span> <span class="nf">minute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The minute component of this time (0-59)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">minutes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">//</span> <span class="n">Time</span><span class="o">.</span><span class="n">MINUTE</span>
+        <span class="k">return</span> <span class="n">minutes</span> <span class="o">%</span> <span class="mi">60</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Time.second"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.Time.second">[docs]</a>    <span class="k">def</span> <span class="nf">second</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The second component of this time (0-59)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">seconds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">//</span> <span class="n">Time</span><span class="o">.</span><span class="n">SECOND</span>
+        <span class="k">return</span> <span class="n">seconds</span> <span class="o">%</span> <span class="mi">60</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Time.nanosecond"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.Time.nanosecond">[docs]</a>    <span class="k">def</span> <span class="nf">nanosecond</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The fractional seconds component of the time, in nanoseconds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">%</span> <span class="n">Time</span><span class="o">.</span><span class="n">SECOND</span>
+</div>
+    <span class="k">def</span> <span class="nf">_from_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="n">Time</span><span class="o">.</span><span class="n">DAY</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;value must be less than number of nanoseconds in a day (</span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="n">Time</span><span class="o">.</span><span class="n">DAY</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">=</span> <span class="n">t</span>
+
+    <span class="k">def</span> <span class="nf">_from_timestring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
+            <span class="n">base_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s">&quot;%H:%M:%S&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">base_time</span><span class="o">.</span><span class="n">tm_hour</span> <span class="o">*</span> <span class="n">Time</span><span class="o">.</span><span class="n">HOUR</span> <span class="o">+</span>
+                                    <span class="n">base_time</span><span class="o">.</span><span class="n">tm_min</span> <span class="o">*</span> <span class="n">Time</span><span class="o">.</span><span class="n">MINUTE</span> <span class="o">+</span>
+                                    <span class="n">base_time</span><span class="o">.</span><span class="n">tm_sec</span> <span class="o">*</span> <span class="n">Time</span><span class="o">.</span><span class="n">SECOND</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c"># right pad to 9 digits</span>
+                <span class="n">nano_time_str</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s">&quot;0&quot;</span> <span class="o">*</span> <span class="p">(</span><span class="mi">9</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nano_time_str</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;can&#39;t interpret </span><span class="si">%r</span><span class="s"> as a time&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">s</span><span class="p">,))</span>
+
+    <span class="k">def</span> <span class="nf">_from_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">hour</span> <span class="o">*</span> <span class="n">Time</span><span class="o">.</span><span class="n">HOUR</span> <span class="o">+</span>
+                                <span class="n">t</span><span class="o">.</span><span class="n">minute</span> <span class="o">*</span> <span class="n">Time</span><span class="o">.</span><span class="n">MINUTE</span> <span class="o">+</span>
+                                <span class="n">t</span><span class="o">.</span><span class="n">second</span> <span class="o">*</span> <span class="n">Time</span><span class="o">.</span><span class="n">SECOND</span> <span class="o">+</span>
+                                <span class="n">t</span><span class="o">.</span><span class="n">microsecond</span> <span class="o">*</span> <span class="n">Time</span><span class="o">.</span><span class="n">MICRO</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Time</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">nanosecond_time</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">integer_types</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">==</span> <span class="n">other</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">%</span> <span class="n">Time</span><span class="o">.</span><span class="n">MICRO</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> \
+            <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">second</span><span class="p">,</span>
+                          <span class="n">microsecond</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nanosecond</span> <span class="o">//</span> <span class="n">Time</span><span class="o">.</span><span class="n">MICRO</span><span class="p">)</span> <span class="o">==</span> <span class="n">other</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;Time(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%02d</span><span class="s">:</span><span class="si">%02d</span><span class="s">:</span><span class="si">%02d</span><span class="s">.</span><span class="si">%09d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">second</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Date"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.Date">[docs]</a><span class="k">class</span> <span class="nc">Date</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Idealized naive date: year, month, day</span>
+
+<span class="sd">    Offers wider year range than datetime.date. For Dates that cannot be represented</span>
+<span class="sd">    as a datetime.date (because datetime.MINYEAR, datetime.MAXYEAR), this type falls back</span>
+<span class="sd">    to printing days_from_epoch offset.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">MINUTE</span> <span class="o">=</span> <span class="mi">60</span>
+    <span class="n">HOUR</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="n">MINUTE</span>
+    <span class="n">DAY</span> <span class="o">=</span> <span class="mi">24</span> <span class="o">*</span> <span class="n">HOUR</span>
+
+    <span class="n">date_format</span> <span class="o">=</span> <span class="s">&quot;%Y-%m-</span><span class="si">%d</span><span class="s">&quot;</span>
+
+    <span class="n">days_from_epoch</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializer value can be:</span>
+
+<span class="sd">            - integer_type: absolute days from epoch (1970, 1, 1). Can be negative.</span>
+<span class="sd">            - datetime.date: built-in date</span>
+<span class="sd">            - string_type: a string time of the form &quot;yyyy-mm-dd&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">integer_types</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_from_timetuple</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">timetuple</span><span class="p">())</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_from_datestring</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Date arguments must be a whole number, datetime.date, or string&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Date.seconds"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.Date.seconds">[docs]</a>    <span class="k">def</span> <span class="nf">seconds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Absolute seconds from epoch (can be negative)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span> <span class="o">*</span> <span class="n">Date</span><span class="o">.</span><span class="n">DAY</span>
+</div>
+<div class="viewcode-block" id="Date.date"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.Date.date">[docs]</a>    <span class="k">def</span> <span class="nf">date</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a built-in datetime.date for Dates falling in the years [datetime.MINYEAR, datetime.MAXYEAR]</span>
+
+<span class="sd">        ValueError is raised for Dates outside this range.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime_from_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seconds</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">day</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%r</span><span class="s"> exceeds ranges for built-in datetime.date&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_from_timetuple</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="n">timegm</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">//</span> <span class="n">Date</span><span class="o">.</span><span class="n">DAY</span>
+
+    <span class="k">def</span> <span class="nf">_from_datestring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;+&#39;</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_format</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_from_timetuple</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">timetuple</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Date</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">days_from_epoch</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">integer_types</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span> <span class="o">==</span> <span class="n">other</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">==</span> <span class="n">other</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;Date(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime_from_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seconds</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s">&quot;</span><span class="si">%04d</span><span class="s">-</span><span class="si">%02d</span><span class="s">-</span><span class="si">%02d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">day</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="c"># If we overflow datetime.[MIN|M</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -736,7 +1082,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

@@ -1,0 +1,457 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Making Queries &mdash; Cassandra Driver 2.5.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../index.html" />
+    <link rel="up" title="Object Mapper" href="../object_mapper.html" />
+    <link rel="next" title="Batch Queries" href="batches.html" />
+    <link rel="prev" title="Models" href="models.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="batches.html" title="Batch Queries"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="models.html" title="Models"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../object_mapper.html" accesskey="U">Object Mapper</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Making Queries</a><ul>
+<li><a class="reference internal" href="#retrieving-objects">Retrieving objects</a><ul>
+<li><a class="reference internal" href="#retrieving-all-objects">Retrieving all objects</a></li>
+<li><a class="reference internal" href="#retrieving-objects-with-filters">Retrieving objects with filters</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#accessing-objects-in-a-queryset">Accessing objects in a QuerySet</a></li>
+<li><a class="reference internal" href="#filtering-operators">Filtering Operators</a></li>
+<li><a class="reference internal" href="#timeuuid-functions">TimeUUID Functions</a></li>
+<li><a class="reference internal" href="#token-function">Token Function</a></li>
+<li><a class="reference internal" href="#querysets-are-immutable">QuerySets are immutable</a></li>
+<li><a class="reference internal" href="#ordering-querysets">Ordering QuerySets</a></li>
+<li><a class="reference internal" href="#values-lists">Values Lists</a></li>
+<li><a class="reference internal" href="#per-query-timeouts">Per Query Timeouts</a></li>
+<li><a class="reference internal" href="#named-tables">Named Tables</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="models.html"
+                        title="previous chapter">Models</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="batches.html"
+                        title="next chapter">Batch Queries</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/cqlengine/queryset.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-cqlengine.queryset">
+<span id="making-queries"></span><h1>Making Queries<a class="headerlink" href="#module-cqlengine.queryset" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="retrieving-objects">
+<h2>Retrieving objects<a class="headerlink" href="#retrieving-objects" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>Once you&#8217;ve populated Cassandra with data, you&#8217;ll probably want to retrieve some of it. This is accomplished with QuerySet objects. This section will describe how to use QuerySet objects to retrieve the data you&#8217;re looking for.</div></blockquote>
+<div class="section" id="retrieving-all-objects">
+<h3>Retrieving all objects<a class="headerlink" href="#retrieving-all-objects" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>The simplest query you can make is to return all objects from a table.</p>
+<p>This is accomplished with the <tt class="docutils literal"><span class="pre">.all()</span></tt> method, which returns a QuerySet of all objects in a table</p>
+<p>Using the Person example model, we would get all Person objects like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">all_objects</span> <span class="o">=</span> <span class="n">Person</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="retrieving-objects-with-filters">
+<span id="id1"></span><h3>Retrieving objects with filters<a class="headerlink" href="#retrieving-objects-with-filters" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>Typically, you&#8217;ll want to query only a subset of the records in your database.</p>
+<p>That can be accomplished with the QuerySet&#8217;s <tt class="docutils literal"><span class="pre">.filter(\*\*)</span></tt> method.</p>
+<p>For example, given the model definition:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Automobile</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">manufacturer</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
+    <span class="n">price</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Decimal</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>...and assuming the Automobile table contains a record of every car model manufactured in the last 20 years or so, we can retrieve only the cars made by a single manufacturer like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also use the more convenient syntax:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">Automobile</span><span class="o">.</span><span class="n">manufacturer</span> <span class="o">==</span> <span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can then further filter our query with another call to <strong>.filter</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><em>Note: all queries involving any filtering MUST define either an &#8216;=&#8217; or an &#8216;in&#8217; relation to either a primary key column, or an indexed column.</em></p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="accessing-objects-in-a-queryset">
+<h2>Accessing objects in a QuerySet<a class="headerlink" href="#accessing-objects-in-a-queryset" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>There are several methods for getting objects out of a queryset</p>
+<ul>
+<li><dl class="first docutils">
+<dt>iterating over the queryset</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">car</span> <span class="ow">in</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+    <span class="c">#...do something to the car instance</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>list index</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c">#returns the first result</span>
+<span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="c">#returns the second result</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>list slicing</dt>
+<dd><div class="first highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="c">#returns all results except the first</span>
+<span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">9</span><span class="p">]</span> <span class="c">#returns a slice of the results</span>
+</pre></div>
+</div>
+<p class="last"><em>Note: CQL does not support specifying a start position in it&#8217;s queries. Therefore, accessing elements using array indexing / slicing will load every result up to the index value requested</em></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>calling <tt class="xref py py-attr docutils literal"><span class="pre">get()</span></tt> on the queryset</dt>
+<dd><div class="first highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>
+<span class="n">car</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+</pre></div>
+</div>
+<p class="last">this returns the object matching the queryset</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>calling <tt class="xref py py-attr docutils literal"><span class="pre">first()</span></tt> on the queryset</dt>
+<dd><div class="first highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>
+<span class="n">car</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</pre></div>
+</div>
+<p class="last">this returns the first value in the queryset</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="filtering-operators">
+<span id="query-filtering-operators"></span><h2>Filtering Operators<a class="headerlink" href="#filtering-operators" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p><tt class="xref py py-attr docutils literal"><span class="pre">Equal</span> <span class="pre">To</span></tt></p>
+<blockquote>
+<div><p>The default filtering operator.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>  <span class="c">#year == 2012</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>In addition to simple equal to queries, cqlengine also supports querying with other operators by appending a <tt class="docutils literal"><span class="pre">__&lt;op&gt;</span></tt> to the field name on the filtering call</p>
+<p><tt class="xref py py-attr docutils literal"><span class="pre">in</span> <span class="pre">(__in)</span></tt></p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__in</span><span class="o">=</span><span class="p">[</span><span class="mi">2011</span><span class="p">,</span> <span class="mi">2012</span><span class="p">])</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><tt class="xref py py-attr docutils literal"><span class="pre">&gt;</span> <span class="pre">(__gt)</span></tt></p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__gt</span><span class="o">=</span><span class="mi">2010</span><span class="p">)</span>  <span class="c"># year &gt; 2010</span>
+
+<span class="c"># or the nicer syntax</span>
+
+<span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Automobile</span><span class="o">.</span><span class="n">year</span> <span class="o">&gt;</span> <span class="mi">2010</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><tt class="xref py py-attr docutils literal"><span class="pre">&gt;=</span> <span class="pre">(__gte)</span></tt></p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__gte</span><span class="o">=</span><span class="mi">2010</span><span class="p">)</span>  <span class="c"># year &gt;= 2010</span>
+
+<span class="c"># or the nicer syntax</span>
+
+<span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Automobile</span><span class="o">.</span><span class="n">year</span> <span class="o">&gt;=</span> <span class="mi">2010</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><tt class="xref py py-attr docutils literal"><span class="pre">&lt;</span> <span class="pre">(__lt)</span></tt></p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__lt</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>  <span class="c"># year &lt; 2012</span>
+
+<span class="c"># or...</span>
+
+<span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Automobile</span><span class="o">.</span><span class="n">year</span> <span class="o">&lt;</span> <span class="mi">2012</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><tt class="xref py py-attr docutils literal"><span class="pre">&lt;=</span> <span class="pre">(__lte)</span></tt></p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__lte</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>  <span class="c"># year &lt;= 2012</span>
+
+<span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Automobile</span><span class="o">.</span><span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">2012</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div></blockquote>
+</div>
+<div class="section" id="timeuuid-functions">
+<h2>TimeUUID Functions<a class="headerlink" href="#timeuuid-functions" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>In addition to querying using regular values, there are two functions you can pass in when querying TimeUUID columns to help make filtering by them easier. Note that these functions don&#8217;t actually return a value, but instruct the cql interpreter to use the functions in it&#8217;s query.</p>
+<dl class="class">
+<dt id="cqlengine.queryset.MinTimeUUID">
+<em class="property">class </em><tt class="descclassname">cqlengine.queryset.</tt><tt class="descname">MinTimeUUID</tt><big>(</big><em>datetime</em><big>)</big><a class="headerlink" href="#cqlengine.queryset.MinTimeUUID" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the minimum time uuid value possible for the given datetime</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cqlengine.queryset.MaxTimeUUID">
+<em class="property">class </em><tt class="descclassname">cqlengine.queryset.</tt><tt class="descname">MaxTimeUUID</tt><big>(</big><em>datetime</em><big>)</big><a class="headerlink" href="#cqlengine.queryset.MaxTimeUUID" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the maximum time uuid value possible for the given datetime</p>
+</dd></dl>
+
+<p><em>Example</em></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">DataStream</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">time</span>    <span class="o">=</span> <span class="n">cqlengine</span><span class="o">.</span><span class="n">TimeUUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">data</span>    <span class="o">=</span> <span class="n">cqlengine</span><span class="o">.</span><span class="n">Bytes</span><span class="p">()</span>
+
+<span class="n">min_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1982</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">max_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1982</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+
+<span class="n">DataStream</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">time__gt</span><span class="o">=</span><span class="n">cqlengine</span><span class="o">.</span><span class="n">MinTimeUUID</span><span class="p">(</span><span class="n">min_time</span><span class="p">),</span> <span class="n">time__lt</span><span class="o">=</span><span class="n">cqlengine</span><span class="o">.</span><span class="n">MaxTimeUUID</span><span class="p">(</span><span class="n">max_time</span><span class="p">))</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="token-function">
+<h2>Token Function<a class="headerlink" href="#token-function" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>Token functon may be used only on special, virtual column pk__token, representing token of partition key (it also works for composite partition keys).
+Cassandra orders returned items by value of partition key token, so using cqlengine.Token we can easy paginate through all table rows.</p>
+<p>See <a class="reference external" href="http://cassandra.apache.org/doc/cql3/CQL.html#tokenFun">http://cassandra.apache.org/doc/cql3/CQL.html#tokenFun</a></p>
+<p><em>Example</em></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Items</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="nb">id</span>      <span class="o">=</span> <span class="n">cqlengine</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">data</span>    <span class="o">=</span> <span class="n">cqlengine</span><span class="o">.</span><span class="n">Bytes</span><span class="p">()</span>
+
+<span class="n">query</span> <span class="o">=</span> <span class="n">Items</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="n">first_page</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">query</span><span class="p">);</span>
+<span class="n">last</span> <span class="o">=</span> <span class="n">first_page</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">next_page</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk__token__gt</span><span class="o">=</span><span class="n">cqlengine</span><span class="o">.</span><span class="n">Token</span><span class="p">(</span><span class="n">last</span><span class="o">.</span><span class="n">pk</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="querysets-are-immutable">
+<h2>QuerySets are immutable<a class="headerlink" href="#querysets-are-immutable" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>When calling any method that changes a queryset, the method does not actually change the queryset object it&#8217;s called on, but returns a new queryset object with the attributes of the original queryset, plus the attributes added in the method call.</p>
+<p><em>Example</em></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#this produces 3 different querysets</span>
+<span class="c">#q does not change after it&#39;s initial definition</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">Automobiles</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>
+<span class="n">tesla2012</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">honda2012</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Honda&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="ordering-querysets">
+<h2>Ordering QuerySets<a class="headerlink" href="#ordering-querysets" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>Since Cassandra is essentially a distributed hash table on steroids, the order you get records back in will not be particularly predictable.</p>
+<p>However, you can set a column to order on with the <tt class="docutils literal"><span class="pre">.order_by(column_name)</span></tt> method.</p>
+<p><em>Example</em></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#sort ascending</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">Automobiles</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s">&#39;year&#39;</span><span class="p">)</span>
+<span class="c">#sort descending</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">Automobiles</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s">&#39;-year&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><em>Note: Cassandra only supports ordering on a clustering key. In other words, to support ordering results, your model must have more than one primary key, and you must order on a primary key, excluding the first one.</em></p>
+<p><em>For instance, given our Automobile model, year is the only column we can order on.</em></p>
+</div></blockquote>
+</div>
+<div class="section" id="values-lists">
+<h2>Values Lists<a class="headerlink" href="#values-lists" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>There is a special QuerySet&#8217;s method <tt class="docutils literal"><span class="pre">.values_list()</span></tt> - when called, QuerySet returns lists of values instead of model instances. It may significantly speedup things with lower memory footprint for large responses.
+Each tuple contains the value from the respective field passed into the <tt class="docutils literal"><span class="pre">values_list()</span></tt> call — so the first item is the first field, etc. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
+<span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+    <span class="n">TestModel</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">clustering_key</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+
+<span class="n">values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">TestModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s">&#39;clustering_key&#39;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+<span class="c"># [19L, 18L, 17L, 16L, 15L, 14L, 13L, 12L, 11L, 10L, 9L, 8L, 7L, 6L, 5L, 4L, 3L, 2L, 1L, 0L]</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="per-query-timeouts">
+<h2>Per Query Timeouts<a class="headerlink" href="#per-query-timeouts" title="Permalink to this headline">¶</a></h2>
+<p>By default all queries are executed with the timeout defined in <cite>~cqlengine.connection.setup()</cite>
+The examples below show how to specify a per-query timeout.
+A timeout is specified in seconds and can be an int, float or None.
+None means no timeout.</p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Row</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Fetch all objects with a timeout of 5 seconds</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="o">.</span><span class="n">objects</span><span class="p">()</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Create a single row with a 50ms timeout</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Jon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Delete a single row with no timeout</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Update a single row with no timeout</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;Blake&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Batch query timeouts</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">BatchQuery</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
+    <span class="n">Row</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Jon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>NOTE: You cannot set both timeout and batch at the same time, batch will use the timeout defined in it&#8217;s constructor.
+Setting the timeout on the model is meaningless and will raise an AssertionError.</p>
+</div></blockquote>
+</div>
+<div class="section" id="named-tables">
+<h2>Named Tables<a class="headerlink" href="#named-tables" title="Permalink to this headline">¶</a></h2>
+<p>Named tables are a way of querying a table without creating an class.  They&#8217;re useful for querying system tables or exploring an unfamiliar database.</p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cqlengine.connection</span> <span class="kn">import</span> <span class="n">setup</span>
+<span class="n">setup</span><span class="p">(</span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="s">&quot;cqlengine_test&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">cqlengine.named</span> <span class="kn">import</span> <span class="n">NamedTable</span>
+<span class="n">user</span> <span class="o">=</span> <span class="n">NamedTable</span><span class="p">(</span><span class="s">&quot;cqlengine_test&quot;</span><span class="p">,</span> <span class="s">&quot;user&quot;</span><span class="p">)</span>
+<span class="n">user</span><span class="o">.</span><span class="n">objects</span><span class="p">()</span>
+<span class="n">user</span><span class="o">.</span><span class="n">objects</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="c"># {u&#39;pk&#39;: 1, u&#39;t&#39;: datetime.datetime(2014, 6, 26, 17, 10, 31, 774000)}</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="batches.html" title="Batch Queries"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="models.html" title="Models"
+             >previous</a> |</li>
+        <li><a href="../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../object_mapper.html" >Object Mapper</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Frequently Asked Questions &mdash; Cassandra Driver 2.5.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../index.html" />
+    <link rel="up" title="Object Mapper" href="../object_mapper.html" />
+    <link rel="prev" title="Third party integrations" href="third_party.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="third_party.html" title="Third party integrations"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../object_mapper.html" accesskey="U">Object Mapper</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Frequently Asked Questions</a><ul>
+<li><a class="reference internal" href="#q-why-don-t-updates-work-correctly-on-models-instantiated-as-model-field-value-field2-value2">Q: Why don&#8217;t updates work correctly on models instantiated as Model(field=value, field2=value2)?</a></li>
+<li><a class="reference internal" href="#q-how-to-preserve-ordering-in-batch-query">Q: How to preserve ordering in batch query?</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="third_party.html"
+                        title="previous chapter">Third party integrations</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/cqlengine/faq.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="frequently-asked-questions">
+<h1>Frequently Asked Questions<a class="headerlink" href="#frequently-asked-questions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="q-why-don-t-updates-work-correctly-on-models-instantiated-as-model-field-value-field2-value2">
+<h2>Q: Why don&#8217;t updates work correctly on models instantiated as Model(field=value, field2=value2)?<a class="headerlink" href="#q-why-don-t-updates-work-correctly-on-models-instantiated-as-model-field-value-field2-value2" title="Permalink to this headline">¶</a></h2>
+<p>A: The recommended way to create new rows is with the models .create method. The values passed into a model&#8217;s init method are interpreted by the model as the values as they were read from a row. This allows the model to &#8220;know&#8221; which rows have changed since the row was read out of cassandra, and create suitable update statements.</p>
+</div>
+<div class="section" id="q-how-to-preserve-ordering-in-batch-query">
+<h2>Q: How to preserve ordering in batch query?<a class="headerlink" href="#q-how-to-preserve-ordering-in-batch-query" title="Permalink to this headline">¶</a></h2>
+<p>A: Statement Ordering is not supported by CQL3 batches. Therefore,
+once cassandra needs resolving conflict(Updating the same column in one batch),
+The algorithm below would be used.</p>
+<blockquote>
+<div><ul class="simple">
+<li>If timestamps are different, pick the column with the largest timestamp (the value being a regular column or a tombstone)</li>
+<li>If timestamps are the same, and one of the columns in a tombstone (&#8216;null&#8217;) - pick the tombstone</li>
+<li>If timestamps are the same, and none of the columns are tombstones, pick the column with the largest value</li>
+</ul>
+</div></blockquote>
+<p>Below is an example to show this scenario.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyMode</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="nb">id</span>    <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Integer</span><span class="p">()</span>
+    <span class="n">text</span>  <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
+
+<span class="k">with</span> <span class="n">BatchQuery</span><span class="p">()</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
+   <span class="n">MyModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s">&#39;123&#39;</span><span class="p">)</span>
+   <span class="n">MyModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s">&#39;111&#39;</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">count</span> <span class="o">==</span> <span class="mi">3</span>
+<span class="k">assert</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">text</span>  <span class="o">==</span> <span class="s">&#39;123&#39;</span>
+</pre></div>
+</div>
+<p>The largest value of count is 3, and the largest value of text would be &#8216;123&#8217;.</p>
+<p>The workaround is applying timestamp to each statement, then Cassandra would
+resolve to the statement with the lastest timestamp.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">BatchQuery</span><span class="p">()</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
+    <span class="n">MyModel</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s">&#39;123&#39;</span><span class="p">)</span>
+    <span class="n">MyModel</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s">&#39;111&#39;</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">count</span> <span class="o">==</span> <span class="mi">3</span>
+<span class="k">assert</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">text</span>  <span class="o">==</span> <span class="s">&#39;111&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="third_party.html" title="Third party integrations"
+             >previous</a> |</li>
+        <li><a href="../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../object_mapper.html" >Object Mapper</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.pool &mdash; Cassandra Driver 2.1.4 documentation</title>
+    <title>cassandra.pool &mdash; Cassandra Driver 2.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.4',
+        VERSION:     '2.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.4 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -65,7 +65,7 @@
           <div class="body">
             
   <h1>Source code for cassandra.pool</h1><div class="highlight"><pre>
-<span class="c"># Copyright 2013-2014 DataStax, Inc.</span>
+<span class="c"># Copyright 2013-2015 DataStax, Inc.</span>
 <span class="c">#</span>
 <span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c"># you may not use this file except in compliance with the License.</span>
@@ -438,6 +438,10 @@
         <span class="n">in_flights</span> <span class="o">=</span> <span class="p">[</span><span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span><span class="p">]</span> <span class="k">if</span> <span class="n">connection</span> <span class="k">else</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="p">{</span><span class="s">&#39;shutdown&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">,</span> <span class="s">&#39;open_count&#39;</span><span class="p">:</span> <span class="n">open_count</span><span class="p">,</span> <span class="s">&#39;in_flights&#39;</span><span class="p">:</span> <span class="n">in_flights</span><span class="p">}</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">open_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">connection</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
 
 <span class="n">_MAX_SIMULTANEOUS_CREATION</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">_MIN_TRASH_INTERVAL</span> <span class="o">=</span> <span class="mi">10</span>
@@ -789,7 +793,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

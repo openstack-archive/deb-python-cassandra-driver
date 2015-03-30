@@ -1,0 +1,309 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.cqlengine.connection &mdash; Cassandra Driver 2.5.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../../index.html" />
+    <link rel="up" title="cassandra" href="../../cassandra.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for cassandra.cqlengine.connection</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2015 DataStax, Inc.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#</span>
+<span class="c"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">six</span>
+
+<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span>
+<span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span><span class="p">,</span> <span class="n">_NOT_SET</span><span class="p">,</span> <span class="n">NoHostAvailable</span><span class="p">,</span> <span class="n">UserTypeDoesNotExist</span>
+<span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="n">SimpleStatement</span><span class="p">,</span> <span class="n">Statement</span><span class="p">,</span> <span class="n">dict_factory</span>
+
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">CQLEngineException</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine.statements</span> <span class="kn">import</span> <span class="n">BaseCQLStatement</span>
+
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+<span class="n">NOT_SET</span> <span class="o">=</span> <span class="n">_NOT_SET</span>  <span class="c"># required for passing timeout to Session.execute</span>
+
+<span class="n">Host</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Host&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;port&#39;</span><span class="p">])</span>
+
+<span class="n">cluster</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="n">session</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="n">lazy_connect_args</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="n">default_consistency_level</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
+
+
+<span class="c"># Because type models may be registered before a connection is present,</span>
+<span class="c"># and because sessions may be replaced, we must register UDTs here, in order</span>
+<span class="c"># to have them registered when a new session is established.</span>
+<span class="n">udt_by_keyspace</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">class</span> <span class="nc">UndefinedKeyspaceException</span><span class="p">(</span><span class="n">CQLEngineException</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="default"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/connection.html#cassandra.cqlengine.connection.default">[docs]</a><span class="k">def</span> <span class="nf">default</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configures the global mapper connection to localhost, using the driver defaults</span>
+<span class="sd">    (except for row_factory)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">session</span>
+
+    <span class="k">if</span> <span class="n">session</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;configuring new connection for cqlengine when one was already set&quot;</span><span class="p">)</span>
+
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
+    <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">dict_factory</span>
+
+    <span class="n">_register_known_types</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;cqlengine connection initialized with default session to localhost&quot;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="set_session"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/connection.html#cassandra.cqlengine.connection.set_session">[docs]</a><span class="k">def</span> <span class="nf">set_session</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configures the global mapper connection with a preexisting :class:`cassandra.cluster.Session`</span>
+
+<span class="sd">    Note: the mapper presently requires a Session :attr:`~.row_factory` set to ``dict_factory``.</span>
+<span class="sd">    This may be relaxed in the future</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">session</span>
+
+    <span class="k">if</span> <span class="n">session</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;configuring new connection for cqlengine when one was already set&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">row_factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">dict_factory</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;Failed to initialize: &#39;Session.row_factory&#39; must be &#39;dict_factory&#39;.&quot;</span><span class="p">)</span>
+    <span class="n">session</span> <span class="o">=</span> <span class="n">s</span>
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">cluster</span>
+
+    <span class="n">_register_known_types</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;cqlengine connection initialized with </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="setup"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/connection.html#cassandra.cqlengine.connection.setup">[docs]</a><span class="k">def</span> <span class="nf">setup</span><span class="p">(</span>
+        <span class="n">hosts</span><span class="p">,</span>
+        <span class="n">default_keyspace</span><span class="p">,</span>
+        <span class="n">consistency</span><span class="o">=</span><span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span><span class="p">,</span>
+        <span class="n">lazy_connect</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">retry_connect</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Setup a the driver connection used by the mapper</span>
+
+<span class="sd">    :param list hosts: list of hosts, (``contact_points`` for :class:`cassandra.cluster.Cluster`)</span>
+<span class="sd">    :param str default_keyspace: The default keyspace to use</span>
+<span class="sd">    :param int consistency: The global default :class:`~.ConsistencyLevel`</span>
+<span class="sd">    :param bool lazy_connect: True if should not connect until first use</span>
+<span class="sd">    :param bool retry_connect: True if we should retry to connect even if there was a connection failure initially</span>
+<span class="sd">    :param \*\*kwargs: Pass-through keyword arguments for :class:`cassandra.cluster.Cluster`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">default_consistency_level</span><span class="p">,</span> <span class="n">lazy_connect_args</span>
+
+    <span class="k">if</span> <span class="s">&#39;username&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="s">&#39;password&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;Username &amp; Password are now handled by using the native driver&#39;s auth_provider&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">default_keyspace</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UndefinedKeyspaceException</span><span class="p">()</span>
+
+    <span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">models</span>
+    <span class="n">models</span><span class="o">.</span><span class="n">DEFAULT_KEYSPACE</span> <span class="o">=</span> <span class="n">default_keyspace</span>
+
+    <span class="n">default_consistency_level</span> <span class="o">=</span> <span class="n">consistency</span>
+    <span class="k">if</span> <span class="n">lazy_connect</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;default_keyspace&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">default_keyspace</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;consistency&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">consistency</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;lazy_connect&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;retry_connect&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">retry_connect</span>
+        <span class="n">lazy_connect_args</span> <span class="o">=</span> <span class="p">(</span><span class="n">hosts</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">hosts</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;cqlengine connection initialized with internally created session&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">NoHostAvailable</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">retry_connect</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;connect failed, setting up for re-attempt on first use&quot;</span><span class="p">)</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;default_keyspace&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">default_keyspace</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;consistency&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">consistency</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;lazy_connect&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;retry_connect&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">retry_connect</span>
+            <span class="n">lazy_connect_args</span> <span class="o">=</span> <span class="p">(</span><span class="n">hosts</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">raise</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">dict_factory</span>
+
+    <span class="n">_register_known_types</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
+
+</div>
+<span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">NOT_SET</span><span class="p">):</span>
+
+    <span class="n">handle_lazy_connect</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">session</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;It is required to setup() cqlengine before executing queries&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">consistency_level</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">consistency_level</span> <span class="o">=</span> <span class="n">default_consistency_level</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">Statement</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">BaseCQLStatement</span><span class="p">):</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">get_context</span><span class="p">()</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">SimpleStatement</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">consistency_level</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">SimpleStatement</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">consistency_level</span><span class="p">)</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">query_string</span><span class="p">)</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="n">params</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span> <span class="nf">get_session</span><span class="p">():</span>
+    <span class="n">handle_lazy_connect</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">session</span>
+
+
+<span class="k">def</span> <span class="nf">get_cluster</span><span class="p">():</span>
+    <span class="n">handle_lazy_connect</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cluster</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">.cluster is not configured. Call one of the setup or default functions first.&quot;</span> <span class="o">%</span> <span class="n">__name__</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cluster</span>
+
+
+<span class="k">def</span> <span class="nf">handle_lazy_connect</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">lazy_connect_args</span>
+    <span class="k">if</span> <span class="n">lazy_connect_args</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;lazy connect&quot;</span><span class="p">)</span>
+        <span class="n">hosts</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">lazy_connect_args</span>
+        <span class="n">lazy_connect_args</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">setup</span><span class="p">(</span><span class="n">hosts</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">register_udt</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">type_name</span><span class="p">,</span> <span class="n">klass</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">udt_by_keyspace</span><span class="p">[</span><span class="n">keyspace</span><span class="p">][</span><span class="n">type_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">klass</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">udt_by_keyspace</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">type_name</span><span class="p">:</span> <span class="n">klass</span><span class="p">}</span>
+
+    <span class="k">global</span> <span class="n">cluster</span>
+    <span class="k">if</span> <span class="n">cluster</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cluster</span><span class="o">.</span><span class="n">register_user_type</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">type_name</span><span class="p">,</span> <span class="n">klass</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">UserTypeDoesNotExist</span><span class="p">:</span>
+            <span class="k">pass</span>  <span class="c"># new types are covered in management sync functions</span>
+
+
+<span class="k">def</span> <span class="nf">_register_known_types</span><span class="p">(</span><span class="n">cluster</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">ks_name</span><span class="p">,</span> <span class="n">name_type_map</span> <span class="ow">in</span> <span class="n">udt_by_keyspace</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">type_name</span><span class="p">,</span> <span class="n">klass</span> <span class="ow">in</span> <span class="n">name_type_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cluster</span><span class="o">.</span><span class="n">register_user_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_name</span><span class="p">,</span> <span class="n">klass</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">UserTypeDoesNotExist</span><span class="p">:</span>
+                <span class="k">pass</span>  <span class="c"># new types are covered in management sync functions</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

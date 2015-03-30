@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 2.1.4 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 2.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.1.4',
+        VERSION:     '2.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.1.4 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -65,7 +65,7 @@
           <div class="body">
             
   <h1>Source code for cassandra.cluster</h1><div class="highlight"><pre>
-<span class="c"># Copyright 2013-2014 DataStax, Inc.</span>
+<span class="c"># Copyright 2013-2015 DataStax, Inc.</span>
 <span class="c">#</span>
 <span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c"># you may not use this file except in compliance with the License.</span>
@@ -89,6 +89,7 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">random</span>
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">time</span>
@@ -113,6 +114,7 @@
                        <span class="n">UnsupportedOperation</span><span class="p">,</span> <span class="n">Unauthorized</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ConnectionException</span><span class="p">,</span> <span class="n">ConnectionShutdown</span><span class="p">,</span>
                                   <span class="n">ConnectionHeartbeat</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqltypes</span> <span class="kn">import</span> <span class="n">UserType</span>
 <span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">Encoder</span>
 <span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="kn">import</span> <span class="p">(</span><span class="n">QueryMessage</span><span class="p">,</span> <span class="n">ResultMessage</span><span class="p">,</span>
                                 <span class="n">ErrorMessage</span><span class="p">,</span> <span class="n">ReadTimeoutErrorMessage</span><span class="p">,</span>
@@ -458,6 +460,40 @@
 <span class="sd">    Setting to zero disables heartbeats.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">schema_event_refresh_window</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Window, in seconds, within which a schema component will be refreshed after</span>
+<span class="sd">    receiving a schema_change event.</span>
+
+<span class="sd">    The driver delays a random amount of time in the range [0.0, window)</span>
+<span class="sd">    before executing the refresh. This serves two purposes:</span>
+
+<span class="sd">    1.) Spread the refresh for deployments with large fanout from C* to client tier,</span>
+<span class="sd">    preventing a &#39;thundering herd&#39; problem with many clients refreshing simultaneously.</span>
+
+<span class="sd">    2.) Remove redundant refreshes. Redundant events arriving within the delay period</span>
+<span class="sd">    are discarded, and only one refresh is executed.</span>
+
+<span class="sd">    Setting this to zero will execute refreshes immediately.</span>
+
+<span class="sd">    Setting this negative will disable schema refreshes in response to push events</span>
+<span class="sd">    (refreshes will still occur in response to schema change responses to DDL statements</span>
+<span class="sd">    executed by Sessions of this Cluster).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">topology_event_refresh_window</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Window, in seconds, within which the node and token list will be refreshed after</span>
+<span class="sd">    receiving a topology_change event.</span>
+
+<span class="sd">    Setting this to zero will execute refreshes immediately.</span>
+
+<span class="sd">    Setting this negative will disable node refreshes in response to push events</span>
+<span class="sd">    (refreshes will still occur in response to new nodes observed on &quot;UP&quot; events).</span>
+
+<span class="sd">    See :attr:`.schema_event_refresh_window` for discussion of rationale</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">sessions</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">control_connection</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">scheduler</span> <span class="o">=</span> <span class="bp">None</span>
@@ -494,7 +530,9 @@
                  <span class="n">executor_threads</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                  <span class="n">max_schema_agreement_wait</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
                  <span class="n">control_connection_timeout</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
-                 <span class="n">idle_heartbeat_interval</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+                 <span class="n">idle_heartbeat_interval</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+                 <span class="n">schema_event_refresh_window</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                 <span class="n">topology_event_refresh_window</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Any of the mutable Cluster attributes may be set as keyword arguments</span>
 <span class="sd">        to the constructor.</span>
@@ -545,6 +583,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">max_schema_agreement_wait</span> <span class="o">=</span> <span class="n">max_schema_agreement_wait</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">control_connection_timeout</span> <span class="o">=</span> <span class="n">control_connection_timeout</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">idle_heartbeat_interval</span> <span class="o">=</span> <span class="n">idle_heartbeat_interval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schema_event_refresh_window</span> <span class="o">=</span> <span class="n">schema_event_refresh_window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topology_event_refresh_window</span> <span class="o">=</span> <span class="n">topology_event_refresh_window</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_listener_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
@@ -589,7 +629,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="n">Metrics</span><span class="p">(</span><span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span> <span class="o">=</span> <span class="n">ControlConnection</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection_timeout</span><span class="p">)</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection_timeout</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">schema_event_refresh_window</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">topology_event_refresh_window</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Cluster.register_user_type"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.register_user_type">[docs]</a>    <span class="k">def</span> <span class="nf">register_user_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">user_type</span><span class="p">,</span> <span class="n">klass</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -642,6 +683,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_user_types</span><span class="p">[</span><span class="n">keyspace</span><span class="p">][</span><span class="n">user_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">klass</span>
         <span class="k">for</span> <span class="n">session</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span><span class="p">:</span>
             <span class="n">session</span><span class="o">.</span><span class="n">user_type_registered</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">user_type</span><span class="p">,</span> <span class="n">klass</span><span class="p">)</span>
+        <span class="n">UserType</span><span class="o">.</span><span class="n">evict_udt_class</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">user_type</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">get_min_requests_per_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_distance</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_requests_per_connection</span><span class="p">[</span><span class="n">host_distance</span><span class="p">]</span>
@@ -1003,7 +1045,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_start_reconnector</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">refresh_nodes</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
             <span class="k">return</span>
 
@@ -1015,7 +1057,7 @@
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Done preparing queries for new host </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">load_balancing_policy</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">refresh_nodes</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">distance</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">IGNORED</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Not adding connection pool for new host </span><span class="si">%r</span><span class="s"> because the &quot;</span>
@@ -1091,7 +1133,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">on_down</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="p">,</span> <span class="n">expect_host_to_be_down</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">is_down</span>
 
-    <span class="k">def</span> <span class="nf">add_host</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">datacenter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rack</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">add_host</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">datacenter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rack</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">refresh_nodes</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Called when adding initial contact points and when the control</span>
 <span class="sd">        connection subsequently discovers a new node.  Intended for internal</span>
@@ -1100,7 +1142,7 @@
         <span class="n">new_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">new_host</span> <span class="ow">and</span> <span class="n">signal</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;New Cassandra host </span><span class="si">%r</span><span class="s"> discovered&quot;</span><span class="p">,</span> <span class="n">new_host</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="n">new_host</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="n">new_host</span><span class="p">,</span> <span class="n">refresh_nodes</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">new_host</span>
 
@@ -1147,11 +1189,11 @@
 
 <span class="sd">        By default, the timeout for this operation is governed by :attr:`~.Cluster.max_schema_agreement_wait`</span>
 <span class="sd">        and :attr:`~.Cluster.control_connection_timeout`.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Passing max_schema_agreement_wait here overrides :attr:`~.Cluster.max_schema_agreement_wait`.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Setting max_schema_agreement_wait &lt;= 0 will bypass schema agreement and refresh schema immediately.</span>
-<span class="sd">        </span>
+
 <span class="sd">        An Exception is raised if schema refresh fails for any reason.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">max_schema_agreement_wait</span><span class="p">):</span>
@@ -1166,6 +1208,27 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">)</span>
 
+<div class="viewcode-block" id="Cluster.refresh_nodes"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.refresh_nodes">[docs]</a>    <span class="k">def</span> <span class="nf">refresh_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Synchronously refresh the node list and token metadata</span>
+
+<span class="sd">        An Exception is raised if node refresh fails for any reason.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Node list was not refreshed. See log for details.&quot;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Cluster.set_meta_refresh_enabled"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.set_meta_refresh_enabled">[docs]</a>    <span class="k">def</span> <span class="nf">set_meta_refresh_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enabled</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets a flag to enable (True) or disable (False) all metadata refresh queries.</span>
+<span class="sd">        This applies to both schema and node topology.</span>
+
+<span class="sd">        Disabling this is useful to minimize refreshes during multiple changes.</span>
+
+<span class="sd">        Meta refresh must be enabled for the driver to become aware of any cluster</span>
+<span class="sd">        topology changes or schema updates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">set_meta_refresh_enabled</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">enabled</span><span class="p">))</span>
+</div>
     <span class="k">def</span> <span class="nf">_prepare_all_queries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepared_statements</span><span class="p">:</span>
             <span class="k">return</span>
@@ -1743,7 +1806,7 @@
         <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
             <span class="k">return</span> <span class="s">&#39;{ </span><span class="si">%s</span><span class="s"> }&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
                 <span class="n">field_name</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">cql_encode_all_types</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">field_name</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">cql_encode_all_types</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
             <span class="p">)</span> <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">type_meta</span><span class="o">.</span><span class="n">field_names</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">mapping</span><span class="p">[</span><span class="n">klass</span><span class="p">]</span> <span class="o">=</span> <span class="n">encode</span>
@@ -1837,15 +1900,25 @@
     <span class="n">_timeout</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_protocol_version</span> <span class="o">=</span> <span class="bp">None</span>
 
+    <span class="n">_schema_event_refresh_window</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_topology_event_refresh_window</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">_meta_refresh_enabled</span> <span class="o">=</span> <span class="bp">True</span>
+
     <span class="c"># for testing purposes</span>
     <span class="n">_time</span> <span class="o">=</span> <span class="n">time</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span>
+                 <span class="n">schema_event_refresh_window</span><span class="p">,</span>
+                 <span class="n">topology_event_refresh_window</span><span class="p">):</span>
         <span class="c"># use a weak reference to allow the Cluster instance to be GC&#39;ed (and</span>
         <span class="c"># shutdown) since implementing __del__ disables the cycle detector</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="n">timeout</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schema_event_refresh_window</span> <span class="o">=</span> <span class="n">schema_event_refresh_window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_topology_event_refresh_window</span> <span class="o">=</span> <span class="n">topology_event_refresh_window</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_schema_agreement_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
@@ -2004,6 +2077,10 @@
 
     <span class="k">def</span> <span class="nf">refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">usertype</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                        <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta_refresh_enabled</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Skipping schema refresh because meta refresh is disabled&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span>
@@ -2131,14 +2208,20 @@
         <span class="k">return</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_token_rebuild</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta_refresh_enabled</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Skipping node list refresh because meta refresh is disabled&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="n">force_token_rebuild</span><span class="o">=</span><span class="n">force_token_rebuild</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">True</span>
         <span class="k">except</span> <span class="ne">ReferenceError</span><span class="p">:</span>
             <span class="k">pass</span>  <span class="c"># our weak reference to the Cluster is no good</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Error refreshing node list and token map&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_signal_error</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">False</span>
 
     <span class="k">def</span> <span class="nf">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                                          <span class="n">force_token_rebuild</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
@@ -2199,7 +2282,7 @@
             <span class="n">rack</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rack&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Found new host to connect to: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
-                <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">add_host</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">refresh_nodes</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
                 <span class="n">should_rebuild_token_map</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">should_rebuild_token_map</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_location_info</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">datacenter</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
@@ -2234,25 +2317,25 @@
     <span class="k">def</span> <span class="nf">_handle_topology_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="n">change_type</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&quot;change_type&quot;</span><span class="p">]</span>
         <span class="n">addr</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&quot;address&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;NEW_NODE&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;NEW_NODE&quot;</span> <span class="ow">or</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;MOVED_NODE&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topology_event_refresh_window</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">delay</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topology_event_refresh_window</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule_unique</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;REMOVED_NODE&quot;</span><span class="p">:</span>
             <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">remove_host</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;MOVED_NODE&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule_unique</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">remove_host</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_handle_status_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="n">change_type</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&quot;change_type&quot;</span><span class="p">]</span>
         <span class="n">addr</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&quot;address&quot;</span><span class="p">]</span>
         <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;UP&quot;</span><span class="p">:</span>
+            <span class="n">delay</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.5</span>  <span class="c"># randomness to avoid thundering herd problem on events</span>
             <span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="c"># this is the first time we&#39;ve seen the node</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule_unique</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="c"># this will be run by the scheduler</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">on_up</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule_unique</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">on_up</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">change_type</span> <span class="o">==</span> <span class="s">&quot;DOWN&quot;</span><span class="p">:</span>
             <span class="c"># Note that there is a slight risk we can receive the event late and thus</span>
             <span class="c"># mark the host down even though we already had reconnected successfully.</span>
@@ -2263,10 +2346,14 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">on_down</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_handle_schema_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema_event_refresh_window</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
         <span class="n">keyspace</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;keyspace&#39;</span><span class="p">)</span>
         <span class="n">table</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;table&#39;</span><span class="p">)</span>
         <span class="n">usertype</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">)</span>
+        <span class="n">delay</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema_event_refresh_window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule_unique</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">wait_for_schema_agreement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">wait_time</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 
@@ -2387,8 +2474,9 @@
             <span class="c"># this will result in a task being submitted to the executor to reconnect</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">(</span><span class="n">force_token_rebuild</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">refresh_nodes</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">refresh_nodes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">(</span><span class="n">force_token_rebuild</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">refresh_node_list_and_token_map</span><span class="p">(</span><span class="n">force_token_rebuild</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
@@ -2400,6 +2488,9 @@
     <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="ow">and</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">set_meta_refresh_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enabled</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_meta_refresh_enabled</span> <span class="o">=</span> <span class="n">enabled</span>
 
 
 <span class="k">def</span> <span class="nf">_stop_scheduler</span><span class="p">(</span><span class="n">scheduler</span><span class="p">,</span> <span class="n">thread</span><span class="p">):</span>
@@ -2414,12 +2505,14 @@
 
 <span class="k">class</span> <span class="nc">_Scheduler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
-    <span class="n">_scheduled</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_queue</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_scheduled_tasks</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_executor</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">is_shutdown</span> <span class="o">=</span> <span class="bp">False</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">executor</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled</span> <span class="o">=</span> <span class="n">Queue</span><span class="o">.</span><span class="n">PriorityQueue</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="o">.</span><span class="n">PriorityQueue</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span> <span class="o">=</span> <span class="n">executor</span>
 
         <span class="n">t</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;Task Scheduler&quot;</span><span class="p">)</span>
@@ -2437,14 +2530,25 @@
             <span class="c"># this can happen on interpreter shutdown</span>
             <span class="k">pass</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_insert_task</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">schedule_unique</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">task</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_insert_task</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Ignoring schedule_unique for already-scheduled task: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_insert_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
             <span class="n">run_at</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">delay</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">((</span><span class="n">run_at</span><span class="p">,</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">((</span><span class="n">run_at</span><span class="p">,</span> <span class="n">task</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Ignoring scheduled function after shutdown: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">fn</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Ignoring scheduled task after shutdown: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
@@ -2453,16 +2557,17 @@
 
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-                    <span class="n">run_at</span><span class="p">,</span> <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+                    <span class="n">run_at</span><span class="p">,</span> <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
                         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Not executing scheduled task due to Scheduler shutdown&quot;</span><span class="p">)</span>
                         <span class="k">return</span>
                     <span class="k">if</span> <span class="n">run_at</span> <span class="o">&lt;=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">():</span>
-                        <span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">task</span>
-                        <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                        <span class="n">fn</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">task</span>
+                        <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
                         <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_if_failed</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">((</span><span class="n">run_at</span><span class="p">,</span> <span class="n">task</span><span class="p">))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">((</span><span class="n">run_at</span><span class="p">,</span> <span class="n">task</span><span class="p">))</span>
                         <span class="k">break</span>
             <span class="k">except</span> <span class="n">Queue</span><span class="o">.</span><span class="n">Empty</span><span class="p">:</span>
                 <span class="k">pass</span>
@@ -2479,9 +2584,13 @@
 
 <span class="k">def</span> <span class="nf">refresh_schema_and_set_result</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">control_conn</span><span class="p">,</span> <span class="n">response_future</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Refreshing schema in response to schema change. Keyspace: </span><span class="si">%s</span><span class="s">; Table: </span><span class="si">%s</span><span class="s">, Type: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
-                  <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">)</span>
-        <span class="n">control_conn</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="n">response_future</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">control_conn</span><span class="o">.</span><span class="n">_meta_refresh_enabled</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Refreshing schema in response to schema change. Keyspace: </span><span class="si">%s</span><span class="s">; Table: </span><span class="si">%s</span><span class="s">, Type: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
+                      <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">)</span>
+            <span class="n">control_conn</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="n">response_future</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Skipping schema refresh in response to schema change because meta refresh is disabled; &quot;</span>
+                      <span class="s">&quot;Keyspace: </span><span class="si">%s</span><span class="s">; Table: </span><span class="si">%s</span><span class="s">, Type: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Exception refreshing schema in response to schema change:&quot;</span><span class="p">)</span>
         <span class="n">response_future</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
@@ -3122,7 +3231,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.1.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

@@ -1,0 +1,216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.cqlengine.management - Schema management for cqlengine &mdash; Cassandra Driver 2.5.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../../index.html" />
+    <link rel="up" title="API Documentation" href="../../index.html" />
+    <link rel="next" title="cassandra.cqlengine.usertype - Model classes for User Defined Types" href="usertype.html" />
+    <link rel="prev" title="cassandra.cqlengine.connection - Connection management for cqlengine" href="connection.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="usertype.html" title="cassandra.cqlengine.usertype - Model classes for User Defined Types"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="connection.html" title="cassandra.cqlengine.connection - Connection management for cqlengine"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="connection.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">cassandra.cqlengine.connection</span></tt> - Connection management for cqlengine</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="usertype.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.cqlengine.usertype</span></tt> - Model classes for User Defined Types</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../../_sources/api/cassandra/cqlengine/management.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-cassandra.cqlengine.management">
+<span id="cassandra-cqlengine-management-schema-management-for-cqlengine"></span><h1><tt class="docutils literal"><span class="pre">cassandra.cqlengine.management</span></tt> - Schema management for cqlengine<a class="headerlink" href="#module-cassandra.cqlengine.management" title="Permalink to this headline">¶</a></h1>
+<p>A collection of functions for managing keyspace and table schema.</p>
+<dl class="function">
+<dt id="cassandra.cqlengine.management.create_keyspace_simple">
+<tt class="descclassname">cassandra.cqlengine.management.</tt><tt class="descname">create_keyspace_simple</tt><big>(</big><em>name</em>, <em>replication_factor</em>, <em>durable_writes=True</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/management.html#create_keyspace_simple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.management.create_keyspace_simple" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a keyspace with SimpleStrategy for replica placement</p>
+<p>If the keyspace already exists, it will not be modified.</p>
+<p><strong>This function should be used with caution, especially in production environments.
+Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).</strong></p>
+<p><em>There are plans to guard schema-modifying functions with an environment-driven conditional.</em></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) &#8211; name of keyspace to create</li>
+<li><strong>replication_factor</strong> (<em>int</em>) &#8211; keyspace replication factor, used with <tt class="xref py py-attr docutils literal"><span class="pre">SimpleStrategy</span></tt></li>
+<li><strong>durable_writes</strong> (<em>bool</em>) &#8211; Write log is bypassed if set to False</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cassandra.cqlengine.management.create_keyspace_network_topology">
+<tt class="descclassname">cassandra.cqlengine.management.</tt><tt class="descname">create_keyspace_network_topology</tt><big>(</big><em>name</em>, <em>dc_replication_map</em>, <em>durable_writes=True</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/management.html#create_keyspace_network_topology"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.management.create_keyspace_network_topology" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a keyspace with NetworkTopologyStrategy for replica placement</p>
+<p>If the keyspace already exists, it will not be modified.</p>
+<p><strong>This function should be used with caution, especially in production environments.
+Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).</strong></p>
+<p><em>There are plans to guard schema-modifying functions with an environment-driven conditional.</em></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) &#8211; name of keyspace to create</li>
+<li><strong>dc_replication_map</strong> (<em>dict</em>) &#8211; map of dc_names: replication_factor</li>
+<li><strong>durable_writes</strong> (<em>bool</em>) &#8211; Write log is bypassed if set to False</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cassandra.cqlengine.management.drop_keyspace">
+<tt class="descclassname">cassandra.cqlengine.management.</tt><tt class="descname">drop_keyspace</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/management.html#drop_keyspace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.management.drop_keyspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drops a keyspace, if it exists.</p>
+<p><em>There are plans to guard schema-modifying functions with an environment-driven conditional.</em></p>
+<p><strong>This function should be used with caution, especially in production environments.
+Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).</strong></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<em>str</em>) &#8211; name of keyspace to drop</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cassandra.cqlengine.management.sync_table">
+<tt class="descclassname">cassandra.cqlengine.management.</tt><tt class="descname">sync_table</tt><big>(</big><em>model</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/management.html#sync_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.management.sync_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inspects the model and creates / updates the corresponding table and columns.</p>
+<p>Any User Defined Types used in the table are implicitly synchronized.</p>
+<p>This function can only add fields that are not part of the primary key.</p>
+<p>Note that the attributes removed from the model are not deleted on the database.
+They become effectively ignored by (will not show up on) the model.</p>
+<p><strong>This function should be used with caution, especially in production environments.
+Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).</strong></p>
+<p><em>There are plans to guard schema-modifying functions with an environment-driven conditional.</em></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cassandra.cqlengine.management.sync_type">
+<tt class="descclassname">cassandra.cqlengine.management.</tt><tt class="descname">sync_type</tt><big>(</big><em>ks_name</em>, <em>type_model</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/management.html#sync_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.management.sync_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inspects the type_model and creates / updates the corresponding type.</p>
+<p>Note that the attributes removed from the type_model are not deleted on the database (this operation is not supported).
+They become effectively ignored by (will not show up on) the type_model.</p>
+<p><strong>This function should be used with caution, especially in production environments.
+Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).</strong></p>
+<p><em>There are plans to guard schema-modifying functions with an environment-driven conditional.</em></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cassandra.cqlengine.management.drop_table">
+<tt class="descclassname">cassandra.cqlengine.management.</tt><tt class="descname">drop_table</tt><big>(</big><em>model</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/management.html#drop_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.management.drop_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drops the table indicated by the model, if it exists.</p>
+<p><strong>This function should be used with caution, especially in production environments.
+Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).</strong></p>
+<p><em>There are plans to guard schema-modifying functions with an environment-driven conditional.</em></p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="usertype.html" title="cassandra.cqlengine.usertype - Model classes for User Defined Types"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="connection.html" title="cassandra.cqlengine.connection - Connection management for cqlengine"
+             >previous</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

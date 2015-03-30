@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.cqlengine.query - Query and filter model objects &mdash; Cassandra Driver 2.5.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../../index.html" />
+    <link rel="up" title="API Documentation" href="../../index.html" />
+    <link rel="next" title="cassandra.cqlengine.connection - Connection management for cqlengine" href="connection.html" />
+    <link rel="prev" title="cassandra.cqlengine.columns - Column types for object mapping models" href="columns.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="connection.html" title="cassandra.cqlengine.connection - Connection management for cqlengine"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="columns.html" title="cassandra.cqlengine.columns - Column types for object mapping models"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">cassandra.cqlengine.query</span></tt> - Query and filter model objects</a><ul>
+<li><a class="reference internal" href="#queryset">QuerySet</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="columns.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">cassandra.cqlengine.columns</span></tt> - Column types for object mapping models</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="connection.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">cassandra.cqlengine.connection</span></tt> - Connection management for cqlengine</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../../_sources/api/cassandra/cqlengine/query.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-cassandra.cqlengine.query">
+<span id="cassandra-cqlengine-query-query-and-filter-model-objects"></span><h1><tt class="docutils literal"><span class="pre">cassandra.cqlengine.query</span></tt> - Query and filter model objects<a class="headerlink" href="#module-cassandra.cqlengine.query" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="queryset">
+<h2>QuerySet<a class="headerlink" href="#queryset" title="Permalink to this headline">¶</a></h2>
+<p>QuerySet objects are typically obtained by calling <tt class="xref py py-meth docutils literal"><span class="pre">objects()</span></tt> on a model class.
+The mehtods here are used to filter, order, and constrain results.</p>
+<dl class="class">
+<dt id="cassandra.cqlengine.query.ModelQuerySet">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.query.</tt><tt class="descname">ModelQuerySet</tt><big>(</big><em>model</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#ModelQuerySet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.all">
+<tt class="descname">all</tt><big>(</big><big>)</big><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a queryset matching all rows</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.batch">
+<tt class="descname">batch</tt><big>(</big><em>batch_obj</em><big>)</big><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.batch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set a batch object to run the query on.</p>
+<p>Note: running a select query with a batch object will raise an exception</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.consistency">
+<tt class="descname">consistency</tt><big>(</big><em>consistency</em><big>)</big><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.consistency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the consistency level for the operation. See <a class="reference internal" href="../../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><tt class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></tt></a>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">consistency</span><span class="p">(</span><span class="n">CL</span><span class="o">.</span><span class="n">ONE</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.count">
+<tt class="descname">count</tt><big>(</big><big>)</big><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of rows matched by this query</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.filter">
+<tt class="descname">filter</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds WHERE arguments to the queryset, returning a new queryset</p>
+<p>See <a class="reference internal" href="../../../cqlengine/queryset.html#retrieving-objects-with-filters"><em>Retrieving objects with filters</em></a></p>
+<p>Returns a QuerySet filtered on the keyword arguments</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.get">
+<tt class="descname">get</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a single instance matching this query, optionally with additional filter kwargs.</p>
+<p>See <a class="reference internal" href="../../../cqlengine/queryset.html#retrieving-objects-with-filters"><em>Retrieving objects with filters</em></a></p>
+<p>Returns a single object matching the QuerySet.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If no objects are matched, a <a class="reference internal" href="#cassandra.cqlengine.query.DoesNotExist" title="cassandra.cqlengine.query.DoesNotExist"><tt class="xref py py-class docutils literal"><span class="pre">DoesNotExist</span></tt></a> exception is raised.</p>
+<p>If more than one object is found, a <a class="reference internal" href="#cassandra.cqlengine.query.MultipleObjectsReturned" title="cassandra.cqlengine.query.MultipleObjectsReturned"><tt class="xref py py-class docutils literal"><span class="pre">MultipleObjectsReturned</span></tt></a> exception is raised.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.limit">
+<tt class="descname">limit</tt><big>(</big><em>v</em><big>)</big><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.limit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Limits the number of results returned by Cassandra.</p>
+<p><em>Note that CQL&#8217;s default limit is 10,000, so all queries without a limit set explicitly will have an implicit limit of 10,000</em></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="p">()</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.order_by">
+<tt class="descname">order_by</tt><big>(</big><em>*colnames</em><big>)</big><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.order_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the column(s) to be used for ordering</p>
+<p>Default order is ascending, prepend a &#8216;-&#8216; to any column name for descending</p>
+<p><em>Note: column names must be a clustering key</em></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid1</span><span class="p">,</span><span class="n">uuid4</span>
+
+<span class="k">class</span> <span class="nc">Comment</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">photo_id</span> <span class="o">=</span> <span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">comment_id</span> <span class="o">=</span> <span class="n">TimeUUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid1</span><span class="p">)</span> <span class="c"># second primary key component is a clustering key</span>
+    <span class="n">comment</span> <span class="o">=</span> <span class="n">Text</span><span class="p">()</span>
+
+<span class="n">sync_table</span><span class="p">(</span><span class="n">Comment</span><span class="p">)</span>
+
+<span class="n">u</span> <span class="o">=</span> <span class="n">uuid4</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="n">Comment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">photo_id</span><span class="o">=</span><span class="n">u</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s">&quot;test </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">x</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">&quot;Normal&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">comment</span> <span class="ow">in</span> <span class="n">Comment</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">photo_id</span><span class="o">=</span><span class="n">u</span><span class="p">):</span>
+    <span class="k">print</span> <span class="n">comment</span><span class="o">.</span><span class="n">comment_id</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">&quot;Reversed&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">comment</span> <span class="ow">in</span> <span class="n">Comment</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">photo_id</span><span class="o">=</span><span class="n">u</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s">&quot;-comment_id&quot;</span><span class="p">):</span>
+    <span class="k">print</span> <span class="n">comment</span><span class="o">.</span><span class="n">comment_id</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.allow_filtering">
+<tt class="descname">allow_filtering</tt><big>(</big><big>)</big><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.allow_filtering" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enables the (usually) unwise practive of querying on a clustering key without also defining a partition key</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.timestamp">
+<tt class="descname">timestamp</tt><big>(</big><em>timestamp</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#ModelQuerySet.timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allows for custom timestamps to be saved with the record.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.ttl">
+<tt class="descname">ttl</tt><big>(</big><em>ttl</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#ModelQuerySet.ttl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.ttl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ttl (in seconds) for modified data.</p>
+<p><em>Note that running a select query with a ttl value will raise an exception</em></p>
+</dd></dl>
+
+<span class="target" id="blind-updates"></span><dl class="method">
+<dt id="cassandra.cqlengine.query.ModelQuerySet.update">
+<tt class="descname">update</tt><big>(</big><em>**values</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#ModelQuerySet.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.ModelQuerySet.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs an update on the row selected by the queryset. Include values to update in the
+update like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Model</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Passing in updates for columns which are not part of the model will raise a ValidationError.</p>
+<p>Per column validation will be performed, but instance level validation will not
+(i.e., <cite>Model.validate</cite> is not called).  This is sometimes referred to as a blind update.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Text</span><span class="p">()</span>
+
+<span class="n">setup</span><span class="p">([</span><span class="s">&quot;localhost&quot;</span><span class="p">],</span> <span class="s">&quot;test&quot;</span><span class="p">)</span>
+<span class="n">sync_table</span><span class="p">(</span><span class="n">User</span><span class="p">)</span>
+
+<span class="n">u</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;jon&quot;</span><span class="p">)</span>
+
+<span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;Steve&quot;</span><span class="p">)</span>
+
+<span class="c"># sets name to null</span>
+<span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Also supported is blindly adding and removing elements from container columns,
+without loading a model instance from Cassandra.</p>
+<p>Using the syntax <cite>.update(column_name={x, y, z})</cite> will overwrite the contents of the container, like updating a
+non container column. However, adding <cite>__&lt;operation&gt;</cite> to the end of the keyword arg, makes the update call add
+or remove items from the collection, without overwriting then entire column.</p>
+<p>Given the model below, here are the operations that can be performed on the different container columns:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Row</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">row_id</span>      <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">set_column</span>  <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">list_column</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">map_column</span>  <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Map</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">Integer</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="xref py py-class docutils literal"><span class="pre">Set</span></tt></p>
+<ul class="simple">
+<li><cite>add</cite>: adds the elements of the given set to the column</li>
+<li><cite>remove</cite>: removes the elements of the given set to the column</li>
+</ul>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># add elements to a set</span>
+<span class="n">Row</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">row_id</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">set_column__add</span><span class="o">=</span><span class="p">{</span><span class="mi">6</span><span class="p">})</span>
+
+<span class="c"># remove elements to a set</span>
+<span class="n">Row</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">row_id</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">set_column__remove</span><span class="o">=</span><span class="p">{</span><span class="mi">4</span><span class="p">})</span>
+</pre></div>
+</div>
+<p><tt class="xref py py-class docutils literal"><span class="pre">List</span></tt></p>
+<ul class="simple">
+<li><cite>append</cite>: appends the elements of the given list to the end of the column</li>
+<li><cite>prepend</cite>: prepends the elements of the given list to the beginning of the column</li>
+</ul>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># append items to a list</span>
+<span class="n">Row</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">row_id</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">list_column__append</span><span class="o">=</span><span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">])</span>
+
+<span class="c"># prepend items to a list</span>
+<span class="n">Row</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">row_id</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">list_column__prepend</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><tt class="xref py py-class docutils literal"><span class="pre">Map</span></tt></p>
+<ul class="simple">
+<li><cite>update</cite>: adds the given keys/values to the columns, creating new entries if they didn&#8217;t exist, and overwriting old ones if they did</li>
+</ul>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># add items to a map</span>
+<span class="n">Row</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">row_id</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">map_column__update</span><span class="o">=</span><span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="mi">4</span><span class="p">})</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.query.DoesNotExist">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.query.</tt><tt class="descname">DoesNotExist</tt><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#DoesNotExist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.DoesNotExist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.query.MultipleObjectsReturned">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.query.</tt><tt class="descname">MultipleObjectsReturned</tt><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#MultipleObjectsReturned"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="connection.html" title="cassandra.cqlengine.connection - Connection management for cqlengine"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="columns.html" title="cassandra.cqlengine.columns - Column types for object mapping models"
+             >previous</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

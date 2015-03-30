@@ -1,0 +1,632 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cassandra.cqlengine.management &mdash; Cassandra Driver 2.5.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Cassandra Driver 2.5.0 documentation" href="../../../index.html" />
+    <link rel="up" title="cassandra" href="../../cassandra.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for cassandra.cqlengine.management</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2015 DataStax, Inc.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#</span>
+<span class="c"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">metadata</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">CQLEngineException</span><span class="p">,</span> <span class="n">SizeTieredCompactionStrategy</span><span class="p">,</span> <span class="n">LeveledCompactionStrategy</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">columns</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine.connection</span> <span class="kn">import</span> <span class="n">execute</span><span class="p">,</span> <span class="n">get_cluster</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine.models</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine.named</span> <span class="kn">import</span> <span class="n">NamedTable</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine.usertype</span> <span class="kn">import</span> <span class="n">UserType</span>
+
+<span class="n">CQLENG_ALLOW_SCHEMA_MANAGEMENT</span> <span class="o">=</span> <span class="s">&#39;CQLENG_ALLOW_SCHEMA_MANAGEMENT&#39;</span>
+
+<span class="n">Field</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Field&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">])</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+<span class="c"># system keyspaces</span>
+<span class="n">schema_columnfamilies</span> <span class="o">=</span> <span class="n">NamedTable</span><span class="p">(</span><span class="s">&#39;system&#39;</span><span class="p">,</span> <span class="s">&#39;schema_columnfamilies&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">create_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">replication_factor</span><span class="p">,</span> <span class="n">durable_writes</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">replication_values</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    *Deprecated - use :func:`create_keyspace_simple` or :func:`create_keyspace_network_topology` instead*</span>
+
+<span class="sd">    Creates a keyspace</span>
+
+<span class="sd">    If the keyspace already exists, it will not be modified.</span>
+
+<span class="sd">    **This function should be used with caution, especially in production environments.</span>
+<span class="sd">    Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).**</span>
+
+<span class="sd">    *There are plans to guard schema-modifying functions with an environment-driven conditional.*</span>
+
+<span class="sd">    :param str name: name of keyspace to create</span>
+<span class="sd">    :param str strategy_class: keyspace replication strategy class (:attr:`~.SimpleStrategy` or :attr:`~.NetworkTopologyStrategy`</span>
+<span class="sd">    :param int replication_factor: keyspace replication factor, used with :attr:`~.SimpleStrategy`</span>
+<span class="sd">    :param bool durable_writes: Write log is bypassed if set to False</span>
+<span class="sd">    :param \*\*replication_values: Additional values to ad to the replication options map</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_allow_schema_modification</span><span class="p">():</span>
+        <span class="k">return</span>
+
+    <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Deprecated. Use create_keyspace_simple or create_keyspace_network_topology instead&quot;</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">:</span>
+        <span class="c"># try the 1.2 method</span>
+        <span class="n">replication_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&#39;class&#39;</span><span class="p">:</span> <span class="n">strategy_class</span><span class="p">,</span>
+            <span class="s">&#39;replication_factor&#39;</span><span class="p">:</span> <span class="n">replication_factor</span>
+        <span class="p">}</span>
+        <span class="n">replication_map</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">replication_values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">strategy_class</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s">&#39;simplestrategy&#39;</span><span class="p">:</span>
+            <span class="c"># Although the Cassandra documentation states for `replication_factor`</span>
+            <span class="c"># that it is &quot;Required if class is SimpleStrategy; otherwise,</span>
+            <span class="c"># not used.&quot; we get an error if it is present.</span>
+            <span class="n">replication_map</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;replication_factor&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">        CREATE KEYSPACE {}</span>
+<span class="s">        WITH REPLICATION = {}</span>
+<span class="s">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">replication_map</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&quot;&#39;&quot;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">strategy_class</span> <span class="o">!=</span> <span class="s">&#39;SimpleStrategy&#39;</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="s">&quot; AND DURABLE_WRITES = {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;true&#39;</span> <span class="k">if</span> <span class="n">durable_writes</span> <span class="k">else</span> <span class="s">&#39;false&#39;</span><span class="p">)</span>
+
+        <span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="create_keyspace_simple"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.create_keyspace_simple">[docs]</a><span class="k">def</span> <span class="nf">create_keyspace_simple</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">replication_factor</span><span class="p">,</span> <span class="n">durable_writes</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a keyspace with SimpleStrategy for replica placement</span>
+
+<span class="sd">    If the keyspace already exists, it will not be modified.</span>
+
+<span class="sd">    **This function should be used with caution, especially in production environments.</span>
+<span class="sd">    Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).**</span>
+
+<span class="sd">    *There are plans to guard schema-modifying functions with an environment-driven conditional.*</span>
+
+<span class="sd">    :param str name: name of keyspace to create</span>
+<span class="sd">    :param int replication_factor: keyspace replication factor, used with :attr:`~.SimpleStrategy`</span>
+<span class="sd">    :param bool durable_writes: Write log is bypassed if set to False</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_create_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="s">&#39;SimpleStrategy&#39;</span><span class="p">,</span>
+                     <span class="p">{</span><span class="s">&#39;replication_factor&#39;</span><span class="p">:</span> <span class="n">replication_factor</span><span class="p">})</span>
+
+</div>
+<div class="viewcode-block" id="create_keyspace_network_topology"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.create_keyspace_network_topology">[docs]</a><span class="k">def</span> <span class="nf">create_keyspace_network_topology</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dc_replication_map</span><span class="p">,</span> <span class="n">durable_writes</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a keyspace with NetworkTopologyStrategy for replica placement</span>
+
+<span class="sd">    If the keyspace already exists, it will not be modified.</span>
+
+<span class="sd">    **This function should be used with caution, especially in production environments.</span>
+<span class="sd">    Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).**</span>
+
+<span class="sd">    *There are plans to guard schema-modifying functions with an environment-driven conditional.*</span>
+
+<span class="sd">    :param str name: name of keyspace to create</span>
+<span class="sd">    :param dict dc_replication_map: map of dc_names: replication_factor</span>
+<span class="sd">    :param bool durable_writes: Write log is bypassed if set to False</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_create_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="s">&#39;NetworkTopologyStrategy&#39;</span><span class="p">,</span> <span class="n">dc_replication_map</span><span class="p">)</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_create_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_allow_schema_modification</span><span class="p">():</span>
+        <span class="k">return</span>
+
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Creating keyspace </span><span class="si">%s</span><span class="s"> &quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">ks_meta</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">KeyspaceMetadata</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">)</span>
+        <span class="n">execute</span><span class="p">(</span><span class="n">ks_meta</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Not creating keyspace </span><span class="si">%s</span><span class="s"> because it already exists&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">delete_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Deprecated. Use drop_keyspace instead&quot;</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">drop_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="drop_keyspace"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.drop_keyspace">[docs]</a><span class="k">def</span> <span class="nf">drop_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Drops a keyspace, if it exists.</span>
+
+<span class="sd">    *There are plans to guard schema-modifying functions with an environment-driven conditional.*</span>
+
+<span class="sd">    **This function should be used with caution, especially in production environments.</span>
+<span class="sd">    Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).**</span>
+
+<span class="sd">    :param str name: name of keyspace to drop</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_allow_schema_modification</span><span class="p">():</span>
+        <span class="k">return</span>
+
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">:</span>
+        <span class="n">execute</span><span class="p">(</span><span class="s">&quot;DROP KEYSPACE {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="sync_table"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.sync_table">[docs]</a><span class="k">def</span> <span class="nf">sync_table</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Inspects the model and creates / updates the corresponding table and columns.</span>
+
+<span class="sd">    Any User Defined Types used in the table are implicitly synchronized.</span>
+
+<span class="sd">    This function can only add fields that are not part of the primary key.</span>
+
+<span class="sd">    Note that the attributes removed from the model are not deleted on the database.</span>
+<span class="sd">    They become effectively ignored by (will not show up on) the model.</span>
+
+<span class="sd">    **This function should be used with caution, especially in production environments.</span>
+<span class="sd">    Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).**</span>
+
+<span class="sd">    *There are plans to guard schema-modifying functions with an environment-driven conditional.*</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_allow_schema_modification</span><span class="p">():</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Model</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;Models must be derived from base Model.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">__abstract__</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;cannot create table from abstract model&quot;</span><span class="p">)</span>
+
+    <span class="c"># construct query string</span>
+    <span class="n">cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()</span>
+    <span class="n">raw_cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(</span><span class="n">include_keyspace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">ks_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()</span>
+
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span>
+
+    <span class="n">keyspace</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks_name</span><span class="p">]</span>
+    <span class="n">tables</span> <span class="o">=</span> <span class="n">keyspace</span><span class="o">.</span><span class="n">tables</span>
+
+    <span class="n">syncd_types</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">udts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">columns</span><span class="o">.</span><span class="n">resolve_udts</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">udts</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">udt</span> <span class="ow">in</span> <span class="p">[</span><span class="n">u</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">udts</span> <span class="k">if</span> <span class="n">u</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">syncd_types</span><span class="p">]:</span>
+            <span class="n">_sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">udt</span><span class="p">,</span> <span class="n">syncd_types</span><span class="p">)</span>
+
+    <span class="c"># check for an existing column family</span>
+    <span class="k">if</span> <span class="n">raw_cf_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;sync_table creating new table </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">cf_name</span><span class="p">)</span>
+        <span class="n">qs</span> <span class="o">=</span> <span class="n">get_create_table</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">execute</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">CQLEngineException</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="c"># 1.2 doesn&#39;t return cf names, so we have to examine the exception</span>
+            <span class="c"># and ignore if it says the column family already exists</span>
+            <span class="k">if</span> <span class="s">&quot;Cannot add already existing column family&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">ex</span><span class="p">):</span>
+                <span class="k">raise</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;sync_table checking existing table </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">cf_name</span><span class="p">)</span>
+        <span class="c"># see if we&#39;re missing any columns</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">get_fields</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">field_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">]</span>
+        <span class="n">model_fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="c"># # TODO: does this work with db_name??</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">primary_key</span> <span class="ow">or</span> <span class="n">col</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c"># we can&#39;t mess with the PK</span>
+            <span class="n">model_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">db_field_name</span> <span class="ow">in</span> <span class="n">field_names</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c"># skip columns already defined</span>
+
+            <span class="c"># add missing column using the column def</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="s">&quot;ALTER TABLE {} add {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">())</span>
+            <span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="n">db_fields_not_in_model</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">field_names</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">db_fields_not_in_model</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Table </span><span class="si">%s</span><span class="s"> has fields not referenced by model: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">cf_name</span><span class="p">,</span> <span class="n">db_fields_not_in_model</span><span class="p">)</span>
+
+        <span class="n">update_compaction</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="n">table</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks_name</span><span class="p">]</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">raw_cf_name</span><span class="p">]</span>
+
+    <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">qs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;CREATE INDEX index_{}_{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">raw_cf_name</span><span class="p">,</span> <span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)]</span>
+        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;ON {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">)]</span>
+        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;(&quot;{}&quot;)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)]</span>
+        <span class="n">qs</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>
+        <span class="n">execute</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="sync_type"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.sync_type">[docs]</a><span class="k">def</span> <span class="nf">sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Inspects the type_model and creates / updates the corresponding type.</span>
+
+<span class="sd">    Note that the attributes removed from the type_model are not deleted on the database (this operation is not supported).</span>
+<span class="sd">    They become effectively ignored by (will not show up on) the type_model.</span>
+
+<span class="sd">    **This function should be used with caution, especially in production environments.</span>
+<span class="sd">    Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).**</span>
+
+<span class="sd">    *There are plans to guard schema-modifying functions with an environment-driven conditional.*</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_allow_schema_modification</span><span class="p">():</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">type_model</span><span class="p">,</span> <span class="n">UserType</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;Types must be derived from base UserType.&quot;</span><span class="p">)</span>
+
+    <span class="n">_sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_model</span><span class="p">)</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_model</span><span class="p">,</span> <span class="n">omit_subtypes</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+    <span class="n">syncd_sub_types</span> <span class="o">=</span> <span class="n">omit_subtypes</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">type_model</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">udts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">columns</span><span class="o">.</span><span class="n">resolve_udts</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">udts</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">udt</span> <span class="ow">in</span> <span class="p">[</span><span class="n">u</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">udts</span> <span class="k">if</span> <span class="n">u</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">syncd_sub_types</span><span class="p">]:</span>
+            <span class="n">_sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">udt</span><span class="p">,</span> <span class="n">syncd_sub_types</span><span class="p">)</span>
+            <span class="n">syncd_sub_types</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">udt</span><span class="p">)</span>
+
+    <span class="n">type_name</span> <span class="o">=</span> <span class="n">type_model</span><span class="o">.</span><span class="n">type_name</span><span class="p">()</span>
+    <span class="n">type_name_qualified</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_name</span><span class="p">)</span>
+
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span>
+
+    <span class="n">keyspace</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks_name</span><span class="p">]</span>
+    <span class="n">defined_types</span> <span class="o">=</span> <span class="n">keyspace</span><span class="o">.</span><span class="n">user_types</span>
+
+    <span class="k">if</span> <span class="n">type_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">defined_types</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;sync_type creating new type </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">type_name_qualified</span><span class="p">)</span>
+        <span class="n">cql</span> <span class="o">=</span> <span class="n">get_create_type</span><span class="p">(</span><span class="n">type_model</span><span class="p">,</span> <span class="n">ks_name</span><span class="p">)</span>
+        <span class="n">execute</span><span class="p">(</span><span class="n">cql</span><span class="p">)</span>
+        <span class="n">cluster</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="o">=</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">usertype</span><span class="o">=</span><span class="n">type_name</span><span class="p">)</span>
+        <span class="n">type_model</span><span class="o">.</span><span class="n">register_for_keyspace</span><span class="p">(</span><span class="n">ks_name</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">defined_fields</span> <span class="o">=</span> <span class="n">defined_types</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span><span class="o">.</span><span class="n">field_names</span>
+        <span class="n">model_fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">type_model</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">model_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">defined_fields</span><span class="p">:</span>
+                <span class="n">execute</span><span class="p">(</span><span class="s">&quot;ALTER TYPE {} ADD {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_name_qualified</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">()))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">defined_fields</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_fields</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Type </span><span class="si">%s</span><span class="s"> did not require synchronization&quot;</span><span class="p">,</span> <span class="n">type_name_qualified</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">db_fields_not_in_model</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">defined_fields</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">db_fields_not_in_model</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Type </span><span class="si">%s</span><span class="s"> has fields not referenced by model: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">type_name_qualified</span><span class="p">,</span> <span class="n">db_fields_not_in_model</span><span class="p">)</span>
+
+        <span class="n">type_model</span><span class="o">.</span><span class="n">register_for_keyspace</span><span class="p">(</span><span class="n">ks_name</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_create_type</span><span class="p">(</span><span class="n">type_model</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">):</span>
+    <span class="n">type_meta</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">UserType</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span>
+                                  <span class="n">type_model</span><span class="o">.</span><span class="n">type_name</span><span class="p">(),</span>
+                                  <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">db_field_name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">type_model</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+                                  <span class="n">type_model</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">type_meta</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">get_create_table</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()</span>
+    <span class="n">qs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;CREATE TABLE {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">)]</span>
+
+    <span class="c"># add column types</span>
+    <span class="n">pkeys</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c"># primary keys</span>
+    <span class="n">ckeys</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c"># clustering keys</span>
+    <span class="n">qtypes</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c"># field types</span>
+
+    <span class="k">def</span> <span class="nf">add_column</span><span class="p">(</span><span class="n">col</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="p">(</span><span class="n">pkeys</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">partition_key</span> <span class="k">else</span> <span class="n">ckeys</span><span class="p">)</span>
+            <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&quot;{}&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">))</span>
+        <span class="n">qtypes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">add_column</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+
+    <span class="n">qtypes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;PRIMARY KEY (({}){})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pkeys</span><span class="p">),</span> <span class="n">ckeys</span> <span class="ow">and</span> <span class="s">&#39;, &#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ckeys</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;&#39;</span><span class="p">))</span>
+
+    <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;({})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qtypes</span><span class="p">))]</span>
+
+    <span class="n">with_qs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">table_properties</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;bloom_filter_fp_chance&#39;</span><span class="p">,</span> <span class="s">&#39;caching&#39;</span><span class="p">,</span> <span class="s">&#39;comment&#39;</span><span class="p">,</span>
+                        <span class="s">&#39;dclocal_read_repair_chance&#39;</span><span class="p">,</span> <span class="s">&#39;default_time_to_live&#39;</span><span class="p">,</span> <span class="s">&#39;gc_grace_seconds&#39;</span><span class="p">,</span>
+                        <span class="s">&#39;index_interval&#39;</span><span class="p">,</span> <span class="s">&#39;memtable_flush_period_in_ms&#39;</span><span class="p">,</span> <span class="s">&#39;populate_io_cache_on_flush&#39;</span><span class="p">,</span>
+                        <span class="s">&#39;read_repair_chance&#39;</span><span class="p">,</span> <span class="s">&#39;replicate_on_write&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">prop_name</span> <span class="ow">in</span> <span class="n">table_properties</span><span class="p">:</span>
+        <span class="n">prop_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s">&#39;__{}__&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prop_name</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prop_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># Strings needs to be single quoted</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prop_value</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+                <span class="n">prop_value</span> <span class="o">=</span> <span class="s">&quot;&#39;{}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prop_value</span><span class="p">)</span>
+            <span class="n">with_qs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;{} = {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prop_name</span><span class="p">,</span> <span class="n">prop_value</span><span class="p">))</span>
+
+    <span class="n">_order</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;&quot;{}&quot; {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">clustering_order</span> <span class="ow">or</span> <span class="s">&#39;ASC&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_clustering_keys</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+    <span class="k">if</span> <span class="n">_order</span><span class="p">:</span>
+        <span class="n">with_qs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;clustering order by ({})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_order</span><span class="p">)))</span>
+
+    <span class="n">compaction_options</span> <span class="o">=</span> <span class="n">get_compaction_options</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">compaction_options</span><span class="p">:</span>
+        <span class="n">compaction_options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">compaction_options</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&quot;&#39;&quot;</span><span class="p">)</span>
+        <span class="n">with_qs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;compaction = {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">compaction_options</span><span class="p">))</span>
+
+    <span class="c"># Add table properties.</span>
+    <span class="k">if</span> <span class="n">with_qs</span><span class="p">:</span>
+        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;WITH {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">with_qs</span><span class="p">))]</span>
+
+    <span class="n">qs</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">qs</span>
+
+
+<span class="k">def</span> <span class="nf">get_compaction_options</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates dictionary (later converted to a string) for creating and altering</span>
+<span class="sd">    tables with compaction strategy</span>
+
+<span class="sd">    :param model:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">__compaction__</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;class&#39;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">__compaction__</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">setter</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">limited_to_strategy</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        sets key in result, checking if the key is limited to either SizeTiered or Leveled</span>
+<span class="sd">        :param key: one of the compaction options, like &quot;bucket_high&quot;</span>
+<span class="sd">        :param limited_to_strategy: SizeTieredCompactionStrategy, LeveledCompactionStrategy</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mkey</span> <span class="o">=</span> <span class="s">&quot;__compaction_{}__&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">mkey</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tmp</span> <span class="ow">and</span> <span class="n">limited_to_strategy</span> <span class="ow">and</span> <span class="n">limited_to_strategy</span> <span class="o">!=</span> <span class="n">model</span><span class="o">.</span><span class="n">__compaction__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;{} is limited to {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">limited_to_strategy</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">tmp</span><span class="p">:</span>
+            <span class="c"># Explicitly cast the values to strings to be able to compare the</span>
+            <span class="c"># values against introspected values from Cassandra.</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
+
+    <span class="n">setter</span><span class="p">(</span><span class="s">&#39;tombstone_compaction_interval&#39;</span><span class="p">)</span>
+    <span class="n">setter</span><span class="p">(</span><span class="s">&#39;tombstone_threshold&#39;</span><span class="p">)</span>
+
+    <span class="n">setter</span><span class="p">(</span><span class="s">&#39;bucket_high&#39;</span><span class="p">,</span> <span class="n">SizeTieredCompactionStrategy</span><span class="p">)</span>
+    <span class="n">setter</span><span class="p">(</span><span class="s">&#39;bucket_low&#39;</span><span class="p">,</span> <span class="n">SizeTieredCompactionStrategy</span><span class="p">)</span>
+    <span class="n">setter</span><span class="p">(</span><span class="s">&#39;max_threshold&#39;</span><span class="p">,</span> <span class="n">SizeTieredCompactionStrategy</span><span class="p">)</span>
+    <span class="n">setter</span><span class="p">(</span><span class="s">&#39;min_threshold&#39;</span><span class="p">,</span> <span class="n">SizeTieredCompactionStrategy</span><span class="p">)</span>
+    <span class="n">setter</span><span class="p">(</span><span class="s">&#39;min_sstable_size&#39;</span><span class="p">,</span> <span class="n">SizeTieredCompactionStrategy</span><span class="p">)</span>
+
+    <span class="n">setter</span><span class="p">(</span><span class="s">&#39;sstable_size_in_mb&#39;</span><span class="p">,</span> <span class="n">LeveledCompactionStrategy</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span> <span class="nf">get_fields</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="c"># returns all fields that aren&#39;t part of the PK</span>
+    <span class="n">ks_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()</span>
+    <span class="n">col_family</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(</span><span class="n">include_keyspace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">field_types</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;regular&#39;</span><span class="p">,</span> <span class="s">&#39;static&#39;</span><span class="p">]</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="s">&quot;select * from system.schema_columns where keyspace_name = </span><span class="si">%s</span><span class="s"> and columnfamily_name = </span><span class="si">%s</span><span class="s">&quot;</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">[</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">col_family</span><span class="p">])</span>
+
+    <span class="c"># Tables containing only primary keys do not appear to create</span>
+    <span class="c"># any entries in system.schema_columns, as only non-primary-key attributes</span>
+    <span class="c"># appear to be inserted into the schema_columns table</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Field</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s">&#39;column_name&#39;</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="s">&#39;validator&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tmp</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">field_types</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Field</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s">&#39;column_name&#39;</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="s">&#39;validator&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">]</span>
+    <span class="c"># convert to Field named tuples</span>
+
+
+<span class="k">def</span> <span class="nf">get_table_settings</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="c"># returns the table as provided by the native driver for a given model</span>
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span>
+    <span class="n">ks</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(</span><span class="n">include_keyspace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks</span><span class="p">]</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">table</span>
+
+
+<span class="k">def</span> <span class="nf">update_compaction</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Updates the compaction options for the given model if necessary.</span>
+
+<span class="sd">    :param model: The model to update.</span>
+
+<span class="sd">    :return: `True`, if the compaction options were modified in Cassandra,</span>
+<span class="sd">        `False` otherwise.</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Checking </span><span class="si">%s</span><span class="s"> for compaction differences&quot;</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="n">get_table_settings</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="n">existing_options</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">existing_compaction_strategy</span> <span class="o">=</span> <span class="n">existing_options</span><span class="p">[</span><span class="s">&#39;compaction_strategy_class&#39;</span><span class="p">]</span>
+
+    <span class="n">existing_options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">existing_options</span><span class="p">[</span><span class="s">&#39;compaction_strategy_options&#39;</span><span class="p">])</span>
+
+    <span class="n">desired_options</span> <span class="o">=</span> <span class="n">get_compaction_options</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="n">desired_compact_strategy</span> <span class="o">=</span> <span class="n">desired_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;class&#39;</span><span class="p">,</span> <span class="n">SizeTieredCompactionStrategy</span><span class="p">)</span>
+
+    <span class="n">desired_options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;class&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+    <span class="n">do_update</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">if</span> <span class="n">desired_compact_strategy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing_compaction_strategy</span><span class="p">:</span>
+        <span class="n">do_update</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">desired_options</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">existing_options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="o">!=</span> <span class="n">v</span><span class="p">:</span>
+            <span class="n">do_update</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="c"># check compaction_strategy_options</span>
+    <span class="k">if</span> <span class="n">do_update</span><span class="p">:</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">get_compaction_options</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="c"># jsonify</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">options</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&quot;&#39;&quot;</span><span class="p">)</span>
+        <span class="n">cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s">&quot;ALTER TABLE {} with compaction = {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+        <span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="k">return</span> <span class="bp">False</span>
+
+
+<div class="viewcode-block" id="drop_table"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.drop_table">[docs]</a><span class="k">def</span> <span class="nf">drop_table</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Drops the table indicated by the model, if it exists.</span>
+
+<span class="sd">    **This function should be used with caution, especially in production environments.</span>
+<span class="sd">    Take care to execute schema modifications in a single context (i.e. not concurrently with other clients).**</span>
+
+<span class="sd">    *There are plans to guard schema-modifying functions with an environment-driven conditional.*</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_allow_schema_modification</span><span class="p">():</span>
+        <span class="k">return</span>
+
+    <span class="c"># don&#39;t try to delete non existant tables</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span><span class="o">.</span><span class="n">metadata</span>
+
+    <span class="n">ks_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()</span>
+    <span class="n">raw_cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(</span><span class="n">include_keyspace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">meta</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks_name</span><span class="p">]</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">raw_cf_name</span><span class="p">]</span>
+        <span class="n">execute</span><span class="p">(</span><span class="s">&#39;drop table {};&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(</span><span class="n">include_keyspace</span><span class="o">=</span><span class="bp">True</span><span class="p">)))</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_allow_schema_modification</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="n">CQLENG_ALLOW_SCHEMA_MANAGEMENT</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">CQLENG_ALLOW_SCHEMA_MANAGEMENT</span> <span class="o">+</span> <span class="s">&quot; environment variable is not set. Future versions of this package will require this variable to enable management functions.&quot;</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="bp">True</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.5.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
