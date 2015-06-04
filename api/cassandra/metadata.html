@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata - Schema and Ring Topology &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra.metadata - Schema and Ring Topology &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.metrics - Performance Metrics" href="metrics.html" />
     <link rel="prev" title="cassandra.auth - Authentication" href="auth.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="auth.html" title="cassandra.auth - Authentication"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -93,6 +93,26 @@
             
   <div class="section" id="module-cassandra.metadata">
 <span id="cassandra-metadata-schema-and-ring-topology"></span><h1><tt class="docutils literal"><span class="pre">cassandra.metadata</span></tt> - Schema and Ring Topology<a class="headerlink" href="#module-cassandra.metadata" title="Permalink to this headline">¶</a></h1>
+<dl class="data">
+<dt id="cassandra.metadata.cql_keywords">
+<tt class="descclassname">cassandra.metadata.</tt><tt class="descname">cql_keywords</tt><a class="headerlink" href="#cassandra.metadata.cql_keywords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of keywords in CQL.</p>
+<p>Derived from .../cassandra/src/java/org/apache/cassandra/cql3/Cql.g</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="cassandra.metadata.cql_keywords_unreserved">
+<tt class="descclassname">cassandra.metadata.</tt><tt class="descname">cql_keywords_unreserved</tt><a class="headerlink" href="#cassandra.metadata.cql_keywords_unreserved" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of unreserved keywords in CQL.</p>
+<p>Derived from .../cassandra/src/java/org/apache/cassandra/cql3/Cql.g</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="cassandra.metadata.cql_keywords_reserved">
+<tt class="descclassname">cassandra.metadata.</tt><tt class="descname">cql_keywords_reserved</tt><a class="headerlink" href="#cassandra.metadata.cql_keywords_reserved" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of reserved keywords in CQL.</p>
+</dd></dl>
+
 <dl class="class">
 <dt id="cassandra.metadata.Metadata">
 <em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">Metadata</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#Metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.Metadata" title="Permalink to this definition">¶</a></dt>
@@ -183,11 +203,35 @@ or not.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="cassandra.metadata.KeyspaceMetadata.indexes">
+<tt class="descname">indexes</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.KeyspaceMetadata.indexes" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dict mapping index names to <a class="reference internal" href="#cassandra.metadata.IndexMetadata" title="cassandra.metadata.IndexMetadata"><tt class="xref py py-class docutils literal"><span class="pre">IndexMetadata</span></tt></a> instances.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="cassandra.metadata.KeyspaceMetadata.user_types">
 <tt class="descname">user_types</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.KeyspaceMetadata.user_types" title="Permalink to this definition">¶</a></dt>
-<dd><p>A map from user-defined type names to instances of <tt class="xref py py-class docutils literal"><span class="pre">UserType</span></tt>.</p>
+<dd><p>A map from user-defined type names to instances of <a class="reference internal" href="#cassandra.metadata.UserType" title="cassandra.metadata.UserType"><tt class="xref py py-class docutils literal"><span class="pre">UserType</span></tt></a>.</p>
 <div class="versionadded">
 <p><span class="versionmodified">New in version 2.1.0.</span></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.KeyspaceMetadata.functions">
+<tt class="descname">functions</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.KeyspaceMetadata.functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>A map from user-defined function signatures to instances of <a class="reference internal" href="#cassandra.metadata.Function" title="cassandra.metadata.Function"><tt class="xref py py-class docutils literal"><span class="pre">Function</span></tt></a>.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.6.0.</span></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.KeyspaceMetadata.aggregates">
+<tt class="descname">aggregates</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.KeyspaceMetadata.aggregates" title="Permalink to this definition">¶</a></dt>
+<dd><p>A map from user-defined aggregate signatures to instances of <a class="reference internal" href="#cassandra.metadata.Aggregate" title="cassandra.metadata.Aggregate"><tt class="xref py py-class docutils literal"><span class="pre">Aggregate</span></tt></a>.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.6.0.</span></p>
 </div>
 </dd></dl>
 
@@ -203,6 +247,181 @@ including user-defined types and tables.</p>
 <tt class="descname">as_cql_query</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#KeyspaceMetadata.as_cql_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.KeyspaceMetadata.as_cql_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a CQL query string that can be used to recreate just this keyspace,
 not including user-defined types and tables.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.metadata.UserType">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">UserType</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#UserType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.UserType" title="Permalink to this definition">¶</a></dt>
+<dd><p>A user defined type, as created by <tt class="docutils literal"><span class="pre">CREATE</span> <span class="pre">TYPE</span></tt> statements.</p>
+<p>User-defined types were introduced in Cassandra 2.1.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.1.0.</span></p>
+</div>
+<dl class="attribute">
+<dt id="cassandra.metadata.UserType.keyspace">
+<tt class="descname">keyspace</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.UserType.keyspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>The string name of the keyspace in which this type is defined.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.UserType.name">
+<tt class="descname">name</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.UserType.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of this type.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.UserType.field_names">
+<tt class="descname">field_names</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.UserType.field_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>An ordered list of the names for each field in this user-defined type.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.UserType.field_types">
+<tt class="descname">field_types</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.UserType.field_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>An ordered list of the types for each field in this user-defined type.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.metadata.UserType.as_cql_query">
+<tt class="descname">as_cql_query</tt><big>(</big><em>formatted=False</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#UserType.as_cql_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.UserType.as_cql_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a CQL query that can be used to recreate this type.
+If <cite>formatted</cite> is set to <tt class="xref py py-const docutils literal"><span class="pre">True</span></tt>, extra whitespace will
+be added to make the query more readable.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.metadata.Function">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">Function</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#Function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.Function" title="Permalink to this definition">¶</a></dt>
+<dd><p>A user defined function, as created by <tt class="docutils literal"><span class="pre">CREATE</span> <span class="pre">FUNCTION</span></tt> statements.</p>
+<p>User-defined functions were introduced in Cassandra 2.2</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.6.0.</span></p>
+</div>
+<dl class="attribute">
+<dt id="cassandra.metadata.Function.keyspace">
+<tt class="descname">keyspace</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Function.keyspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>The string name of the keyspace in which this function is defined</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Function.name">
+<tt class="descname">name</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Function.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of this function</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Function.type_signature">
+<tt class="descname">type_signature</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Function.type_signature" title="Permalink to this definition">¶</a></dt>
+<dd><p>An ordered list of the types for each argument to the function</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Function.argument_names">
+<tt class="descname">argument_names</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Function.argument_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>An ordered list of the names of each argument to the function</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Function.return_type">
+<tt class="descname">return_type</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Function.return_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return type of the function</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Function.language">
+<tt class="descname">language</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Function.language" title="Permalink to this definition">¶</a></dt>
+<dd><p>Language of the function body</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Function.body">
+<tt class="descname">body</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Function.body" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function body string</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Function.called_on_null_input">
+<tt class="descname">called_on_null_input</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Function.called_on_null_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag indicating whether this function should be called for rows with null values
+(convenience function to avoid handling nulls explicitly if the result will just be null)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.metadata.Function.as_cql_query">
+<tt class="descname">as_cql_query</tt><big>(</big><em>formatted=False</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#Function.as_cql_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.Function.as_cql_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a CQL query that can be used to recreate this function.
+If <cite>formatted</cite> is set to <tt class="xref py py-const docutils literal"><span class="pre">True</span></tt>, extra whitespace will
+be added to make the query more readable.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.metadata.Aggregate">
+<em class="property">class </em><tt class="descclassname">cassandra.metadata.</tt><tt class="descname">Aggregate</tt><a class="reference internal" href="../../_modules/cassandra/metadata.html#Aggregate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.Aggregate" title="Permalink to this definition">¶</a></dt>
+<dd><p>A user defined aggregate function, as created by <tt class="docutils literal"><span class="pre">CREATE</span> <span class="pre">AGGREGATE</span></tt> statements.</p>
+<p>Aggregate functions were introduced in Cassandra 2.2</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.6.0.</span></p>
+</div>
+<dl class="attribute">
+<dt id="cassandra.metadata.Aggregate.keyspace">
+<tt class="descname">keyspace</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Aggregate.keyspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>The string name of the keyspace in which this aggregate is defined</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Aggregate.name">
+<tt class="descname">name</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Aggregate.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of this aggregate</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Aggregate.type_signature">
+<tt class="descname">type_signature</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Aggregate.type_signature" title="Permalink to this definition">¶</a></dt>
+<dd><p>An ordered list of the types for each argument to the aggregate</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Aggregate.state_func">
+<tt class="descname">state_func</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Aggregate.state_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of a state function</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Aggregate.state_type">
+<tt class="descname">state_type</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Aggregate.state_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type of the aggregate state</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Aggregate.final_func">
+<tt class="descname">final_func</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Aggregate.final_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of a final function</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Aggregate.initial_condition">
+<tt class="descname">initial_condition</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Aggregate.initial_condition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initial condition of the aggregate</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.Aggregate.return_type">
+<tt class="descname">return_type</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.Aggregate.return_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return type of the aggregate</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.metadata.Aggregate.as_cql_query">
+<tt class="descname">as_cql_query</tt><big>(</big><em>formatted=False</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#Aggregate.as_cql_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.Aggregate.as_cql_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a CQL query that can be used to recreate this aggregate.
+If <cite>formatted</cite> is set to <tt class="xref py py-const docutils literal"><span class="pre">True</span></tt>, extra whitespace will
+be added to make the query more readable.</p>
 </dd></dl>
 
 </dd></dl>
@@ -258,6 +477,12 @@ be an empty list.</p>
 <dt id="cassandra.metadata.TableMetadata.columns">
 <tt class="descname">columns</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.TableMetadata.columns" title="Permalink to this definition">¶</a></dt>
 <dd><p>A dict mapping column names to <a class="reference internal" href="#cassandra.metadata.ColumnMetadata" title="cassandra.metadata.ColumnMetadata"><tt class="xref py py-class docutils literal"><span class="pre">ColumnMetadata</span></tt></a> instances.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.metadata.TableMetadata.indexes">
+<tt class="descname">indexes</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.metadata.TableMetadata.indexes" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dict mapping index names to <a class="reference internal" href="#cassandra.metadata.IndexMetadata" title="cassandra.metadata.IndexMetadata"><tt class="xref py py-class docutils literal"><span class="pre">IndexMetadata</span></tt></a> instances.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -369,6 +594,12 @@ or &#8220;map&lt;string, int&gt;&#8221;.</p>
 <dt id="cassandra.metadata.IndexMetadata.as_cql_query">
 <tt class="descname">as_cql_query</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#IndexMetadata.as_cql_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.IndexMetadata.as_cql_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a CQL query that can be used to recreate this index.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.metadata.IndexMetadata.export_as_string">
+<tt class="descname">export_as_string</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/cassandra/metadata.html#IndexMetadata.export_as_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.metadata.IndexMetadata.export_as_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a CQL query string that can be used to recreate this index.</p>
 </dd></dl>
 
 </dd></dl>
@@ -519,7 +750,7 @@ suitable for use in a CREATE KEYSPACE statement.</p>
         <li class="right" >
           <a href="auth.html" title="cassandra.auth - Authentication"
              >previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

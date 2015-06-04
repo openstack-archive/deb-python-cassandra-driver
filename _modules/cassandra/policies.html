@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra.policies &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -576,14 +576,16 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">delay</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;delay must not be negative&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">max_attempts</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">max_attempts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">max_attempts</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;max_attempts must not be negative&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="n">delay</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span> <span class="o">=</span> <span class="n">max_attempts</span>
 
     <span class="k">def</span> <span class="nf">new_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="ExponentialReconnectionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ExponentialReconnectionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ExponentialReconnectionPolicy</span><span class="p">(</span><span class="n">ReconnectionPolicy</span><span class="p">):</span>
@@ -664,8 +666,13 @@
 
 <div class="viewcode-block" id="RetryPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.RetryPolicy">[docs]</a><span class="k">class</span> <span class="nc">RetryPolicy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A policy that describes whether to retry, rethrow, or ignore timeout</span>
-<span class="sd">    and unavailable failures.</span>
+<span class="sd">    A policy that describes whether to retry, rethrow, or ignore coordinator</span>
+<span class="sd">    timeout and unavailable failures. These are failures reported from the</span>
+<span class="sd">    server side. Timeouts are configured by</span>
+<span class="sd">    `settings in cassandra.yaml &lt;https://github.com/apache/cassandra/blob/cassandra-2.1.4/conf/cassandra.yaml#L568-L584&gt;`_.</span>
+<span class="sd">    Unavailable failures occur when the coordinator cannot acheive the consistency</span>
+<span class="sd">    level for a request. For further information see the method descriptions</span>
+<span class="sd">    below.</span>
 
 <span class="sd">    To specify a default retry policy, set the</span>
 <span class="sd">    :attr:`.Cluster.default_retry_policy` attribute to an instance of this</span>
@@ -906,7 +913,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

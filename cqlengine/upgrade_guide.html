@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Upgrade Guide &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>Upgrade Guide &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../index.html" />
     <link rel="up" title="Object Mapper" href="../object_mapper.html" />
     <link rel="next" title="Models" href="models.html" />
     <link rel="prev" title="Object Mapper" href="../object_mapper.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../object_mapper.html" title="Object Mapper"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../object_mapper.html" accesskey="U">Object Mapper</a> &raquo;</li> 
       </ul>
     </div>
@@ -53,7 +53,11 @@
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Upgrade Guide</a><ul>
-<li><a class="reference internal" href="#functional-change">Functional Change</a></li>
+<li><a class="reference internal" href="#functional-changes">Functional Changes</a><ul>
+<li><a class="reference internal" href="#list-prepend-reversing">List Prepend Reversing</a></li>
+<li><a class="reference internal" href="#date-column-type">Date Column Type</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#remove-cqlengine">Remove cqlengine</a></li>
 <li><a class="reference internal" href="#organization">Organization</a><ul>
 <li><a class="reference internal" href="#imports">Imports</a></li>
@@ -63,6 +67,7 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#api-deprecations">API Deprecations</a><ul>
+<li><a class="reference internal" href="#float-double-overload">Float/Double Overload</a></li>
 <li><a class="reference internal" href="#schema-management">Schema Management</a></li>
 <li><a class="reference internal" href="#model-inheritance">Model Inheritance</a></li>
 </ul>
@@ -109,12 +114,23 @@
 cassandra-driver. While efforts were taken to preserve the API and most functionality exactly,
 conversion to this package will still require certain minimal updates (namely, imports).</p>
 <p><strong>THERE IS ONE FUNCTIONAL CHANGE</strong>, described in the first section below.</p>
-<div class="section" id="functional-change">
-<h2>Functional Change<a class="headerlink" href="#functional-change" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="functional-changes">
+<h2>Functional Changes<a class="headerlink" href="#functional-changes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="list-prepend-reversing">
+<h3>List Prepend Reversing<a class="headerlink" href="#list-prepend-reversing" title="Permalink to this headline">¶</a></h3>
 <p>Legacy cqlengine included a workaround for a Cassandra bug in which prepended list segments were
 reversed (<a class="reference external" href="https://issues.apache.org/jira/browse/CASSANDRA-8733">CASSANDRA-8733</a>). As of
 this integration, this workaround is removed. The first released integrated version emits
 a warning when prepend is used. Subsequent versions will have this warning removed.</p>
+</div>
+<div class="section" id="date-column-type">
+<h3>Date Column Type<a class="headerlink" href="#date-column-type" title="Permalink to this headline">¶</a></h3>
+<p>The Date column type in legacy cqlengine used a <tt class="docutils literal"><span class="pre">timestamp</span></tt> CQL type and truncated the time.
+Going forward, the <a class="reference internal" href="../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Date" title="cassandra.cqlengine.columns.Date"><tt class="xref py py-class docutils literal"><span class="pre">Date</span></tt></a> type represents a <tt class="docutils literal"><span class="pre">date</span></tt> for Cassandra 2.2+
+(<a class="reference external" href="https://datastax-oss.atlassian.net/browse/PYTHON-245">PYTHON-245</a>).
+Users of the legacy functionality should convert models to use <a class="reference internal" href="../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.DateTime" title="cassandra.cqlengine.columns.DateTime"><tt class="xref py py-class docutils literal"><span class="pre">DateTime</span></tt></a> (which
+uses <tt class="docutils literal"><span class="pre">timestamp</span></tt> internally), and use the build-in <tt class="docutils literal"><span class="pre">datetime.date</span></tt> for input values.</p>
+</div>
 </div>
 <div class="section" id="remove-cqlengine">
 <h2>Remove cqlengine<a class="headerlink" href="#remove-cqlengine" title="Permalink to this headline">¶</a></h2>
@@ -198,6 +214,12 @@ the API, but noted here for completeness.</p>
 <p>This upgrade served as a good juncture to deprecate certain API features and invite users to upgrade
 to new ones. The first released version does not change functionality &#8211; only introduces deprecation
 warnings. Future releases will remove these features in favor of the alternatives.</p>
+<div class="section" id="float-double-overload">
+<h3>Float/Double Overload<a class="headerlink" href="#float-double-overload" title="Permalink to this headline">¶</a></h3>
+<p>Previously there was no <tt class="docutils literal"><span class="pre">Double</span></tt> column type. Doubles were modeled by specifying <tt class="docutils literal"><span class="pre">Float(double_precision=True)</span></tt>.
+This inititializer parameter is now deprecated. Applications should use <a class="reference internal" href="../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Double" title="cassandra.cqlengine.columns.Double"><tt class="xref py py-class docutils literal"><span class="pre">Double</span></tt></a> for CQL <tt class="docutils literal"><span class="pre">double</span></tt>, and <a class="reference internal" href="../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Float" title="cassandra.cqlengine.columns.Float"><tt class="xref py py-class docutils literal"><span class="pre">Float</span></tt></a>
+for CQL <tt class="docutils literal"><span class="pre">float</span></tt>.</p>
+</div>
 <div class="section" id="schema-management">
 <h3>Schema Management<a class="headerlink" href="#schema-management" title="Permalink to this headline">¶</a></h3>
 <p><tt class="docutils literal"><span class="pre">cassandra.cqlengine.management.create_keyspace</span></tt> is deprecated. Instead, use the new replication-strategy-specific
@@ -214,7 +236,7 @@ intent is simply to make the function match the CQL verb it invokes.</p>
 <p>The names for class attributes controlling model inheritance are changing. Changes are as follows:</p>
 <ul class="simple">
 <li>Replace &#8216;polymorphic_key&#8217; in the base class Column definition with <a class="reference internal" href="../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Column.discriminator_column" title="cassandra.cqlengine.columns.Column.discriminator_column"><tt class="xref py py-attr docutils literal"><span class="pre">discriminator_column</span></tt></a></li>
-<li>Replace the &#8216;__polymporphic_key__&#8217; class attribute the derived classes with <a class="reference internal" href="../api/cassandra/cqlengine/models.html#cassandra.cqlengine.models.Model.__discriminator_value__" title="cassandra.cqlengine.models.Model.__discriminator_value__"><tt class="xref py py-attr docutils literal"><span class="pre">__discriminator_value__</span></tt></a></li>
+<li>Replace the &#8216;__polymorphic_key__&#8217; class attribute the derived classes with <a class="reference internal" href="../api/cassandra/cqlengine/models.html#cassandra.cqlengine.models.Model.__discriminator_value__" title="cassandra.cqlengine.models.Model.__discriminator_value__"><tt class="xref py py-attr docutils literal"><span class="pre">__discriminator_value__</span></tt></a></li>
 </ul>
 <p>The functionality is unchanged &#8211; the intent here is to make the names and language around these attributes more precise.
 For now, the old names are just deprecated, and the mapper will emit warnings if they are used. The old names
@@ -275,7 +297,7 @@ will be removed in a future version.</p>
         <li class="right" >
           <a href="../object_mapper.html" title="Object Mapper"
              >previous</a> |</li>
-        <li><a href="../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../object_mapper.html" >Object Mapper</a> &raquo;</li> 
       </ul>
     </div>

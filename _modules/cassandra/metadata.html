@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra.metadata &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -86,8 +86,9 @@
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">RLock</span>
 <span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">zip</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">RLock</span>
 
 <span class="n">murmur3</span> <span class="o">=</span> <span class="bp">None</span>
 <span class="k">try</span><span class="p">:</span>
@@ -95,25 +96,52 @@
 <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
     <span class="k">pass</span>
 
+<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">SignatureDescriptor</span>
 <span class="kn">import</span> <span class="nn">cassandra.cqltypes</span> <span class="kn">as</span> <span class="nn">types</span>
+<span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">Encoder</span>
 <span class="kn">from</span> <span class="nn">cassandra.marshal</span> <span class="kn">import</span> <span class="n">varint_unpack</span>
 <span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
-<span class="n">_keywords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span>
-    <span class="s">&#39;select&#39;</span><span class="p">,</span> <span class="s">&#39;from&#39;</span><span class="p">,</span> <span class="s">&#39;where&#39;</span><span class="p">,</span> <span class="s">&#39;and&#39;</span><span class="p">,</span> <span class="s">&#39;key&#39;</span><span class="p">,</span> <span class="s">&#39;insert&#39;</span><span class="p">,</span> <span class="s">&#39;update&#39;</span><span class="p">,</span> <span class="s">&#39;with&#39;</span><span class="p">,</span>
-    <span class="s">&#39;limit&#39;</span><span class="p">,</span> <span class="s">&#39;using&#39;</span><span class="p">,</span> <span class="s">&#39;use&#39;</span><span class="p">,</span> <span class="s">&#39;count&#39;</span><span class="p">,</span> <span class="s">&#39;set&#39;</span><span class="p">,</span>
-    <span class="s">&#39;begin&#39;</span><span class="p">,</span> <span class="s">&#39;apply&#39;</span><span class="p">,</span> <span class="s">&#39;batch&#39;</span><span class="p">,</span> <span class="s">&#39;truncate&#39;</span><span class="p">,</span> <span class="s">&#39;delete&#39;</span><span class="p">,</span> <span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="s">&#39;create&#39;</span><span class="p">,</span>
-    <span class="s">&#39;keyspace&#39;</span><span class="p">,</span> <span class="s">&#39;schema&#39;</span><span class="p">,</span> <span class="s">&#39;columnfamily&#39;</span><span class="p">,</span> <span class="s">&#39;table&#39;</span><span class="p">,</span> <span class="s">&#39;index&#39;</span><span class="p">,</span> <span class="s">&#39;on&#39;</span><span class="p">,</span> <span class="s">&#39;drop&#39;</span><span class="p">,</span>
-    <span class="s">&#39;primary&#39;</span><span class="p">,</span> <span class="s">&#39;into&#39;</span><span class="p">,</span> <span class="s">&#39;values&#39;</span><span class="p">,</span> <span class="s">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s">&#39;ttl&#39;</span><span class="p">,</span> <span class="s">&#39;alter&#39;</span><span class="p">,</span> <span class="s">&#39;add&#39;</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">,</span>
-    <span class="s">&#39;compact&#39;</span><span class="p">,</span> <span class="s">&#39;storage&#39;</span><span class="p">,</span> <span class="s">&#39;order&#39;</span><span class="p">,</span> <span class="s">&#39;by&#39;</span><span class="p">,</span> <span class="s">&#39;asc&#39;</span><span class="p">,</span> <span class="s">&#39;desc&#39;</span><span class="p">,</span> <span class="s">&#39;clustering&#39;</span><span class="p">,</span>
-    <span class="s">&#39;token&#39;</span><span class="p">,</span> <span class="s">&#39;writetime&#39;</span><span class="p">,</span> <span class="s">&#39;map&#39;</span><span class="p">,</span> <span class="s">&#39;list&#39;</span><span class="p">,</span> <span class="s">&#39;to&#39;</span>
+<span class="n">cql_keywords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span>
+    <span class="s">&#39;add&#39;</span><span class="p">,</span> <span class="s">&#39;aggregate&#39;</span><span class="p">,</span> <span class="s">&#39;all&#39;</span><span class="p">,</span> <span class="s">&#39;allow&#39;</span><span class="p">,</span> <span class="s">&#39;alter&#39;</span><span class="p">,</span> <span class="s">&#39;and&#39;</span><span class="p">,</span> <span class="s">&#39;apply&#39;</span><span class="p">,</span> <span class="s">&#39;as&#39;</span><span class="p">,</span> <span class="s">&#39;asc&#39;</span><span class="p">,</span> <span class="s">&#39;ascii&#39;</span><span class="p">,</span> <span class="s">&#39;authorize&#39;</span><span class="p">,</span> <span class="s">&#39;batch&#39;</span><span class="p">,</span> <span class="s">&#39;begin&#39;</span><span class="p">,</span>
+    <span class="s">&#39;bigint&#39;</span><span class="p">,</span> <span class="s">&#39;blob&#39;</span><span class="p">,</span> <span class="s">&#39;boolean&#39;</span><span class="p">,</span> <span class="s">&#39;by&#39;</span><span class="p">,</span> <span class="s">&#39;called&#39;</span><span class="p">,</span> <span class="s">&#39;clustering&#39;</span><span class="p">,</span> <span class="s">&#39;columnfamily&#39;</span><span class="p">,</span> <span class="s">&#39;compact&#39;</span><span class="p">,</span> <span class="s">&#39;contains&#39;</span><span class="p">,</span> <span class="s">&#39;count&#39;</span><span class="p">,</span>
+    <span class="s">&#39;counter&#39;</span><span class="p">,</span> <span class="s">&#39;create&#39;</span><span class="p">,</span> <span class="s">&#39;custom&#39;</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;decimal&#39;</span><span class="p">,</span> <span class="s">&#39;delete&#39;</span><span class="p">,</span> <span class="s">&#39;desc&#39;</span><span class="p">,</span> <span class="s">&#39;describe&#39;</span><span class="p">,</span> <span class="s">&#39;distinct&#39;</span><span class="p">,</span> <span class="s">&#39;double&#39;</span><span class="p">,</span> <span class="s">&#39;drop&#39;</span><span class="p">,</span>
+    <span class="s">&#39;entries&#39;</span><span class="p">,</span> <span class="s">&#39;execute&#39;</span><span class="p">,</span> <span class="s">&#39;exists&#39;</span><span class="p">,</span> <span class="s">&#39;filtering&#39;</span><span class="p">,</span> <span class="s">&#39;finalfunc&#39;</span><span class="p">,</span> <span class="s">&#39;float&#39;</span><span class="p">,</span> <span class="s">&#39;from&#39;</span><span class="p">,</span> <span class="s">&#39;frozen&#39;</span><span class="p">,</span> <span class="s">&#39;full&#39;</span><span class="p">,</span> <span class="s">&#39;function&#39;</span><span class="p">,</span>
+    <span class="s">&#39;functions&#39;</span><span class="p">,</span> <span class="s">&#39;grant&#39;</span><span class="p">,</span> <span class="s">&#39;if&#39;</span><span class="p">,</span> <span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="s">&#39;index&#39;</span><span class="p">,</span> <span class="s">&#39;inet&#39;</span><span class="p">,</span> <span class="s">&#39;infinity&#39;</span><span class="p">,</span> <span class="s">&#39;initcond&#39;</span><span class="p">,</span> <span class="s">&#39;input&#39;</span><span class="p">,</span> <span class="s">&#39;insert&#39;</span><span class="p">,</span> <span class="s">&#39;int&#39;</span><span class="p">,</span> <span class="s">&#39;into&#39;</span><span class="p">,</span> <span class="s">&#39;json&#39;</span><span class="p">,</span>
+    <span class="s">&#39;key&#39;</span><span class="p">,</span> <span class="s">&#39;keys&#39;</span><span class="p">,</span> <span class="s">&#39;keyspace&#39;</span><span class="p">,</span> <span class="s">&#39;keyspaces&#39;</span><span class="p">,</span> <span class="s">&#39;language&#39;</span><span class="p">,</span> <span class="s">&#39;limit&#39;</span><span class="p">,</span> <span class="s">&#39;list&#39;</span><span class="p">,</span> <span class="s">&#39;login&#39;</span><span class="p">,</span> <span class="s">&#39;map&#39;</span><span class="p">,</span> <span class="s">&#39;modify&#39;</span><span class="p">,</span> <span class="s">&#39;nan&#39;</span><span class="p">,</span> <span class="s">&#39;nologin&#39;</span><span class="p">,</span>
+    <span class="s">&#39;norecursive&#39;</span><span class="p">,</span> <span class="s">&#39;nosuperuser&#39;</span><span class="p">,</span> <span class="s">&#39;not&#39;</span><span class="p">,</span> <span class="s">&#39;null&#39;</span><span class="p">,</span> <span class="s">&#39;of&#39;</span><span class="p">,</span> <span class="s">&#39;on&#39;</span><span class="p">,</span> <span class="s">&#39;options&#39;</span><span class="p">,</span> <span class="s">&#39;or&#39;</span><span class="p">,</span> <span class="s">&#39;order&#39;</span><span class="p">,</span> <span class="s">&#39;password&#39;</span><span class="p">,</span> <span class="s">&#39;permission&#39;</span><span class="p">,</span>
+    <span class="s">&#39;permissions&#39;</span><span class="p">,</span> <span class="s">&#39;primary&#39;</span><span class="p">,</span> <span class="s">&#39;rename&#39;</span><span class="p">,</span> <span class="s">&#39;replace&#39;</span><span class="p">,</span> <span class="s">&#39;returns&#39;</span><span class="p">,</span> <span class="s">&#39;revoke&#39;</span><span class="p">,</span> <span class="s">&#39;role&#39;</span><span class="p">,</span> <span class="s">&#39;roles&#39;</span><span class="p">,</span> <span class="s">&#39;schema&#39;</span><span class="p">,</span> <span class="s">&#39;select&#39;</span><span class="p">,</span> <span class="s">&#39;set&#39;</span><span class="p">,</span>
+    <span class="s">&#39;sfunc&#39;</span><span class="p">,</span> <span class="s">&#39;smallint&#39;</span><span class="p">,</span> <span class="s">&#39;static&#39;</span><span class="p">,</span> <span class="s">&#39;storage&#39;</span><span class="p">,</span> <span class="s">&#39;stype&#39;</span><span class="p">,</span> <span class="s">&#39;superuser&#39;</span><span class="p">,</span> <span class="s">&#39;table&#39;</span><span class="p">,</span> <span class="s">&#39;text&#39;</span><span class="p">,</span> <span class="s">&#39;time&#39;</span><span class="p">,</span> <span class="s">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s">&#39;timeuuid&#39;</span><span class="p">,</span>
+    <span class="s">&#39;tinyint&#39;</span><span class="p">,</span> <span class="s">&#39;to&#39;</span><span class="p">,</span> <span class="s">&#39;token&#39;</span><span class="p">,</span> <span class="s">&#39;trigger&#39;</span><span class="p">,</span> <span class="s">&#39;truncate&#39;</span><span class="p">,</span> <span class="s">&#39;ttl&#39;</span><span class="p">,</span> <span class="s">&#39;tuple&#39;</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;unlogged&#39;</span><span class="p">,</span> <span class="s">&#39;update&#39;</span><span class="p">,</span> <span class="s">&#39;use&#39;</span><span class="p">,</span> <span class="s">&#39;user&#39;</span><span class="p">,</span>
+    <span class="s">&#39;users&#39;</span><span class="p">,</span> <span class="s">&#39;using&#39;</span><span class="p">,</span> <span class="s">&#39;uuid&#39;</span><span class="p">,</span> <span class="s">&#39;values&#39;</span><span class="p">,</span> <span class="s">&#39;varchar&#39;</span><span class="p">,</span> <span class="s">&#39;varint&#39;</span><span class="p">,</span> <span class="s">&#39;where&#39;</span><span class="p">,</span> <span class="s">&#39;with&#39;</span><span class="p">,</span> <span class="s">&#39;writetime&#39;</span>
 <span class="p">))</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Set of keywords in CQL.</span>
 
-<span class="n">_unreserved_keywords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span>
-    <span class="s">&#39;key&#39;</span><span class="p">,</span> <span class="s">&#39;clustering&#39;</span><span class="p">,</span> <span class="s">&#39;ttl&#39;</span><span class="p">,</span> <span class="s">&#39;compact&#39;</span><span class="p">,</span> <span class="s">&#39;storage&#39;</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;values&#39;</span>
+<span class="sd">Derived from .../cassandra/src/java/org/apache/cassandra/cql3/Cql.g</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">cql_keywords_unreserved</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span>
+    <span class="s">&#39;aggregate&#39;</span><span class="p">,</span> <span class="s">&#39;all&#39;</span><span class="p">,</span> <span class="s">&#39;as&#39;</span><span class="p">,</span> <span class="s">&#39;ascii&#39;</span><span class="p">,</span> <span class="s">&#39;bigint&#39;</span><span class="p">,</span> <span class="s">&#39;blob&#39;</span><span class="p">,</span> <span class="s">&#39;boolean&#39;</span><span class="p">,</span> <span class="s">&#39;called&#39;</span><span class="p">,</span> <span class="s">&#39;clustering&#39;</span><span class="p">,</span> <span class="s">&#39;compact&#39;</span><span class="p">,</span> <span class="s">&#39;contains&#39;</span><span class="p">,</span>
+    <span class="s">&#39;count&#39;</span><span class="p">,</span> <span class="s">&#39;counter&#39;</span><span class="p">,</span> <span class="s">&#39;custom&#39;</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;decimal&#39;</span><span class="p">,</span> <span class="s">&#39;distinct&#39;</span><span class="p">,</span> <span class="s">&#39;double&#39;</span><span class="p">,</span> <span class="s">&#39;exists&#39;</span><span class="p">,</span> <span class="s">&#39;filtering&#39;</span><span class="p">,</span> <span class="s">&#39;finalfunc&#39;</span><span class="p">,</span> <span class="s">&#39;float&#39;</span><span class="p">,</span>
+    <span class="s">&#39;frozen&#39;</span><span class="p">,</span> <span class="s">&#39;function&#39;</span><span class="p">,</span> <span class="s">&#39;functions&#39;</span><span class="p">,</span> <span class="s">&#39;inet&#39;</span><span class="p">,</span> <span class="s">&#39;initcond&#39;</span><span class="p">,</span> <span class="s">&#39;input&#39;</span><span class="p">,</span> <span class="s">&#39;int&#39;</span><span class="p">,</span> <span class="s">&#39;json&#39;</span><span class="p">,</span> <span class="s">&#39;key&#39;</span><span class="p">,</span> <span class="s">&#39;keys&#39;</span><span class="p">,</span> <span class="s">&#39;keyspaces&#39;</span><span class="p">,</span>
+    <span class="s">&#39;language&#39;</span><span class="p">,</span> <span class="s">&#39;list&#39;</span><span class="p">,</span> <span class="s">&#39;login&#39;</span><span class="p">,</span> <span class="s">&#39;map&#39;</span><span class="p">,</span> <span class="s">&#39;nologin&#39;</span><span class="p">,</span> <span class="s">&#39;nosuperuser&#39;</span><span class="p">,</span> <span class="s">&#39;options&#39;</span><span class="p">,</span> <span class="s">&#39;password&#39;</span><span class="p">,</span> <span class="s">&#39;permission&#39;</span><span class="p">,</span> <span class="s">&#39;permissions&#39;</span><span class="p">,</span>
+    <span class="s">&#39;returns&#39;</span><span class="p">,</span> <span class="s">&#39;role&#39;</span><span class="p">,</span> <span class="s">&#39;roles&#39;</span><span class="p">,</span> <span class="s">&#39;sfunc&#39;</span><span class="p">,</span> <span class="s">&#39;smallint&#39;</span><span class="p">,</span> <span class="s">&#39;static&#39;</span><span class="p">,</span> <span class="s">&#39;storage&#39;</span><span class="p">,</span> <span class="s">&#39;stype&#39;</span><span class="p">,</span> <span class="s">&#39;superuser&#39;</span><span class="p">,</span> <span class="s">&#39;text&#39;</span><span class="p">,</span> <span class="s">&#39;time&#39;</span><span class="p">,</span>
+    <span class="s">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s">&#39;timeuuid&#39;</span><span class="p">,</span> <span class="s">&#39;tinyint&#39;</span><span class="p">,</span> <span class="s">&#39;trigger&#39;</span><span class="p">,</span> <span class="s">&#39;ttl&#39;</span><span class="p">,</span> <span class="s">&#39;tuple&#39;</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;user&#39;</span><span class="p">,</span> <span class="s">&#39;users&#39;</span><span class="p">,</span> <span class="s">&#39;uuid&#39;</span><span class="p">,</span> <span class="s">&#39;values&#39;</span><span class="p">,</span> <span class="s">&#39;varchar&#39;</span><span class="p">,</span>
+    <span class="s">&#39;varint&#39;</span><span class="p">,</span> <span class="s">&#39;writetime&#39;</span>
 <span class="p">))</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Set of unreserved keywords in CQL.</span>
+
+<span class="sd">Derived from .../cassandra/src/java/org/apache/cassandra/cql3/Cql.g</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">cql_keywords_reserved</span> <span class="o">=</span> <span class="n">cql_keywords</span> <span class="o">-</span> <span class="n">cql_keywords_unreserved</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Set of reserved keywords in CQL.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 
 <div class="viewcode-block" id="Metadata"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Metadata">[docs]</a><span class="k">class</span> <span class="nc">Metadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -149,7 +177,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ks</span><span class="o">.</span><span class="n">export_as_string</span><span class="p">()</span> <span class="k">for</span> <span class="n">ks</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 </div>
-    <span class="k">def</span> <span class="nf">rebuild_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ks_results</span><span class="p">,</span> <span class="n">type_results</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">rebuild_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ks_results</span><span class="p">,</span> <span class="n">type_results</span><span class="p">,</span> <span class="n">function_results</span><span class="p">,</span>
+                       <span class="n">aggregate_results</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Rebuild the view of the current schema from a fresh set of rows from</span>
 <span class="sd">        the system schema tables.</span>
@@ -159,6 +188,8 @@
         <span class="n">cf_def_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         <span class="n">col_def_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">))</span>
         <span class="n">usertype_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="n">fn_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="n">agg_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         <span class="n">trigger_rows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">))</span>
 
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cf_results</span><span class="p">:</span>
@@ -172,6 +203,12 @@
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">type_results</span><span class="p">:</span>
             <span class="n">usertype_rows</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
 
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">function_results</span><span class="p">:</span>
+            <span class="n">fn_rows</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">aggregate_results</span><span class="p">:</span>
+            <span class="n">agg_rows</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">triggers_result</span><span class="p">:</span>
             <span class="n">ksname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]</span>
             <span class="n">cfname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;columnfamily_name&quot;</span><span class="p">]</span>
@@ -183,14 +220,20 @@
             <span class="n">keyspace_col_rows</span> <span class="o">=</span> <span class="n">col_def_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{})</span>
             <span class="n">keyspace_trigger_rows</span> <span class="o">=</span> <span class="n">trigger_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{})</span>
             <span class="k">for</span> <span class="n">table_row</span> <span class="ow">in</span> <span class="n">cf_def_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
-                <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span>
-                    <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">table_row</span><span class="p">,</span> <span class="n">keyspace_col_rows</span><span class="p">,</span>
-                    <span class="n">keyspace_trigger_rows</span><span class="p">)</span>
-                <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_meta</span>
+                <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">table_row</span><span class="p">,</span> <span class="n">keyspace_col_rows</span><span class="p">,</span> <span class="n">keyspace_trigger_rows</span><span class="p">)</span>
+                <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">_add_table_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">)</span>
 
             <span class="k">for</span> <span class="n">usertype_row</span> <span class="ow">in</span> <span class="n">usertype_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
                 <span class="n">usertype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_usertype</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">usertype_row</span><span class="p">)</span>
                 <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">user_types</span><span class="p">[</span><span class="n">usertype</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">usertype</span>
+
+            <span class="k">for</span> <span class="n">fn_row</span> <span class="ow">in</span> <span class="n">fn_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
+                <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_function</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">fn_row</span><span class="p">)</span>
+                <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">functions</span><span class="p">[</span><span class="n">fn</span><span class="o">.</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span>
+
+            <span class="k">for</span> <span class="n">agg_row</span> <span class="ow">in</span> <span class="n">agg_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
+                <span class="n">agg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_aggregate</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">agg_row</span><span class="p">)</span>
+                <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">aggregates</span><span class="p">[</span><span class="n">agg</span><span class="o">.</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">agg</span>
 
             <span class="n">current_keyspaces</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="n">old_keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
@@ -201,8 +244,8 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_keyspace_added</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
         <span class="c"># remove not-just-added keyspaces</span>
-        <span class="n">removed_keyspaces</span> <span class="o">=</span> <span class="p">[</span><span class="n">ksname</span> <span class="k">for</span> <span class="n">ksname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-                             <span class="k">if</span> <span class="n">ksname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_keyspaces</span><span class="p">]</span>
+        <span class="n">removed_keyspaces</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                             <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_keyspaces</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                               <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">current_keyspaces</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">ksname</span> <span class="ow">in</span> <span class="n">removed_keyspaces</span><span class="p">:</span>
@@ -221,6 +264,9 @@
         <span class="k">if</span> <span class="n">old_keyspace_meta</span><span class="p">:</span>
             <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">tables</span> <span class="o">=</span> <span class="n">old_keyspace_meta</span><span class="o">.</span><span class="n">tables</span>
             <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">user_types</span> <span class="o">=</span> <span class="n">old_keyspace_meta</span><span class="o">.</span><span class="n">user_types</span>
+            <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">indexes</span> <span class="o">=</span> <span class="n">old_keyspace_meta</span><span class="o">.</span><span class="n">indexes</span>
+            <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">functions</span> <span class="o">=</span> <span class="n">old_keyspace_meta</span><span class="o">.</span><span class="n">functions</span>
+            <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">aggregates</span> <span class="o">=</span> <span class="n">old_keyspace_meta</span><span class="o">.</span><span class="n">aggregates</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">replication_strategy</span> <span class="o">!=</span> <span class="n">old_keyspace_meta</span><span class="o">.</span><span class="n">replication_strategy</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_keyspace_updated</span><span class="p">(</span><span class="n">keyspace</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -234,6 +280,22 @@
             <span class="c"># the type was deleted</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">user_types</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">function_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">function_results</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">function_results</span><span class="p">:</span>
+            <span class="n">new_function</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_function</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">function_results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">functions</span><span class="p">[</span><span class="n">function</span><span class="o">.</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_function</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># the function was deleted</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">function</span><span class="o">.</span><span class="n">signature</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">aggregate_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">,</span> <span class="n">aggregate_results</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">aggregate_results</span><span class="p">:</span>
+            <span class="n">new_aggregate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_aggregate</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">aggregate_results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">aggregates</span><span class="p">[</span><span class="n">aggregate</span><span class="o">.</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_aggregate</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># the aggregate was deleted</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">aggregates</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">aggregate</span><span class="o">.</span><span class="n">signature</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">table_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span>
@@ -245,12 +307,11 @@
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cf_results</span><span class="p">:</span>
             <span class="c"># the table was removed</span>
-            <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">_drop_table_metadata</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">cf_results</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
-            <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span>
-                <span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">col_results</span><span class="p">},</span>
-                <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">triggers_result</span><span class="p">})</span>
+            <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">col_results</span><span class="p">},</span> <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">triggers_result</span><span class="p">})</span>
+            <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">_add_table_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_keyspace_added</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ksname</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span><span class="p">:</span>
@@ -275,6 +336,23 @@
         <span class="n">type_classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">,</span> <span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;field_types&#39;</span><span class="p">]))</span>
         <span class="k">return</span> <span class="n">UserType</span><span class="p">(</span><span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;keyspace_name&#39;</span><span class="p">],</span> <span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;type_name&#39;</span><span class="p">],</span>
                         <span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;field_names&#39;</span><span class="p">],</span> <span class="n">type_classes</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_build_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">function_row</span><span class="p">):</span>
+        <span class="n">return_type</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">function_row</span><span class="p">[</span><span class="s">&#39;return_type&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">Function</span><span class="p">(</span><span class="n">function_row</span><span class="p">[</span><span class="s">&#39;keyspace_name&#39;</span><span class="p">],</span> <span class="n">function_row</span><span class="p">[</span><span class="s">&#39;function_name&#39;</span><span class="p">],</span>
+                        <span class="n">function_row</span><span class="p">[</span><span class="s">&#39;signature&#39;</span><span class="p">],</span> <span class="n">function_row</span><span class="p">[</span><span class="s">&#39;argument_names&#39;</span><span class="p">],</span>
+                        <span class="n">return_type</span><span class="p">,</span> <span class="n">function_row</span><span class="p">[</span><span class="s">&#39;language&#39;</span><span class="p">],</span> <span class="n">function_row</span><span class="p">[</span><span class="s">&#39;body&#39;</span><span class="p">],</span>
+                        <span class="n">function_row</span><span class="p">[</span><span class="s">&#39;called_on_null_input&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_build_aggregate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">aggregate_row</span><span class="p">):</span>
+        <span class="n">state_type</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">aggregate_row</span><span class="p">[</span><span class="s">&#39;state_type&#39;</span><span class="p">])</span>
+        <span class="n">initial_condition</span> <span class="o">=</span> <span class="n">aggregate_row</span><span class="p">[</span><span class="s">&#39;initcond&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">initial_condition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">initial_condition</span> <span class="o">=</span> <span class="n">state_type</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">initial_condition</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">return_type</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">aggregate_row</span><span class="p">[</span><span class="s">&#39;return_type&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">Aggregate</span><span class="p">(</span><span class="n">aggregate_row</span><span class="p">[</span><span class="s">&#39;keyspace_name&#39;</span><span class="p">],</span> <span class="n">aggregate_row</span><span class="p">[</span><span class="s">&#39;aggregate_name&#39;</span><span class="p">],</span>
+                         <span class="n">aggregate_row</span><span class="p">[</span><span class="s">&#39;signature&#39;</span><span class="p">],</span> <span class="n">aggregate_row</span><span class="p">[</span><span class="s">&#39;state_func&#39;</span><span class="p">],</span> <span class="n">state_type</span><span class="p">,</span>
+                         <span class="n">aggregate_row</span><span class="p">[</span><span class="s">&#39;final_func&#39;</span><span class="p">],</span> <span class="n">initial_condition</span><span class="p">,</span> <span class="n">return_type</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_build_table_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace_metadata</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col_rows</span><span class="p">,</span> <span class="n">trigger_rows</span><span class="p">):</span>
         <span class="n">cfname</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;columnfamily_name&quot;</span><span class="p">]</span>
@@ -446,6 +524,8 @@
         <span class="n">column_meta</span> <span class="o">=</span> <span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">table_metadata</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="n">is_static</span><span class="o">=</span><span class="n">is_static</span><span class="p">)</span>
         <span class="n">index_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_index_metadata</span><span class="p">(</span><span class="n">column_meta</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
         <span class="n">column_meta</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index_meta</span>
+        <span class="k">if</span> <span class="n">index_meta</span><span class="p">:</span>
+            <span class="n">table_metadata</span><span class="o">.</span><span class="n">indexes</span><span class="p">[</span><span class="n">index_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_meta</span>
         <span class="k">return</span> <span class="n">column_meta</span>
 
     <span class="k">def</span> <span class="nf">_build_index_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
@@ -796,26 +876,51 @@
 <span class="sd">    A map from table names to instances of :class:`~.TableMetadata`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">indexes</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A dict mapping index names to :class:`.IndexMetadata` instances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">user_types</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A map from user-defined type names to instances of :class:`~cassandra.metadata..UserType`.</span>
+<span class="sd">    A map from user-defined type names to instances of :class:`~cassandra.metadata.UserType`.</span>
 
 <span class="sd">    .. versionadded:: 2.1.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">functions</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A map from user-defined function signatures to instances of :class:`~cassandra.metadata.Function`.</span>
+
+<span class="sd">    .. versionadded:: 2.6.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">aggregates</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A map from user-defined aggregate signatures to instances of :class:`~cassandra.metadata.Aggregate`.</span>
+
+<span class="sd">    .. versionadded:: 2.6.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">durable_writes</span> <span class="o">=</span> <span class="n">durable_writes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">replication_strategy</span> <span class="o">=</span> <span class="n">ReplicationStrategy</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indexes</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">user_types</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">functions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggregates</span> <span class="o">=</span> <span class="p">{}</span>
 
 <div class="viewcode-block" id="KeyspaceMetadata.export_as_string"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.KeyspaceMetadata.export_as_string">[docs]</a>    <span class="k">def</span> <span class="nf">export_as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a CQL query string that can be used to recreate the entire keyspace,</span>
 <span class="sd">        including user-defined types and tables.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">()]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_type_strings</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">export_as_string</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">()]</span>
+                           <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_type_strings</span><span class="p">()</span>
+                           <span class="o">+</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+                           <span class="o">+</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregates</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+                           <span class="o">+</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">export_as_string</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
 </div>
 <div class="viewcode-block" id="KeyspaceMetadata.as_cql_query"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.KeyspaceMetadata.as_cql_query">[docs]</a>    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -843,8 +948,20 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">resolve_user_types</span><span class="p">(</span><span class="n">field_type</span><span class="o">.</span><span class="n">typename</span><span class="p">,</span> <span class="n">types</span><span class="p">,</span> <span class="n">user_type_strings</span><span class="p">)</span>
         <span class="n">user_type_strings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user_type</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(</span><span class="n">formatted</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
 
+    <span class="k">def</span> <span class="nf">_add_table_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_metadata</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_drop_table_metadata</span><span class="p">(</span><span class="n">table_metadata</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table_metadata</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_metadata</span>
+        <span class="k">for</span> <span class="n">index_name</span><span class="p">,</span> <span class="n">index_metadata</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">table_metadata</span><span class="o">.</span><span class="n">indexes</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">indexes</span><span class="p">[</span><span class="n">index_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_metadata</span>
+
+    <span class="k">def</span> <span class="nf">_drop_table_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">table_meta</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index_name</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">indexes</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">indexes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">index_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 </div>
-<span class="k">class</span> <span class="nc">UserType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="UserType"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.UserType">[docs]</a><span class="k">class</span> <span class="nc">UserType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A user defined type, as created by ``CREATE TYPE`` statements.</span>
 
@@ -879,7 +996,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">field_names</span> <span class="o">=</span> <span class="n">field_names</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">field_types</span> <span class="o">=</span> <span class="n">field_types</span>
 
-    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formatted</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="UserType.as_cql_query"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.UserType.as_cql_query">[docs]</a>    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formatted</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a CQL query that can be used to recreate this type.</span>
 <span class="sd">        If `formatted` is set to :const:`True`, extra whitespace will</span>
@@ -905,7 +1022,183 @@
         <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">);&quot;</span> <span class="k">if</span> <span class="n">formatted</span> <span class="k">else</span> <span class="s">&quot;);&quot;</span>
         <span class="k">return</span> <span class="n">ret</span>
 
+</div></div>
+<div class="viewcode-block" id="Aggregate"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Aggregate">[docs]</a><span class="k">class</span> <span class="nc">Aggregate</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A user defined aggregate function, as created by ``CREATE AGGREGATE`` statements.</span>
 
+<span class="sd">    Aggregate functions were introduced in Cassandra 2.2</span>
+
+<span class="sd">    .. versionadded:: 2.6.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The string name of the keyspace in which this aggregate is defined</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The name of this aggregate</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">type_signature</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An ordered list of the types for each argument to the aggregate</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">final_func</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Name of a final function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">initial_condition</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initial condition of the aggregate</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">return_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return type of the aggregate</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">state_func</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Name of a state function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">state_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Type of the aggregate state</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">type_signature</span><span class="p">,</span> <span class="n">state_func</span><span class="p">,</span>
+                 <span class="n">state_type</span><span class="p">,</span> <span class="n">final_func</span><span class="p">,</span> <span class="n">initial_condition</span><span class="p">,</span> <span class="n">return_type</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_signature</span> <span class="o">=</span> <span class="n">type_signature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_func</span> <span class="o">=</span> <span class="n">state_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_type</span> <span class="o">=</span> <span class="n">state_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_func</span> <span class="o">=</span> <span class="n">final_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_condition</span> <span class="o">=</span> <span class="n">initial_condition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="n">return_type</span>
+
+<div class="viewcode-block" id="Aggregate.as_cql_query"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Aggregate.as_cql_query">[docs]</a>    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formatted</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a CQL query that can be used to recreate this aggregate.</span>
+<span class="sd">        If `formatted` is set to :const:`True`, extra whitespace will</span>
+<span class="sd">        be added to make the query more readable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sep</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="k">if</span> <span class="n">formatted</span> <span class="k">else</span> <span class="s">&#39; &#39;</span>
+        <span class="n">keyspace</span> <span class="o">=</span> <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">type_list</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type_signature</span><span class="p">)</span>
+        <span class="n">state_func</span> <span class="o">=</span> <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_func</span><span class="p">)</span>
+        <span class="n">state_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_type</span><span class="o">.</span><span class="n">cql_parameterized_type</span><span class="p">()</span>
+
+        <span class="n">ret</span> <span class="o">=</span> <span class="s">&quot;CREATE AGGREGATE </span><span class="si">%(keyspace)s</span><span class="s">.</span><span class="si">%(name)s</span><span class="s">(</span><span class="si">%(type_list)s</span><span class="s">)</span><span class="si">%(sep)s</span><span class="s">&quot;</span> \
+              <span class="s">&quot;SFUNC </span><span class="si">%(state_func)s%(sep)s</span><span class="s">&quot;</span> \
+              <span class="s">&quot;STYPE </span><span class="si">%(state_type)s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">locals</span><span class="p">()</span>
+
+        <span class="n">ret</span> <span class="o">+=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">sep</span><span class="p">,</span> <span class="s">&#39;FINALFUNC &#39;</span><span class="p">,</span> <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_func</span><span class="p">)))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_func</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">ret</span> <span class="o">+=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">sep</span><span class="p">,</span> <span class="s">&#39;INITCOND &#39;</span><span class="p">,</span> <span class="n">Encoder</span><span class="p">()</span><span class="o">.</span><span class="n">cql_encode_all_types</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_condition</span><span class="p">)))</span>\
+               <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_condition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+
+        <span class="k">return</span> <span class="n">ret</span>
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SignatureDescriptor</span><span class="o">.</span><span class="n">format_signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_signature</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Function"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Function">[docs]</a><span class="k">class</span> <span class="nc">Function</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A user defined function, as created by ``CREATE FUNCTION`` statements.</span>
+
+<span class="sd">    User-defined functions were introduced in Cassandra 2.2</span>
+
+<span class="sd">    .. versionadded:: 2.6.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The string name of the keyspace in which this function is defined</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The name of this function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">type_signature</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An ordered list of the types for each argument to the function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">argument_names</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An ordered list of the names of each argument to the function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">return_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return type of the function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">language</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Language of the function body</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">body</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function body string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">called_on_null_input</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Flag indicating whether this function should be called for rows with null values</span>
+<span class="sd">    (convenience function to avoid handling nulls explicitly if the result will just be null)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">type_signature</span><span class="p">,</span> <span class="n">argument_names</span><span class="p">,</span>
+                 <span class="n">return_type</span><span class="p">,</span> <span class="n">language</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">called_on_null_input</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_signature</span> <span class="o">=</span> <span class="n">type_signature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">argument_names</span> <span class="o">=</span> <span class="n">argument_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="n">return_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">language</span> <span class="o">=</span> <span class="n">language</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">body</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">called_on_null_input</span> <span class="o">=</span> <span class="n">called_on_null_input</span>
+
+<div class="viewcode-block" id="Function.as_cql_query"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Function.as_cql_query">[docs]</a>    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formatted</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a CQL query that can be used to recreate this function.</span>
+<span class="sd">        If `formatted` is set to :const:`True`, extra whitespace will</span>
+<span class="sd">        be added to make the query more readable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sep</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="k">if</span> <span class="n">formatted</span> <span class="k">else</span> <span class="s">&#39; &#39;</span>
+        <span class="n">keyspace</span> <span class="o">=</span> <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">arg_list</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">protect_name</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">t</span><span class="p">)</span>
+                             <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">argument_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_signature</span><span class="p">)])</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="o">.</span><span class="n">cql_parameterized_type</span><span class="p">()</span>
+        <span class="n">lang</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">language</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">protect_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+        <span class="n">on_null</span> <span class="o">=</span> <span class="s">&quot;CALLED&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">called_on_null_input</span> <span class="k">else</span> <span class="s">&quot;RETURNS NULL&quot;</span>
+
+        <span class="k">return</span> <span class="s">&quot;CREATE FUNCTION </span><span class="si">%(keyspace)s</span><span class="s">.</span><span class="si">%(name)s</span><span class="s">(</span><span class="si">%(arg_list)s</span><span class="s">)</span><span class="si">%(sep)s</span><span class="s">&quot;</span> \
+               <span class="s">&quot;</span><span class="si">%(on_null)s</span><span class="s"> ON NULL INPUT</span><span class="si">%(sep)s</span><span class="s">&quot;</span> \
+               <span class="s">&quot;RETURNS </span><span class="si">%(typ)s%(sep)s</span><span class="s">&quot;</span> \
+               <span class="s">&quot;LANGUAGE </span><span class="si">%(lang)s%(sep)s</span><span class="s">&quot;</span> \
+               <span class="s">&quot;AS </span><span class="si">%(body)s</span><span class="s">;&quot;</span> <span class="o">%</span> <span class="nb">locals</span><span class="p">()</span>
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SignatureDescriptor</span><span class="o">.</span><span class="n">format_signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_signature</span><span class="p">)</span>
+
+</div>
 <div class="viewcode-block" id="TableMetadata"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TableMetadata">[docs]</a><span class="k">class</span> <span class="nc">TableMetadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A representation of the schema for a single table.</span>
@@ -945,6 +1238,11 @@
     <span class="n">columns</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A dict mapping column names to :class:`.ColumnMetadata` instances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">indexes</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A dict mapping index names to :class:`.IndexMetadata` instances.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">is_compact_storage</span> <span class="o">=</span> <span class="bp">False</span>
@@ -1008,6 +1306,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">partition_key</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">partition_key</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">clustering_key</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">clustering_key</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span> <span class="k">if</span> <span class="n">columns</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indexes</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">options</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">triggers</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span> <span class="k">if</span> <span class="n">triggers</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">triggers</span>
@@ -1176,7 +1475,7 @@
 <span class="k">def</span> <span class="nf">is_valid_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">False</span>
-    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">_keywords</span> <span class="o">-</span> <span class="n">_unreserved_keywords</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">cql_keywords_reserved</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">False</span>
     <span class="k">return</span> <span class="n">valid_cql3_word_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
 
@@ -1304,6 +1603,12 @@
                 <span class="n">protect_name</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
                 <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">index_options</span><span class="p">[</span><span class="s">&quot;class_name&quot;</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="IndexMetadata.export_as_string"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.IndexMetadata.export_as_string">[docs]</a>    <span class="k">def</span> <span class="nf">export_as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a CQL query string that can be used to recreate this index.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">()</span> <span class="o">+</span> <span class="s">&#39;;&#39;</span>
 
 </div></div>
 <div class="viewcode-block" id="TokenMap"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.TokenMap">[docs]</a><span class="k">class</span> <span class="nc">TokenMap</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -1517,7 +1822,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

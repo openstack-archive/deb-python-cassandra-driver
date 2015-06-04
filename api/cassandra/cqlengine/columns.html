@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.columns - Column types for object mapping models &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra.cqlengine.columns - Column types for object mapping models &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../../index.html" />
     <link rel="up" title="API Documentation" href="../../index.html" />
     <link rel="next" title="cassandra.cqlengine.query - Query and filter model objects" href="query.html" />
     <link rel="prev" title="cassandra.cqlengine.models - Table models for object mapping" href="models.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="models.html" title="cassandra.cqlengine.models - Table models for object mapping"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -188,7 +188,7 @@ for how to specify the value of this column on specialized models.</p>
 <dl class="class">
 <dt id="cassandra.cqlengine.columns.BigInt">
 <em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">BigInt</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#BigInt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.BigInt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stores a 64-bit signed long value</p>
+<dd><p>Stores a 64-bit signed integer value</p>
 </dd></dl>
 
 <dl class="class">
@@ -218,9 +218,11 @@ for how to specify the value of this column on specialized models.</p>
 <dl class="class">
 <dt id="cassandra.cqlengine.columns.Date">
 <em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Date</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Date"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Date" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>Note: this type is overloaded, and will likely be changed or removed to accommodate distinct date type
-in a future version</em></p>
-<p>Stores a date value, with no time-of-day</p>
+<dd><p>Stores a simple date, with no time-of-day</p>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 2.6.0: </span>removed overload of Date and DateTime. DateTime is a drop-in replacement for legacy models</p>
+</div>
+<p>requires C* 2.2+ and protocol v4+</p>
 </dd></dl>
 
 <dl class="class">
@@ -236,9 +238,15 @@ in a future version</em></p>
 </dd></dl>
 
 <dl class="class">
+<dt id="cassandra.cqlengine.columns.Double">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Double</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Double"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Double" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a double-precision floating-point value</p>
+</dd></dl>
+
+<dl class="class">
 <dt id="cassandra.cqlengine.columns.Float">
-<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Float</tt><big>(</big><em>double_precision=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Float"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Float" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stores a floating point value</p>
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Float</tt><big>(</big><em>double_precision=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Float"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Float" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a single-precision floating-point value</p>
 </dd></dl>
 
 <dl class="class">
@@ -302,6 +310,16 @@ type on validation, or raise a validation error, defaults to True</li>
 </dd></dl>
 
 <dl class="class">
+<dt id="cassandra.cqlengine.columns.SmallInt">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">SmallInt</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#SmallInt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.SmallInt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a 16-bit signed integer value</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.6.0.</span></p>
+</div>
+<p>requires C* 2.2+ and protocol v4+</p>
+</dd></dl>
+
+<dl class="class">
 <dt id="cassandra.cqlengine.columns.Text">
 <em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Text</tt><big>(</big><em>min_length=None</em>, <em>max_length=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Text" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stores a UTF-8 encoded string</p>
@@ -321,9 +339,29 @@ Defaults to 1 if this is a <tt class="docutils literal"><span class="pre">requir
 </dd></dl>
 
 <dl class="class">
+<dt id="cassandra.cqlengine.columns.Time">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">Time</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#Time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.Time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores a timezone-naive time-of-day, with nanosecond precision</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.6.0.</span></p>
+</div>
+<p>requires C* 2.2+ and protocol v4+</p>
+</dd></dl>
+
+<dl class="class">
 <dt id="cassandra.cqlengine.columns.TimeUUID">
 <em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">TimeUUID</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#TimeUUID"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.TimeUUID" title="Permalink to this definition">¶</a></dt>
 <dd><p>UUID containing timestamp</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.columns.TinyInt">
+<em class="property">class </em><tt class="descclassname">cassandra.cqlengine.columns.</tt><tt class="descname">TinyInt</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../../_modules/cassandra/cqlengine/columns.html#TinyInt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.columns.TinyInt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores an 8-bit signed integer value</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 2.6.0.</span></p>
+</div>
+<p>requires C* 2.2+ and protocol v4+</p>
 </dd></dl>
 
 <dl class="class">
@@ -379,7 +417,7 @@ Defaults to 1 if this is a <tt class="docutils literal"><span class="pre">requir
         <li class="right" >
           <a href="models.html" title="cassandra.cqlengine.models - Table models for object mapping"
              >previous</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

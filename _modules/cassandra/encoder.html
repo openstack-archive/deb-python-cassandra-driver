@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.encoder &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra.encoder &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -95,7 +95,8 @@
 <span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">UUID</span>
 <span class="kn">import</span> <span class="nn">six</span>
 
-<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">OrderedMap</span><span class="p">,</span> <span class="n">sortedset</span><span class="p">,</span> <span class="n">Time</span>
+<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="p">(</span><span class="n">OrderedDict</span><span class="p">,</span> <span class="n">OrderedMap</span><span class="p">,</span> <span class="n">OrderedMapSerializedKey</span><span class="p">,</span>
+                            <span class="n">sortedset</span><span class="p">,</span> <span class="n">Time</span><span class="p">,</span> <span class="n">Date</span><span class="p">)</span>
 
 <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
     <span class="nb">long</span> <span class="o">=</span> <span class="nb">int</span>
@@ -142,10 +143,12 @@
             <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_datetime</span><span class="p">,</span>
             <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_date</span><span class="p">,</span>
             <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_time</span><span class="p">,</span>
+            <span class="n">Date</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_date_ext</span><span class="p">,</span>
             <span class="n">Time</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_time</span><span class="p">,</span>
             <span class="nb">dict</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_map_collection</span><span class="p">,</span>
             <span class="n">OrderedDict</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_map_collection</span><span class="p">,</span>
             <span class="n">OrderedMap</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_map_collection</span><span class="p">,</span>
+            <span class="n">OrderedMapSerializedKey</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_map_collection</span><span class="p">,</span>
             <span class="nb">list</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_list_collection</span><span class="p">,</span>
             <span class="nb">tuple</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_list_collection</span><span class="p">,</span>
             <span class="nb">set</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_set_collection</span><span class="p">,</span>
@@ -228,10 +231,17 @@
 </div>
     <span class="k">def</span> <span class="nf">cql_encode_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Converts a :class:`datetime.date` object to a string with format</span>
+<span class="sd">        Converts a :class:`cassandra.util.Time` object to a string with format</span>
 <span class="sd">        ``HH:MM:SS.mmmuuunnn``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">val</span>
+
+    <span class="k">def</span> <span class="nf">cql_encode_date_ext</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Encodes a :class:`cassandra.util.Date` object as an integer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># using the int form in case the Date exceeds datetime.[MIN|MAX]YEAR</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">days_from_epoch</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">31</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Encoder.cql_encode_sequence"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_sequence">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -293,7 +303,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

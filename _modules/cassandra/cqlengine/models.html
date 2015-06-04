@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.models &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra.cqlengine.models &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -90,6 +90,7 @@
 <span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">query</span>
 <span class="kn">from</span> <span class="nn">cassandra.cqlengine.query</span> <span class="kn">import</span> <span class="n">DoesNotExist</span> <span class="k">as</span> <span class="n">_DoesNotExist</span>
 <span class="kn">from</span> <span class="nn">cassandra.cqlengine.query</span> <span class="kn">import</span> <span class="n">MultipleObjectsReturned</span> <span class="k">as</span> <span class="n">_MultipleObjectsReturned</span>
+<span class="kn">from</span> <span class="nn">cassandra.metadata</span> <span class="kn">import</span> <span class="n">protect_name</span>
 <span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
@@ -420,6 +421,8 @@
 
     <span class="n">_if_not_exists</span> <span class="o">=</span> <span class="bp">False</span>  <span class="c"># optional if_not_exists flag to check existence before insertion</span>
 
+    <span class="n">_table_name</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c"># used internally to cache a derived table name</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">values</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_values</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ttl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__default_ttl__</span>
@@ -571,27 +574,33 @@
 <span class="sd">        Returns the column family name if it&#39;s been defined</span>
 <span class="sd">        otherwise, it creates it from the module and class name</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cf_name</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">__table_name__</span><span class="p">:</span>
-            <span class="n">cf_name</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">__table_name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c"># get polymorphic base table names if model is polymorphic</span>
-            <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">_is_polymorphic</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cls</span><span class="o">.</span><span class="n">_is_polymorphic_base</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">_polymorphic_base</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(</span><span class="n">include_keyspace</span><span class="o">=</span><span class="n">include_keyspace</span><span class="p">)</span>
+        <span class="n">cf_name</span> <span class="o">=</span> <span class="n">protect_name</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_raw_column_family_name</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">include_keyspace</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;{}.{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">protect_name</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()),</span> <span class="n">cf_name</span><span class="p">)</span>
 
-            <span class="n">camelcase</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;([a-z])([A-Z])&#39;</span><span class="p">)</span>
-            <span class="n">ccase</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">camelcase</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="s">&#39;{}_{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()),</span> <span class="n">s</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cf_name</span>
 
-            <span class="n">cf_name</span> <span class="o">+=</span> <span class="n">ccase</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
-            <span class="c"># trim to less than 48 characters or cassandra will complain</span>
-            <span class="n">cf_name</span> <span class="o">=</span> <span class="n">cf_name</span><span class="p">[</span><span class="o">-</span><span class="mi">48</span><span class="p">:]</span>
-            <span class="n">cf_name</span> <span class="o">=</span> <span class="n">cf_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="n">cf_name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">r&#39;^_+&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">cf_name</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">include_keyspace</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">cf_name</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_raw_column_family_name</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cls</span><span class="o">.</span><span class="n">_table_name</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">__table_name__</span><span class="p">:</span>
+                <span class="n">cls</span><span class="o">.</span><span class="n">_table_name</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">__table_name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">_is_polymorphic</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cls</span><span class="o">.</span><span class="n">_is_polymorphic_base</span><span class="p">:</span>
+                    <span class="n">cls</span><span class="o">.</span><span class="n">_table_name</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_polymorphic_base</span><span class="o">.</span><span class="n">_raw_column_family_name</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">camelcase</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;([a-z])([A-Z])&#39;</span><span class="p">)</span>
+                    <span class="n">ccase</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">camelcase</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="s">&#39;{}_{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()),</span> <span class="n">s</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="s">&#39;{}.{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">(),</span> <span class="n">cf_name</span><span class="p">)</span>
+                    <span class="n">cf_name</span> <span class="o">=</span> <span class="n">ccase</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+                    <span class="c"># trim to less than 48 characters or cassandra will complain</span>
+                    <span class="n">cf_name</span> <span class="o">=</span> <span class="n">cf_name</span><span class="p">[</span><span class="o">-</span><span class="mi">48</span><span class="p">:]</span>
+                    <span class="n">cf_name</span> <span class="o">=</span> <span class="n">cf_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                    <span class="n">cf_name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">r&#39;^_+&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">cf_name</span><span class="p">)</span>
+                    <span class="n">cls</span><span class="o">.</span><span class="n">_table_name</span> <span class="o">=</span> <span class="n">cf_name</span>
+
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">_table_name</span>
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -772,7 +781,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_polymorphic_base</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">PolymorphicModelException</span><span class="p">(</span><span class="s">&#39;cannot update polymorphic base model&#39;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_discriminator_column_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__disciminator_value__</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_discriminator_column_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__discriminator_value__</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dmlquery__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span>
@@ -1057,7 +1066,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

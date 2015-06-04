@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.columns &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra.cqlengine.columns &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -82,13 +82,11 @@
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span><span class="p">,</span> <span class="n">copy</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">six</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 
-<span class="kn">from</span> <span class="nn">cassandra.cqltypes</span> <span class="kn">import</span> <span class="n">DateType</span>
-<span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">cql_quote</span>
-
+<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">util</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqltypes</span> <span class="kn">import</span> <span class="n">DateType</span><span class="p">,</span> <span class="n">SimpleDateType</span>
 <span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">ValidationError</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
@@ -138,25 +136,6 @@
             <span class="k">return</span> <span class="nb">property</span><span class="p">(</span><span class="n">_get</span><span class="p">,</span> <span class="n">_set</span><span class="p">,</span> <span class="n">_del</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">property</span><span class="p">(</span><span class="n">_get</span><span class="p">,</span> <span class="n">_set</span><span class="p">)</span>
-
-
-<span class="k">class</span> <span class="nc">ValueQuoter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    contains a single value, which will quote itself for CQL insertion statements</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
-
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__str__</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span>
-        <span class="k">return</span> <span class="bp">False</span>
 
 
 <div class="viewcode-block" id="Column"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Column">[docs]</a><span class="k">class</span> <span class="nc">Column</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -444,9 +423,31 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
 </div>
+<div class="viewcode-block" id="TinyInt"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.TinyInt">[docs]</a><span class="k">class</span> <span class="nc">TinyInt</span><span class="p">(</span><span class="n">Integer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores an 8-bit signed integer value</span>
+
+<span class="sd">    .. versionadded:: 2.6.0</span>
+
+<span class="sd">    requires C* 2.2+ and protocol v4+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;tinyint&#39;</span>
+
+</div>
+<div class="viewcode-block" id="SmallInt"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.SmallInt">[docs]</a><span class="k">class</span> <span class="nc">SmallInt</span><span class="p">(</span><span class="n">Integer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a 16-bit signed integer value</span>
+
+<span class="sd">    .. versionadded:: 2.6.0</span>
+
+<span class="sd">    requires C* 2.2+ and protocol v4+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;smallint&#39;</span>
+
+</div>
 <div class="viewcode-block" id="BigInt"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.BigInt">[docs]</a><span class="k">class</span> <span class="nc">BigInt</span><span class="p">(</span><span class="n">Integer</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Stores a 64-bit signed long value</span>
+<span class="sd">    Stores a 64-bit signed integer value</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;bigint&#39;</span>
 
@@ -538,35 +539,43 @@
 </div>
 <div class="viewcode-block" id="Date"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Date">[docs]</a><span class="k">class</span> <span class="nc">Date</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    *Note: this type is overloaded, and will likely be changed or removed to accommodate distinct date type</span>
-<span class="sd">    in a future version*</span>
+<span class="sd">    Stores a simple date, with no time-of-day</span>
 
-<span class="sd">    Stores a date value, with no time-of-day</span>
+<span class="sd">    .. versionchanged:: 2.6.0</span>
+
+<span class="sd">        removed overload of Date and DateTime. DateTime is a drop-in replacement for legacy models</span>
+
+<span class="sd">    requires C* 2.2+ and protocol v4+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;timestamp&#39;</span>
-
-    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">return</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">value</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">DateType</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">value</span><span class="p">))</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;date&#39;</span>
 
     <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Date</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} &#39;{}&#39; is not a date object&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span>
 
-        <span class="k">return</span> <span class="nb">int</span><span class="p">((</span><span class="n">value</span> <span class="o">-</span> <span class="n">date</span><span class="p">(</span><span class="mi">1970</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="c"># need to translate to int version because some dates are not representable in</span>
+        <span class="c"># string form (datetime limitation)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">Date</span><span class="p">)</span> <span class="k">else</span> <span class="n">util</span><span class="o">.</span><span class="n">Date</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">d</span><span class="o">.</span><span class="n">days_from_epoch</span> <span class="o">+</span> <span class="n">SimpleDateType</span><span class="o">.</span><span class="n">EPOCH_OFFSET_DAYS</span>
+
+</div>
+<div class="viewcode-block" id="Time"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Time">[docs]</a><span class="k">class</span> <span class="nc">Time</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a timezone-naive time-of-day, with nanosecond precision</span>
+
+<span class="sd">    .. versionadded:: 2.6.0</span>
+
+<span class="sd">    requires C* 2.2+ and protocol v4+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;time&#39;</span>
+
+    <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Time</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="c"># str(util.Time) yields desired CQL encoding</span>
+        <span class="k">return</span> <span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">Time</span><span class="p">)</span> <span class="k">else</span> <span class="n">util</span><span class="o">.</span><span class="n">Time</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="UUID"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.UUID">[docs]</a><span class="k">class</span> <span class="nc">UUID</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
@@ -575,8 +584,6 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;uuid&#39;</span>
 
-    <span class="n">re_uuid</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}&#39;</span><span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="n">val</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">UUID</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -584,9 +591,14 @@
         <span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">UUID</span> <span class="k">as</span> <span class="n">_UUID</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">_UUID</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">val</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">re_uuid</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">_UUID</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} {} is not a valid uuid&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">_UUID</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="c"># fall-through to error</span>
+                <span class="k">pass</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} {} is not a valid uuid&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -658,18 +670,9 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
 </div>
-<div class="viewcode-block" id="Float"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Float">[docs]</a><span class="k">class</span> <span class="nc">Float</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Stores a floating point value</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;double&#39;</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">double_precision</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;double&#39;</span> <span class="k">if</span> <span class="n">double_precision</span> <span class="k">else</span> <span class="s">&#39;float&#39;</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
+<span class="k">class</span> <span class="nc">BaseFloat</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">BaseFloat</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="k">try</span><span class="p">:</span>
@@ -682,6 +685,31 @@
 
     <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Float"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Float">[docs]</a><span class="k">class</span> <span class="nc">Float</span><span class="p">(</span><span class="n">BaseFloat</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a single-precision floating-point value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;float&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">double_precision</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">double_precision</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span><span class="n">double_precision</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Float(double_precision=True) is deprecated. Use Double() type instead.&quot;</span>
+            <span class="n">double_precision</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;double&#39;</span> <span class="k">if</span> <span class="n">double_precision</span> <span class="k">else</span> <span class="s">&#39;float&#39;</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Double"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Double">[docs]</a><span class="k">class</span> <span class="nc">Double</span><span class="p">(</span><span class="n">BaseFloat</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a double-precision floating-point value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_type</span> <span class="o">=</span> <span class="s">&#39;double&#39;</span>
 
 </div>
 <div class="viewcode-block" id="Decimal"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Decimal">[docs]</a><span class="k">class</span> <span class="nc">Decimal</span><span class="p">(</span><span class="n">Column</span><span class="p">):</span>
@@ -752,24 +780,12 @@
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="p">]</span>
 
 
-<span class="k">class</span> <span class="nc">BaseContainerQuoter</span><span class="p">(</span><span class="n">ValueQuoter</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__nonzero__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-
-
 <div class="viewcode-block" id="Set"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Set">[docs]</a><span class="k">class</span> <span class="nc">Set</span><span class="p">(</span><span class="n">BaseContainerColumn</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Stores a set of unordered, unique values</span>
 
 <span class="sd">    http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_set_t.html</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">class</span> <span class="nc">Quoter</span><span class="p">(</span><span class="n">BaseContainerQuoter</span><span class="p">):</span>
-
-        <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="n">cq</span> <span class="o">=</span> <span class="n">cql_quote</span>
-            <span class="k">return</span> <span class="s">&#39;{&#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">cq</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">])</span> <span class="o">+</span> <span class="s">&#39;}&#39;</span>
-
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_type</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">set</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param value_type: a column class indicating the types of the value</span>
@@ -804,10 +820,7 @@
     <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">value</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">})</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">}</span>
 
 </div>
 <div class="viewcode-block" id="List"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.List">[docs]</a><span class="k">class</span> <span class="nc">List</span><span class="p">(</span><span class="n">BaseContainerColumn</span><span class="p">):</span>
@@ -816,15 +829,6 @@
 
 <span class="sd">    http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_list_t.html</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">class</span> <span class="nc">Quoter</span><span class="p">(</span><span class="n">BaseContainerQuoter</span><span class="p">):</span>
-
-        <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="n">cq</span> <span class="o">=</span> <span class="n">cql_quote</span>
-            <span class="k">return</span> <span class="s">&#39;[&#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">cq</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">])</span> <span class="o">+</span> <span class="s">&#39;]&#39;</span>
-
-        <span class="k">def</span> <span class="nf">__nonzero__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_type</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param value_type: a column class indicating the types of the value</span>
@@ -850,9 +854,7 @@
     <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">value</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
 
 </div>
 <div class="viewcode-block" id="Map"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Map">[docs]</a><span class="k">class</span> <span class="nc">Map</span><span class="p">(</span><span class="n">BaseContainerColumn</span><span class="p">):</span>
@@ -861,21 +863,6 @@
 
 <span class="sd">    http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_map_t.html</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">class</span> <span class="nc">Quoter</span><span class="p">(</span><span class="n">BaseContainerQuoter</span><span class="p">):</span>
-
-        <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="n">cq</span> <span class="o">=</span> <span class="n">cql_quote</span>
-            <span class="k">return</span> <span class="s">&#39;{&#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">cq</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;:&#39;</span> <span class="o">+</span> <span class="n">cq</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span> <span class="o">+</span> <span class="s">&#39;}&#39;</span>
-
-        <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-        <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-
-        <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_type</span><span class="p">,</span> <span class="n">value_type</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param key_type: a column class indicating the types of the key</span>
@@ -906,6 +893,8 @@
             <span class="k">return</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;{} {} is not a dict object&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">None</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{} None is not allowed in a map&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">))</span>
         <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key_col</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
     <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
@@ -917,9 +906,7 @@
     <span class="k">def</span> <span class="nf">to_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">value</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Quoter</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">key_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_col</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">sub_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -951,7 +938,7 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param type user_type: specifies the :class:`~.UserType` model of the column</span>
+<span class="sd">        :param type user_type: specifies the :class:`~.cqlengine.usertype.UserType` model of the column</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">user_type</span> <span class="o">=</span> <span class="n">user_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">db_type</span> <span class="o">=</span> <span class="s">&quot;frozen&lt;</span><span class="si">%s</span><span class="s">&gt;&quot;</span> <span class="o">%</span> <span class="n">user_type</span><span class="o">.</span><span class="n">type_name</span><span class="p">()</span>
@@ -1007,7 +994,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

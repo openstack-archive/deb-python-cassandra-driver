@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.auth &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra.auth &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -81,6 +81,7 @@
     <span class="kn">from</span> <span class="nn">puresasl.client</span> <span class="kn">import</span> <span class="n">SASLClient</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="n">SASLClient</span> <span class="o">=</span> <span class="bp">None</span>
+
 
 <div class="viewcode-block" id="AuthProvider"><a class="viewcode-back" href="../../api/cassandra/auth.html#cassandra.auth.AuthProvider">[docs]</a><span class="k">class</span> <span class="nc">AuthProvider</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -206,8 +207,7 @@
 <span class="sd">        from cassandra.cluster import Cluster</span>
 <span class="sd">        from cassandra.auth import SaslAuthProvider</span>
 
-<span class="sd">        sasl_kwargs = {&#39;host&#39;: &#39;localhost&#39;,</span>
-<span class="sd">                       &#39;service&#39;: &#39;dse&#39;,</span>
+<span class="sd">        sasl_kwargs = {&#39;service&#39;: &#39;dse&#39;,</span>
 <span class="sd">                       &#39;mechanism&#39;: &#39;GSSAPI&#39;,</span>
 <span class="sd">                       &#39;qops&#39;: &#39;auth&#39;.split(&#39;,&#39;)}</span>
 <span class="sd">        auth_provider = SaslAuthProvider(**sasl_kwargs)</span>
@@ -219,10 +219,13 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">sasl_kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">SASLClient</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s">&#39;The puresasl library has not been installed&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s">&#39;host&#39;</span> <span class="ow">in</span> <span class="n">sasl_kwargs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;kwargs should not contain &#39;host&#39; since it is passed dynamically to new_authenticator&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sasl_kwargs</span> <span class="o">=</span> <span class="n">sasl_kwargs</span>
 
     <span class="k">def</span> <span class="nf">new_authenticator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">SaslAuthenticator</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">sasl_kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SaslAuthenticator</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">sasl_kwargs</span><span class="p">)</span>
+
 </div>
 <div class="viewcode-block" id="SaslAuthenticator"><a class="viewcode-back" href="../../api/cassandra/auth.html#cassandra.auth.SaslAuthenticator">[docs]</a><span class="k">class</span> <span class="nc">SaslAuthenticator</span><span class="p">(</span><span class="n">Authenticator</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -258,7 +261,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

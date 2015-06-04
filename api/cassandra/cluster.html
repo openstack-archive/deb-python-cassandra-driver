@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" />
     <link rel="prev" title="cassandra - Exceptions and Enums" href="../cassandra.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -181,12 +181,20 @@ and returns a dict of credentials for that node.</p>
 <dt id="cassandra.cluster.Cluster.load_balancing_policy">
 <tt class="descname">load_balancing_policy</tt><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.load_balancing_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.LoadBalancingPolicy" title="cassandra.policies.LoadBalancingPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.LoadBalancingPolicy</span></tt></a> or
-one of its subclasses.  Defaults to <a class="reference internal" href="policies.html#cassandra.policies.RoundRobinPolicy" title="cassandra.policies.RoundRobinPolicy"><tt class="xref py py-class docutils literal"><span class="pre">RoundRobinPolicy</span></tt></a>.</p>
+one of its subclasses.</p>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 2.6.0.</span></p>
+</div>
+<p>Defaults to <a class="reference internal" href="policies.html#cassandra.policies.TokenAwarePolicy" title="cassandra.policies.TokenAwarePolicy"><tt class="xref py py-class docutils literal"><span class="pre">TokenAwarePolicy</span></tt></a> (<a class="reference internal" href="policies.html#cassandra.policies.DCAwareRoundRobinPolicy" title="cassandra.policies.DCAwareRoundRobinPolicy"><tt class="xref py py-class docutils literal"><span class="pre">DCAwareRoundRobinPolicy</span></tt></a>).
+when using CPython (where the murmur3 extension is available). <a class="reference internal" href="policies.html#cassandra.policies.DCAwareRoundRobinPolicy" title="cassandra.policies.DCAwareRoundRobinPolicy"><tt class="xref py py-class docutils literal"><span class="pre">DCAwareRoundRobinPolicy</span></tt></a>
+otherwise. Default local DC will be chosen from contact points.</p>
+<p><strong>Please see</strong> <a class="reference internal" href="policies.html#cassandra.policies.DCAwareRoundRobinPolicy" title="cassandra.policies.DCAwareRoundRobinPolicy"><tt class="xref py py-class docutils literal"><span class="pre">DCAwareRoundRobinPolicy</span></tt></a> <strong>for a discussion on default behavior with respect to
+DC locality and remote nodes.</strong></p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.reconnection_policy">
-<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x104957650&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">reconnection_policy</tt><em class="property"> = &lt;cassandra.policies.ExponentialReconnectionPolicy object at 0x1064ccc10&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.reconnection_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.ReconnectionPolicy</span></tt></a>. Defaults to an instance
 of <a class="reference internal" href="policies.html#cassandra.policies.ExponentialReconnectionPolicy" title="cassandra.policies.ExponentialReconnectionPolicy"><tt class="xref py py-class docutils literal"><span class="pre">ExponentialReconnectionPolicy</span></tt></a> with a base delay of one second and
 a max delay of ten minutes.</p>
@@ -194,7 +202,7 @@ a max delay of ten minutes.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.default_retry_policy">
-<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x104957690&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">default_retry_policy</tt><em class="property"> = &lt;cassandra.policies.RetryPolicy object at 0x1064ccc50&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.default_retry_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A default <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> instance to use for all
 <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><tt class="xref py py-class docutils literal"><span class="pre">Statement</span></tt></a> objects which do not have a <a class="reference internal" href="query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">retry_policy</span></tt></a>
 explicitly set.</p>
@@ -320,6 +328,14 @@ receiving a topology_change event.</p>
 <p>See <a class="reference internal" href="#cassandra.cluster.Cluster.schema_event_refresh_window" title="cassandra.cluster.Cluster.schema_event_refresh_window"><tt class="xref py py-attr docutils literal"><span class="pre">schema_event_refresh_window</span></tt></a> for discussion of rationale</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.connect_timeout">
+<tt class="descname">connect_timeout</tt><em class="property"> = 5</em><a class="headerlink" href="#cassandra.cluster.Cluster.connect_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Timeout, in seconds, for creating new connections.</p>
+<p>This timeout covers the entire connection negotiation, including TCP
+establishment, options passing, and authentication.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="cassandra.cluster.Cluster.connect">
 <tt class="descname">connect</tt><big>(</big><em>keyspace=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.connect" title="Permalink to this definition">¶</a></dt>
@@ -397,6 +413,34 @@ marked up, or marked down.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="cassandra.cluster.Cluster.set_max_requests_per_connection">
+<tt class="descname">set_max_requests_per_connection</tt><big>(</big><em>host_distance</em>, <em>max_requests</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.set_max_requests_per_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.set_max_requests_per_connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a threshold for concurrent requests per connection, above which new
+connections will be created to a host (up to max connections;
+see <a class="reference internal" href="#cassandra.cluster.Cluster.set_max_connections_per_host" title="cassandra.cluster.Cluster.set_max_connections_per_host"><tt class="xref py py-meth docutils literal"><span class="pre">set_max_connections_per_host()</span></tt></a>).</p>
+<p>Pertains to connection pool management in protocol versions {1,2}.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.get_max_requests_per_connection">
+<tt class="descname">get_max_requests_per_connection</tt><big>(</big><em>host_distance</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.get_max_requests_per_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.get_max_requests_per_connection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.set_min_requests_per_connection">
+<tt class="descname">set_min_requests_per_connection</tt><big>(</big><em>host_distance</em>, <em>min_requests</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.set_min_requests_per_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.set_min_requests_per_connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a threshold for concurrent requests per connection, below which
+connections will be considered for disposal (down to core connections;
+see <a class="reference internal" href="#cassandra.cluster.Cluster.set_core_connections_per_host" title="cassandra.cluster.Cluster.set_core_connections_per_host"><tt class="xref py py-meth docutils literal"><span class="pre">set_core_connections_per_host()</span></tt></a>).</p>
+<p>Pertains to connection pool management in protocol versions {1,2}.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.get_min_requests_per_connection">
+<tt class="descname">get_min_requests_per_connection</tt><big>(</big><em>host_distance</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.get_min_requests_per_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.get_min_requests_per_connection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="cassandra.cluster.Cluster.get_core_connections_per_host">
 <tt class="descname">get_core_connections_per_host</tt><big>(</big><em>host_distance</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.get_core_connections_per_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.get_core_connections_per_host" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets the minimum number of connections per Session that will be opened
@@ -414,6 +458,9 @@ The default is 2 for <tt class="xref py py-attr docutils literal"><span class="p
 for each host with <a class="reference internal" href="policies.html#cassandra.policies.HostDistance" title="cassandra.policies.HostDistance"><tt class="xref py py-class docutils literal"><span class="pre">HostDistance</span></tt></a> equal to <cite>host_distance</cite>.
 The default is 2 for <tt class="xref py py-attr docutils literal"><span class="pre">LOCAL</span></tt> and 1 for
 <tt class="xref py py-attr docutils literal"><span class="pre">REMOTE</span></tt>.</p>
+<p>Protocol version 1 and 2 are limited in the number of concurrent
+requests they can send per connection. The driver implements connection
+pooling to support higher levels of concurrency.</p>
 <p>If <a class="reference internal" href="#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> is set to 3 or higher, this
 is not supported (there is always one connection per host, unless
 the host is remote and <tt class="xref py py-attr docutils literal"><span class="pre">connect_to_remote_hosts</span></tt> is <tt class="xref py py-const docutils literal"><span class="pre">False</span></tt>)
@@ -445,9 +492,70 @@ and using this will result in an <tt class="xref py py-exc docutils literal"><sp
 </dd></dl>
 
 <dl class="method">
+<dt id="cassandra.cluster.Cluster.refresh_schema_metadata">
+<tt class="descname">refresh_schema_metadata</tt><big>(</big><em>max_schema_agreement_wait=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_schema_metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_schema_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Synchronously refresh all schema metadata.</p>
+<p>By default, the timeout for this operation is governed by <a class="reference internal" href="#cassandra.cluster.Cluster.max_schema_agreement_wait" title="cassandra.cluster.Cluster.max_schema_agreement_wait"><tt class="xref py py-attr docutils literal"><span class="pre">max_schema_agreement_wait</span></tt></a>
+and <a class="reference internal" href="#cassandra.cluster.Cluster.control_connection_timeout" title="cassandra.cluster.Cluster.control_connection_timeout"><tt class="xref py py-attr docutils literal"><span class="pre">control_connection_timeout</span></tt></a>.</p>
+<p>Passing max_schema_agreement_wait here overrides <a class="reference internal" href="#cassandra.cluster.Cluster.max_schema_agreement_wait" title="cassandra.cluster.Cluster.max_schema_agreement_wait"><tt class="xref py py-attr docutils literal"><span class="pre">max_schema_agreement_wait</span></tt></a>.</p>
+<p>Setting max_schema_agreement_wait &lt;= 0 will bypass schema agreement and refresh schema immediately.</p>
+<p>An Exception is raised if schema refresh fails for any reason.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.refresh_keyspace_metadata">
+<tt class="descname">refresh_keyspace_metadata</tt><big>(</big><em>keyspace</em>, <em>max_schema_agreement_wait=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_keyspace_metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_keyspace_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Synchronously refresh keyspace metadata. This applies to keyspace-level information such as replication
+and durability settings. It does not refresh tables, types, etc. contained in the keyspace.</p>
+<p>See <a class="reference internal" href="#cassandra.cluster.Cluster.refresh_schema_metadata" title="cassandra.cluster.Cluster.refresh_schema_metadata"><tt class="xref py py-meth docutils literal"><span class="pre">refresh_schema_metadata()</span></tt></a> for description of <tt class="docutils literal"><span class="pre">max_schema_agreement_wait</span></tt> behavior</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.refresh_table_metadata">
+<tt class="descname">refresh_table_metadata</tt><big>(</big><em>keyspace</em>, <em>table</em>, <em>max_schema_agreement_wait=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_table_metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_table_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Synchronously refresh table metadata. This applies to a table, and any triggers or indexes attached
+to the table.</p>
+<p>See <a class="reference internal" href="#cassandra.cluster.Cluster.refresh_schema_metadata" title="cassandra.cluster.Cluster.refresh_schema_metadata"><tt class="xref py py-meth docutils literal"><span class="pre">refresh_schema_metadata()</span></tt></a> for description of <tt class="docutils literal"><span class="pre">max_schema_agreement_wait</span></tt> behavior</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.refresh_user_type_metadata">
+<tt class="descname">refresh_user_type_metadata</tt><big>(</big><em>keyspace</em>, <em>user_type</em>, <em>max_schema_agreement_wait=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_user_type_metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_user_type_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Synchronously refresh user defined type metadata.</p>
+<p>See <a class="reference internal" href="#cassandra.cluster.Cluster.refresh_schema_metadata" title="cassandra.cluster.Cluster.refresh_schema_metadata"><tt class="xref py py-meth docutils literal"><span class="pre">refresh_schema_metadata()</span></tt></a> for description of <tt class="docutils literal"><span class="pre">max_schema_agreement_wait</span></tt> behavior</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.refresh_user_function_metadata">
+<tt class="descname">refresh_user_function_metadata</tt><big>(</big><em>keyspace</em>, <em>function</em>, <em>max_schema_agreement_wait=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_user_function_metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_user_function_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Synchronously refresh user defined function metadata.</p>
+<p><tt class="docutils literal"><span class="pre">function</span></tt> is a <a class="reference internal" href="../cassandra.html#cassandra.UserFunctionDescriptor" title="cassandra.UserFunctionDescriptor"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.UserFunctionDescriptor</span></tt></a>.</p>
+<p>See <a class="reference internal" href="#cassandra.cluster.Cluster.refresh_schema_metadata" title="cassandra.cluster.Cluster.refresh_schema_metadata"><tt class="xref py py-meth docutils literal"><span class="pre">refresh_schema_metadata()</span></tt></a> for description of <tt class="docutils literal"><span class="pre">max_schema_agreement_wait</span></tt> behavior</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Cluster.refresh_user_aggregate_metadata">
+<tt class="descname">refresh_user_aggregate_metadata</tt><big>(</big><em>keyspace</em>, <em>aggregate</em>, <em>max_schema_agreement_wait=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_user_aggregate_metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_user_aggregate_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Synchronously refresh user defined aggregate metadata.</p>
+<p><tt class="docutils literal"><span class="pre">aggregate</span></tt> is a <a class="reference internal" href="../cassandra.html#cassandra.UserAggregateDescriptor" title="cassandra.UserAggregateDescriptor"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.UserAggregateDescriptor</span></tt></a>.</p>
+<p>See <a class="reference internal" href="#cassandra.cluster.Cluster.refresh_schema_metadata" title="cassandra.cluster.Cluster.refresh_schema_metadata"><tt class="xref py py-meth docutils literal"><span class="pre">refresh_schema_metadata()</span></tt></a> for description of <tt class="docutils literal"><span class="pre">max_schema_agreement_wait</span></tt> behavior</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="cassandra.cluster.Cluster.refresh_schema">
-<tt class="descname">refresh_schema</tt><big>(</big><em>keyspace=None</em>, <em>table=None</em>, <em>usertype=None</em>, <em>max_schema_agreement_wait=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_schema" title="Permalink to this definition">¶</a></dt>
-<dd><p>Synchronously refresh the schema metadata.</p>
+<tt class="descname">refresh_schema</tt><big>(</big><em>keyspace=None</em>, <em>table=None</em>, <em>usertype=None</em>, <em>function=None</em>, <em>aggregate=None</em>, <em>max_schema_agreement_wait=None</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_schema" title="Permalink to this definition">¶</a></dt>
+<dd><div class="deprecated">
+<p><span class="versionmodified">Deprecated since version 2.6.0: </span>Use refresh_*_metadata instead</p>
+</div>
+<p>Synchronously refresh schema metadata.</p>
+<p>{keyspace, table, usertype} are string names of the respective entities.
+<tt class="docutils literal"><span class="pre">function</span></tt> is a <a class="reference internal" href="../cassandra.html#cassandra.UserFunctionDescriptor" title="cassandra.UserFunctionDescriptor"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.UserFunctionDescriptor</span></tt></a>.
+<tt class="docutils literal"><span class="pre">aggregate</span></tt> is a <a class="reference internal" href="../cassandra.html#cassandra.UserAggregateDescriptor" title="cassandra.UserAggregateDescriptor"><tt class="xref py py-class docutils literal"><span class="pre">cassandra.UserAggregateDescriptor</span></tt></a>.</p>
+<p>If none of <tt class="docutils literal"><span class="pre">{keyspace,</span> <span class="pre">table,</span> <span class="pre">usertype,</span> <span class="pre">function,</span> <span class="pre">aggregate}</span></tt> are specified, the entire schema is refreshed.</p>
+<p>If any of <tt class="docutils literal"><span class="pre">{keyspace,</span> <span class="pre">table,</span> <span class="pre">usertype,</span> <span class="pre">function,</span> <span class="pre">aggregate}</span></tt> are specified, <tt class="docutils literal"><span class="pre">keyspace</span></tt> is required.</p>
+<p>If only <tt class="docutils literal"><span class="pre">keyspace</span></tt> is specified, just the top-level keyspace metadata is refreshed (e.g. replication).</p>
+<p>The remaining arguments <tt class="docutils literal"><span class="pre">{table,</span> <span class="pre">usertype,</span> <span class="pre">function,</span> <span class="pre">aggregate}</span></tt>
+are mutually exclusive &#8211; only one may be specified.</p>
 <p>By default, the timeout for this operation is governed by <a class="reference internal" href="#cassandra.cluster.Cluster.max_schema_agreement_wait" title="cassandra.cluster.Cluster.max_schema_agreement_wait"><tt class="xref py py-attr docutils literal"><span class="pre">max_schema_agreement_wait</span></tt></a>
 and <a class="reference internal" href="#cassandra.cluster.Cluster.control_connection_timeout" title="cassandra.cluster.Cluster.control_connection_timeout"><tt class="xref py py-attr docutils literal"><span class="pre">control_connection_timeout</span></tt></a>.</p>
 <p>Passing max_schema_agreement_wait here overrides <a class="reference internal" href="#cassandra.cluster.Cluster.max_schema_agreement_wait" title="cassandra.cluster.Cluster.max_schema_agreement_wait"><tt class="xref py py-attr docutils literal"><span class="pre">max_schema_agreement_wait</span></tt></a>.</p>
@@ -497,10 +605,8 @@ methods.</p>
 overridden with the <cite>timeout</cite> parameter for either of those methods
 or the <cite>timeout</cite> parameter for <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.result()</span></tt></a>.</p>
 <p>Setting this to <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt> will cause no timeouts to be set by default.</p>
-<p><strong>Important</strong>: This timeout currently has no effect on callbacks registered
-on a <a class="reference internal" href="#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><tt class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></tt></a> through <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_callback()</span></tt></a> or
-<a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_errback" title="cassandra.cluster.ResponseFuture.add_errback"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_errback()</span></tt></a>; even if a query exceeds this default
-timeout, neither the registered callback or errback will be called.</p>
+<p>Please see <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.result()</span></tt></a> for details on the scope and
+effect of this timeout.</p>
 <div class="versionadded">
 <p><span class="versionmodified">New in version 2.0.0.</span></p>
 </div>
@@ -508,7 +614,7 @@ timeout, neither the registered callback or errback will be called.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Session.row_factory">
-<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x104951140&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">row_factory</tt><em class="property"> = &lt;function named_tuple_factory at 0x1064c9488&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.row_factory" title="Permalink to this definition">¶</a></dt>
 <dd><p>The format to return row results in.  By default, each
 returned row will be a named tuple.  You can alternatively
 use any of the following:</p>
@@ -590,7 +696,8 @@ be used.</p>
 which an <a class="reference internal" href="../cassandra.html#cassandra.OperationTimedOut" title="cassandra.OperationTimedOut"><tt class="xref py py-exc docutils literal"><span class="pre">OperationTimedOut</span></tt></a> exception will be raised if the query
 has not completed.  If not set, the timeout defaults to
 <a class="reference internal" href="#cassandra.cluster.Session.default_timeout" title="cassandra.cluster.Session.default_timeout"><tt class="xref py py-attr docutils literal"><span class="pre">default_timeout</span></tt></a>.  If set to <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt>, there is
-no timeout.</p>
+no timeout. Please see <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.result()</span></tt></a> for details on
+the scope and effect of this timeout.</p>
 <p>If <cite>trace</cite> is set to <tt class="xref py py-const docutils literal"><span class="pre">True</span></tt>, an attempt will be made to
 fetch the trace details and attach them to the <cite>query</cite>&#8216;s
 <a class="reference internal" href="query.html#cassandra.query.Statement.trace" title="cassandra.query.Statement.trace"><tt class="xref py py-attr docutils literal"><span class="pre">trace</span></tt></a> attribute in the form of a <a class="reference internal" href="query.html#cassandra.query.QueryTrace" title="cassandra.query.QueryTrace"><tt class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></tt></a>
@@ -598,6 +705,9 @@ instance.  This requires that <cite>query</cite> be a <a class="reference intern
 instance and not just a string.  If there is an error fetching the
 trace details, the <a class="reference internal" href="query.html#cassandra.query.Statement.trace" title="cassandra.query.Statement.trace"><tt class="xref py py-attr docutils literal"><span class="pre">trace</span></tt></a> attribute will be left as
 <tt class="xref py py-const docutils literal"><span class="pre">None</span></tt>.</p>
+<p><cite>custom_payload</cite> is a <a class="reference internal" href="protocol.html#custom-payload"><em>Custom Payload</em></a> dict to be passed to the server.
+If <cite>query</cite> is a Statement with its own custom_payload. The message payload
+will be a union of the two, with the values specified here taking precedence.</p>
 </dd></dl>
 
 <dl class="method">
@@ -611,6 +721,12 @@ any time.</p>
 <p>If <cite>trace</cite> is set to <tt class="xref py py-const docutils literal"><span class="pre">True</span></tt>, you may call
 <a class="reference internal" href="#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></tt></a> after the request
 completes to retrieve a <a class="reference internal" href="query.html#cassandra.query.QueryTrace" title="cassandra.query.QueryTrace"><tt class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></tt></a> instance.</p>
+<p><cite>custom_payload</cite> is a <a class="reference internal" href="protocol.html#custom-payload"><em>Custom Payload</em></a> dict to be passed to the server.
+If <cite>query</cite> is a Statement with its own custom_payload. The message payload
+will be a union of the two, with the values specified here taking precedence.</p>
+<p>If the server sends a custom payload in the response message,
+the dict can be obtained following <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.result()</span></tt></a> via
+<a class="reference internal" href="#cassandra.cluster.ResponseFuture.custom_payload" title="cassandra.cluster.ResponseFuture.custom_payload"><tt class="xref py py-attr docutils literal"><span class="pre">ResponseFuture.custom_payload</span></tt></a></p>
 <p>Example usage:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
@@ -640,7 +756,7 @@ completes to retrieve a <a class="reference internal" href="query.html#cassandra
 <dl class="method">
 <dt id="cassandra.cluster.Session.prepare">
 <tt class="descname">prepare</tt><big>(</big><em>statement</em><big>)</big><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.prepare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.prepare" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prepares a query string, returing a <a class="reference internal" href="query.html#cassandra.query.PreparedStatement" title="cassandra.query.PreparedStatement"><tt class="xref py py-class docutils literal"><span class="pre">PreparedStatement</span></tt></a>
+<dd><p>Prepares a query string, returning a <a class="reference internal" href="query.html#cassandra.query.PreparedStatement" title="cassandra.query.PreparedStatement"><tt class="xref py py-class docutils literal"><span class="pre">PreparedStatement</span></tt></a>
 instance which can be used as follows:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">&quot;mykeyspace&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="s">&quot;INSERT INTO users (id, name, age) VALUES (?, ?, ?)&quot;</span>
@@ -663,6 +779,8 @@ instance which can be used as follows:</p>
 </div>
 <p><strong>Important</strong>: PreparedStatements should be prepared only once.
 Preparing the same query more than once will likely affect performance.</p>
+<p><cite>custom_payload</cite> is a key value map to be passed along with the prepare
+message. See <a class="reference internal" href="protocol.html#custom-payload"><em>Custom Payload</em></a>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -712,8 +830,17 @@ yet, this method will block until that time.</p>
 <p>You may set a timeout (in seconds) with the <cite>timeout</cite> parameter.
 By default, the <a class="reference internal" href="#cassandra.cluster.Session.default_timeout" title="cassandra.cluster.Session.default_timeout"><tt class="xref py py-attr docutils literal"><span class="pre">default_timeout</span></tt></a> for the <a class="reference internal" href="#cassandra.cluster.Session" title="cassandra.cluster.Session"><tt class="xref py py-class docutils literal"><span class="pre">Session</span></tt></a>
 this was created through will be used for the timeout on this
-operation.  If the timeout is exceeded, an
-<a class="reference internal" href="../cassandra.html#cassandra.OperationTimedOut" title="cassandra.OperationTimedOut"><tt class="xref py py-exc docutils literal"><span class="pre">cassandra.OperationTimedOut</span></tt></a> will be raised.</p>
+operation.</p>
+<p>This timeout applies to the entire request, including any retries
+(decided internally by the <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> used with
+the request).</p>
+<p>If the timeout is exceeded, an <a class="reference internal" href="../cassandra.html#cassandra.OperationTimedOut" title="cassandra.OperationTimedOut"><tt class="xref py py-exc docutils literal"><span class="pre">cassandra.OperationTimedOut</span></tt></a> will be raised.
+This is a client-side timeout. For more information
+about server-side coordinator timeouts, see <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a>.</p>
+<p><strong>Important</strong>: This timeout currently has no effect on callbacks registered
+on a <a class="reference internal" href="#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><tt class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></tt></a> through <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_callback()</span></tt></a> or
+<a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_errback" title="cassandra.cluster.ResponseFuture.add_errback"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_errback()</span></tt></a>; even if a query exceeds this default
+timeout, neither the registered callback or errback will be called.</p>
 <p>Example usage:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># do other stuff...</span>
@@ -740,6 +867,25 @@ trace is not available after <cite>max_wait</cite> seconds,
 </dd></dl>
 
 <dl class="attribute">
+<dt id="cassandra.cluster.ResponseFuture.custom_payload">
+<tt class="descname">custom_payload</tt><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResponseFuture.custom_payload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResponseFuture.custom_payload" title="Permalink to this definition">¶</a></dt>
+<dd><p>The custom payload returned from the server, if any. This will only be
+set by Cassandra servers implementing a custom QueryHandler, and only
+for protocol_version 4+.</p>
+<p>Ensure the future is complete before trying to access this property
+(call <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><tt class="xref py py-meth docutils literal"><span class="pre">result()</span></tt></a>, or after callback is invoked).
+Otherwise it may throw if the response has not been received.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><a class="reference internal" href="protocol.html#custom-payload"><em>Custom Payload</em></a>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="cassandra.cluster.ResponseFuture.has_more_pages">
 <tt class="descname">has_more_pages</tt><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResponseFuture.has_more_pages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResponseFuture.has_more_pages" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns <tt class="xref py py-const docutils literal"><span class="pre">True</span></tt> if there are more pages left in the
@@ -748,6 +894,18 @@ be checked after the first page has been returned.</p>
 <div class="versionadded">
 <p><span class="versionmodified">New in version 2.0.0.</span></p>
 </div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.ResponseFuture.warnings">
+<tt class="descname">warnings</tt><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResponseFuture.warnings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResponseFuture.warnings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Warnings returned from the server, if any. This will only be
+set for protocol_version 4+.</p>
+<p>Warnings may be returned for such things as oversized batches,
+or too many tombstones in slice queries.</p>
+<p>Ensure the future is complete before trying to access this property
+(call <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><tt class="xref py py-meth docutils literal"><span class="pre">result()</span></tt></a>, or after callback is invoked).
+Otherwise it may throw if the response has not been received.</p>
 </dd></dl>
 
 <dl class="method">
@@ -903,7 +1061,7 @@ against.</p>
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              >previous</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

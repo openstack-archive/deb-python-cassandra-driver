@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.util &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra.util &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -963,6 +963,9 @@
                                 <span class="n">t</span><span class="o">.</span><span class="n">second</span> <span class="o">*</span> <span class="n">Time</span><span class="o">.</span><span class="n">SECOND</span> <span class="o">+</span>
                                 <span class="n">t</span><span class="o">.</span><span class="n">microsecond</span> <span class="o">*</span> <span class="n">Time</span><span class="o">.</span><span class="n">MICRO</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span>
+
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Time</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">nanosecond_time</span>
@@ -974,6 +977,9 @@
             <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">second</span><span class="p">,</span>
                           <span class="n">microsecond</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nanosecond</span> <span class="o">//</span> <span class="n">Time</span><span class="o">.</span><span class="n">MICRO</span><span class="p">)</span> <span class="o">==</span> <span class="n">other</span>
 
+    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">nanosecond_time</span>
+
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&quot;Time(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanosecond_time</span>
 
@@ -984,7 +990,7 @@
 </div>
 <div class="viewcode-block" id="Date"><a class="viewcode-back" href="../../api/cassandra/util.html#cassandra.util.Date">[docs]</a><span class="k">class</span> <span class="nc">Date</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Idealized naive date: year, month, day</span>
+<span class="sd">    Idealized date: year, month, day</span>
 
 <span class="sd">    Offers wider year range than datetime.date. For Dates that cannot be represented</span>
 <span class="sd">    as a datetime.date (because datetime.MINYEAR, datetime.MAXYEAR), this type falls back</span>
@@ -1044,6 +1050,9 @@
         <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_format</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_from_timetuple</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">timetuple</span><span class="p">())</span>
 
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span>
+
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Date</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">days_from_epoch</span>
@@ -1056,6 +1065,9 @@
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">False</span>
 
+    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">days_from_epoch</span>
+
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&quot;Date(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span>
 
@@ -1064,8 +1076,97 @@
             <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime_from_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seconds</span><span class="p">)</span>
             <span class="k">return</span> <span class="s">&quot;</span><span class="si">%04d</span><span class="s">-</span><span class="si">%02d</span><span class="s">-</span><span class="si">%02d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">day</span><span class="p">)</span>
         <span class="k">except</span><span class="p">:</span>
-            <span class="c"># If we overflow datetime.[MIN|M</span>
-            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span><span class="p">)</span></div>
+            <span class="c"># If we overflow datetime.[MIN|MAX]</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">days_from_epoch</span><span class="p">)</span>
+</div>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="s">&#39;inet_pton&#39;</span><span class="p">):</span>
+    <span class="n">inet_pton</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">inet_pton</span>
+    <span class="n">inet_ntop</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">inet_ntop</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Windows doesn&#39;t have socket.inet_pton and socket.inet_ntop until Python 3.4</span>
+<span class="sd">    This is an alternative impl using ctypes, based on this win_inet_pton project:</span>
+<span class="sd">    https://github.com/hickeroar/win_inet_pton</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">ctypes</span>
+
+    <span class="k">class</span> <span class="nc">sockaddr</span><span class="p">(</span><span class="n">ctypes</span><span class="o">.</span><span class="n">Structure</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Shared struct for ipv4 and ipv6.</span>
+
+<span class="sd">        https://msdn.microsoft.com/en-us/library/windows/desktop/ms740496(v=vs.85).aspx</span>
+
+<span class="sd">        ``__pad1`` always covers the port.</span>
+
+<span class="sd">        When being used for ``sockaddr_in6``, ``ipv4_addr`` actually covers ``sin6_flowinfo``, resulting</span>
+<span class="sd">        in proper alignment for ``ipv6_addr``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_fields_</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&quot;sa_family&quot;</span><span class="p">,</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_short</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s">&quot;__pad1&quot;</span><span class="p">,</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_ushort</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s">&quot;ipv4_addr&quot;</span><span class="p">,</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_byte</span> <span class="o">*</span> <span class="mi">4</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s">&quot;ipv6_addr&quot;</span><span class="p">,</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_byte</span> <span class="o">*</span> <span class="mi">16</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s">&quot;__pad2&quot;</span><span class="p">,</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_ulong</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ctypes</span><span class="p">,</span> <span class="s">&#39;windll&#39;</span><span class="p">):</span>
+        <span class="n">WSAStringToAddressA</span> <span class="o">=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">windll</span><span class="o">.</span><span class="n">ws2_32</span><span class="o">.</span><span class="n">WSAStringToAddressA</span>
+        <span class="n">WSAAddressToStringA</span> <span class="o">=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">windll</span><span class="o">.</span><span class="n">ws2_32</span><span class="o">.</span><span class="n">WSAAddressToStringA</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">not_windows</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;IPv6 addresses cannot be handled on Windows. &quot;</span>
+                            <span class="s">&quot;Missing ctypes.windll&quot;</span><span class="p">)</span>
+        <span class="n">WSAStringToAddressA</span> <span class="o">=</span> <span class="n">not_windows</span>
+        <span class="n">WSAAddressToStringA</span> <span class="o">=</span> <span class="n">not_windows</span>
+
+    <span class="k">def</span> <span class="nf">inet_pton</span><span class="p">(</span><span class="n">address_family</span><span class="p">,</span> <span class="n">ip_string</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">address_family</span> <span class="o">==</span> <span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">socket</span><span class="o">.</span><span class="n">inet_aton</span><span class="p">(</span><span class="n">ip_string</span><span class="p">)</span>
+
+        <span class="n">addr</span> <span class="o">=</span> <span class="n">sockaddr</span><span class="p">()</span>
+        <span class="n">addr</span><span class="o">.</span><span class="n">sa_family</span> <span class="o">=</span> <span class="n">address_family</span>
+        <span class="n">addr_size</span> <span class="o">=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_int</span><span class="p">(</span><span class="n">ctypes</span><span class="o">.</span><span class="n">sizeof</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">WSAStringToAddressA</span><span class="p">(</span>
+                <span class="n">ip_string</span><span class="p">,</span>
+                <span class="n">address_family</span><span class="p">,</span>
+                <span class="bp">None</span><span class="p">,</span>
+                <span class="n">ctypes</span><span class="o">.</span><span class="n">byref</span><span class="p">(</span><span class="n">addr</span><span class="p">),</span>
+                <span class="n">ctypes</span><span class="o">.</span><span class="n">byref</span><span class="p">(</span><span class="n">addr_size</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">ctypes</span><span class="o">.</span><span class="n">FormatError</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="n">address_family</span> <span class="o">==</span> <span class="n">socket</span><span class="o">.</span><span class="n">AF_INET6</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">string_at</span><span class="p">(</span><span class="n">addr</span><span class="o">.</span><span class="n">ipv6_addr</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+
+        <span class="k">raise</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;unknown address family&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">inet_ntop</span><span class="p">(</span><span class="n">address_family</span><span class="p">,</span> <span class="n">packed_ip</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">address_family</span> <span class="o">==</span> <span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">socket</span><span class="o">.</span><span class="n">inet_ntoa</span><span class="p">(</span><span class="n">packed_ip</span><span class="p">)</span>
+
+        <span class="n">addr</span> <span class="o">=</span> <span class="n">sockaddr</span><span class="p">()</span>
+        <span class="n">addr</span><span class="o">.</span><span class="n">sa_family</span> <span class="o">=</span> <span class="n">address_family</span>
+        <span class="n">addr_size</span> <span class="o">=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_int</span><span class="p">(</span><span class="n">ctypes</span><span class="o">.</span><span class="n">sizeof</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span>
+        <span class="n">ip_string</span> <span class="o">=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">create_string_buffer</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span>
+        <span class="n">ip_string_size</span> <span class="o">=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_int</span><span class="p">(</span><span class="n">ctypes</span><span class="o">.</span><span class="n">sizeof</span><span class="p">(</span><span class="n">ip_string</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">address_family</span> <span class="o">==</span> <span class="n">socket</span><span class="o">.</span><span class="n">AF_INET6</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">packed_ip</span><span class="p">)</span> <span class="o">!=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">sizeof</span><span class="p">(</span><span class="n">addr</span><span class="o">.</span><span class="n">ipv6_addr</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;packed IP wrong length for inet_ntoa&#39;</span><span class="p">)</span>
+            <span class="n">ctypes</span><span class="o">.</span><span class="n">memmove</span><span class="p">(</span><span class="n">addr</span><span class="o">.</span><span class="n">ipv6_addr</span><span class="p">,</span> <span class="n">packed_ip</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;unknown address family&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">WSAAddressToStringA</span><span class="p">(</span>
+                <span class="n">ctypes</span><span class="o">.</span><span class="n">byref</span><span class="p">(</span><span class="n">addr</span><span class="p">),</span>
+                <span class="n">addr_size</span><span class="p">,</span>
+                <span class="bp">None</span><span class="p">,</span>
+                <span class="n">ip_string</span><span class="p">,</span>
+                <span class="n">ctypes</span><span class="o">.</span><span class="n">byref</span><span class="p">(</span><span class="n">ip_string_size</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">ctypes</span><span class="o">.</span><span class="n">FormatError</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">ip_string</span><span class="p">[:</span><span class="n">ip_string_size</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
 </pre></div>
 
           </div>
@@ -1082,7 +1183,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

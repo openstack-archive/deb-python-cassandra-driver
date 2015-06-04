@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.management &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra.cqlengine.management &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -148,7 +148,7 @@
         <span class="n">query</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
 <span class="s">        CREATE KEYSPACE {}</span>
 <span class="s">        WITH REPLICATION = {}</span>
-<span class="s">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">replication_map</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&quot;&#39;&quot;</span><span class="p">))</span>
+<span class="s">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">replication_map</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&quot;&#39;&quot;</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">strategy_class</span> <span class="o">!=</span> <span class="s">&#39;SimpleStrategy&#39;</span><span class="p">:</span>
             <span class="n">query</span> <span class="o">+=</span> <span class="s">&quot; AND DURABLE_WRITES = {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;true&#39;</span> <span class="k">if</span> <span class="n">durable_writes</span> <span class="k">else</span> <span class="s">&#39;false&#39;</span><span class="p">)</span>
@@ -230,7 +230,7 @@
 
     <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">:</span>
-        <span class="n">execute</span><span class="p">(</span><span class="s">&quot;DROP KEYSPACE {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="n">execute</span><span class="p">(</span><span class="s">&quot;DROP KEYSPACE {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>
 
 </div>
 <div class="viewcode-block" id="sync_table"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.sync_table">[docs]</a><span class="k">def</span> <span class="nf">sync_table</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
@@ -258,9 +258,8 @@
     <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">__abstract__</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;cannot create table from abstract model&quot;</span><span class="p">)</span>
 
-    <span class="c"># construct query string</span>
     <span class="n">cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()</span>
-    <span class="n">raw_cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(</span><span class="n">include_keyspace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">raw_cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_raw_column_family_name</span><span class="p">()</span>
 
     <span class="n">ks_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()</span>
 
@@ -370,7 +369,7 @@
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;sync_type creating new type </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">type_name_qualified</span><span class="p">)</span>
         <span class="n">cql</span> <span class="o">=</span> <span class="n">get_create_type</span><span class="p">(</span><span class="n">type_model</span><span class="p">,</span> <span class="n">ks_name</span><span class="p">)</span>
         <span class="n">execute</span><span class="p">(</span><span class="n">cql</span><span class="p">)</span>
-        <span class="n">cluster</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="o">=</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">usertype</span><span class="o">=</span><span class="n">type_name</span><span class="p">)</span>
+        <span class="n">cluster</span><span class="o">.</span><span class="n">refresh_user_type_metadata</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_name</span><span class="p">)</span>
         <span class="n">type_model</span><span class="o">.</span><span class="n">register_for_keyspace</span><span class="p">(</span><span class="n">ks_name</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">defined_fields</span> <span class="o">=</span> <span class="n">defined_types</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span><span class="o">.</span><span class="n">field_names</span>
@@ -380,6 +379,8 @@
             <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">defined_fields</span><span class="p">:</span>
                 <span class="n">execute</span><span class="p">(</span><span class="s">&quot;ALTER TYPE {} ADD {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_name_qualified</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">()))</span>
 
+        <span class="n">type_model</span><span class="o">.</span><span class="n">register_for_keyspace</span><span class="p">(</span><span class="n">ks_name</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">defined_fields</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_fields</span><span class="p">):</span>
             <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Type </span><span class="si">%s</span><span class="s"> did not require synchronization&quot;</span><span class="p">,</span> <span class="n">type_name_qualified</span><span class="p">)</span>
             <span class="k">return</span>
@@ -387,8 +388,6 @@
         <span class="n">db_fields_not_in_model</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">defined_fields</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">db_fields_not_in_model</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Type </span><span class="si">%s</span><span class="s"> has fields not referenced by model: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">type_name_qualified</span><span class="p">,</span> <span class="n">db_fields_not_in_model</span><span class="p">)</span>
-
-        <span class="n">type_model</span><span class="o">.</span><span class="n">register_for_keyspace</span><span class="p">(</span><span class="n">ks_name</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">get_create_type</span><span class="p">(</span><span class="n">type_model</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">):</span>
@@ -500,7 +499,7 @@
 <span class="k">def</span> <span class="nf">get_fields</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
     <span class="c"># returns all fields that aren&#39;t part of the PK</span>
     <span class="n">ks_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()</span>
-    <span class="n">col_family</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(</span><span class="n">include_keyspace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">col_family</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_raw_column_family_name</span><span class="p">()</span>
     <span class="n">field_types</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;regular&#39;</span><span class="p">,</span> <span class="s">&#39;static&#39;</span><span class="p">]</span>
     <span class="n">query</span> <span class="o">=</span> <span class="s">&quot;select * from system.schema_columns where keyspace_name = </span><span class="si">%s</span><span class="s"> and columnfamily_name = </span><span class="si">%s</span><span class="s">&quot;</span>
     <span class="n">tmp</span> <span class="o">=</span> <span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">[</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">col_family</span><span class="p">])</span>
@@ -519,7 +518,7 @@
     <span class="c"># returns the table as provided by the native driver for a given model</span>
     <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span>
     <span class="n">ks</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()</span>
-    <span class="n">table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(</span><span class="n">include_keyspace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_raw_column_family_name</span><span class="p">()</span>
     <span class="n">table</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks</span><span class="p">]</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">table</span>
 
@@ -587,11 +586,11 @@
     <span class="n">meta</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span><span class="o">.</span><span class="n">metadata</span>
 
     <span class="n">ks_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()</span>
-    <span class="n">raw_cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(</span><span class="n">include_keyspace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">raw_cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_raw_column_family_name</span><span class="p">()</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">meta</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks_name</span><span class="p">]</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">raw_cf_name</span><span class="p">]</span>
-        <span class="n">execute</span><span class="p">(</span><span class="s">&#39;drop table {};&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(</span><span class="n">include_keyspace</span><span class="o">=</span><span class="bp">True</span><span class="p">)))</span>
+        <span class="n">execute</span><span class="p">(</span><span class="s">&#39;DROP TABLE {};&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()))</span>
     <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
         <span class="k">pass</span>
 
@@ -619,7 +618,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

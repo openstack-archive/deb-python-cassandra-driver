@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra &mdash; Cassandra Driver 2.5.1 documentation</title>
+    <title>cassandra &mdash; Cassandra Driver 2.6.0c1 documentation</title>
     
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '2.5.1',
+        VERSION:     '2.6.0c1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.5.1 documentation" href="../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../index.html" />
     <link rel="up" title="Module code" href="index.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -89,7 +89,7 @@
 <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;cassandra&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">NullHandler</span><span class="p">())</span>
 
 
-<span class="n">__version_info__</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">__version_info__</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="s">&#39;0c1&#39;</span><span class="p">)</span>
 <span class="n">__version__</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">__version_info__</span><span class="p">))</span>
 
 
@@ -192,6 +192,58 @@
     <span class="k">return</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="s">&quot;Not Set&quot;</span>
 
 
+<span class="k">class</span> <span class="nc">SignatureDescriptor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">type_signature</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_signature</span> <span class="o">=</span> <span class="n">type_signature</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        function signature string in the form &#39;name([type0[,type1[...]]])&#39;</span>
+
+<span class="sd">        can be used to uniquely identify overloaded function names within a keyspace</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_signature</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">format_signature</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">type_signature</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">type_signature</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="UserFunctionDescriptor"><a class="viewcode-back" href="../api/cassandra.html#cassandra.UserFunctionDescriptor">[docs]</a><span class="k">class</span> <span class="nc">UserFunctionDescriptor</span><span class="p">(</span><span class="n">SignatureDescriptor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Describes a User function by name and argument signature</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    name of the function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">type_signature</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ordered list of CQL argument type names comprising the type signature</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+</div>
+<div class="viewcode-block" id="UserAggregateDescriptor"><a class="viewcode-back" href="../api/cassandra.html#cassandra.UserAggregateDescriptor">[docs]</a><span class="k">class</span> <span class="nc">UserAggregateDescriptor</span><span class="p">(</span><span class="n">SignatureDescriptor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Describes a User aggregate function by name and argument signature</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    name of the aggregate</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">type_signature</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ordered list of CQL argument type names comprising the type signature</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+</div>
 <div class="viewcode-block" id="Unavailable"><a class="viewcode-back" href="../api/cassandra.html#cassandra.Unavailable">[docs]</a><span class="k">class</span> <span class="nc">Unavailable</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    There were not enough live replicas to satisfy the requested consistency</span>
@@ -285,6 +337,103 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">write_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">Timeout</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_type</span> <span class="o">=</span> <span class="n">write_type</span>
+
+</div>
+<span class="k">class</span> <span class="nc">CoordinationFailure</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replicas sent a failure to the coordinator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">consistency</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The requested :class:`ConsistencyLevel` &quot;&quot;&quot;</span>
+
+    <span class="n">required_responses</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; The number of required replica responses &quot;&quot;&quot;</span>
+
+    <span class="n">received_responses</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The number of replicas that responded before the coordinator timed out</span>
+<span class="sd">    the operation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">failures</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The number of replicas that sent a failure message</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">summary_message</span><span class="p">,</span> <span class="n">consistency</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">required_responses</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">received_responses</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">failures</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">consistency</span> <span class="o">=</span> <span class="n">consistency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">required_responses</span> <span class="o">=</span> <span class="n">required_responses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">received_responses</span> <span class="o">=</span> <span class="n">received_responses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">failures</span> <span class="o">=</span> <span class="n">failures</span>
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">summary_message</span> <span class="o">+</span> <span class="s">&#39; info=&#39;</span> <span class="o">+</span>
+                           <span class="nb">repr</span><span class="p">({</span><span class="s">&#39;consistency&#39;</span><span class="p">:</span> <span class="n">consistency_value_to_name</span><span class="p">(</span><span class="n">consistency</span><span class="p">),</span>
+                                 <span class="s">&#39;required_responses&#39;</span><span class="p">:</span> <span class="n">required_responses</span><span class="p">,</span>
+                                 <span class="s">&#39;received_responses&#39;</span><span class="p">:</span> <span class="n">received_responses</span><span class="p">,</span>
+                                 <span class="s">&#39;failures&#39;</span><span class="p">:</span> <span class="n">failures</span><span class="p">}))</span>
+
+
+<div class="viewcode-block" id="ReadFailure"><a class="viewcode-back" href="../api/cassandra.html#cassandra.ReadFailure">[docs]</a><span class="k">class</span> <span class="nc">ReadFailure</span><span class="p">(</span><span class="n">CoordinationFailure</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A subclass of :exc:`CoordinationFailure` for read operations.</span>
+
+<span class="sd">    This indicates that the replicas sent a failure message to the coordinator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">data_retrieved</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A boolean indicating whether the requested data was retrieved</span>
+<span class="sd">    by the coordinator from any replicas before it timed out the</span>
+<span class="sd">    operation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">data_retrieved</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">CoordinationFailure</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_retrieved</span> <span class="o">=</span> <span class="n">data_retrieved</span>
+
+</div>
+<div class="viewcode-block" id="WriteFailure"><a class="viewcode-back" href="../api/cassandra.html#cassandra.WriteFailure">[docs]</a><span class="k">class</span> <span class="nc">WriteFailure</span><span class="p">(</span><span class="n">CoordinationFailure</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A subclass of :exc:`CoordinationFailure` for write operations.</span>
+
+<span class="sd">    This indicates that the replicas sent a failure message to the coordinator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">write_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The type of write operation, enum on :class:`~cassandra.policies.WriteType`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">write_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">CoordinationFailure</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_type</span> <span class="o">=</span> <span class="n">write_type</span>
+
+</div>
+<div class="viewcode-block" id="FunctionFailure"><a class="viewcode-back" href="../api/cassandra.html#cassandra.FunctionFailure">[docs]</a><span class="k">class</span> <span class="nc">FunctionFailure</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    User Defined Function failed during execution</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Keyspace of the function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">function</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Name of the function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">arg_types</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    List of argument type names of the function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">summary_message</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">arg_types</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">function</span> <span class="o">=</span> <span class="n">function</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_types</span> <span class="o">=</span> <span class="n">arg_types</span>
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">summary_message</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="AlreadyExists"><a class="viewcode-back" href="../api/cassandra.html#cassandra.AlreadyExists">[docs]</a><span class="k">class</span> <span class="nc">AlreadyExists</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -384,7 +533,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../index.html">Cassandra Driver 2.5.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
           <li><a href="index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
