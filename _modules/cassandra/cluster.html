@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 2.6.0c1 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 2.6.0c2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.6.0c1',
+        VERSION:     '2.6.0c2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c2 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -114,7 +114,7 @@
                        <span class="n">InvalidRequest</span><span class="p">,</span> <span class="n">OperationTimedOut</span><span class="p">,</span>
                        <span class="n">UnsupportedOperation</span><span class="p">,</span> <span class="n">Unauthorized</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ConnectionException</span><span class="p">,</span> <span class="n">ConnectionShutdown</span><span class="p">,</span>
-                                  <span class="n">ConnectionHeartbeat</span><span class="p">)</span>
+                                  <span class="n">ConnectionHeartbeat</span><span class="p">,</span> <span class="n">ProtocolVersionUnsupported</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.cqltypes</span> <span class="kn">import</span> <span class="n">UserType</span>
 <span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">Encoder</span>
 <span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="kn">import</span> <span class="p">(</span><span class="n">QueryMessage</span><span class="p">,</span> <span class="n">ResultMessage</span><span class="p">,</span>
@@ -127,8 +127,8 @@
                                 <span class="n">IsBootstrappingErrorMessage</span><span class="p">,</span>
                                 <span class="n">BatchMessage</span><span class="p">,</span> <span class="n">RESULT_KIND_PREPARED</span><span class="p">,</span>
                                 <span class="n">RESULT_KIND_SET_KEYSPACE</span><span class="p">,</span> <span class="n">RESULT_KIND_ROWS</span><span class="p">,</span>
-                                <span class="n">RESULT_KIND_SCHEMA_CHANGE</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">cassandra.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span><span class="p">,</span> <span class="n">protect_name</span>
+                                <span class="n">RESULT_KIND_SCHEMA_CHANGE</span><span class="p">,</span> <span class="n">MIN_SUPPORTED_VERSION</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">cassandra.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span><span class="p">,</span> <span class="n">protect_name</span><span class="p">,</span> <span class="n">murmur3</span>
 <span class="kn">from</span> <span class="nn">cassandra.policies</span> <span class="kn">import</span> <span class="p">(</span><span class="n">TokenAwarePolicy</span><span class="p">,</span> <span class="n">DCAwareRoundRobinPolicy</span><span class="p">,</span> <span class="n">SimpleConvictionPolicy</span><span class="p">,</span>
                                 <span class="n">ExponentialReconnectionPolicy</span><span class="p">,</span> <span class="n">HostDistance</span><span class="p">,</span>
                                 <span class="n">RetryPolicy</span><span class="p">)</span>
@@ -240,7 +240,9 @@
 <span class="kn">import</span> <span class="nn">platform</span>
 <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">python_implementation</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;CPython&#39;</span><span class="p">:</span>
     <span class="k">def</span> <span class="nf">default_lbp_factory</span><span class="p">():</span>
-        <span class="k">return</span> <span class="n">TokenAwarePolicy</span><span class="p">(</span><span class="n">DCAwareRoundRobinPolicy</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">murmur3</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TokenAwarePolicy</span><span class="p">(</span><span class="n">DCAwareRoundRobinPolicy</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">DCAwareRoundRobinPolicy</span><span class="p">()</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="k">def</span> <span class="nf">default_lbp_factory</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">DCAwareRoundRobinPolicy</span><span class="p">()</span>
@@ -287,9 +289,14 @@
 <span class="sd">    server will be automatically used.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">protocol_version</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">protocol_version</span> <span class="o">=</span> <span class="mi">4</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The version of the native protocol to use.</span>
+<span class="sd">    The maximum version of the native protocol to use.</span>
+
+<span class="sd">    The driver will automatically downgrade version based on a negotiation with</span>
+<span class="sd">    the server, but it is most efficient to set this to the maximum supported</span>
+<span class="sd">    by your version of Cassandra. Setting this will also prevent conflicting</span>
+<span class="sd">    versions negotiated if your cluster is upgraded.</span>
 
 <span class="sd">    Version 2 of the native protocol adds support for lightweight transactions,</span>
 <span class="sd">    batch operations, and automatic query paging. The v2 protocol is</span>
@@ -299,6 +306,10 @@
 <span class="sd">    client-side timestamps (see :attr:`.Session.use_client_timestamp`),</span>
 <span class="sd">    serial consistency levels for :class:`~.BatchStatement`, and an</span>
 <span class="sd">    improved connection pool.</span>
+
+<span class="sd">    Version 4 of the native protocol adds a number of new types, server warnings,</span>
+<span class="sd">    new failure messages, and custom payloads. Details in the</span>
+<span class="sd">    `project docs &lt;https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v4.spec&gt;`_</span>
 
 <span class="sd">    The following table describes the native protocol versions that</span>
 <span class="sd">    are supported by each version of Cassandra:</span>
@@ -311,6 +322,8 @@
 <span class="sd">    | 2.0               | 1, 2              |</span>
 <span class="sd">    +-------------------+-------------------+</span>
 <span class="sd">    | 2.1               | 1, 2, 3           |</span>
+<span class="sd">    +-------------------+-------------------+</span>
+<span class="sd">    | 2.2               | 1, 2, 3, 4        |</span>
 <span class="sd">    +-------------------+-------------------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -562,7 +575,7 @@
                  <span class="n">ssl_options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">sockopts</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">cql_version</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">protocol_version</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                 <span class="n">protocol_version</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
                  <span class="n">executor_threads</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                  <span class="n">max_schema_agreement_wait</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
                  <span class="n">control_connection_timeout</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
@@ -854,6 +867,15 @@
         <span class="n">kwargs_dict</span><span class="p">[</span><span class="s">&#39;user_type_map&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_types</span>
 
         <span class="k">return</span> <span class="n">kwargs_dict</span>
+
+    <span class="k">def</span> <span class="nf">protocol_downgrade</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_addr</span><span class="p">,</span> <span class="n">previous_version</span><span class="p">):</span>
+        <span class="n">new_version</span> <span class="o">=</span> <span class="n">previous_version</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">new_version</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">new_version</span> <span class="o">&gt;=</span> <span class="n">MIN_SUPPORTED_VERSION</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Downgrading core protocol version from </span><span class="si">%d</span><span class="s"> to </span><span class="si">%d</span><span class="s"> for </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span><span class="p">,</span> <span class="n">new_version</span><span class="p">,</span> <span class="n">host_addr</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span> <span class="o">=</span> <span class="n">new_version</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Cannot downgrade protocol version (</span><span class="si">%d</span><span class="s">) below minimum supported version: </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">new_version</span><span class="p">,</span> <span class="n">MIN_SUPPORTED_VERSION</span><span class="p">))</span>
 
 <div class="viewcode-block" id="Cluster.connect"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1570,7 +1592,6 @@
     <span class="n">_pools</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_load_balancer</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_metrics</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_protocol_version</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">hosts</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span> <span class="o">=</span> <span class="n">cluster</span>
@@ -2161,7 +2182,13 @@
 <span class="sd">        node/token and schema metadata.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Opening new connection to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
-        <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="n">is_control_connection</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="n">is_control_connection</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="n">ProtocolVersionUnsupported</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">protocol_downgrade</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">startup_version</span><span class="p">)</span>
 
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Established new connection </span><span class="si">%r</span><span class="s">, &quot;</span>
                   <span class="s">&quot;registering watchers and refreshing schema and topology&quot;</span><span class="p">,</span>
@@ -2185,10 +2212,7 @@
                 <span class="n">peers_query</span><span class="p">,</span> <span class="n">local_query</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_node_list_and_token_map</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="n">shared_results</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="n">shared_results</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;[control connection] No schema built on connect; retrying without wait for schema agreement&quot;</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="n">shared_results</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="n">shared_results</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="k">raise</span>
@@ -3370,6 +3394,11 @@
 <span class="sd">        If the final result has already been seen when this method is called,</span>
 <span class="sd">        the callback will be called immediately (before this method returns).</span>
 
+<span class="sd">        Note: in the case that the result is not available when the callback is added,</span>
+<span class="sd">        the callback is executed by IO event thread. This means that the callback</span>
+<span class="sd">        should not block or attempt further synchronous requests, because no further</span>
+<span class="sd">        IO will be processed until the callback returns.</span>
+
 <span class="sd">        **Important**: if the callback you attach results in an exception being</span>
 <span class="sd">        raised, **the exception will be ignored**, so please ensure your</span>
 <span class="sd">        callback handles all error cases that you care about.</span>
@@ -3529,7 +3558,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

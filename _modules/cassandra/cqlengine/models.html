@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.models &mdash; Cassandra Driver 2.6.0c1 documentation</title>
+    <title>cassandra.cqlengine.models &mdash; Cassandra Driver 2.6.0c2 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '2.6.0c1',
+        VERSION:     '2.6.0c2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c2 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -347,7 +347,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">can_delete</span><span class="p">:</span>
                 <span class="n">instance</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">delval</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&#39;cannot delete {} columns&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">column_name</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&#39;cannot delete {0} columns&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">column_name</span><span class="p">))</span>
 
 
 <span class="k">class</span> <span class="nc">BaseModel</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -445,8 +445,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">NOT_SET</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;{}({})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
-                               <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;{}={!r}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s">&#39;{0}({1})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+                               <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;{0}={1!r}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
                                          <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_defined_columns</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
                                          <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_discriminator_column_name</span><span class="p">))</span>
 
@@ -454,8 +454,8 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Pretty printing of models by their primary key</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s">&#39;{} &lt;{}&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
-                                <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;{}={}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_primary_keys</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="s">&#39;{0} &lt;{1}&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+                                <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;{0}={1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_primary_keys</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_discover_polymorphic_submodels</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
@@ -501,15 +501,15 @@
                 <span class="n">klass</span> <span class="o">=</span> <span class="n">poly_base</span><span class="o">.</span><span class="n">_get_model_by_discriminator_value</span><span class="p">(</span><span class="n">disc_key</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">klass</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">PolymorphicModelException</span><span class="p">(</span>
-                        <span class="s">&#39;unrecognized discriminator column {} for class {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">disc_key</span><span class="p">,</span> <span class="n">poly_base</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+                        <span class="s">&#39;unrecognized discriminator column {0} for class {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">disc_key</span><span class="p">,</span> <span class="n">poly_base</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
                     <span class="p">)</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="n">cls</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">PolymorphicModelException</span><span class="p">(</span>
-                    <span class="s">&#39;{} is not a subclass of {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">klass</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+                    <span class="s">&#39;{0} is not a subclass of {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">klass</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
                 <span class="p">)</span>
 
-            <span class="n">field_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">field_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">klass</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+            <span class="n">field_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">field_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">klass</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="n">klass</span> <span class="o">=</span> <span class="n">cls</span>
@@ -576,7 +576,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cf_name</span> <span class="o">=</span> <span class="n">protect_name</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_raw_column_family_name</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">include_keyspace</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&#39;{}.{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">protect_name</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()),</span> <span class="n">cf_name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s">&#39;{0}.{1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">protect_name</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()),</span> <span class="n">cf_name</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">cf_name</span>
 
@@ -591,7 +591,7 @@
                     <span class="n">cls</span><span class="o">.</span><span class="n">_table_name</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_polymorphic_base</span><span class="o">.</span><span class="n">_raw_column_family_name</span><span class="p">()</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">camelcase</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;([a-z])([A-Z])&#39;</span><span class="p">)</span>
-                    <span class="n">ccase</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">camelcase</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="s">&#39;{}_{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()),</span> <span class="n">s</span><span class="p">)</span>
+                    <span class="n">ccase</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">camelcase</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="s">&#39;{0}_{1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()),</span> <span class="n">s</span><span class="p">)</span>
 
                     <span class="n">cf_name</span> <span class="o">=</span> <span class="n">ccase</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
                     <span class="c"># trim to less than 48 characters or cassandra will complain</span>
@@ -675,7 +675,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">extra_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">extra_columns</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;Incorrect columns passed: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">extra_columns</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;Incorrect columns passed: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">extra_columns</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
@@ -768,11 +768,11 @@
 
             <span class="c"># check for nonexistant columns</span>
             <span class="k">if</span> <span class="n">col</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{}.{} has no column named: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__module__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;{0}.{1} has no column named: {2}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__module__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
 
             <span class="c"># check for primary key update attempts</span>
             <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">is_primary_key</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;Cannot apply update to primary key &#39;{}&#39; for {}.{}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__module__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;Cannot apply update to primary key &#39;{0}&#39; for {1}.{2}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__module__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
 
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
 
@@ -875,7 +875,7 @@
         <span class="n">discriminator_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">column_definitions</span> <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">discriminator_column</span><span class="p">]</span>
         <span class="n">is_polymorphic</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">discriminator_columns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">discriminator_columns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ModelDefinitionException</span><span class="p">(</span><span class="s">&#39;only one discriminator_column (polymorphic_key (deprecated)) can be defined in a model, {} found&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">discriminator_columns</span><span class="p">)))</span>
+            <span class="k">raise</span> <span class="n">ModelDefinitionException</span><span class="p">(</span><span class="s">&#39;only one discriminator_column (polymorphic_key (deprecated)) can be defined in a model, {0} found&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">discriminator_columns</span><span class="p">)))</span>
 
         <span class="k">if</span> <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;__discriminator_value__&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_polymorphic</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ModelDefinitionException</span><span class="p">(</span><span class="s">&#39;__discriminator_value__ specified, but no base columns defined with discriminator_column=True&#39;</span><span class="p">)</span>
@@ -914,7 +914,7 @@
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">column_definitions</span><span class="p">:</span>
             <span class="c"># don&#39;t allow a column with the same name as a built-in attribute or method</span>
             <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">BaseModel</span><span class="o">.</span><span class="n">__dict__</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ModelDefinitionException</span><span class="p">(</span><span class="s">&quot;column &#39;{}&#39; conflicts with built-in attribute/method&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">ModelDefinitionException</span><span class="p">(</span><span class="s">&quot;column &#39;{0}&#39; conflicts with built-in attribute/method&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
 
             <span class="c"># counter column primary keys are not allowed</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">primary_key</span> <span class="ow">or</span> <span class="n">v</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="n">columns</span><span class="o">.</span><span class="n">Counter</span><span class="p">,</span> <span class="n">columns</span><span class="o">.</span><span class="n">BaseContainerColumn</span><span class="p">)):</span>
@@ -948,11 +948,11 @@
         <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">column_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="c"># check for duplicate column names</span>
             <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">db_field_name</span> <span class="ow">in</span> <span class="n">col_names</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ModelException</span><span class="p">(</span><span class="s">&quot;{} defines the column {} more than once&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">ModelException</span><span class="p">(</span><span class="s">&quot;{0} defines the column {1} more than once&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">clustering_order</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">primary_key</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">partition_key</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ModelException</span><span class="p">(</span><span class="s">&quot;clustering_order may be specified only for clustering primary keys&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">clustering_order</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">clustering_order</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;asc&#39;</span><span class="p">,</span> <span class="s">&#39;desc&#39;</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">ModelException</span><span class="p">(</span><span class="s">&quot;invalid clustering order {} for column {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">clustering_order</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">ModelException</span><span class="p">(</span><span class="s">&quot;invalid clustering order {0} for column {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">clustering_order</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">))</span>
             <span class="n">col_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)</span>
 
         <span class="c"># create db_name -&gt; model name map for loading</span>
@@ -1066,7 +1066,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

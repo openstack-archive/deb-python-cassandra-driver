@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.connection &mdash; Cassandra Driver 2.6.0c1 documentation</title>
+    <title>cassandra.connection &mdash; Cassandra Driver 2.6.0c2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.6.0c1',
+        VERSION:     '2.6.0c2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c2 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -80,15 +80,21 @@
 <span class="c"># limitations under the License.</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>  <span class="c"># to enable import io from stdlib</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">deque</span><span class="p">,</span> <span class="n">namedtuple</span>
 <span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span><span class="p">,</span> <span class="n">partial</span>
 <span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">struct</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Thread</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">RLock</span>
 <span class="kn">import</span> <span class="nn">time</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">ssl</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">ssl</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c"># NOQA</span>
 
 <span class="k">if</span> <span class="s">&#39;gevent.monkey&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">gevent.queue</span> <span class="kn">import</span> <span class="n">Queue</span><span class="p">,</span> <span class="n">Empty</span>
@@ -99,13 +105,13 @@
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span>
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">AuthenticationFailed</span><span class="p">,</span> <span class="n">OperationTimedOut</span>
-<span class="kn">from</span> <span class="nn">cassandra.marshal</span> <span class="kn">import</span> <span class="n">int32_pack</span><span class="p">,</span> <span class="n">header_unpack</span><span class="p">,</span> <span class="n">v3_header_unpack</span><span class="p">,</span> <span class="n">int32_unpack</span>
+<span class="kn">from</span> <span class="nn">cassandra.marshal</span> <span class="kn">import</span> <span class="n">int32_pack</span><span class="p">,</span> <span class="n">uint8_unpack</span>
 <span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ReadyMessage</span><span class="p">,</span> <span class="n">AuthenticateMessage</span><span class="p">,</span> <span class="n">OptionsMessage</span><span class="p">,</span>
                                 <span class="n">StartupMessage</span><span class="p">,</span> <span class="n">ErrorMessage</span><span class="p">,</span> <span class="n">CredentialsMessage</span><span class="p">,</span>
                                 <span class="n">QueryMessage</span><span class="p">,</span> <span class="n">ResultMessage</span><span class="p">,</span> <span class="n">decode_response</span><span class="p">,</span>
                                 <span class="n">InvalidRequestException</span><span class="p">,</span> <span class="n">SupportedMessage</span><span class="p">,</span>
                                 <span class="n">AuthResponseMessage</span><span class="p">,</span> <span class="n">AuthChallengeMessage</span><span class="p">,</span>
-                                <span class="n">AuthSuccessMessage</span><span class="p">,</span> <span class="n">ProtocolException</span><span class="p">)</span>
+                                <span class="n">AuthSuccessMessage</span><span class="p">,</span> <span class="n">ProtocolException</span><span class="p">,</span> <span class="n">MAX_SUPPORTED_VERSION</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
 
@@ -155,6 +161,11 @@
 <span class="n">HEADER_DIRECTION_TO_CLIENT</span> <span class="o">=</span> <span class="mh">0x80</span>
 <span class="n">HEADER_DIRECTION_MASK</span> <span class="o">=</span> <span class="mh">0x80</span>
 
+<span class="n">frame_header_v1_v2</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">Struct</span><span class="p">(</span><span class="s">&#39;&gt;BbBi&#39;</span><span class="p">)</span>
+<span class="n">frame_header_v3</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">Struct</span><span class="p">(</span><span class="s">&#39;&gt;BhBi&#39;</span><span class="p">)</span>
+
+<span class="n">_Frame</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Frame&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;version&#39;</span><span class="p">,</span> <span class="s">&#39;flags&#39;</span><span class="p">,</span> <span class="s">&#39;stream&#39;</span><span class="p">,</span> <span class="s">&#39;opcode&#39;</span><span class="p">,</span> <span class="s">&#39;body_offset&#39;</span><span class="p">,</span> <span class="s">&#39;end_pos&#39;</span><span class="p">))</span>
+
 <span class="n">NONBLOCKING</span> <span class="o">=</span> <span class="p">(</span><span class="n">errno</span><span class="o">.</span><span class="n">EAGAIN</span><span class="p">,</span> <span class="n">errno</span><span class="o">.</span><span class="n">EWOULDBLOCK</span><span class="p">)</span>
 
 
@@ -174,8 +185,16 @@
 <span class="sd">    Raised when a connection has been marked as defunct or has been closed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
-
 </div>
+<span class="k">class</span> <span class="nc">ProtocolVersionUnsupported</span><span class="p">(</span><span class="n">ConnectionException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Server rejected startup message due to unsupported protocol version</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">startup_version</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ProtocolVersionUnsupported</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="s">&quot;Unsupported protocol version on </span><span class="si">%s</span><span class="s">: </span><span class="si">%d</span><span class="s">&quot;</span><span class="p">,</span>
+                                                         <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">startup_version</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">startup_version</span> <span class="o">=</span> <span class="n">startup_version</span>
+
 <div class="viewcode-block" id="ConnectionBusy"><a class="viewcode-back" href="../../api/cassandra/connection.html#cassandra.connection.ConnectionBusy">[docs]</a><span class="k">class</span> <span class="nc">ConnectionBusy</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An attempt was made to send a message through a :class:`.Connection` that</span>
@@ -211,7 +230,7 @@
     <span class="n">out_buffer_size</span> <span class="o">=</span> <span class="mi">4096</span>
 
     <span class="n">cql_version</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">protocol_version</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">protocol_version</span> <span class="o">=</span> <span class="n">MAX_SUPPORTED_VERSION</span>
 
     <span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">compression</span> <span class="o">=</span> <span class="bp">True</span>
@@ -241,12 +260,20 @@
 
     <span class="n">msg_received</span> <span class="o">=</span> <span class="bp">False</span>
 
+    <span class="n">is_unsupported_proto_version</span> <span class="o">=</span> <span class="bp">False</span>
+
     <span class="n">is_control_connection</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">_iobuf</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_current_frame</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">_socket</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">_socket_impl</span> <span class="o">=</span> <span class="n">socket</span>
+    <span class="n">_ssl_impl</span> <span class="o">=</span> <span class="n">ssl</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">9042</span><span class="p">,</span> <span class="n">authenticator</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">ssl_options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">sockopts</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                 <span class="n">cql_version</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">protocol_version</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">is_control_connection</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">cql_version</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">protocol_version</span><span class="o">=</span><span class="n">MAX_SUPPORTED_VERSION</span><span class="p">,</span> <span class="n">is_control_connection</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
                  <span class="n">user_type_map</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
@@ -260,33 +287,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">user_type_map</span> <span class="o">=</span> <span class="n">user_type_map</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_push_watchers</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+
         <span class="k">if</span> <span class="n">protocol_version</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_header_unpack</span> <span class="o">=</span> <span class="n">v3_header_unpack</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_header_length</span> <span class="o">=</span> <span class="mi">5</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">max_request_id</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">15</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
             <span class="c"># Don&#39;t fill the deque with 2**15 items right away. Start with 300 and add</span>
             <span class="c"># more if needed.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">request_ids</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">300</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">highest_request_id</span> <span class="o">=</span> <span class="mi">299</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_header_unpack</span> <span class="o">=</span> <span class="n">header_unpack</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_header_length</span> <span class="o">=</span> <span class="mi">4</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">max_request_id</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">7</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">request_ids</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_request_id</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">highest_request_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_request_id</span>
-
-        <span class="c"># 0         8        16        24        32         40</span>
-        <span class="c"># +---------+---------+---------+---------+---------+</span>
-        <span class="c"># | version |  flags  |      stream       | opcode  |</span>
-        <span class="c"># +---------+---------+---------+---------+---------+</span>
-        <span class="c"># |                length                 |</span>
-        <span class="c"># +---------+---------+---------+---------+</span>
-        <span class="c"># |                                       |</span>
-        <span class="c"># .            ...  body ...              .</span>
-        <span class="c"># .                                       .</span>
-        <span class="c"># .                                       .</span>
-        <span class="c"># +----------------------------------------</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_full_header_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_header_length</span> <span class="o">+</span> <span class="mi">4</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
 
@@ -316,12 +327,41 @@
         <span class="n">conn</span> <span class="o">=</span> <span class="n">cls</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">conn</span><span class="o">.</span><span class="n">connected_event</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">conn</span><span class="o">.</span><span class="n">last_error</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">conn</span><span class="o">.</span><span class="n">is_unsupported_proto_version</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ProtocolVersionUnsupported</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">protocol_version</span><span class="p">)</span>
             <span class="k">raise</span> <span class="n">conn</span><span class="o">.</span><span class="n">last_error</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">conn</span><span class="o">.</span><span class="n">connected_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
             <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="k">raise</span> <span class="n">OperationTimedOut</span><span class="p">(</span><span class="s">&quot;Timed out creating connection (</span><span class="si">%s</span><span class="s"> seconds)&quot;</span> <span class="o">%</span> <span class="n">timeout</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">conn</span>
+
+    <span class="k">def</span> <span class="nf">_connect_socket</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">sockerr</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">addresses</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">getaddrinfo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">AF_UNSPEC</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">af</span><span class="p">,</span> <span class="n">socktype</span><span class="p">,</span> <span class="n">proto</span><span class="p">,</span> <span class="n">canonname</span><span class="p">,</span> <span class="n">sockaddr</span><span class="p">)</span> <span class="ow">in</span> <span class="n">addresses</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_socket_impl</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">af</span><span class="p">,</span> <span class="n">socktype</span><span class="p">,</span> <span class="n">proto</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ssl_options</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ssl_impl</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;This version of Python was not compiled with SSL support&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ssl_impl</span><span class="o">.</span><span class="n">wrap_socket</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">ssl_options</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">sockaddr</span><span class="p">)</span>
+                <span class="n">sockerr</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="n">sockerr</span> <span class="o">=</span> <span class="n">err</span>
+
+        <span class="k">if</span> <span class="n">sockerr</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">sockerr</span><span class="o">.</span><span class="n">errno</span><span class="p">,</span> <span class="s">&quot;Tried connecting to </span><span class="si">%s</span><span class="s">. Last error: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">([</span><span class="n">a</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">addresses</span><span class="p">],</span> <span class="n">sockerr</span><span class="o">.</span><span class="n">strerror</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sockopts</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">args</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sockopts</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
@@ -444,42 +484,56 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">is_control_connection</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_push_watchers</span> <span class="o">=</span> <span class="p">{}</span>
 
+    <span class="nd">@defunct_on_error</span>
+    <span class="k">def</span> <span class="nf">_read_frame_header</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">buf</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">pos</span><span class="p">:</span>
+            <span class="n">buf</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="n">uint8_unpack</span><span class="p">(</span><span class="n">buf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">&amp;</span> <span class="n">PROTOCOL_VERSION_MASK</span>
+            <span class="k">if</span> <span class="n">version</span> <span class="o">&gt;</span> <span class="n">MAX_SUPPORTED_VERSION</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s">&quot;This version of the driver does not support protocol version </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">version</span><span class="p">)</span>
+            <span class="n">frame_header</span> <span class="o">=</span> <span class="n">frame_header_v3</span> <span class="k">if</span> <span class="n">version</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="k">else</span> <span class="n">frame_header_v1_v2</span>
+            <span class="c"># this frame header struct is everything after the version byte</span>
+            <span class="n">header_size</span> <span class="o">=</span> <span class="n">frame_header</span><span class="o">.</span><span class="n">size</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">pos</span> <span class="o">&gt;=</span> <span class="n">header_size</span><span class="p">:</span>
+                <span class="n">flags</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">body_len</span> <span class="o">=</span> <span class="n">frame_header</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="n">buf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">frame_header</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">body_len</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s">&quot;Received negative body length: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">body_len</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_current_frame</span> <span class="o">=</span> <span class="n">_Frame</span><span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">header_size</span><span class="p">,</span> <span class="n">body_len</span> <span class="o">+</span> <span class="n">header_size</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pos</span>
+
+    <span class="k">def</span> <span class="nf">_reset_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">leftover</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">leftover</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_frame</span> <span class="o">=</span> <span class="bp">None</span>
+
     <span class="k">def</span> <span class="nf">process_io_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_header_length</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_total_reqd_bytes</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_total_reqd_bytes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_frame</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_frame_header</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_frame</span> <span class="ow">or</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_frame</span><span class="o">.</span><span class="n">end_pos</span><span class="p">:</span>
                 <span class="c"># we don&#39;t have a complete header yet or we</span>
                 <span class="c"># already saw a header, but we don&#39;t have a</span>
                 <span class="c"># complete message yet</span>
                 <span class="k">return</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="c"># have enough for header, read body len from header</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_header_length</span><span class="p">)</span>
-                <span class="n">body_len</span> <span class="o">=</span> <span class="n">int32_unpack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
-
-                <span class="c"># seek to end to get length of current buffer</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">SEEK_END</span><span class="p">)</span>
-                <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
-
-                <span class="k">if</span> <span class="n">pos</span> <span class="o">&gt;=</span> <span class="n">body_len</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_header_length</span><span class="p">:</span>
-                    <span class="c"># read message header and body</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-                    <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_header_length</span> <span class="o">+</span> <span class="n">body_len</span><span class="p">)</span>
-
-                    <span class="c"># leave leftover in current buffer</span>
-                    <span class="n">leftover</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">leftover</span><span class="p">)</span>
-
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_total_reqd_bytes</span> <span class="o">=</span> <span class="mi">0</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">process_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">body_len</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_total_reqd_bytes</span> <span class="o">=</span> <span class="n">body_len</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_header_length</span>
-                    <span class="k">return</span>
+                <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_frame</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">body_offset</span><span class="p">)</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">end_pos</span> <span class="o">-</span> <span class="n">frame</span><span class="o">.</span><span class="n">body_offset</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">process_msg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_frame</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_reset_frame</span><span class="p">()</span>
 
     <span class="nd">@defunct_on_error</span>
-    <span class="k">def</span> <span class="nf">process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">body_len</span><span class="p">):</span>
-        <span class="n">version</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">stream_id</span><span class="p">,</span> <span class="n">opcode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_header_unpack</span><span class="p">(</span><span class="n">msg</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">_header_length</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="n">body</span><span class="p">):</span>
+        <span class="n">stream_id</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">stream</span>
         <span class="k">if</span> <span class="n">stream_id</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">callback</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">else</span><span class="p">:</span>
@@ -489,33 +543,12 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">msg_received</span> <span class="o">=</span> <span class="bp">True</span>
 
-        <span class="n">body</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="c"># check that the protocol version is supported</span>
-            <span class="n">given_version</span> <span class="o">=</span> <span class="n">version</span> <span class="o">&amp;</span> <span class="n">PROTOCOL_VERSION_MASK</span>
-            <span class="k">if</span> <span class="n">given_version</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Server protocol version (</span><span class="si">%d</span><span class="s">) does not match the specified driver protocol version (</span><span class="si">%d</span><span class="s">). &quot;</span> <span class="o">+</span>\
-                      <span class="s">&quot;Consider setting Cluster.protocol_version to </span><span class="si">%d</span><span class="s">.&quot;</span>
-                <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="p">(</span><span class="n">given_version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span><span class="p">,</span> <span class="n">given_version</span><span class="p">))</span>
-
-            <span class="c"># check that the header direction is correct</span>
-            <span class="k">if</span> <span class="n">version</span> <span class="o">&amp;</span> <span class="n">HEADER_DIRECTION_MASK</span> <span class="o">!=</span> <span class="n">HEADER_DIRECTION_TO_CLIENT</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span>
-                    <span class="s">&quot;Header direction in response is incorrect; opcode </span><span class="si">%04x</span><span class="s">, stream id </span><span class="si">%r</span><span class="s">&quot;</span>
-                    <span class="o">%</span> <span class="p">(</span><span class="n">opcode</span><span class="p">,</span> <span class="n">stream_id</span><span class="p">))</span>
-
-            <span class="k">if</span> <span class="n">body_len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">body</span> <span class="o">=</span> <span class="n">msg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_header_length</span><span class="p">:]</span>
-            <span class="k">elif</span> <span class="n">body_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">body</span> <span class="o">=</span> <span class="n">six</span><span class="o">.</span><span class="n">binary_type</span><span class="p">()</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s">&quot;Got negative body length: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">body_len</span><span class="p">)</span>
-
-            <span class="n">response</span> <span class="o">=</span> <span class="n">decode_response</span><span class="p">(</span><span class="n">given_version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_type_map</span><span class="p">,</span> <span class="n">stream_id</span><span class="p">,</span>
-                                       <span class="n">flags</span><span class="p">,</span> <span class="n">opcode</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decompressor</span><span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">decode_response</span><span class="p">(</span><span class="n">header</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_type_map</span><span class="p">,</span> <span class="n">stream_id</span><span class="p">,</span>
+                                       <span class="n">header</span><span class="o">.</span><span class="n">flags</span><span class="p">,</span> <span class="n">header</span><span class="o">.</span><span class="n">opcode</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decompressor</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Error decoding response from Cassandra. &quot;</span>
-                          <span class="s">&quot;opcode: </span><span class="si">%04x</span><span class="s">; message contents: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">opcode</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+                          <span class="s">&quot;opcode: </span><span class="si">%04x</span><span class="s">; message contents: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">.</span><span class="n">opcode</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">callback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">callback</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
@@ -524,6 +557,9 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">stream_id</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">ProtocolException</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="s">&#39;unsupported protocol version&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">message</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">is_unsupported_proto_version</span> <span class="o">=</span> <span class="bp">True</span>
+
                     <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Closing connection </span><span class="si">%s</span><span class="s"> due to protocol error: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">summary_msg</span><span class="p">())</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">callback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
@@ -954,7 +990,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata &mdash; Cassandra Driver 2.6.0c1 documentation</title>
+    <title>cassandra.metadata &mdash; Cassandra Driver 2.6.0c2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.6.0c1',
+        VERSION:     '2.6.0c2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c2 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -604,7 +604,6 @@
             <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">[</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">]</span> <span class="o">=</span> <span class="n">host</span>
                 <span class="k">return</span> <span class="n">host</span><span class="p">,</span> <span class="bp">True</span>
-
 </div>
     <span class="k">def</span> <span class="nf">remove_host</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span><span class="p">:</span>
@@ -960,6 +959,7 @@
         <span class="k">if</span> <span class="n">table_meta</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">index_name</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">indexes</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">indexes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">index_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
 </div>
 <div class="viewcode-block" id="UserType"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.UserType">[docs]</a><span class="k">class</span> <span class="nc">UserType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1185,14 +1185,14 @@
                              <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">argument_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_signature</span><span class="p">)])</span>
         <span class="n">typ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="o">.</span><span class="n">cql_parameterized_type</span><span class="p">()</span>
         <span class="n">lang</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">language</span>
-        <span class="n">body</span> <span class="o">=</span> <span class="n">protect_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span>
         <span class="n">on_null</span> <span class="o">=</span> <span class="s">&quot;CALLED&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">called_on_null_input</span> <span class="k">else</span> <span class="s">&quot;RETURNS NULL&quot;</span>
 
         <span class="k">return</span> <span class="s">&quot;CREATE FUNCTION </span><span class="si">%(keyspace)s</span><span class="s">.</span><span class="si">%(name)s</span><span class="s">(</span><span class="si">%(arg_list)s</span><span class="s">)</span><span class="si">%(sep)s</span><span class="s">&quot;</span> \
                <span class="s">&quot;</span><span class="si">%(on_null)s</span><span class="s"> ON NULL INPUT</span><span class="si">%(sep)s</span><span class="s">&quot;</span> \
                <span class="s">&quot;RETURNS </span><span class="si">%(typ)s%(sep)s</span><span class="s">&quot;</span> \
                <span class="s">&quot;LANGUAGE </span><span class="si">%(lang)s%(sep)s</span><span class="s">&quot;</span> \
-               <span class="s">&quot;AS </span><span class="si">%(body)s</span><span class="s">;&quot;</span> <span class="o">%</span> <span class="nb">locals</span><span class="p">()</span>
+               <span class="s">&quot;AS $$</span><span class="si">%(body)s</span><span class="s">$$;&quot;</span> <span class="o">%</span> <span class="nb">locals</span><span class="p">()</span>
 </div>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">signature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1274,7 +1274,6 @@
         <span class="s">&quot;rows_per_partition_to_cache&quot;</span><span class="p">,</span>
         <span class="s">&quot;memtable_flush_period_in_ms&quot;</span><span class="p">,</span>
         <span class="s">&quot;populate_io_cache_on_flush&quot;</span><span class="p">,</span>
-        <span class="s">&quot;compaction&quot;</span><span class="p">,</span>
         <span class="s">&quot;compression&quot;</span><span class="p">,</span>
         <span class="s">&quot;default_time_to_live&quot;</span><span class="p">)</span>
 
@@ -1417,17 +1416,13 @@
     <span class="k">def</span> <span class="nf">_make_option_strings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">options_copy</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">options_copy</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;compaction&#39;</span><span class="p">):</span>
-            <span class="n">options_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;compaction&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
-            <span class="n">actual_options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">options_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;compaction_strategy_options&#39;</span><span class="p">,</span> <span class="s">&#39;{}&#39;</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">system_table_name</span><span class="p">,</span> <span class="n">compact_option_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compaction_options</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="n">options_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">system_table_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
-                    <span class="n">actual_options</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">compact_option_name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="n">actual_options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">options_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;compaction_strategy_options&#39;</span><span class="p">,</span> <span class="s">&#39;{}&#39;</span><span class="p">))</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">options_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;compaction_strategy_class&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">actual_options</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s">&quot;class&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
-            <span class="n">compaction_option_strings</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;: &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">actual_options</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
-            <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;compaction = {</span><span class="si">%s</span><span class="s">}&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">compaction_option_strings</span><span class="p">))</span>
+        <span class="n">compaction_option_strings</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;: &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">actual_options</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;compaction = {</span><span class="si">%s</span><span class="s">}&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">compaction_option_strings</span><span class="p">))</span>
 
         <span class="k">for</span> <span class="n">system_table_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compaction_options</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">options_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">system_table_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>  <span class="c"># delete if present</span>
@@ -1674,17 +1669,17 @@
         <span class="k">if</span> <span class="n">tokens_to_hosts</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rebuild_keyspace</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">build_if_absent</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="n">tokens_to_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">tokens_to_hosts</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">[]</span>
 
-        <span class="c"># token range ownership is exclusive on the LHS (the start token), so</span>
-        <span class="c"># we use bisect_right, which, in the case of a tie/exact match,</span>
-        <span class="c"># picks an insertion point to the right of the existing match</span>
-        <span class="n">point</span> <span class="o">=</span> <span class="n">bisect_right</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">point</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">tokens_to_hosts</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">tokens_to_hosts</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">[</span><span class="n">point</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">tokens_to_hosts</span><span class="p">:</span>
+            <span class="c"># token range ownership is exclusive on the LHS (the start token), so</span>
+            <span class="c"># we use bisect_right, which, in the case of a tie/exact match,</span>
+            <span class="c"># picks an insertion point to the right of the existing match</span>
+            <span class="n">point</span> <span class="o">=</span> <span class="n">bisect_right</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">point</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">tokens_to_hosts</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">tokens_to_hosts</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ring</span><span class="p">[</span><span class="n">point</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="p">[]</span>
 
 </div></div>
 <div class="viewcode-block" id="Token"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Token">[docs]</a><span class="k">class</span> <span class="nc">Token</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -1822,7 +1817,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

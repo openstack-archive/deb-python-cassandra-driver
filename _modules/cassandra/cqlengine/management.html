@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.management &mdash; Cassandra Driver 2.6.0c1 documentation</title>
+    <title>cassandra.cqlengine.management &mdash; Cassandra Driver 2.6.0c2 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '2.6.0c1',
+        VERSION:     '2.6.0c2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c2 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -146,12 +146,12 @@
             <span class="n">replication_map</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;replication_factor&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
         <span class="n">query</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
-<span class="s">        CREATE KEYSPACE {}</span>
-<span class="s">        WITH REPLICATION = {}</span>
+<span class="s">        CREATE KEYSPACE {0}</span>
+<span class="s">        WITH REPLICATION = {1}</span>
 <span class="s">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">replication_map</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&quot;&#39;&quot;</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">strategy_class</span> <span class="o">!=</span> <span class="s">&#39;SimpleStrategy&#39;</span><span class="p">:</span>
-            <span class="n">query</span> <span class="o">+=</span> <span class="s">&quot; AND DURABLE_WRITES = {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;true&#39;</span> <span class="k">if</span> <span class="n">durable_writes</span> <span class="k">else</span> <span class="s">&#39;false&#39;</span><span class="p">)</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="s">&quot; AND DURABLE_WRITES = {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;true&#39;</span> <span class="k">if</span> <span class="n">durable_writes</span> <span class="k">else</span> <span class="s">&#39;false&#39;</span><span class="p">)</span>
 
         <span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 
@@ -230,7 +230,7 @@
 
     <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">:</span>
-        <span class="n">execute</span><span class="p">(</span><span class="s">&quot;DROP KEYSPACE {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>
+        <span class="n">execute</span><span class="p">(</span><span class="s">&quot;DROP KEYSPACE {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>
 
 </div>
 <div class="viewcode-block" id="sync_table"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.sync_table">[docs]</a><span class="k">def</span> <span class="nf">sync_table</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
@@ -302,7 +302,7 @@
                 <span class="k">continue</span>  <span class="c"># skip columns already defined</span>
 
             <span class="c"># add missing column using the column def</span>
-            <span class="n">query</span> <span class="o">=</span> <span class="s">&quot;ALTER TABLE {} add {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">())</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="s">&quot;ALTER TABLE {0} add {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">())</span>
             <span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 
         <span class="n">db_fields_not_in_model</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">field_names</span><span class="p">)</span>
@@ -319,9 +319,9 @@
         <span class="k">if</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
             <span class="k">continue</span>
 
-        <span class="n">qs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;CREATE INDEX index_{}_{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">raw_cf_name</span><span class="p">,</span> <span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)]</span>
-        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;ON {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">)]</span>
-        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;(&quot;{}&quot;)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)]</span>
+        <span class="n">qs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;CREATE INDEX index_{0}_{1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">raw_cf_name</span><span class="p">,</span> <span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)]</span>
+        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;ON {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">)]</span>
+        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;(&quot;{0}&quot;)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)]</span>
         <span class="n">qs</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>
         <span class="n">execute</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>
 
@@ -377,7 +377,7 @@
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">type_model</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">model_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">defined_fields</span><span class="p">:</span>
-                <span class="n">execute</span><span class="p">(</span><span class="s">&quot;ALTER TYPE {} ADD {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_name_qualified</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">()))</span>
+                <span class="n">execute</span><span class="p">(</span><span class="s">&quot;ALTER TYPE {0} ADD {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_name_qualified</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">()))</span>
 
         <span class="n">type_model</span><span class="o">.</span><span class="n">register_for_keyspace</span><span class="p">(</span><span class="n">ks_name</span><span class="p">)</span>
 
@@ -400,7 +400,7 @@
 
 <span class="k">def</span> <span class="nf">get_create_table</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
     <span class="n">cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()</span>
-    <span class="n">qs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;CREATE TABLE {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">)]</span>
+    <span class="n">qs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;CREATE TABLE {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">)]</span>
 
     <span class="c"># add column types</span>
     <span class="n">pkeys</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c"># primary keys</span>
@@ -411,15 +411,15 @@
         <span class="n">s</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
             <span class="n">keys</span> <span class="o">=</span> <span class="p">(</span><span class="n">pkeys</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">partition_key</span> <span class="k">else</span> <span class="n">ckeys</span><span class="p">)</span>
-            <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&quot;{}&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">))</span>
+            <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&quot;{0}&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">))</span>
         <span class="n">qtypes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">add_column</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
 
-    <span class="n">qtypes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;PRIMARY KEY (({}){})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pkeys</span><span class="p">),</span> <span class="n">ckeys</span> <span class="ow">and</span> <span class="s">&#39;, &#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ckeys</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;&#39;</span><span class="p">))</span>
+    <span class="n">qtypes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;PRIMARY KEY (({0}){1})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pkeys</span><span class="p">),</span> <span class="n">ckeys</span> <span class="ow">and</span> <span class="s">&#39;, &#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ckeys</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;&#39;</span><span class="p">))</span>
 
-    <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;({})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qtypes</span><span class="p">))]</span>
+    <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;({0})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qtypes</span><span class="p">))]</span>
 
     <span class="n">with_qs</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -428,25 +428,25 @@
                         <span class="s">&#39;index_interval&#39;</span><span class="p">,</span> <span class="s">&#39;memtable_flush_period_in_ms&#39;</span><span class="p">,</span> <span class="s">&#39;populate_io_cache_on_flush&#39;</span><span class="p">,</span>
                         <span class="s">&#39;read_repair_chance&#39;</span><span class="p">,</span> <span class="s">&#39;replicate_on_write&#39;</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">prop_name</span> <span class="ow">in</span> <span class="n">table_properties</span><span class="p">:</span>
-        <span class="n">prop_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s">&#39;__{}__&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prop_name</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">prop_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s">&#39;__{0}__&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prop_name</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">prop_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="c"># Strings needs to be single quoted</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prop_value</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
-                <span class="n">prop_value</span> <span class="o">=</span> <span class="s">&quot;&#39;{}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prop_value</span><span class="p">)</span>
-            <span class="n">with_qs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;{} = {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prop_name</span><span class="p">,</span> <span class="n">prop_value</span><span class="p">))</span>
+                <span class="n">prop_value</span> <span class="o">=</span> <span class="s">&quot;&#39;{0}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prop_value</span><span class="p">)</span>
+            <span class="n">with_qs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;{0} = {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prop_name</span><span class="p">,</span> <span class="n">prop_value</span><span class="p">))</span>
 
-    <span class="n">_order</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;&quot;{}&quot; {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">clustering_order</span> <span class="ow">or</span> <span class="s">&#39;ASC&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_clustering_keys</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+    <span class="n">_order</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;&quot;{0}&quot; {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">clustering_order</span> <span class="ow">or</span> <span class="s">&#39;ASC&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_clustering_keys</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
     <span class="k">if</span> <span class="n">_order</span><span class="p">:</span>
-        <span class="n">with_qs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;clustering order by ({})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_order</span><span class="p">)))</span>
+        <span class="n">with_qs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;clustering order by ({0})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_order</span><span class="p">)))</span>
 
     <span class="n">compaction_options</span> <span class="o">=</span> <span class="n">get_compaction_options</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">compaction_options</span><span class="p">:</span>
         <span class="n">compaction_options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">compaction_options</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&quot;&#39;&quot;</span><span class="p">)</span>
-        <span class="n">with_qs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;compaction = {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">compaction_options</span><span class="p">))</span>
+        <span class="n">with_qs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;compaction = {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">compaction_options</span><span class="p">))</span>
 
     <span class="c"># Add table properties.</span>
     <span class="k">if</span> <span class="n">with_qs</span><span class="p">:</span>
-        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;WITH {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">with_qs</span><span class="p">))]</span>
+        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;WITH {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">with_qs</span><span class="p">))]</span>
 
     <span class="n">qs</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">qs</span>
@@ -472,10 +472,10 @@
 <span class="sd">        :param limited_to_strategy: SizeTieredCompactionStrategy, LeveledCompactionStrategy</span>
 <span class="sd">        :return:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">mkey</span> <span class="o">=</span> <span class="s">&quot;__compaction_{}__&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">mkey</span> <span class="o">=</span> <span class="s">&quot;__compaction_{0}__&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="n">tmp</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">mkey</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">tmp</span> <span class="ow">and</span> <span class="n">limited_to_strategy</span> <span class="ow">and</span> <span class="n">limited_to_strategy</span> <span class="o">!=</span> <span class="n">model</span><span class="o">.</span><span class="n">__compaction__</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;{} is limited to {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">limited_to_strategy</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;{0} is limited to {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">limited_to_strategy</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">tmp</span><span class="p">:</span>
             <span class="c"># Explicitly cast the values to strings to be able to compare the</span>
@@ -563,7 +563,7 @@
         <span class="c"># jsonify</span>
         <span class="n">options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">options</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&quot;&#39;&quot;</span><span class="p">)</span>
         <span class="n">cf_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="s">&quot;ALTER TABLE {} with compaction = {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s">&quot;ALTER TABLE {0} with compaction = {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
         <span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">True</span>
 
@@ -590,7 +590,7 @@
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">meta</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks_name</span><span class="p">]</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">raw_cf_name</span><span class="p">]</span>
-        <span class="n">execute</span><span class="p">(</span><span class="s">&#39;DROP TABLE {};&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()))</span>
+        <span class="n">execute</span><span class="p">(</span><span class="s">&#39;DROP TABLE {0};&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()))</span>
     <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
         <span class="k">pass</span>
 
@@ -618,7 +618,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

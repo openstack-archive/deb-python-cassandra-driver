@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.io.asyncorereactor &mdash; Cassandra Driver 2.6.0c1 documentation</title>
+    <title>cassandra.io.asyncorereactor &mdash; Cassandra Driver 2.6.0c2 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '2.6.0c1',
+        VERSION:     '2.6.0c2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0c1 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0c2 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body>
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -90,7 +90,6 @@
 
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span>
 
-<span class="kn">from</span> <span class="nn">errno</span> <span class="kn">import</span> <span class="n">EALREADY</span><span class="p">,</span> <span class="n">EINPROGRESS</span><span class="p">,</span> <span class="n">EWOULDBLOCK</span><span class="p">,</span> <span class="n">EINVAL</span><span class="p">,</span> <span class="n">EISCONN</span><span class="p">,</span> <span class="n">errorcode</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">weakref</span> <span class="kn">import</span> <span class="n">WeakSet</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
@@ -103,9 +102,7 @@
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="n">ssl</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c"># NOQA</span>
 
-<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">OperationTimedOut</span>
-<span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="n">ConnectionShutdown</span><span class="p">,</span>
-                                  <span class="n">ConnectionException</span><span class="p">,</span> <span class="n">NONBLOCKING</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="n">ConnectionShutdown</span><span class="p">,</span> <span class="n">NONBLOCKING</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="kn">import</span> <span class="n">RegisterMessage</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
@@ -202,7 +199,6 @@
 
     <span class="n">_loop</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="n">_total_reqd_bytes</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">_writable</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">_readable</span> <span class="o">=</span> <span class="bp">False</span>
 
@@ -235,65 +231,16 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">connection_created</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-        <span class="n">sockerr</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">addresses</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">getaddrinfo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">AF_UNSPEC</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">af</span><span class="p">,</span> <span class="n">socktype</span><span class="p">,</span> <span class="n">proto</span><span class="p">,</span> <span class="n">canonname</span><span class="p">,</span> <span class="n">sockaddr</span><span class="p">)</span> <span class="ow">in</span> <span class="n">addresses</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">create_socket</span><span class="p">(</span><span class="n">af</span><span class="p">,</span> <span class="n">socktype</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">sockaddr</span><span class="p">)</span>
-                <span class="n">sockerr</span> <span class="o">=</span> <span class="bp">None</span>
-                <span class="k">break</span>
-            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                <span class="n">sockerr</span> <span class="o">=</span> <span class="n">err</span>
-        <span class="k">if</span> <span class="n">sockerr</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">sockerr</span><span class="o">.</span><span class="n">errno</span><span class="p">,</span> <span class="s">&quot;Tried connecting to </span><span class="si">%s</span><span class="s">. Last error: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">([</span><span class="n">a</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">addresses</span><span class="p">],</span> <span class="n">sockerr</span><span class="o">.</span><span class="n">strerror</span><span class="p">))</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">add_channel</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sockopts</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">args</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sockopts</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connect_socket</span><span class="p">()</span>
+        <span class="n">asyncore</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_writable</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_readable</span> <span class="o">=</span> <span class="bp">True</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_send_options_message</span><span class="p">()</span>
+
         <span class="c"># start the event loop if needed</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">maybe_start</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">set_socket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">):</span>
-        <span class="c"># Overrides the same method in asyncore. We deliberately</span>
-        <span class="c"># do not call add_channel() in this method so that we can call</span>
-        <span class="c"># it later, after connect() has completed.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">socket</span> <span class="o">=</span> <span class="n">sock</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fileno</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">create_socket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">family</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
-        <span class="c"># copied from asyncore, but with the line to set the socket in</span>
-        <span class="c"># non-blocking mode removed (we will do that after connecting)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">family_and_type</span> <span class="o">=</span> <span class="n">family</span><span class="p">,</span> <span class="nb">type</span>
-        <span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">family</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ssl_options</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">ssl</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;This version of Python was not compiled with SSL support&quot;</span><span class="p">)</span>
-            <span class="n">sock</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">wrap_socket</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">ssl_options</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_socket</span><span class="p">(</span><span class="n">sock</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">):</span>
-        <span class="c"># this is copied directly from asyncore.py, except that</span>
-        <span class="c"># a timeout is set before connecting</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connecting</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-        <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">connect_ex</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">err</span> <span class="ow">in</span> <span class="p">(</span><span class="n">EINPROGRESS</span><span class="p">,</span> <span class="n">EALREADY</span><span class="p">,</span> <span class="n">EWOULDBLOCK</span><span class="p">)</span> \
-           <span class="ow">or</span> <span class="n">err</span> <span class="o">==</span> <span class="n">EINVAL</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;nt&#39;</span><span class="p">,</span> <span class="s">&#39;ce&#39;</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">ConnectionException</span><span class="p">(</span><span class="s">&quot;Timed out connecting to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">address</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-        <span class="k">if</span> <span class="n">err</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">EISCONN</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">addr</span> <span class="o">=</span> <span class="n">address</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">handle_connect_event</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">strerror</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
@@ -314,9 +261,6 @@
                 <span class="n">ConnectionShutdown</span><span class="p">(</span><span class="s">&quot;Connection to </span><span class="si">%s</span><span class="s"> was closed&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">))</span>
             <span class="c"># don&#39;t leave in-progress operations hanging</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">connected_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">handle_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_send_options_message</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">handle_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
@@ -417,7 +361,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Cassandra Driver 2.6.0c1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
