@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Frequently Asked Questions &mdash; Cassandra Driver 2.6.0c2 documentation</title>
+    <title>Frequently Asked Questions &mdash; Cassandra Driver 2.6.0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '2.6.0c2',
+        VERSION:     '2.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,11 +23,11 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0c2 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0 documentation" href="index.html" />
     <link rel="prev" title="Frequently Asked Questions" href="cqlengine/faq.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -39,10 +39,10 @@
         <li class="right" >
           <a href="cqlengine/faq.html" title="Frequently Asked Questions"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -58,12 +58,14 @@
   <h4>Previous topic</h4>
   <p class="topless"><a href="cqlengine/faq.html"
                         title="previous chapter">Frequently Asked Questions</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/faq.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/faq.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -82,7 +84,7 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="frequently-asked-questions">
 <h1>Frequently Asked Questions<a class="headerlink" href="#frequently-asked-questions" title="Permalink to this headline">¶</a></h1>
@@ -112,11 +114,11 @@
     <span class="k">return</span> <span class="n">row</span><span class="o">.</span><span class="n">release_version</span>
 </pre></div>
 </div>
-<p>uWSGI provides a <tt class="docutils literal"><span class="pre">postfork</span></tt> hook you can use to create sessions and prepared statements after the child process forks.</p>
+<p>uWSGI provides a <code class="docutils literal"><span class="pre">postfork</span></code> hook you can use to create sessions and prepared statements after the child process forks.</p>
 </div>
 <div class="section" id="how-do-i-trace-a-request">
 <h2>How do I trace a request?<a class="headerlink" href="#how-do-i-trace-a-request" title="Permalink to this headline">¶</a></h2>
-<p>Request tracing can be turned on for any request by setting <tt class="docutils literal"><span class="pre">trace=True</span></tt> in <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><tt class="xref py py-meth docutils literal"><span class="pre">Session.execute_async()</span></tt></a>. View the results by waiting on the future, then <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></tt></a>.
+<p>Request tracing can be turned on for any request by setting <code class="docutils literal"><span class="pre">trace=True</span></code> in <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute_async()</span></code></a>. View the results by waiting on the future, then <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></code></a>.
 Since tracing is done asynchronously to the request, this method polls until the trace is complete before querying data.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s">&quot;SELECT * FROM system.local&quot;</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
@@ -134,11 +136,11 @@ Since tracing is done asynchronously to the request, this method polls until the
 <span class="go">0:00:00.000755 Scanned 1 rows and matched 1</span>
 </pre></div>
 </div>
-<p><tt class="docutils literal"><span class="pre">trace</span></tt> is a <tt class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></tt> object.</p>
+<p><code class="docutils literal"><span class="pre">trace</span></code> is a <code class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></code> object.</p>
 </div>
 <div class="section" id="how-do-i-determine-the-replicas-for-a-query">
 <h2>How do I determine the replicas for a query?<a class="headerlink" href="#how-do-i-determine-the-replicas-for-a-query" title="Permalink to this headline">¶</a></h2>
-<p>With prepared statements, the replicas are obtained by <tt class="docutils literal"><span class="pre">routing_key</span></tt>, based on current cluster token metadata:</p>
+<p>With prepared statements, the replicas are obtained by <code class="docutils literal"><span class="pre">routing_key</span></code>, based on current cluster token metadata:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">prepared</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s">&quot;SELECT * FROM example.t WHERE key=?&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bound</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="mi">1</span><span class="p">,))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">replicas</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_replicas</span><span class="p">(</span><span class="n">bound</span><span class="o">.</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">bound</span><span class="o">.</span><span class="n">routing_key</span><span class="p">)</span>
@@ -148,14 +150,14 @@ Since tracing is done asynchronously to the request, this method polls until the
 <span class="go">127.0.0.2</span>
 </pre></div>
 </div>
-<p><tt class="docutils literal"><span class="pre">replicas</span></tt> is a list of <tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt> objects.</p>
+<p><code class="docutils literal"><span class="pre">replicas</span></code> is a list of <code class="xref py py-class docutils literal"><span class="pre">Host</span></code> objects.</p>
 </div>
 <div class="section" id="how-does-the-driver-manage-request-retries">
 <h2>How does the driver manage request retries?<a class="headerlink" href="#how-does-the-driver-manage-request-retries" title="Permalink to this headline">¶</a></h2>
-<p>By default, retries are managed by the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.default_retry_policy" title="cassandra.cluster.Cluster.default_retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">Cluster.default_retry_policy</span></tt></a> set on the session Cluster. It can also
-be specialized per statement by setting <a class="reference internal" href="api/cassandra/query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><tt class="xref py py-attr docutils literal"><span class="pre">Statement.retry_policy</span></tt></a>.</p>
+<p>By default, retries are managed by the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.default_retry_policy" title="cassandra.cluster.Cluster.default_retry_policy"><code class="xref py py-attr docutils literal"><span class="pre">Cluster.default_retry_policy</span></code></a> set on the session Cluster. It can also
+be specialized per statement by setting <a class="reference internal" href="api/cassandra/query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><code class="xref py py-attr docutils literal"><span class="pre">Statement.retry_policy</span></code></a>.</p>
 <p>Retries are presently attempted on the same coordinator, but this may change in the future.</p>
-<p>Please see <a class="reference internal" href="api/cassandra/policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><tt class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></tt></a> for further details.</p>
+<p>Please see <a class="reference internal" href="api/cassandra/policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><code class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></code></a> for further details.</p>
 </div>
 </div>
 
@@ -165,7 +167,7 @@ be specialized per statement by setting <a class="reference internal" href="api/
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -177,12 +179,12 @@ be specialized per statement by setting <a class="reference internal" href="api/
         <li class="right" >
           <a href="cqlengine/faq.html" title="Frequently Asked Questions"
              >previous</a> |</li>
-        <li><a href="index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2014, DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

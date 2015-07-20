@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Performance Notes &mdash; Cassandra Driver 2.6.0c2 documentation</title>
+    <title>Performance Notes &mdash; Cassandra Driver 2.6.0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '2.6.0c2',
+        VERSION:     '2.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,12 +23,12 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0c2 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 2.6.0 documentation" href="index.html" />
     <link rel="next" title="Paging Large Queries" href="query_paging.html" />
     <link rel="prev" title="Upgrading" href="upgrading.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -43,10 +43,10 @@
         <li class="right" >
           <a href="upgrading.html" title="Upgrading"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -69,12 +69,14 @@
   <h4>Next topic</h4>
   <p class="topless"><a href="query_paging.html"
                         title="next chapter">Paging Large Queries</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/performance.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/performance.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -93,15 +95,15 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="performance-notes">
 <h1>Performance Notes<a class="headerlink" href="#performance-notes" title="Permalink to this headline">¶</a></h1>
 <p>The Python driver for Cassandra offers several methods for executing queries.
 You can synchronously block for queries to complete using
-<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><tt class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></tt></a>, you can use a future-like interface through
-<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><tt class="xref py py-meth docutils literal"><span class="pre">Session.execute_async()</span></tt></a>, or you can attach a callback to the future
-with <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_callback()</span></tt></a>.  Each of these methods has
+<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></code></a>, you can use a future-like interface through
+<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute_async()</span></code></a>, or you can attach a callback to the future
+with <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_callback()</span></code></a>.  Each of these methods has
 different performance characteristics and behaves differently when
 multiple threads are used.</p>
 <div class="section" id="benchmark-notes">
@@ -114,21 +116,21 @@ node <a class="reference external" href="https://github.com/pcmanus/ccm">ccm</a>
 with version 1.2.13 of Cassandra. I suggest testing these benchmarks against your
 own cluster when tuning the driver for optimal throughput or latency.</p>
 <p>The 1.0.0 version of the driver was used with all default settings.  For these
-benchmarks, the driver was configured to use the <tt class="docutils literal"><span class="pre">libev</span></tt> reactor.  You can also run
-the benchmarks using the <tt class="docutils literal"><span class="pre">asyncore</span></tt> event loop (<a class="reference internal" href="api/cassandra/io/asyncorereactor.html#cassandra.io.asyncorereactor.AsyncoreConnection" title="cassandra.io.asyncorereactor.AsyncoreConnection"><tt class="xref py py-class docutils literal"><span class="pre">AsyncoreConnection</span></tt></a>)
-by using the <tt class="docutils literal"><span class="pre">--asyncore-only</span></tt> command line option.</p>
+benchmarks, the driver was configured to use the <code class="docutils literal"><span class="pre">libev</span></code> reactor.  You can also run
+the benchmarks using the <code class="docutils literal"><span class="pre">asyncore</span></code> event loop (<a class="reference internal" href="api/cassandra/io/asyncorereactor.html#cassandra.io.asyncorereactor.AsyncoreConnection" title="cassandra.io.asyncorereactor.AsyncoreConnection"><code class="xref py py-class docutils literal"><span class="pre">AsyncoreConnection</span></code></a>)
+by using the <code class="docutils literal"><span class="pre">--asyncore-only</span></code> command line option.</p>
 <p>Each benchmark completes 100,000 small inserts. The replication factor for the
 keyspace was three, so all nodes were replicas for the inserted rows.</p>
 <p>The benchmarks require the Python driver C extensions as well as a few additional
 Python packages. Follow these steps to install the prerequisites:</p>
 <ol class="arabic simple">
 <li>Install packages to support Python driver C extensions:<ul>
-<li>Debian/Ubuntu: <tt class="docutils literal"><span class="pre">sudo</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">gcc</span> <span class="pre">python-dev</span> <span class="pre">libev4</span> <span class="pre">libev-dev</span></tt></li>
-<li>RHEL/CentOS/Fedora: <tt class="docutils literal"><span class="pre">sudo</span> <span class="pre">yum</span> <span class="pre">install</span> <span class="pre">gcc</span> <span class="pre">python-dev</span> <span class="pre">libev4</span> <span class="pre">libev-dev</span></tt></li>
+<li>Debian/Ubuntu: <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">gcc</span> <span class="pre">python-dev</span> <span class="pre">libev4</span> <span class="pre">libev-dev</span></code></li>
+<li>RHEL/CentOS/Fedora: <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">yum</span> <span class="pre">install</span> <span class="pre">gcc</span> <span class="pre">python-dev</span> <span class="pre">libev4</span> <span class="pre">libev-dev</span></code></li>
 </ul>
 </li>
-<li>Install Python packages: <tt class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">scales</span> <span class="pre">twisted</span> <span class="pre">blist</span></tt></li>
-<li>Re-install the Cassandra driver: <tt class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--upgrade</span> <span class="pre">cassandra-driver</span></tt></li>
+<li>Install Python packages: <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">scales</span> <span class="pre">twisted</span> <span class="pre">blist</span></code></li>
+<li>Re-install the Cassandra driver: <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--upgrade</span> <span class="pre">cassandra-driver</span></code></li>
 </ol>
 </div>
 <div class="section" id="synchronous-execution-sync-py">
@@ -145,18 +147,18 @@ is doing:</p>
     <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;INSERT INTO mykeyspace.mytable (key, b, c) VALUES (a, &#39;b&#39;, &#39;c&#39;)&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/sync.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/sync.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
 Average throughput: 434.08/sec
 </pre></div>
 </div>
 <p>This technique does scale reasonably well as we add more threads:</p>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/sync.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>2
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/sync.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>2
 Average throughput: 830.49/sec
-~/python-driver <span class="nv">$ </span>python benchmarks/sync.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>4
+~/python-driver <span class="nv">$ </span>python benchmarks/sync.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>4
 Average throughput: 1078.27/sec
-~/python-driver <span class="nv">$ </span>python benchmarks/sync.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>8
+~/python-driver <span class="nv">$ </span>python benchmarks/sync.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>8
 Average throughput: 1275.20/sec
-~/python-driver <span class="nv">$ </span>python benchmarks/sync.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>16
+~/python-driver <span class="nv">$ </span>python benchmarks/sync.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>16
 Average throughput: 1345.56/sec
 </pre></div>
 </div>
@@ -183,16 +185,16 @@ have completed:</p>
 </pre></div>
 </div>
 <p>As expected, this improves throughput in a single-threaded environment:</p>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/future_batches.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/future_batches.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
 Average throughput: 3477.56/sec
 </pre></div>
 </div>
 <p>However, adding more threads may actually harm throughput:</p>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/future_batches.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>2
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/future_batches.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>2
 Average throughput: 2360.52/sec
-~/python-driver <span class="nv">$ </span>python benchmarks/future_batches.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>4
+~/python-driver <span class="nv">$ </span>python benchmarks/future_batches.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>4
 Average throughput: 2293.21/sec
-~/python-driver <span class="nv">$ </span>python benchmarks/future_batches.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>8
+~/python-driver <span class="nv">$ </span>python benchmarks/future_batches.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>8
 Average throughput: 2244.85/sec
 </pre></div>
 </div>
@@ -213,16 +215,16 @@ and wait for it to complete:</p>
 </pre></div>
 </div>
 <p>This gets slightly better throughput than the Batched Futures pattern:</p>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/future_full_pipeline.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/future_full_pipeline.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
 Average throughput: 3635.76/sec
 </pre></div>
 </div>
 <p>But this has the same throughput issues when multiple threads are used:</p>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/future_full_pipeline.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>2
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/future_full_pipeline.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>2
 Average throughput: 2213.62/sec
-~/python-driver <span class="nv">$ </span>python benchmarks/future_full_pipeline.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>4
+~/python-driver <span class="nv">$ </span>python benchmarks/future_full_pipeline.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>4
 Average throughput: 2707.62/sec
-~/python-driver <span class="nv">$ </span>python benchmarks/future_full_pipeline.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>8
+~/python-driver <span class="nv">$ </span>python benchmarks/future_full_pipeline.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>8
 Average throughput: 2462.42/sec
 </pre></div>
 </div>
@@ -241,13 +243,13 @@ Average throughput: 2462.42/sec
 </div>
 <p>Throughput is about the same as the previous pattern, but a lot of memory will
 be consumed by the list of Futures:</p>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/future_full_throttle.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/future_full_throttle.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
 Average throughput: 3474.11/sec
-~/python-driver <span class="nv">$ </span>python benchmarks/future_full_throttle.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>2
+~/python-driver <span class="nv">$ </span>python benchmarks/future_full_throttle.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>2
 Average throughput: 2389.61/sec
-~/python-driver <span class="nv">$ </span>python benchmarks/future_full_throttle.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>4
+~/python-driver <span class="nv">$ </span>python benchmarks/future_full_throttle.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>4
 Average throughput: 2371.75/sec
-~/python-driver <span class="nv">$ </span>python benchmarks/future_full_throttle.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>8
+~/python-driver <span class="nv">$ </span>python benchmarks/future_full_throttle.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>8
 Average throughput: 2165.29/sec
 </pre></div>
 </div>
@@ -255,7 +257,7 @@ Average throughput: 2165.29/sec
 <div class="section" id="callback-chaining-callback-full-pipeline-py">
 <h2>Callback Chaining (<a class="reference external" href="https://github.com/datastax/python-driver/blob/master/benchmarks/callback_full_pipeline.py">callback_full_pipeline.py</a>)<a class="headerlink" href="#callback-chaining-callback-full-pipeline-py" title="Permalink to this headline">¶</a></h2>
 <p>This pattern is very different from the previous patterns.  Here we&#8217;re taking
-advantage of the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_callback()</span></tt></a> function to start
+advantage of the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_callback()</span></code></a> function to start
 another request as soon as one finishes.  Furthermore, we&#8217;re starting 120
 of these callback chains, so we&#8217;ve always got about 120 operations in
 flight at any time:</p>
@@ -287,20 +289,20 @@ flight at any time:</p>
 </pre></div>
 </div>
 <p>This is a more complex pattern, but the throughput is excellent:</p>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/callback_full_pipeline.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/callback_full_pipeline.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
 Average throughput: 7647.30/sec
 </pre></div>
 </div>
 <p>Part of the reason why performance is so good is that everything is running on
 single thread: the internal event loop thread that powers the driver.  The
 downside to this is that adding more threads doesn&#8217;t improve anything:</p>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/callback_full_pipeline.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>2
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/callback_full_pipeline.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>2
 Average throughput: 7704.58/sec
 </pre></div>
 </div>
 <p>What happens if we have more than 120 callback chains running?</p>
 <p>With 250 chains:</p>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/callback_full_pipeline.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/callback_full_pipeline.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
 Average throughput: 7794.22/sec
 </pre></div>
 </div>
@@ -309,17 +311,17 @@ all of the connections in the connection pools.  The problem is that the current
 version of the driver isn&#8217;t very good at throttling these callback chains, so
 a lot of time gets spent waiting for new connections and performance drops
 dramatically:</p>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/callback_full_pipeline.py -n 100000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>python benchmarks/callback_full_pipeline.py -n <span class="m">100000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --libev-only --threads<span class="o">=</span>1
 Average throughput: 679.61/sec
 </pre></div>
 </div>
-<p>When <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">Cluster.protocol_version</span></tt></a> is set to 1 or 2, you should limit the
+<p>When <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><code class="xref py py-attr docutils literal"><span class="pre">Cluster.protocol_version</span></code></a> is set to 1 or 2, you should limit the
 number of callback chains you run to roughly 100 per node in the cluster.
-When <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><tt class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></tt></a> is 3 or higher, you can safely experiment
+When <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code></a> is 3 or higher, you can safely experiment
 with higher numbers of callback chains.</p>
 <p>For many use cases, you don&#8217;t need to implement this pattern yourself.  You can
-simply use <a class="reference internal" href="api/cassandra/concurrent.html#cassandra.concurrent.execute_concurrent" title="cassandra.concurrent.execute_concurrent"><tt class="xref py py-meth docutils literal"><span class="pre">cassandra.concurrent.execute_concurrent()</span></tt></a> and
-<a class="reference internal" href="api/cassandra/concurrent.html#cassandra.concurrent.execute_concurrent_with_args" title="cassandra.concurrent.execute_concurrent_with_args"><tt class="xref py py-meth docutils literal"><span class="pre">cassandra.concurrent.execute_concurrent_with_args()</span></tt></a>, which implement
+simply use <a class="reference internal" href="api/cassandra/concurrent.html#cassandra.concurrent.execute_concurrent" title="cassandra.concurrent.execute_concurrent"><code class="xref py py-meth docutils literal"><span class="pre">cassandra.concurrent.execute_concurrent()</span></code></a> and
+<a class="reference internal" href="api/cassandra/concurrent.html#cassandra.concurrent.execute_concurrent_with_args" title="cassandra.concurrent.execute_concurrent_with_args"><code class="xref py py-meth docutils literal"><span class="pre">cassandra.concurrent.execute_concurrent_with_args()</span></code></a>, which implement
 this pattern for you with a synchronous API.</p>
 </div>
 <div class="section" id="pypy">
@@ -329,7 +331,7 @@ normal implementation of python. <a class="reference external" href="http://pypy
 implementation of Python (written in Python) which uses a JIT compiler to
 reduce CPU consumption.  This leads to a huge improvement in the driver
 performance:</p>
-<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>pypy benchmarks/callback_full_pipeline.py -n 500000 --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --asyncore-only --threads<span class="o">=</span>1
+<div class="highlight-bash"><div class="highlight"><pre>~/python-driver <span class="nv">$ </span>pypy benchmarks/callback_full_pipeline.py -n <span class="m">500000</span> --hosts<span class="o">=</span>127.0.0.1,127.0.0.2,127.0.0.3 --asyncore-only --threads<span class="o">=</span>1
 Average throughput: 18782.00/sec
 </pre></div>
 </div>
@@ -342,8 +344,8 @@ would probably narrow the gap between the performance of CPython and PyPy.</p>
 <a class="reference external" href="http://docs.python.org/2/library/multiprocessing.html">multiprocessing</a>
 module.  Multiple processes will scale significantly better than multiple
 threads will, so if high throughput is your goal, consider this option.</p>
-<p>Just be sure to <strong>never share any</strong> <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><tt class="xref py py-class docutils literal"><span class="pre">Cluster</span></tt></a>, <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session" title="cassandra.cluster.Session"><tt class="xref py py-class docutils literal"><span class="pre">Session</span></tt></a>,
-<strong>or</strong> <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><tt class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></tt></a> <strong>objects across multiple processes</strong>. These
+<p>Just be sure to <strong>never share any</strong> <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code></a>, <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session" title="cassandra.cluster.Session"><code class="xref py py-class docutils literal"><span class="pre">Session</span></code></a>,
+<strong>or</strong> <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><code class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></code></a> <strong>objects across multiple processes</strong>. These
 objects should all be created after forking the process, not before.</p>
 </div>
 </div>
@@ -354,7 +356,7 @@ objects should all be created after forking the process, not before.</p>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -369,12 +371,12 @@ objects should all be created after forking the process, not before.</p>
         <li class="right" >
           <a href="upgrading.html" title="Upgrading"
              >previous</a> |</li>
-        <li><a href="index.html">Cassandra Driver 2.6.0c2 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2014, DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>
