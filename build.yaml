@@ -1,0 +1,38 @@
+python:
+  - 2.7
+os:
+  - ruby_regex(/ubuntu14/)
+env:
+  CASSANDRA_VERSION:
+    - 2.2.0
+  JDK:
+    - java-7-oracle
+build:
+  - script: |
+      export JAVA_HOME=/usr/lib/jvm/$JDK
+      export PATH=$JAVA_HOME/bin:$PATH
+     
+      pyenv virtualenv testenv
+      pyenv activate testenv
+      
+      echo "Using Python:"
+      python --version
+      
+      # Install dependencies
+      pip install -r test-requirements.txt
+      
+      # Install the driver & compile C extensions
+      python setup.py build_ext --inplace
+      
+      echo "==========RUNNING CQLENGINE TESTS=========="
+      CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=cqle_results.xml tests/integration/cqlengine/
+      
+      echo "==========RUNNING INTEGRATION TESTS=========="
+      CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=standard_results.xml tests/integration/standard/ 
+      
+      #echo "==========RUNNING LONG INTEGRATION TESTS=========="
+      #CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=long_results.xml tests/integration/long/
+      
+      pyenv deactivate
+      echo 'y' | pyenv uninstall testenv
+    
