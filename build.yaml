@@ -5,11 +5,14 @@ os:
 env:
   CASSANDRA_VERSION:
     - 2.2.0
+    - 3.0.0-alpha1
   JDK:
     - java-7-oracle
+    - java-8-oracle
   EVENT_LOOP_MANAGER:
     - libev
   CYTHON:
+    - CYTHON
     - NO_CYTHON
 build:
   - script: |
@@ -21,7 +24,7 @@ build:
         sudo apt-get install libev4 libev-dev
       fi
       
-      if [[ $CYTHON != 'NO_CYTHON' ]]; then
+      if [[ $CYTHON == 'CYTHON' ]]; then
         pip install cython
       fi
       
@@ -34,7 +37,7 @@ build:
       CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=cqle_results.xml tests/integration/cqlengine/
       
       echo "==========RUNNING INTEGRATION TESTS=========="
-      CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=standard_results.xml tests/integration/standard/ 
+      #CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=standard_results.xml tests/integration/standard/ 
       
       #echo "==========RUNNING LONG INTEGRATION TESTS=========="
       #CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=long_results.xml tests/integration/long/
