@@ -7,15 +7,24 @@ env:
     - 2.2.0
   JDK:
     - java-7-oracle
+  EVENT_LOOP_MANAGER
+    - libev
+  CYTHON
+    - NO_CYTHON
 build:
   - script: |
       export JAVA_HOME=/usr/lib/jvm/$JDK
       export PATH=$JAVA_HOME/bin:$PATH
   
-      echo "Using Python:"
-      python --version
-      
       # Install dependencies
+      if [[ $EVENT_LOOP_MANAGER == 'libev' ]]; then
+        sudo apt-get install libev4 libev-dev
+      fi
+      
+      if [[ $CYTHON != 'NO_CYTHON' ]]; then
+        pip install cython
+      fi
+      
       pip install -r test-requirements.txt
       
       # Install the driver & compile C extensions
