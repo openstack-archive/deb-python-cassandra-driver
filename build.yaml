@@ -1,5 +1,6 @@
 python:
   - 2.7
+  - 3.4
 os:
   - ubuntu/trusty64
 env:
@@ -26,6 +27,7 @@ build:
       
       if [[ $CYTHON == 'CYTHON' ]]; then
         pip install cython
+        pip install numpy
       fi
       
       pip install -r test-requirements.txt
@@ -37,8 +39,8 @@ build:
       CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=cqle_results.xml tests/integration/cqlengine/
       
       echo "==========RUNNING INTEGRATION TESTS=========="
-      #CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=standard_results.xml tests/integration/standard/ 
+      CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=standard_results.xml tests/integration/standard/ 
       
-      #echo "==========RUNNING LONG INTEGRATION TESTS=========="
-      #CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=long_results.xml tests/integration/long/
+      echo "==========RUNNING LONG INTEGRATION TESTS=========="
+      CASSANDRA_VERSION=$CASSANDRA_VERSION nosetests -s -v --with-xunit --xunit-file=long_results.xml tests/integration/long/
       
