@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Installation &mdash; Cassandra Driver 2.6.0 documentation</title>
+    <title>Installation &mdash; Cassandra Driver 2.7.0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '2.6.0',
+        VERSION:     '2.7.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 2.7.0 documentation" href="index.html" />
     <link rel="next" title="Getting Started" href="getting_started.html" />
     <link rel="prev" title="cassandra.cqlengine.usertype - Model classes for User Defined Types" href="api/cassandra/cqlengine/usertype.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="api/cassandra/cqlengine/usertype.html" title="cassandra.cqlengine.usertype - Model classes for User Defined Types"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 2.7.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -56,13 +56,17 @@
 <li><a class="reference internal" href="#osx-installation-error">OSX Installation Error</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#windows-installation-notes">Windows Installation Notes</a></li>
 <li><a class="reference internal" href="#manual-installation">Manual Installation</a></li>
 <li><a class="reference internal" href="#verifying-your-installation">Verifying your Installation</a></li>
 <li><a class="reference internal" href="#optional-compression-support">(<em>Optional</em>) Compression Support</a></li>
 <li><a class="reference internal" href="#optional-metrics-support">(<em>Optional</em>) Metrics Support</a></li>
-<li><a class="reference internal" href="#optional-sorted-sets">(<em>Optional</em>) Sorted Sets</a></li>
+<li><a class="reference internal" href="#optional-blist-for-sorted-sets">(<em>Optional</em>) blist for Sorted Sets</a></li>
 <li><a class="reference internal" href="#optional-non-python-dependencies">(<em>Optional</em>) Non-python Dependencies</a><ul>
-<li><a class="reference internal" href="#c-extensions">C Extensions</a></li>
+<li><a class="reference internal" href="#c-extensions">C Extensions</a><ul>
+<li><a class="reference internal" href="#cython-based-extensions">Cython-based Extensions</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#libev-support">libev support</a></li>
 </ul>
 </li>
@@ -110,8 +114,7 @@
 <div class="section" id="supported-platforms">
 <h2>Supported Platforms<a class="headerlink" href="#supported-platforms" title="Permalink to this headline">¶</a></h2>
 <p>Python 2.6, 2.7, 3.3, and 3.4 are supported.  Both CPython (the standard Python
-implementation) and <a class="reference external" href="http://pypy.org">PyPy</a> are supported and tested
-against.</p>
+implementation) and <a class="reference external" href="http://pypy.org">PyPy</a> are supported and tested.</p>
 <p>Linux, OSX, and Windows are supported.</p>
 </div>
 <div class="section" id="installation-through-pip">
@@ -136,6 +139,19 @@ the same time as the driver itself.  To install the driver*:</p>
 </div>
 </div>
 </div>
+<div class="section" id="windows-installation-notes">
+<span id="windows-build"></span><h2>Windows Installation Notes<a class="headerlink" href="#windows-installation-notes" title="Permalink to this headline">¶</a></h2>
+<p>Installing the driver with extensions in Windows sometimes presents some challenges. A few notes about common
+hang-ups:</p>
+<p>Setup requires a compiler. When using Python 2, this is as simple as installing <a class="reference external" href="http://aka.ms/vcpython27">this package</a>
+(this link is also emitted during install if setuptools is unable to find the resources it needs). Depending on your
+system settings, this package may install as a user-specific application. Make sure to install for everyone, or at least
+as the user that will be building the Python environment.</p>
+<p>It is also possible to run the build with your compiler of choice. Just make sure to have your environment setup with
+the proper paths. Make sure the compiler target architecture matches the bitness of your Python runtime.
+Perhaps the easiest way to do this is to run the build/install from a Visual Studio Command Prompt (a
+shortcut installed with Visual Studio that sources the appropriate environment and presents a shell).</p>
+</div>
 <div class="section" id="manual-installation">
 <h2>Manual Installation<a class="headerlink" href="#manual-installation" title="Permalink to this headline">¶</a></h2>
 <p>You can always install the driver directly from a source checkout or tarball.
@@ -153,7 +169,7 @@ installed. You can find the list of dependencies in
 <div class="highlight-python"><div class="highlight"><pre>python -c &#39;import cassandra; print cassandra.__version__&#39;
 </pre></div>
 </div>
-<p>It should print something like &#8220;2.0.0&#8221;.</p>
+<p>It should print something like &#8220;2.7.0&#8221;.</p>
 </div>
 <div class="section" id="optional-compression-support">
 <h2>(<em>Optional</em>) Compression Support<a class="headerlink" href="#optional-compression-support" title="Permalink to this headline">¶</a></h2>
@@ -182,29 +198,31 @@ support this:</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="optional-sorted-sets">
-<h2>(<em>Optional</em>) Sorted Sets<a class="headerlink" href="#optional-sorted-sets" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="optional-blist-for-sorted-sets">
+<h2>(<em>Optional</em>) blist for Sorted Sets<a class="headerlink" href="#optional-blist-for-sorted-sets" title="Permalink to this headline">¶</a></h2>
 <p>Cassandra can store entire collections within a column.  One of those
 collection types is a set.  Cassandra&#8217;s sets are actually ordered
-sets.  By default, the driver will use unordered sets to represent
-these collections.  If you would like to maintain the ordering,
+sets.  By default, the driver will use a pure Python ordered sets to represent
+these collections.  If you would like to use an optimized implementation,
 install the <code class="docutils literal"><span class="pre">blist</span></code> library:</p>
 <div class="highlight-python"><div class="highlight"><pre>pip install blist
 </pre></div>
 </div>
+<p><strong>Note</strong>: This optional dependency is likely to be removed in favor of the internal
+implementation in the next major version.</p>
 </div>
 <div class="section" id="optional-non-python-dependencies">
 <h2>(<em>Optional</em>) Non-python Dependencies<a class="headerlink" href="#optional-non-python-dependencies" title="Permalink to this headline">¶</a></h2>
 <p>The driver has several <strong>optional</strong> features that have non-Python dependencies.</p>
 <div class="section" id="c-extensions">
 <h3>C Extensions<a class="headerlink" href="#c-extensions" title="Permalink to this headline">¶</a></h3>
-<p>By default, two C extensions are compiled: one that adds support
-for token-aware routing with the <code class="docutils literal"><span class="pre">Murmur3Partitioner</span></code>, and one that
-allows you to use <a class="reference external" href="http://software.schmorp.de/pkg/libev.html">libev</a>
-for the event loop, which improves performance.</p>
+<p>By default, a number of extensions are compiled, providing faster hashing
+for token-aware routing with the <code class="docutils literal"><span class="pre">Murmur3Partitioner</span></code>,
+<a class="reference external" href="http://software.schmorp.de/pkg/libev.html">libev</a> event loop integration,
+and Cython optimized extensions.</p>
 <p>When installing manually through setup.py, you can disable both with
-the <code class="docutils literal"><span class="pre">--no-extensions</span></code> option, or selectively disable one or the other
-with <code class="docutils literal"><span class="pre">--no-murmur3</span></code> and <code class="docutils literal"><span class="pre">--no-libev</span></code>.</p>
+the <code class="docutils literal"><span class="pre">--no-extensions</span></code> option, or selectively disable them with
+with <code class="docutils literal"><span class="pre">--no-murmur3</span></code>, <code class="docutils literal"><span class="pre">--no-libev</span></code>, or <code class="docutils literal"><span class="pre">--no-cython</span></code>.</p>
 <p>To compile the extensions, ensure that GCC and the Python headers are available.</p>
 <p>On Ubuntu and Debian, this can be accomplished by running:</p>
 <div class="highlight-python"><div class="highlight"><pre>$ sudo apt-get install gcc python-dev
@@ -215,6 +233,24 @@ with <code class="docutils literal"><span class="pre">--no-murmur3</span></code>
 </pre></div>
 </div>
 <p>On OS X, homebrew installations of Python should provide the necessary headers.</p>
+<p>See <a class="reference internal" href="#windows-build"><span>Windows Installation Notes</span></a> for notes on configuring the build environment on Windows.</p>
+<div class="section" id="cython-based-extensions">
+<h4>Cython-based Extensions<a class="headerlink" href="#cython-based-extensions" title="Permalink to this headline">¶</a></h4>
+<p>By default, this package uses <a class="reference external" href="http://cython.org/">Cython</a> to optimize core modules and build custom extensions.
+This is not a hard requirement, but is engaged by default to build extensions offering better performance than the
+pure Python implementation.</p>
+<p>This build phase can be avoided using the build switch, or an environment variable:</p>
+<div class="highlight-python"><div class="highlight"><pre>python setup.py install --no-cython
+-or-
+pip install --install-option=&quot;--no-cython&quot; &lt;spec-or-path&gt;
+</pre></div>
+</div>
+<p>Alternatively, an environment variable can be used to switch this option regardless of
+context:</p>
+<div class="highlight-python"><div class="highlight"><pre>CASS_DRIVER_NO_CYTHON=1 &lt;your script here&gt;
+</pre></div>
+</div>
+</div>
 </div>
 <div class="section" id="libev-support">
 <h3>libev support<a class="headerlink" href="#libev-support" title="Permalink to this headline">¶</a></h3>
@@ -235,6 +271,8 @@ through <a class="reference external" href="http://brew.sh/">Homebrew</a>. For e
 <div class="highlight-python"><div class="highlight"><pre>$ brew install libev
 </pre></div>
 </div>
+<p>The libev extension is not built for Windows (the build process is complex, and the Windows implementation uses
+select anyway).</p>
 <p>If successful, you should be able to build and install the extension
 (just using <code class="docutils literal"><span class="pre">setup.py</span> <span class="pre">build</span></code> or <code class="docutils literal"><span class="pre">setup.py</span> <span class="pre">install</span></code>) and then use
 the libev event loop by doing the following:</p>
@@ -276,7 +314,7 @@ the libev event loop by doing the following:</p>
         <li class="right" >
           <a href="api/cassandra/cqlengine/usertype.html" title="cassandra.cqlengine.usertype - Model classes for User Defined Types"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 2.7.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

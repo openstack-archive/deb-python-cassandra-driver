@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 2.6.0 documentation</title>
+    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 2.7.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.6.0',
+        VERSION:     '2.7.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.7.0 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" />
     <link rel="prev" title="cassandra - Exceptions and Enums" href="../cassandra.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -614,8 +614,7 @@ methods.</p>
 <code class="descname">default_timeout</code><em class="property"> = 10.0</em><a class="headerlink" href="#cassandra.cluster.Session.default_timeout" title="Permalink to this definition">¶</a></dt>
 <dd><p>A default timeout, measured in seconds, for queries executed through
 <a class="reference internal" href="#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">execute()</span></code></a> or <a class="reference internal" href="#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><code class="xref py py-meth docutils literal"><span class="pre">execute_async()</span></code></a>.  This default may be
-overridden with the <cite>timeout</cite> parameter for either of those methods
-or the <cite>timeout</cite> parameter for <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.result()</span></code></a>.</p>
+overridden with the <cite>timeout</cite> parameter for either of those methods.</p>
 <p>Setting this to <code class="xref py py-const docutils literal"><span class="pre">None</span></code> will cause no timeouts to be set by default.</p>
 <p>Please see <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.result()</span></code></a> for details on the scope and
 effect of this timeout.</p>
@@ -691,6 +690,16 @@ properly sanitize data.</p>
 <div class="versionadded">
 <p><span class="versionmodified">New in version 2.1.0.</span></p>
 </div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Session.client_protocol_handler">
+<code class="descname">client_protocol_handler</code><em class="property"> = &lt;class 'cassandra.protocol.ProtocolHandler'&gt;</em><a class="headerlink" href="#cassandra.cluster.Session.client_protocol_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies a protocol handler that will be used for client-initiated requests (i.e. no
+internal driver requests). This can be used to override or extend features such as
+message or type ser/des.</p>
+<p>The default pure python implementation is <a class="reference internal" href="protocol.html#cassandra.protocol.ProtocolHandler" title="cassandra.protocol.ProtocolHandler"><code class="xref py py-class docutils literal"><span class="pre">cassandra.protocol.ProtocolHandler</span></code></a>.</p>
+<p>When compiled with Cython, there are also built-in faster alternatives. See <a class="reference internal" href="protocol.html#faster-deser"><span>Faster Deserialization</span></a></p>
 </dd></dl>
 
 <dl class="method">
@@ -839,6 +848,11 @@ to <a class="reference internal" href="#cassandra.cluster.Session.execute_async"
 <dd><p>Return the final result or raise an Exception if errors were
 encountered.  If the final result or error has not been set
 yet, this method will block until that time.</p>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 2.6.0.</span></p>
+</div>
+<p><strong>`timeout` is deprecated. Use timeout in the Session execute functions instead.
+The following description applies to deprecated behavior:</strong></p>
 <p>You may set a timeout (in seconds) with the <cite>timeout</cite> parameter.
 By default, the <a class="reference internal" href="#cassandra.cluster.Session.default_timeout" title="cassandra.cluster.Session.default_timeout"><code class="xref py py-attr docutils literal"><span class="pre">default_timeout</span></code></a> for the <a class="reference internal" href="#cassandra.cluster.Session" title="cassandra.cluster.Session"><code class="xref py py-class docutils literal"><span class="pre">Session</span></code></a>
 this was created through will be used for the timeout on this
@@ -849,10 +863,6 @@ the request).</p>
 <p>If the timeout is exceeded, an <a class="reference internal" href="../cassandra.html#cassandra.OperationTimedOut" title="cassandra.OperationTimedOut"><code class="xref py py-exc docutils literal"><span class="pre">cassandra.OperationTimedOut</span></code></a> will be raised.
 This is a client-side timeout. For more information
 about server-side coordinator timeouts, see <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><code class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></code></a>.</p>
-<p><strong>Important</strong>: This timeout currently has no effect on callbacks registered
-on a <a class="reference internal" href="#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><code class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></code></a> through <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_callback()</span></code></a> or
-<a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_errback" title="cassandra.cluster.ResponseFuture.add_errback"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.add_errback()</span></code></a>; even if a query exceeds this default
-timeout, neither the registered callback or errback will be called.</p>
 <p>Example usage:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># do other stuff...</span>
@@ -1077,7 +1087,7 @@ against.</p>
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

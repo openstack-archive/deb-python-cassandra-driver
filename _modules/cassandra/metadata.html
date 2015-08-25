@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata &mdash; Cassandra Driver 2.6.0 documentation</title>
+    <title>cassandra.metadata &mdash; Cassandra Driver 2.7.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.6.0',
+        VERSION:     '2.7.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.7.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -88,6 +88,7 @@
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">six</span>
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">zip</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">RLock</span>
 
 <span class="n">murmur3</span> <span class="o">=</span> <span class="bp">None</span>
@@ -217,23 +218,27 @@
         <span class="n">current_keyspaces</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">ks_results</span><span class="p">:</span>
             <span class="n">keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_keyspace_metadata</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
-            <span class="n">keyspace_col_rows</span> <span class="o">=</span> <span class="n">col_def_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{})</span>
-            <span class="n">keyspace_trigger_rows</span> <span class="o">=</span> <span class="n">trigger_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{})</span>
-            <span class="k">for</span> <span class="n">table_row</span> <span class="ow">in</span> <span class="n">cf_def_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
-                <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">table_row</span><span class="p">,</span> <span class="n">keyspace_col_rows</span><span class="p">,</span> <span class="n">keyspace_trigger_rows</span><span class="p">)</span>
-                <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">_add_table_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">keyspace_col_rows</span> <span class="o">=</span> <span class="n">col_def_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="n">keyspace_trigger_rows</span> <span class="o">=</span> <span class="n">trigger_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="k">for</span> <span class="n">table_row</span> <span class="ow">in</span> <span class="n">cf_def_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">table_row</span><span class="p">,</span> <span class="n">keyspace_col_rows</span><span class="p">,</span> <span class="n">keyspace_trigger_rows</span><span class="p">)</span>
+                    <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">_add_table_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">usertype_row</span> <span class="ow">in</span> <span class="n">usertype_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
-                <span class="n">usertype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_usertype</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">usertype_row</span><span class="p">)</span>
-                <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">user_types</span><span class="p">[</span><span class="n">usertype</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">usertype</span>
+                <span class="k">for</span> <span class="n">usertype_row</span> <span class="ow">in</span> <span class="n">usertype_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="n">usertype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_usertype</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">usertype_row</span><span class="p">)</span>
+                    <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">user_types</span><span class="p">[</span><span class="n">usertype</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">usertype</span>
 
-            <span class="k">for</span> <span class="n">fn_row</span> <span class="ow">in</span> <span class="n">fn_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
-                <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_function</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">fn_row</span><span class="p">)</span>
-                <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">functions</span><span class="p">[</span><span class="n">fn</span><span class="o">.</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span>
+                <span class="k">for</span> <span class="n">fn_row</span> <span class="ow">in</span> <span class="n">fn_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_function</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">fn_row</span><span class="p">)</span>
+                    <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">functions</span><span class="p">[</span><span class="n">fn</span><span class="o">.</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span>
 
-            <span class="k">for</span> <span class="n">agg_row</span> <span class="ow">in</span> <span class="n">agg_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
-                <span class="n">agg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_aggregate</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">agg_row</span><span class="p">)</span>
-                <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">aggregates</span><span class="p">[</span><span class="n">agg</span><span class="o">.</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">agg</span>
+                <span class="k">for</span> <span class="n">agg_row</span> <span class="ow">in</span> <span class="n">agg_rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="n">agg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_aggregate</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">agg_row</span><span class="p">)</span>
+                    <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">aggregates</span><span class="p">[</span><span class="n">agg</span><span class="o">.</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">agg</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Error while parsing metadata for keyspace </span><span class="si">%s</span><span class="s">. Metadata model will be incomplete.&quot;</span><span class="p">,</span> <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">_exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
 
             <span class="n">current_keyspaces</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="n">old_keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
@@ -277,41 +282,42 @@
             <span class="n">new_usertype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_usertype</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">type_results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">user_types</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_usertype</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c"># the type was deleted</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">user_types</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">user_types</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">function_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">function_results</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">function_results</span><span class="p">:</span>
             <span class="n">new_function</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_function</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">function_results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">functions</span><span class="p">[</span><span class="n">function</span><span class="o">.</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_function</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c"># the function was deleted</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">function</span><span class="o">.</span><span class="n">signature</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">function</span><span class="o">.</span><span class="n">signature</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">aggregate_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">,</span> <span class="n">aggregate_results</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">aggregate_results</span><span class="p">:</span>
             <span class="n">new_aggregate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_aggregate</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">aggregate_results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">aggregates</span><span class="p">[</span><span class="n">aggregate</span><span class="o">.</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_aggregate</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c"># the aggregate was deleted</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">aggregates</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">aggregate</span><span class="o">.</span><span class="n">signature</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">aggregates</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">aggregate</span><span class="o">.</span><span class="n">signature</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">table_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">,</span> <span class="n">col_results</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="c"># we&#39;re trying to update a table in a keyspace we don&#39;t know about</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Tried to update schema for table &#39;</span><span class="si">%s</span><span class="s">&#39; in unknown keyspace &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span><span class="p">,</span>
-                      <span class="n">table</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">cf_results</span><span class="p">:</span>
-            <span class="c"># the table was removed</span>
-            <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">_drop_table_metadata</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cf_results</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">cf_results</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="n">keyspace_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span>
             <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_metadata</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="p">,</span> <span class="n">cf_results</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">col_results</span><span class="p">},</span> <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">triggers_result</span><span class="p">})</span>
             <span class="n">keyspace_meta</span><span class="o">.</span><span class="n">_add_table_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span><span class="o">.</span><span class="n">_drop_table_metadata</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">_keyspace_added</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ksname</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_map</span><span class="p">:</span>
@@ -327,10 +333,16 @@
 
     <span class="k">def</span> <span class="nf">_build_keyspace_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
         <span class="n">name</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;keyspace_name&quot;</span><span class="p">]</span>
-        <span class="n">durable_writes</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;durable_writes&quot;</span><span class="p">]</span>
-        <span class="n">strategy_class</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;strategy_class&quot;</span><span class="p">]</span>
-        <span class="n">strategy_options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;strategy_options&quot;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">KeyspaceMetadata</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">durable_writes</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;durable_writes&quot;</span><span class="p">]</span>
+            <span class="n">strategy_class</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&quot;strategy_class&quot;</span><span class="p">]</span>
+            <span class="n">strategy_options</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;strategy_options&quot;</span><span class="p">])</span>
+            <span class="n">ksm</span> <span class="o">=</span> <span class="n">KeyspaceMetadata</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Error while parsing metadata for keyspace </span><span class="si">%s</span><span class="s"> row(</span><span class="si">%s</span><span class="s">)&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
+            <span class="n">ksm</span> <span class="o">=</span> <span class="n">KeyspaceMetadata</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;UNKNOWN&#39;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">ksm</span><span class="o">.</span><span class="n">_exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">ksm</span>
 
     <span class="k">def</span> <span class="nf">_build_usertype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">usertype_row</span><span class="p">):</span>
         <span class="n">type_classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">,</span> <span class="n">usertype_row</span><span class="p">[</span><span class="s">&#39;field_types&#39;</span><span class="p">]))</span>
@@ -362,143 +374,147 @@
             <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Building table metadata with no column meta for </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
                         <span class="n">keyspace_metadata</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">cfname</span><span class="p">)</span>
 
-        <span class="n">comparator</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;comparator&quot;</span><span class="p">])</span>
-
-        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">comparator</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">CompositeType</span><span class="p">):</span>
-            <span class="n">column_name_types</span> <span class="o">=</span> <span class="n">comparator</span><span class="o">.</span><span class="n">subtypes</span>
-            <span class="n">is_composite_comparator</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">column_name_types</span> <span class="o">=</span> <span class="p">(</span><span class="n">comparator</span><span class="p">,)</span>
-            <span class="n">is_composite_comparator</span> <span class="o">=</span> <span class="bp">False</span>
-
-        <span class="n">num_column_name_components</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_name_types</span><span class="p">)</span>
-        <span class="n">last_col</span> <span class="o">=</span> <span class="n">column_name_types</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-
-        <span class="n">column_aliases</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;column_aliases&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-
-        <span class="n">clustering_rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cf_col_rows</span>
-                           <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;clustering_key&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">clustering_rows</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">clustering_rows</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">clustering_rows</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;component_index&#39;</span><span class="p">))</span>
-
-        <span class="k">if</span> <span class="n">column_aliases</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">column_aliases</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">column_aliases</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">column_aliases</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;column_name&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">clustering_rows</span><span class="p">]</span>
-
-        <span class="k">if</span> <span class="n">is_composite_comparator</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">last_col</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ColumnToCollectionType</span><span class="p">):</span>
-                <span class="c"># collections</span>
-                <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">False</span>
-                <span class="n">has_value</span> <span class="o">=</span> <span class="bp">False</span>
-                <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span> <span class="o">-</span> <span class="mi">2</span>
-            <span class="k">elif</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">column_aliases</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_column_name_components</span> <span class="o">-</span> <span class="mi">1</span>
-                    <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">last_col</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">UTF8Type</span><span class="p">)):</span>
-                <span class="c"># aliases?</span>
-                <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">False</span>
-                <span class="n">has_value</span> <span class="o">=</span> <span class="bp">False</span>
-                <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span> <span class="o">-</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c"># compact table</span>
-                <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">True</span>
-                <span class="n">has_value</span> <span class="o">=</span> <span class="n">column_aliases</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">cf_col_rows</span>
-                <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span>
-
-                <span class="c"># Some thrift tables define names in composite types (see PYTHON-192)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">column_aliases</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">comparator</span><span class="p">,</span> <span class="s">&#39;fieldnames&#39;</span><span class="p">):</span>
-                    <span class="n">column_aliases</span> <span class="o">=</span> <span class="n">comparator</span><span class="o">.</span><span class="n">fieldnames</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="k">if</span> <span class="n">column_aliases</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">cf_col_rows</span><span class="p">:</span>
-                <span class="n">has_value</span> <span class="o">=</span> <span class="bp">True</span>
-                <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">has_value</span> <span class="o">=</span> <span class="bp">False</span>
-                <span class="n">clustering_size</span> <span class="o">=</span> <span class="mi">0</span>
-
         <span class="n">table_meta</span> <span class="o">=</span> <span class="n">TableMetadata</span><span class="p">(</span><span class="n">keyspace_metadata</span><span class="p">,</span> <span class="n">cfname</span><span class="p">)</span>
-        <span class="n">table_meta</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="n">comparator</span>
 
-        <span class="c"># partition key</span>
-        <span class="n">partition_rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cf_col_rows</span>
-                          <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;partition_key&quot;</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">comparator</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;comparator&quot;</span><span class="p">])</span>
+            <span class="n">table_meta</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="n">comparator</span>
 
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">partition_rows</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">partition_rows</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">partition_rows</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;component_index&#39;</span><span class="p">))</span>
-
-        <span class="n">key_aliases</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;key_aliases&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">key_aliases</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">key_aliases</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">key_aliases</span><span class="p">)</span> <span class="k">if</span> <span class="n">key_aliases</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c"># In 2.0+, we can use the &#39;type&#39; column. In 3.0+, we have to use it.</span>
-            <span class="n">key_aliases</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;column_name&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">partition_rows</span><span class="p">]</span>
-
-        <span class="n">key_validator</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;key_validator&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">key_validator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">key_type</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">key_validator</span><span class="p">)</span>
-            <span class="n">key_types</span> <span class="o">=</span> <span class="n">key_type</span><span class="o">.</span><span class="n">subtypes</span> <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">key_type</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">CompositeType</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">key_type</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">key_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;validator&#39;</span><span class="p">))</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">partition_rows</span><span class="p">]</span>
-
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">col_type</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">key_types</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_aliases</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">:</span>
-                <span class="n">column_name</span> <span class="o">=</span> <span class="n">key_aliases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">column_name</span> <span class="o">=</span> <span class="s">&quot;key&quot;</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">comparator</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">CompositeType</span><span class="p">):</span>
+                <span class="n">column_name_types</span> <span class="o">=</span> <span class="n">comparator</span><span class="o">.</span><span class="n">subtypes</span>
+                <span class="n">is_composite_comparator</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">column_name</span> <span class="o">=</span> <span class="s">&quot;key</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">i</span>
+                <span class="n">column_name_types</span> <span class="o">=</span> <span class="p">(</span><span class="n">comparator</span><span class="p">,)</span>
+                <span class="n">is_composite_comparator</span> <span class="o">=</span> <span class="bp">False</span>
 
-            <span class="n">col</span> <span class="o">=</span> <span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">col_type</span><span class="p">)</span>
-            <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span>
-            <span class="n">table_meta</span><span class="o">.</span><span class="n">partition_key</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+            <span class="n">num_column_name_components</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_name_types</span><span class="p">)</span>
+            <span class="n">last_col</span> <span class="o">=</span> <span class="n">column_name_types</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
-        <span class="c"># clustering key</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clustering_size</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_aliases</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">:</span>
-                <span class="n">column_name</span> <span class="o">=</span> <span class="n">column_aliases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">column_aliases</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;column_aliases&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+            <span class="n">clustering_rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cf_col_rows</span>
+                               <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;clustering_key&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">clustering_rows</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">clustering_rows</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">clustering_rows</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;component_index&#39;</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">column_aliases</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">column_aliases</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">column_aliases</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">column_name</span> <span class="o">=</span> <span class="s">&quot;column</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">i</span>
+                <span class="n">column_aliases</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;column_name&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">clustering_rows</span><span class="p">]</span>
 
-            <span class="n">col</span> <span class="o">=</span> <span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">column_name_types</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-            <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span>
-            <span class="n">table_meta</span><span class="o">.</span><span class="n">clustering_key</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">is_composite_comparator</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">last_col</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ColumnToCollectionType</span><span class="p">):</span>
+                    <span class="c"># collections</span>
+                    <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="n">has_value</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span> <span class="o">-</span> <span class="mi">2</span>
+                <span class="k">elif</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">column_aliases</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_column_name_components</span> <span class="o">-</span> <span class="mi">1</span>
+                        <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">last_col</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">UTF8Type</span><span class="p">)):</span>
+                    <span class="c"># aliases?</span>
+                    <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="n">has_value</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c"># compact table</span>
+                    <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="n">has_value</span> <span class="o">=</span> <span class="n">column_aliases</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">cf_col_rows</span>
+                    <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span>
 
-        <span class="c"># value alias (if present)</span>
-        <span class="k">if</span> <span class="n">has_value</span><span class="p">:</span>
-            <span class="n">value_alias_rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cf_col_rows</span>
-                                <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;compact_value&quot;</span><span class="p">]</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">key_aliases</span><span class="p">:</span>  <span class="c"># TODO are we checking the right thing here?</span>
-                <span class="n">value_alias</span> <span class="o">=</span> <span class="s">&quot;value&quot;</span>
+                    <span class="c"># Some thrift tables define names in composite types (see PYTHON-192)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">column_aliases</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">comparator</span><span class="p">,</span> <span class="s">&#39;fieldnames&#39;</span><span class="p">):</span>
+                        <span class="n">column_aliases</span> <span class="o">=</span> <span class="n">comparator</span><span class="o">.</span><span class="n">fieldnames</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">value_alias</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;value_alias&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">value_alias</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">value_alias_rows</span><span class="p">:</span>  <span class="c"># CASSANDRA-8487</span>
-                    <span class="c"># In 2.0+, we can use the &#39;type&#39; column. In 3.0+, we have to use it.</span>
-                    <span class="n">value_alias</span> <span class="o">=</span> <span class="n">value_alias_rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;column_name&#39;</span><span class="p">)</span>
+                <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="k">if</span> <span class="n">column_aliases</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">cf_col_rows</span><span class="p">:</span>
+                    <span class="n">has_value</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">has_value</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="n">clustering_size</span> <span class="o">=</span> <span class="mi">0</span>
 
-            <span class="n">default_validator</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;default_validator&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">default_validator</span><span class="p">:</span>
-                <span class="n">validator</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">default_validator</span><span class="p">)</span>
+            <span class="c"># partition key</span>
+            <span class="n">partition_rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cf_col_rows</span>
+                              <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;partition_key&quot;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">partition_rows</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">partition_rows</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">partition_rows</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;component_index&#39;</span><span class="p">))</span>
+
+            <span class="n">key_aliases</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;key_aliases&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key_aliases</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">key_aliases</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">key_aliases</span><span class="p">)</span> <span class="k">if</span> <span class="n">key_aliases</span> <span class="k">else</span> <span class="p">[]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">value_alias_rows</span><span class="p">:</span>  <span class="c"># CASSANDRA-8487</span>
-                    <span class="n">validator</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">value_alias_rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;validator&#39;</span><span class="p">))</span>
+                <span class="c"># In 2.0+, we can use the &#39;type&#39; column. In 3.0+, we have to use it.</span>
+                <span class="n">key_aliases</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;column_name&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">partition_rows</span><span class="p">]</span>
 
-            <span class="n">col</span> <span class="o">=</span> <span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">value_alias</span><span class="p">,</span> <span class="n">validator</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">value_alias</span><span class="p">:</span>  <span class="c"># CASSANDRA-8487</span>
-                <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">value_alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span>
+            <span class="n">key_validator</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;key_validator&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key_validator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">key_type</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">key_validator</span><span class="p">)</span>
+                <span class="n">key_types</span> <span class="o">=</span> <span class="n">key_type</span><span class="o">.</span><span class="n">subtypes</span> <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">key_type</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">CompositeType</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">key_type</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">key_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;validator&#39;</span><span class="p">))</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">partition_rows</span><span class="p">]</span>
 
-        <span class="c"># other normal columns</span>
-        <span class="k">for</span> <span class="n">col_row</span> <span class="ow">in</span> <span class="n">cf_col_rows</span><span class="p">:</span>
-            <span class="n">column_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_column_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">col_row</span><span class="p">)</span>
-            <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">column_meta</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">col_type</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">key_types</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_aliases</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">:</span>
+                    <span class="n">column_name</span> <span class="o">=</span> <span class="n">key_aliases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">column_name</span> <span class="o">=</span> <span class="s">&quot;key&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">column_name</span> <span class="o">=</span> <span class="s">&quot;key</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">i</span>
 
-        <span class="k">if</span> <span class="n">trigger_rows</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">trigger_row</span> <span class="ow">in</span> <span class="n">trigger_rows</span><span class="p">[</span><span class="n">cfname</span><span class="p">]:</span>
-                <span class="n">trigger_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_trigger_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">trigger_row</span><span class="p">)</span>
-                <span class="n">table_meta</span><span class="o">.</span><span class="n">triggers</span><span class="p">[</span><span class="n">trigger_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">trigger_meta</span>
+                <span class="n">col</span> <span class="o">=</span> <span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">col_type</span><span class="p">)</span>
+                <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span>
+                <span class="n">table_meta</span><span class="o">.</span><span class="n">partition_key</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
 
-        <span class="n">table_meta</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_options</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
-        <span class="n">table_meta</span><span class="o">.</span><span class="n">is_compact_storage</span> <span class="o">=</span> <span class="n">is_compact</span>
+            <span class="c"># clustering key</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clustering_size</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_aliases</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">:</span>
+                    <span class="n">column_name</span> <span class="o">=</span> <span class="n">column_aliases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">column_name</span> <span class="o">=</span> <span class="s">&quot;column</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">i</span>
+
+                <span class="n">col</span> <span class="o">=</span> <span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">column_name_types</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span>
+                <span class="n">table_meta</span><span class="o">.</span><span class="n">clustering_key</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+
+            <span class="c"># value alias (if present)</span>
+            <span class="k">if</span> <span class="n">has_value</span><span class="p">:</span>
+                <span class="n">value_alias_rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cf_col_rows</span>
+                                    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;compact_value&quot;</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">key_aliases</span><span class="p">:</span>  <span class="c"># TODO are we checking the right thing here?</span>
+                    <span class="n">value_alias</span> <span class="o">=</span> <span class="s">&quot;value&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">value_alias</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;value_alias&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">value_alias</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">value_alias_rows</span><span class="p">:</span>  <span class="c"># CASSANDRA-8487</span>
+                        <span class="c"># In 2.0+, we can use the &#39;type&#39; column. In 3.0+, we have to use it.</span>
+                        <span class="n">value_alias</span> <span class="o">=</span> <span class="n">value_alias_rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;column_name&#39;</span><span class="p">)</span>
+
+                <span class="n">default_validator</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;default_validator&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">default_validator</span><span class="p">:</span>
+                    <span class="n">validator</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">default_validator</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">value_alias_rows</span><span class="p">:</span>  <span class="c"># CASSANDRA-8487</span>
+                        <span class="n">validator</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">value_alias_rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;validator&#39;</span><span class="p">))</span>
+
+                <span class="n">col</span> <span class="o">=</span> <span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">value_alias</span><span class="p">,</span> <span class="n">validator</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">value_alias</span><span class="p">:</span>  <span class="c"># CASSANDRA-8487</span>
+                    <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">value_alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span>
+
+            <span class="c"># other normal columns</span>
+            <span class="k">for</span> <span class="n">col_row</span> <span class="ow">in</span> <span class="n">cf_col_rows</span><span class="p">:</span>
+                <span class="n">column_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_column_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">col_row</span><span class="p">)</span>
+                <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">column_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">column_meta</span>
+
+            <span class="k">if</span> <span class="n">trigger_rows</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">trigger_row</span> <span class="ow">in</span> <span class="n">trigger_rows</span><span class="p">[</span><span class="n">cfname</span><span class="p">]:</span>
+                    <span class="n">trigger_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_trigger_metadata</span><span class="p">(</span><span class="n">table_meta</span><span class="p">,</span> <span class="n">trigger_row</span><span class="p">)</span>
+                    <span class="n">table_meta</span><span class="o">.</span><span class="n">triggers</span><span class="p">[</span><span class="n">trigger_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">trigger_meta</span>
+
+            <span class="n">table_meta</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_table_options</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="n">table_meta</span><span class="o">.</span><span class="n">is_compact_storage</span> <span class="o">=</span> <span class="n">is_compact</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">table_meta</span><span class="o">.</span><span class="n">_exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Error while parsing metadata for table </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> row(</span><span class="si">%s</span><span class="s">) columns(</span><span class="si">%s</span><span class="s">)&quot;</span><span class="p">,</span> <span class="n">keyspace_metadata</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">cfname</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">cf_col_rows</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">table_meta</span>
 
@@ -900,6 +916,10 @@
 
 <span class="sd">    .. versionadded:: 2.6.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_exc_info</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; set if metadata parsing failed &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">durable_writes</span> <span class="o">=</span> <span class="n">durable_writes</span>
@@ -915,11 +935,20 @@
 <span class="sd">        Returns a CQL query string that can be used to recreate the entire keyspace,</span>
 <span class="sd">        including user-defined types and tables.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">()]</span>
-                           <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_type_strings</span><span class="p">()</span>
-                           <span class="o">+</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
-                           <span class="o">+</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregates</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
-                           <span class="o">+</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">export_as_string</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+        <span class="n">cql</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">()]</span>
+                         <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_type_strings</span><span class="p">()</span>
+                         <span class="o">+</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+                         <span class="o">+</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregates</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+                         <span class="o">+</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">export_as_string</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exc_info</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">traceback</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="s">&quot;/*</span><span class="se">\n</span><span class="s">Warning: Keyspace </span><span class="si">%s</span><span class="s"> is incomplete because of an error processing metadata.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> \
+                  <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_exc_info</span><span class="p">):</span>
+                <span class="n">ret</span> <span class="o">+=</span> <span class="n">line</span>
+            <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Approximate structure, for reference:</span><span class="se">\n</span><span class="s">(this should not be used to reproduce this schema)</span><span class="se">\n\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">*/&quot;</span> <span class="o">%</span> <span class="n">cql</span>
+            <span class="k">return</span> <span class="n">ret</span>
+        <span class="k">return</span> <span class="n">cql</span>
 </div>
 <div class="viewcode-block" id="KeyspaceMetadata.as_cql_query"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.KeyspaceMetadata.as_cql_query">[docs]</a>    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1287,6 +1316,9 @@
 <span class="sd">    A dict mapping trigger names to :class:`.TriggerMetadata` instances.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">_exc_info</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&quot;&quot;&quot; set if metadata parsing failed &quot;&quot;&quot;</span>
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">is_cql_compatible</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1310,7 +1342,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">clustering_key</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">clustering_key</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span> <span class="k">if</span> <span class="n">columns</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">columns</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">indexes</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">options</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">options</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">triggers</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span> <span class="k">if</span> <span class="n">triggers</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">triggers</span>
 
@@ -1320,14 +1352,20 @@
 <span class="sd">        along with all indexes on it.  The returned string is formatted to</span>
 <span class="sd">        be human readable.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cql_compatible</span><span class="p">:</span>
-            <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_as_cql</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exc_info</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">traceback</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="s">&quot;/*</span><span class="se">\n</span><span class="s">Warning: Table </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> is incomplete because of an error processing metadata.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> \
+                  <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_exc_info</span><span class="p">):</span>
+                <span class="n">ret</span> <span class="o">+=</span> <span class="n">line</span>
+            <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Approximate structure, for reference:</span><span class="se">\n</span><span class="s">(this should not be used to reproduce this schema)</span><span class="se">\n\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">*/&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_as_cql</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cql_compatible</span><span class="p">:</span>
             <span class="c"># If we can&#39;t produce this table with CQL, comment inline</span>
             <span class="n">ret</span> <span class="o">=</span> <span class="s">&quot;/*</span><span class="se">\n</span><span class="s">Warning: Table </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> omitted because it has constructs not compatible with CQL (was created via legacy API).</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> \
                   <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-            <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Approximate structure, for reference:</span><span class="se">\n</span><span class="s">(this should not be used to reproduce this schema)</span><span class="se">\n\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_as_cql</span><span class="p">()</span>
-            <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">*/&quot;</span>
+            <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Approximate structure, for reference:</span><span class="se">\n</span><span class="s">(this should not be used to reproduce this schema)</span><span class="se">\n\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">*/&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_as_cql</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_as_cql</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">ret</span>
 </div>
@@ -1377,7 +1415,7 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="s">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">protect_name</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">ret</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+                <span class="n">ret</span> <span class="o">+=</span> <span class="n">protect_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span><span class="p">:</span>
                 <span class="n">ret</span> <span class="o">+=</span> <span class="s">&quot;, </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">protect_name</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span><span class="p">)</span>
@@ -1821,7 +1859,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

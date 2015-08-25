@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.concurrent &mdash; Cassandra Driver 2.6.0 documentation</title>
+    <title>cassandra.concurrent &mdash; Cassandra Driver 2.7.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.6.0',
+        VERSION:     '2.7.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.6.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.7.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -79,33 +79,23 @@
 <span class="c"># See the License for the specific language governing permissions and</span>
 <span class="c"># limitations under the License.</span>
 
-<span class="kn">import</span> <span class="nn">six</span>
-<span class="kn">import</span> <span class="nn">sys</span>
 
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span><span class="p">,</span> <span class="n">cycle</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">xrange</span>
-<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">heapq</span> <span class="kn">import</span> <span class="n">heappush</span><span class="p">,</span> <span class="n">heappop</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">cycle</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">xrange</span><span class="p">,</span> <span class="nb">zip</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Condition</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">PagedResult</span>
 
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="execute_concurrent"><a class="viewcode-back" href="../../api/cassandra/concurrent.html#cassandra.concurrent.execute_concurrent">[docs]</a><span class="k">def</span> <span class="nf">execute_concurrent</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">statements_and_parameters</span><span class="p">,</span> <span class="n">concurrency</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">raise_on_first_error</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="execute_concurrent"><a class="viewcode-back" href="../../api/cassandra/concurrent.html#cassandra.concurrent.execute_concurrent">[docs]</a><span class="k">def</span> <span class="nf">execute_concurrent</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">statements_and_parameters</span><span class="p">,</span> <span class="n">concurrency</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">raise_on_first_error</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">results_generator</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Executes a sequence of (statement, parameters) tuples concurrently.  Each</span>
 <span class="sd">    ``parameters`` item must be a sequence or :const:`None`.</span>
-
-<span class="sd">    A sequence of ``(success, result_or_exc)`` tuples is returned in the same</span>
-<span class="sd">    order that the statements were passed in.  If ``success`` is :const:`False`,</span>
-<span class="sd">    there was an error executing the statement, and ``result_or_exc`` will be</span>
-<span class="sd">    an :class:`Exception`.  If ``success`` is :const:`True`, ``result_or_exc``</span>
-<span class="sd">    will be the query result.</span>
-
-<span class="sd">    If `raise_on_first_error` is left as :const:`True`, execution will stop</span>
-<span class="sd">    after the first failed statement and the corresponding exception will be</span>
-<span class="sd">    raised.</span>
 
 <span class="sd">    The `concurrency` parameter controls how many statements will be executed</span>
 <span class="sd">    concurrently.  When :attr:`.Cluster.protocol_version` is set to 1 or 2,</span>
@@ -115,6 +105,26 @@
 <span class="sd">    the event loop thread may attempt to block on new connection creation,</span>
 <span class="sd">    substantially impacting throughput.  If :attr:`~.Cluster.protocol_version`</span>
 <span class="sd">    is 3 or higher, you can safely experiment with higher levels of concurrency.</span>
+
+<span class="sd">    If `raise_on_first_error` is left as :const:`True`, execution will stop</span>
+<span class="sd">    after the first failed statement and the corresponding exception will be</span>
+<span class="sd">    raised.</span>
+
+<span class="sd">    `results_generator` controls how the results are returned.</span>
+
+<span class="sd">        If :const:`False`, the results are returned only after all requests have completed.</span>
+
+<span class="sd">        If :const:`True`, a generator expression is returned. Using a generator results in a constrained</span>
+<span class="sd">        memory footprint when the results set will be large -- results are yielded</span>
+<span class="sd">        as they return instead of materializing the entire list at once. The trade for lower memory</span>
+<span class="sd">        footprint is marginal CPU overhead (more thread coordination and sorting out-of-order results</span>
+<span class="sd">        on-the-fly).</span>
+
+<span class="sd">    A sequence of ``(success, result_or_exc)`` tuples is returned in the same</span>
+<span class="sd">    order that the statements were passed in.  If ``success`` is :const:`False`,</span>
+<span class="sd">    there was an error executing the statement, and ``result_or_exc`` will be</span>
+<span class="sd">    an :class:`Exception`.  If ``success`` is :const:`True`, ``result_or_exc``</span>
+<span class="sd">    will be the query result.</span>
 
 <span class="sd">    Example usage::</span>
 
@@ -141,34 +151,127 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">statements_and_parameters</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
 
-    <span class="c"># TODO handle iterators and generators naturally without converting the</span>
-    <span class="c"># whole thing to a list.  This would require not building a result</span>
-    <span class="c"># list of Nones up front (we don&#39;t know how many results there will be),</span>
-    <span class="c"># so a dict keyed by index should be used instead.  The tricky part is</span>
-    <span class="c"># knowing when you&#39;re the final statement to finish.</span>
-    <span class="n">statements_and_parameters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">statements_and_parameters</span><span class="p">)</span>
+    <span class="n">executor</span> <span class="o">=</span> <span class="n">ConcurrentExecutorGenResults</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">statements_and_parameters</span><span class="p">)</span> <span class="k">if</span> <span class="n">results_generator</span> <span class="k">else</span> <span class="n">ConcurrentExecutorListResults</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">statements_and_parameters</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">executor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">concurrency</span><span class="p">,</span> <span class="n">raise_on_first_error</span><span class="p">)</span>
 
-    <span class="n">event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
-    <span class="n">first_error</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">raise_on_first_error</span> <span class="k">else</span> <span class="bp">None</span>
-    <span class="n">to_execute</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">statements_and_parameters</span><span class="p">)</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">to_execute</span>
-    <span class="n">num_finished</span> <span class="o">=</span> <span class="n">count</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">statements</span> <span class="o">=</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">statements_and_parameters</span><span class="p">))</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">concurrency</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">statements_and_parameters</span><span class="p">))):</span>
-        <span class="n">_execute_next</span><span class="p">(</span><span class="n">_sentinel</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">statements</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">num_finished</span><span class="p">,</span> <span class="n">to_execute</span><span class="p">,</span> <span class="n">first_error</span><span class="p">)</span>
+</div>
+<span class="k">class</span> <span class="nc">_ConcurrentExecutor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
-    <span class="n">event</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">first_error</span><span class="p">:</span>
-        <span class="n">exc</span> <span class="o">=</span> <span class="n">first_error</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">statements_and_params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_enum_statements</span> <span class="o">=</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">statements_and_params</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fail_fast</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exec_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concurrency</span><span class="p">,</span> <span class="n">fail_fast</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fail_fast</span> <span class="o">=</span> <span class="n">fail_fast</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exec_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">concurrency</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_next</span><span class="p">():</span>
+                    <span class="k">break</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_execute_next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># lock must be held</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">))</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_enum_statements</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_exec_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+            <span class="n">future</span><span class="o">.</span><span class="n">add_callbacks</span><span class="p">(</span>
+                <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_success</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+                <span class="n">errback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_error</span><span class="p">,</span> <span class="n">errback_args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="c"># exc_info with fail_fast to preserve stack trace info when raising on the client thread</span>
+            <span class="c"># (matches previous behavior -- not sure why we wouldn&#39;t want stack trace in the other case)</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fail_fast</span> <span class="ow">and</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span> <span class="k">else</span> <span class="n">exc</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_on_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">future</span><span class="o">.</span><span class="n">has_more_pages</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">PagedResult</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+            <span class="n">future</span><span class="o">.</span><span class="n">clear_callbacks</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_on_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_raise</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span> <span class="o">=</span> <span class="n">exc</span>
             <span class="n">six</span><span class="o">.</span><span class="n">reraise</span><span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">exc</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">results</span>
 
-</div>
+
+<span class="k">class</span> <span class="nc">ConcurrentExecutorGenResults</span><span class="p">(</span><span class="n">_ConcurrentExecutor</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_put_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">success</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="p">:</span>
+            <span class="n">heappush</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span><span class="p">,</span> <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">success</span><span class="p">,</span> <span class="n">result</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_execute_next</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_results</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="p">:</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec_count</span><span class="p">:</span>
+                <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+                <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">:</span>
+                    <span class="n">_</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="n">heappop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fail_fast</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_raise</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="k">yield</span> <span class="n">res</span>
+                    <span class="k">finally</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+<span class="k">class</span> <span class="nc">ConcurrentExecutorListResults</span><span class="p">(</span><span class="n">_ConcurrentExecutor</span><span class="p">):</span>
+
+    <span class="n">_exception</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concurrency</span><span class="p">,</span> <span class="n">fail_fast</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ConcurrentExecutorListResults</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">concurrency</span><span class="p">,</span> <span class="n">fail_fast</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_put_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">success</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">success</span><span class="p">,</span> <span class="n">result</span><span class="p">)))</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">success</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fail_fast</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="n">result</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_next</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec_count</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_results</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="p">:</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec_count</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fail_fast</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_raise</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_exception</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span><span class="p">)]</span>
+
+
+
 <div class="viewcode-block" id="execute_concurrent_with_args"><a class="viewcode-back" href="../../api/cassandra/concurrent.html#cassandra.concurrent.execute_concurrent_with_args">[docs]</a><span class="k">def</span> <span class="nf">execute_concurrent_with_args</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Like :meth:`~cassandra.concurrent.execute_concurrent()`, but takes a single</span>
@@ -181,86 +284,7 @@
 <span class="sd">        parameters = [(x,) for x in range(1000)]</span>
 <span class="sd">        execute_concurrent_with_args(session, statement, parameters, concurrency=50)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">execute_concurrent</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">cycle</span><span class="p">((</span><span class="n">statement</span><span class="p">,)),</span> <span class="n">parameters</span><span class="p">)),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-</div>
-<span class="n">_sentinel</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
-
-
-<span class="k">def</span> <span class="nf">_handle_error</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">result_index</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">statements</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span>
-                  <span class="n">future</span><span class="p">,</span> <span class="n">num_finished</span><span class="p">,</span> <span class="n">to_execute</span><span class="p">,</span> <span class="n">first_error</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">first_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">first_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
-        <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
-        <span class="k">return</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">results</span><span class="p">[</span><span class="n">result_index</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">next</span><span class="p">(</span><span class="n">num_finished</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">to_execute</span><span class="p">:</span>
-            <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
-            <span class="k">return</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="p">(</span><span class="n">next_index</span><span class="p">,</span> <span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">))</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">statements</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
-        <span class="k">return</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">next_index</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">statements</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">num_finished</span><span class="p">,</span> <span class="n">to_execute</span><span class="p">,</span> <span class="n">first_error</span><span class="p">)</span>
-        <span class="n">future</span><span class="o">.</span><span class="n">add_callbacks</span><span class="p">(</span>
-            <span class="n">callback</span><span class="o">=</span><span class="n">_execute_next</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
-            <span class="n">errback</span><span class="o">=</span><span class="n">_handle_error</span><span class="p">,</span> <span class="n">errback_args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">first_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
-                <span class="n">first_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">first_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-            <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
-            <span class="k">return</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">results</span><span class="p">[</span><span class="n">next_index</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">next</span><span class="p">(</span><span class="n">num_finished</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">to_execute</span><span class="p">:</span>
-                <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
-                <span class="k">return</span>
-
-
-<span class="k">def</span> <span class="nf">_execute_next</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">result_index</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">statements</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span>
-                  <span class="n">future</span><span class="p">,</span> <span class="n">num_finished</span><span class="p">,</span> <span class="n">to_execute</span><span class="p">,</span> <span class="n">first_error</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_sentinel</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">future</span><span class="o">.</span><span class="n">has_more_pages</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">PagedResult</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
-            <span class="n">future</span><span class="o">.</span><span class="n">clear_callbacks</span><span class="p">()</span>
-        <span class="n">results</span><span class="p">[</span><span class="n">result_index</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
-        <span class="n">finished</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">num_finished</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">finished</span> <span class="o">&gt;=</span> <span class="n">to_execute</span><span class="p">:</span>
-            <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
-            <span class="k">return</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="p">(</span><span class="n">next_index</span><span class="p">,</span> <span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">))</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">statements</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
-        <span class="k">return</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">next_index</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">statements</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">num_finished</span><span class="p">,</span> <span class="n">to_execute</span><span class="p">,</span> <span class="n">first_error</span><span class="p">)</span>
-        <span class="n">future</span><span class="o">.</span><span class="n">add_callbacks</span><span class="p">(</span>
-            <span class="n">callback</span><span class="o">=</span><span class="n">_execute_next</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
-            <span class="n">errback</span><span class="o">=</span><span class="n">_handle_error</span><span class="p">,</span> <span class="n">errback_args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">first_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
-                <span class="n">first_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">first_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-            <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
-            <span class="k">return</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">results</span><span class="p">[</span><span class="n">next_index</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">next</span><span class="p">(</span><span class="n">num_finished</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">to_execute</span><span class="p">:</span>
-                <span class="n">event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
-                <span class="k">return</span>
+    <span class="k">return</span> <span class="n">execute_concurrent</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cycle</span><span class="p">((</span><span class="n">statement</span><span class="p">,)),</span> <span class="n">parameters</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -277,7 +301,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.6.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
