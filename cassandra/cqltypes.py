@@ -88,6 +88,7 @@ def datetime_from_timestamp(timestamp):
 
 
 _casstypes = {}
+_cqltypes = {}
 
 
 class CassandraTypeType(type):
@@ -106,6 +107,8 @@ class CassandraTypeType(type):
         cls = type.__new__(metacls, name, bases, dct)
         if not name.startswith('_'):
             _casstypes[name] = cls
+            if not cls.typename.startswith("'org"):
+                _cqltypes[cls.typename] = cls
         return cls
 
 
@@ -182,6 +185,61 @@ def lookup_casstype(casstype):
         return parse_casstype_args(casstype)
     except (ValueError, AssertionError, IndexError) as e:
         raise ValueError("Don't know how to parse type string %r: %s" % (casstype, e))
+
+
+cql_type_scanner = re.Scanner((
+    (r'[<>]', lambda s, t: t),
+    (r'[a-zA-Z0-9_]+', lambda s, t: t),
+    (r'[\s,]', None),
+))
+
+
+def parse_cql_type_args(cql_type):
+    # based on parse_casstype_args
+    tokens, remainder = cql_type_scanner.scan(cql_type)
+    if remainder:
+        raise ValueError("unexpected characters %r at end" % remainder)
+
+    # use a stack of type lists
+    args = [[]]
+    for tok in tokens:
+        if tok == '<':
+            args.append([])
+        elif tok == '>':
+            types = args.pop()
+            prev_types = args[-1]
+            prev_types[-1] = prev_types[-1].apply_parameters(types)
+        else:
+            types = args[-1]
+
+            try:
+                ctype = _cqltypes[tok]
+            except KeyError:
+                # TODO: UDTs by name (as written, this just brings back an unrecognized type)
+                ctype = lookup_casstype_simple(tok)
+
+            types.append(ctype)
+
+    # return the first (outer) type, which will have all parameters applied
+    return args[0][0]
+
+
+def lookup_cql_type(cql_type):
+    """
+    Given a CQL type specifier (possibly including parameters), return
+    the CassandraType class responsible for it. If a name is not
+    recognized, ValueError is raised.
+
+    Example:
+
+        >>> lookup_casstype('map<text, int>')
+        <class 'cassandra.types.MapType(UTF8Type, Int32Type)'>
+
+    """
+    try:
+        return parse_cql_type_args(cql_type)
+    except (ValueError, AssertionError, IndexError) as e:
+        raise ValueError("Don't know how to parse CQL type string %r: %s" % (cql_type, e))
 
 
 class EmptyValue(object):

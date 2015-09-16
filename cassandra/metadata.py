@@ -1602,6 +1602,10 @@ class SchemaParserV22(_SchemaParser):
         "compression",
         "default_time_to_live")
 
+    @staticmethod
+    def _type_lookup(type_string):
+        return types.lookup_casstype(type_string)
+
     def __init__(self, connection, timeout):
         super(SchemaParserV22, self).__init__(connection, timeout)
         self.keyspaces_result = []
@@ -1705,27 +1709,27 @@ class SchemaParserV22(_SchemaParser):
         strategy_options = json.loads(row["strategy_options"])
         return KeyspaceMetadata(name, durable_writes, strategy_class, strategy_options)
 
-    @staticmethod
-    def _build_user_type(usertype_row):
-        type_classes = list(map(types.lookup_casstype, usertype_row['field_types']))
+    @classmethod
+    def _build_user_type(cls, usertype_row):
+        type_classes = list(map(cls._type_lookup, usertype_row['field_types']))
         return UserType(usertype_row['keyspace_name'], usertype_row['type_name'],
                         usertype_row['field_names'], type_classes)
 
-    @staticmethod
-    def _build_function(function_row):
-        return_type = types.lookup_casstype(function_row['return_type'])
+    @classmethod
+    def _build_function(cls, function_row):
+        return_type = cls._type_lookup(function_row['return_type'])
         return Function(function_row['keyspace_name'], function_row['function_name'],
                         function_row['signature'], function_row['argument_names'],
                         return_type, function_row['language'], function_row['body'],
                         function_row['called_on_null_input'])
 
-    @staticmethod
-    def _build_aggregate(aggregate_row):
-        state_type = types.lookup_casstype(aggregate_row['state_type'])
+    @classmethod
+    def _build_aggregate(cls, aggregate_row):
+        state_type = cls._type_lookup(aggregate_row['state_type'])
         initial_condition = aggregate_row['initcond']
         if initial_condition is not None:
             initial_condition = state_type.deserialize(initial_condition, 3)
-        return_type = types.lookup_casstype(aggregate_row['return_type'])
+        return_type = cls._type_lookup(aggregate_row['return_type'])
         return Aggregate(aggregate_row['keyspace_name'], aggregate_row['aggregate_name'],
                          aggregate_row['signature'], aggregate_row['state_func'], state_type,
                          aggregate_row['final_func'], initial_condition, return_type)
@@ -1744,7 +1748,7 @@ class SchemaParserV22(_SchemaParser):
         table_meta = TableMetadata(keyspace_name, cfname)
 
         try:
-            comparator = types.lookup_casstype(row["comparator"])
+            comparator = self._type_lookup(row["comparator"])
             table_meta.comparator = comparator
 
             if issubclass(comparator, types.CompositeType):
@@ -1815,10 +1819,10 @@ class SchemaParserV22(_SchemaParser):
 
             key_validator = row.get("key_validator")
             if key_validator is not None:
-                key_type = types.lookup_casstype(key_validator)
+                key_type = self._type_lookup(key_validator)
                 key_types = key_type.subtypes if issubclass(key_type, types.CompositeType) else [key_type]
             else:
-                key_types = [types.lookup_casstype(r.get('validator')) for r in partition_rows]
+                key_types = [self._type_lookup(r.get('validator')) for r in partition_rows]
 
             for i, col_type in enumerate(key_types):
                 if len(key_aliases) > i:
@@ -1858,10 +1862,10 @@ class SchemaParserV22(_SchemaParser):
 
                 default_validator = row.get("default_validator")
                 if default_validator:
-                    validator = types.lookup_casstype(default_validator)
+                    validator = self._type_lookup(default_validator)
                 else:
                     if value_alias_rows:  # CASSANDRA-8487
-                        validator = types.lookup_casstype(value_alias_rows[0].get('validator'))
+                        validator = self._type_lookup(value_alias_rows[0].get('validator'))
 
                 col = ColumnMetadata(table_meta, value_alias, validator)
                 if value_alias:  # CASSANDRA-8487
@@ -1903,10 +1907,10 @@ class SchemaParserV22(_SchemaParser):
 
         return options
 
-    @staticmethod
-    def _build_column_metadata(table_metadata, row):
+    @classmethod
+    def _build_column_metadata(cls, table_metadata, row):
         name = row["column_name"]
-        data_type = types.lookup_casstype(row["validator"])
+        data_type = cls._type_lookup(row["validator"])
         is_static = row.get("type", None) == "static"
         column_meta = ColumnMetadata(table_metadata, name, data_type, is_static=is_static)
         return column_meta
@@ -2036,6 +2040,10 @@ class SchemaParserV3(SchemaParserV22):
     _SELECT_VIEWS = "SELECT * FROM system_schema.views"
 
     _table_name_col = 'table_name'
+
+    @staticmethod
+    def _type_lookup(type_string):
+        return types.lookup_cql_type(type_string)
 
     recognized_table_options = (
         'bloom_filter_fp_chance',
@@ -2185,12 +2193,17 @@ class SchemaParserV3(SchemaParserV22):
 
         return view_meta
 
-    @staticmethod
-    def _build_column_metadata(table_metadata, row):
+    @classmethod
+    def _build_column_metadata(cls, table_metadata, row):
         name = row["column_name"]
-        data_type = types.lookup_casstype(row["type"])
+        # TODO: right now we're parsing cql to get back to CassTypes. This is strictly in support
+        # of integrators like cqlsh that use this metadata directly to format results tables.
+        # Ultimately it would be good to keep the CQL, and have cqlsh use results metadata to
+        # do the formatting.
+        data_type = cls._type_lookup(row["type"])
         is_static = row.get("kind", None) == "static"
         column_meta = ColumnMetadata(table_metadata, name, data_type, is_static=is_static)
+        column_meta.clustering_order = row["clustering_order"]
         return column_meta
 
     @staticmethod
@@ -2267,6 +2280,28 @@ class TableMetadataV3(TableMetadata):
     @property
     def is_cql_compatible(self):
         return True
+
+    @classmethod
+    def _property_string(cls, formatted, clustering_key, options_map, is_compact_storage=False):
+        # TODO: collapse this in PYTHON-404
+        properties = []
+        if is_compact_storage:
+            properties.append("COMPACT STORAGE")
+
+        if clustering_key:
+            cluster_str = "CLUSTERING ORDER BY "
+
+            inner = []
+            for col in clustering_key:
+                inner.append("%s %s" % (protect_name(col.name), col.clustering_order.upper()))
+
+            cluster_str += "(%s)" % ", ".join(inner)
+            properties.append(cluster_str)
+
+        properties.extend(cls._make_option_strings(options_map))
+
+        join_str = "\n    AND " if formatted else " AND "
+        return join_str.join(properties)
 
     @classmethod
     def _make_option_strings(cls, options_map):
