@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tests.integration import get_server_versions, use_singledc, PROTOCOL_VERSION
+from tests.integration import get_server_versions, use_singledc, PROTOCOL_VERSION, BasicKeyspaceUnitTestCaseRF3WTable
 
 try:
     import unittest2 as unittest
@@ -28,39 +28,34 @@ def setup_module():
     use_singledc()
 
 
-class RowFactoryTests(unittest.TestCase):
+class RowFactoryTests(BasicKeyspaceUnitTestCaseRF3WTable):
     """
     Test different row_factories and access code
     """
-
     def setUp(self):
-        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
-        self.session = self.cluster.connect()
+        ksname = self.__class__.__name__
+        self.truncate = '''
+            TRUNCATE {0}.test
+        '''.format(ksname)
 
-    def tearDown(self):
-        self.cluster.shutdown()
+        self.insert1 = '''
+            INSERT INTO {0}.test
+                ( k , v )
+            VALUES
+                ( 1 , 1 )
+        '''.format(ksname)
 
-    truncate = '''
-        TRUNCATE test3rf.test
-    '''
+        self.insert2 = '''
+            INSERT INTO {0}.test
+                ( k , v )
+            VALUES
+                ( 2 , 2 )
+        '''.format(ksname)
 
-    insert1 = '''
-        INSERT INTO test3rf.test
-            ( k , v )
-        VALUES
-            ( 1 , 1 )
-    '''
-
-    insert2 = '''
-        INSERT INTO test3rf.test
-            ( k , v )
-        VALUES
-            ( 2 , 2 )
-    '''
-
-    select = '''
-        SELECT * FROM test3rf.test
-    '''
+        self.select = '''
+            SELECT * FROM {0}.test
+        '''.format(ksname)
+        super(RowFactoryTests, self).setUp()
 
     def test_tuple_factory(self):
         session = self.session
@@ -154,7 +149,6 @@ class NamedTupleFactoryAndNumericColNamesTests(unittest.TestCase):
     def setup_class(cls):
         cls.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
         cls.session = cls.cluster.connect()
-
         cls._cass_version, cls._cql_version = get_server_versions()
         ddl = '''
             CREATE TABLE test1rf.table_num_col ( key blob PRIMARY KEY, "626972746864617465" blob )

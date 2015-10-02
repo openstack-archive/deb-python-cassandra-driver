@@ -332,3 +332,78 @@ class UpDownWaiter(object):
 
     def wait_for_up(self):
         self.up_event.wait()
+
+
+class BasicKeyspaceUnitTestCase(unittest.TestCase):
+    """
+    This is basic unit test case that can be leveraged to scope a keyspace to a specific unit test.
+    creates a keyspace named after the testclass with a rf of 1
+    """
+    def setUp(self):
+        self.commonSetUp('1')
+
+    def commonSetUp(self, rf, create_table=False):
+        self.ksname = self.__class__.__name__
+        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
+        self.session = self.cluster.connect()
+        print("Creating keyspace {0} with rf of {1}".format(self.ksname, rf))
+        execute_until_pass(self.session,
+                           "CREATE KEYSPACE {0} WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '{1}'}}"
+                           .format(self.ksname, rf))
+        if create_table:
+
+            ddl = '''
+                CREATE TABLE {0}.test (
+                    k int PRIMARY KEY,
+                    v int )'''.format(self.ksname)
+            execute_until_pass(self.session, ddl)
+
+    def tearDown(self):
+        print("Executing tear down")
+        execute_until_pass(self.session, "DROP KEYSPACE {0}".format(self.ksname))
+        self.cluster.shutdown()
+
+
+class BasicKeyspaceUnitTestCaseWTable(BasicKeyspaceUnitTestCase):
+    """
+    This is basic unit test case that can be leveraged to scope a keyspace to a specific unit test.
+    creates a keyspace named after the testclass with a rf of 1, and a table named test
+    """
+    def setUp(self):
+        self.commonSetUp('1', True)
+
+
+class BasicKeyspaceUnitTestCaseRF2(BasicKeyspaceUnitTestCase):
+    """
+    This is basic unit test case that can be leveraged to scope a keyspace to a specific unit test.
+    creates a keyspace named after the testclass with a rf of 2
+    """
+    def setUp(self):
+        self.commonSetUp('2')
+
+
+class BasicKeyspaceUnitTestCaseRF2WTable(BasicKeyspaceUnitTestCase):
+    """
+    This is basic unit test case that can be leveraged to scope a keyspace to a specific unit test.
+    creates a keyspace named after the testclass with a rf of 2, and a table named test
+    """
+    def setUp(self):
+        self.commonSetUp('2', True)
+
+
+class BasicKeyspaceUnitTestCaseRF3(BasicKeyspaceUnitTestCase):
+    """
+    This is basic unit test case that can be leveraged to scope a keyspace to a specific unit test.
+    creates a keyspace named after the testclass with a rf of 3
+    """
+    def setUp(self):
+        self.commonSetUp('3')
+
+
+class BasicKeyspaceUnitTestCaseRF3WTable(BasicKeyspaceUnitTestCase):
+    """
+    This is basic unit test case that can be leveraged to scope a keyspace to a specific unit test.
+    creates a keyspace named after the testclass with a rf of 3 and a table named test
+    """
+    def setUp(self):
+        self.commonSetUp('3', True)
