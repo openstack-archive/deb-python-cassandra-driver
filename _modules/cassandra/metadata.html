@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata &mdash; Cassandra Driver 2.7.0 documentation</title>
+    <title>cassandra.metadata &mdash; Cassandra Driver 2.7.2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.7.0',
+        VERSION:     '2.7.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.7.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 2.7.2 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -1022,8 +1022,9 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">field_names</span><span class="p">,</span> <span class="n">field_types</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">field_names</span> <span class="o">=</span> <span class="n">field_names</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">field_types</span> <span class="o">=</span> <span class="n">field_types</span>
+        <span class="c"># non-frozen collections can return None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">field_names</span> <span class="o">=</span> <span class="n">field_names</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">field_types</span> <span class="o">=</span> <span class="n">field_types</span> <span class="ow">or</span> <span class="p">[]</span>
 
 <div class="viewcode-block" id="UserType.as_cql_query"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.UserType.as_cql_query">[docs]</a>    <span class="k">def</span> <span class="nf">as_cql_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formatted</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1195,7 +1196,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type_signature</span> <span class="o">=</span> <span class="n">type_signature</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">argument_names</span> <span class="o">=</span> <span class="n">argument_names</span>
+        <span class="c"># type_signature (frozen&lt;list&lt;&gt;&gt;) will always be a list</span>
+        <span class="c"># argument_name is not frozen in C* &lt; 3.0 and may return None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">argument_names</span> <span class="o">=</span> <span class="n">argument_names</span> <span class="ow">or</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="n">return_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">language</span> <span class="o">=</span> <span class="n">language</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">body</span>
@@ -1859,7 +1862,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
