@@ -123,6 +123,44 @@ class LargeDataTests(unittest.TestCase):
 
         session.cluster.shutdown()
 
+    def test_wide_rows_query_trace(self):
+        import logging
+
+        log = logging.getLogger()
+        log.setLevel('DEBUG')
+
+        ch = logging.StreamHandler()
+        ch.setLevel('DEBUG')
+
+        log.addHandler(ch)
+        table = 'wide_rows'
+        session = self.make_session_and_keyspace()
+        session.execute('CREATE TABLE %s (k INT, i INT, PRIMARY KEY(k, i))' % table)
+
+        prepared = session.prepare('INSERT INTO %s (k, i) VALUES (0, ?)' % (table, ))
+
+        # Write via async futures
+        print("executing insert")
+        self.batch_futures(session, (prepared.bind((i, )) for i in range(100000)))
+        # Read
+        print("executing select")
+        response_future = session.execute_async('SELECT i FROM %s WHERE k=0' % (table, ), trace=True)
+        # Verify
+        trace = None
+        while trace is None:
+            print ("waiting for trace to be surfaced")
+            trace = response_future.get_query_trace(wait_for_complete=False)
+
+        while trace.duration is None:
+            trace = response_future.get_query_trace(wait_for_complete=False)
+            print("trace is not completed")
+            print(str(trace))
+        results = response_future.result()
+        for i, row in enumerate(results):
+            self.assertEqual(row['i'], i)
+
+        session.cluster.shutdown()
+
     def test_wide_batch_rows(self):
         """
         Test for inserting wide rows with batching

@@ -3127,7 +3127,7 @@ class ResponseFuture(object):
         """
         return [trace.trace_id for trace in self._query_traces]
 
-    def get_query_trace(self, max_wait=None):
+    def get_query_trace(self, max_wait=None, wait_for_complete=True):
         """
         Fetches and returns the query trace of the last response, or `None` if tracing was
         not enabled.
@@ -3137,22 +3137,22 @@ class ResponseFuture(object):
         :exc:`cassandra.query.TraceUnavailable` will be raised.
         """
         if self._query_traces:
-            return self._get_query_trace(len(self._query_traces) - 1, max_wait)
+            return self._get_query_trace(len(self._query_traces) - 1, max_wait, wait_for_complete)
 
-    def get_all_query_traces(self, max_wait_per=None):
+    def get_all_query_traces(self, max_wait_per=None, wait_for_complete=True):
         """
         Fetches and returns the query traces for all query pages, if tracing was enabled.
 
         See note in :meth:`~.get_query_trace` regarding possible exceptions.
         """
         if self._query_traces:
-            return [self._get_query_trace(i, max_wait_per) for i in range(len(self._query_traces))]
+            return [self._get_query_trace(i, max_wait_per, wait_for_complete) for i in range(len(self._query_traces))]
         return []
 
-    def _get_query_trace(self, i, max_wait):
+    def _get_query_trace(self, i, max_wait, wait_for_complete):
         trace = self._query_traces[i]
         if not trace.events:
-            trace.populate(max_wait=max_wait)
+            trace.populate(max_wait=max_wait, wait_for_complete=wait_for_complete)
         return trace
 
     def add_callback(self, fn, *args, **kwargs):
