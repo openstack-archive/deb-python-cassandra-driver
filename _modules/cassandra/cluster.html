@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &mdash; Cassandra Driver 2.7.2 documentation</title>
+    <title>cassandra.cluster &mdash; Cassandra Driver 3.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.7.2',
+        VERSION:     '3.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.7.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -86,7 +86,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
 
 <span class="kn">import</span> <span class="nn">atexit</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">Mapping</span>
 <span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">random</span>
@@ -111,8 +111,8 @@
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">groupby</span>
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">AuthenticationFailed</span><span class="p">,</span>
-                       <span class="n">InvalidRequest</span><span class="p">,</span> <span class="n">OperationTimedOut</span><span class="p">,</span>
-                       <span class="n">UnsupportedOperation</span><span class="p">,</span> <span class="n">Unauthorized</span><span class="p">)</span>
+                       <span class="n">OperationTimedOut</span><span class="p">,</span> <span class="n">UnsupportedOperation</span><span class="p">,</span>
+                       <span class="n">SchemaTargetType</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ConnectionException</span><span class="p">,</span> <span class="n">ConnectionShutdown</span><span class="p">,</span>
                                   <span class="n">ConnectionHeartbeat</span><span class="p">,</span> <span class="n">ProtocolVersionUnsupported</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.cqltypes</span> <span class="kn">import</span> <span class="n">UserType</span>
@@ -146,6 +146,7 @@
         <span class="k">return</span> <span class="bp">False</span>
     <span class="kn">import</span> <span class="nn">eventlet.patcher</span>
     <span class="k">return</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">patcher</span><span class="o">.</span><span class="n">is_monkey_patched</span><span class="p">(</span><span class="s">&#39;socket&#39;</span><span class="p">)</span>
+
 
 <span class="k">def</span> <span class="nf">_is_gevent_monkey_patched</span><span class="p">():</span>
     <span class="k">if</span> <span class="s">&#39;gevent.monkey&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
@@ -452,6 +453,10 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An optional list of tuples which will be used as arguments to</span>
 <span class="sd">    ``socket.setsockopt()`` for all created sockets.</span>
+
+<span class="sd">    Note: some drivers find setting TCPNODELAY beneficial in the context of</span>
+<span class="sd">    their execution model. It was not found generally beneficial for this driver.</span>
+<span class="sd">    To try with your own workload, set ``sockopts = [(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)]``</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">max_schema_agreement_wait</span> <span class="o">=</span> <span class="mi">10</span>
@@ -473,18 +478,17 @@
 
 <span class="sd">    * :class:`cassandra.io.asyncorereactor.AsyncoreConnection`</span>
 <span class="sd">    * :class:`cassandra.io.libevreactor.LibevConnection`</span>
-<span class="sd">    * :class:`cassandra.io.geventreactor.GeventConnection` (requires monkey-patching)</span>
+<span class="sd">    * :class:`cassandra.io.eventletreactor.EventletConnection` (requires monkey-patching - see doc for details)</span>
+<span class="sd">    * :class:`cassandra.io.geventreactor.GeventConnection` (requires monkey-patching - see doc for details)</span>
 <span class="sd">    * :class:`cassandra.io.twistedreactor.TwistedConnection`</span>
 
 <span class="sd">    By default, ``AsyncoreConnection`` will be used, which uses</span>
-<span class="sd">    the ``asyncore`` module in the Python standard library.  The</span>
-<span class="sd">    performance is slightly worse than with ``libev``, but it is</span>
-<span class="sd">    supported on a wider range of systems.</span>
+<span class="sd">    the ``asyncore`` module in the Python standard library.</span>
 
 <span class="sd">    If ``libev`` is installed, ``LibevConnection`` will be used instead.</span>
 
-<span class="sd">    If gevent monkey-patching of the standard library is detected,</span>
-<span class="sd">    GeventConnection will be used automatically.</span>
+<span class="sd">    If ``gevent`` or ``eventlet`` monkey-patching is detected, the corresponding</span>
+<span class="sd">    connection class will be used automatically.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">control_connection_timeout</span> <span class="o">=</span> <span class="mf">2.0</span>
@@ -1269,66 +1273,27 @@
             <span class="k">for</span> <span class="n">pool</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
                 <span class="n">pool</span><span class="o">.</span><span class="n">ensure_core_connections</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_validate_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">):</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_validate_refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">((</span><span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">)):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">keyspace</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;keyspace is required to refresh specific sub-entity {table, usertype, function, aggregate}&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">)</span> <span class="k">if</span> <span class="n">e</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;{table, usertype, function, aggregate} are mutually exclusive&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Cluster.refresh_schema"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.refresh_schema">[docs]</a>    <span class="k">def</span> <span class="nf">refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">usertype</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">max_schema_agreement_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        .. deprecated:: 2.6.0</span>
-<span class="sd">            Use refresh_*_metadata instead</span>
-
-<span class="sd">        Synchronously refresh schema metadata.</span>
-
-<span class="sd">        {keyspace, table, usertype} are string names of the respective entities.</span>
-<span class="sd">        ``function`` is a :class:`cassandra.UserFunctionDescriptor`.</span>
-<span class="sd">        ``aggregate`` is a :class:`cassandra.UserAggregateDescriptor`.</span>
-
-<span class="sd">        If none of ``{keyspace, table, usertype, function, aggregate}`` are specified, the entire schema is refreshed.</span>
-
-<span class="sd">        If any of ``{keyspace, table, usertype, function, aggregate}`` are specified, ``keyspace`` is required.</span>
-
-<span class="sd">        If only ``keyspace`` is specified, just the top-level keyspace metadata is refreshed (e.g. replication).</span>
-
-<span class="sd">        The remaining arguments ``{table, usertype, function, aggregate}``</span>
-<span class="sd">        are mutually exclusive -- only one may be specified.</span>
-
-<span class="sd">        By default, the timeout for this operation is governed by :attr:`~.Cluster.max_schema_agreement_wait`</span>
-<span class="sd">        and :attr:`~.Cluster.control_connection_timeout`.</span>
-
-<span class="sd">        Passing max_schema_agreement_wait here overrides :attr:`~.Cluster.max_schema_agreement_wait`.</span>
-
-<span class="sd">        Setting max_schema_agreement_wait &lt;= 0 will bypass schema agreement and refresh schema immediately.</span>
-
-<span class="sd">        An Exception is raised if schema refresh fails for any reason.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;refresh_schema is deprecated. Use Cluster.refresh_*_metadata instead.&quot;</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span>
-                                                      <span class="n">aggregate</span><span class="p">,</span> <span class="n">max_schema_agreement_wait</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Schema was not refreshed. See log for details.&quot;</span><span class="p">)</span>
-</div>
-    <span class="k">def</span> <span class="nf">submit_schema_refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">usertype</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        .. deprecated:: 2.6.0</span>
-<span class="sd">            Use refresh_*_metadata instead</span>
-
-<span class="sd">        Schedule a refresh of the internal representation of the current</span>
-<span class="sd">        schema for this cluster.  See :meth:`~.refresh_schema` for description of parameters.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;submit_schema_refresh is deprecated. Use Cluster.refresh_*_metadata instead.&quot;</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">)</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_target_type_from_refresh_args</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">aggregate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">AGGREGATE</span>
+        <span class="k">elif</span> <span class="n">function</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">FUNCTION</span>
+        <span class="k">elif</span> <span class="n">usertype</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">TYPE</span>
+        <span class="k">elif</span> <span class="n">table</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">TABLE</span>
+        <span class="k">elif</span> <span class="n">keyspace</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">KEYSPACE</span>
+        <span class="k">return</span> <span class="bp">None</span>
 
 <div class="viewcode-block" id="Cluster.refresh_schema_metadata"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.refresh_schema_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">refresh_schema_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_schema_agreement_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1353,7 +1318,8 @@
 
 <span class="sd">        See :meth:`~.Cluster.refresh_schema_metadata` for description of ``max_schema_agreement_wait`` behavior</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">max_schema_agreement_wait</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">KEYSPACE</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">keyspace</span><span class="p">,</span>
+                                                      <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">max_schema_agreement_wait</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Keyspace metadata was not refreshed. See log for details.&quot;</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Cluster.refresh_table_metadata"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.refresh_table_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">refresh_table_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">max_schema_agreement_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -1363,16 +1329,25 @@
 
 <span class="sd">        See :meth:`~.Cluster.refresh_schema_metadata` for description of ``max_schema_agreement_wait`` behavior</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">max_schema_agreement_wait</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">TABLE</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="n">table</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">max_schema_agreement_wait</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Table metadata was not refreshed. See log for details.&quot;</span><span class="p">)</span>
 </div>
+    <span class="k">def</span> <span class="nf">refresh_materialized_view_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">max_schema_agreement_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Synchronously refresh materialized view metadata.</span>
+
+<span class="sd">        See :meth:`~.Cluster.refresh_schema_metadata` for description of ``max_schema_agreement_wait`` behavior</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">TABLE</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="n">view</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">max_schema_agreement_wait</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;View metadata was not refreshed. See log for details.&quot;</span><span class="p">)</span>
+
 <div class="viewcode-block" id="Cluster.refresh_user_type_metadata"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.refresh_user_type_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">refresh_user_type_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">user_type</span><span class="p">,</span> <span class="n">max_schema_agreement_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Synchronously refresh user defined type metadata.</span>
 
 <span class="sd">        See :meth:`~.Cluster.refresh_schema_metadata` for description of ``max_schema_agreement_wait`` behavior</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">usertype</span><span class="o">=</span><span class="n">user_type</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">max_schema_agreement_wait</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">TYPE</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">keyspace</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">user_type</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">max_schema_agreement_wait</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;User Type metadata was not refreshed. See log for details.&quot;</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Cluster.refresh_user_function_metadata"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.refresh_user_function_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">refresh_user_function_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">max_schema_agreement_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -1383,7 +1358,7 @@
 
 <span class="sd">        See :meth:`~.Cluster.refresh_schema_metadata` for description of ``max_schema_agreement_wait`` behavior</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="n">function</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">max_schema_agreement_wait</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">FUNCTION</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="n">function</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">max_schema_agreement_wait</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;User Function metadata was not refreshed. See log for details.&quot;</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Cluster.refresh_user_aggregate_metadata"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.refresh_user_aggregate_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">refresh_user_aggregate_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">,</span> <span class="n">max_schema_agreement_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -1394,7 +1369,7 @@
 
 <span class="sd">        See :meth:`~.Cluster.refresh_schema_metadata` for description of ``max_schema_agreement_wait`` behavior</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="n">aggregate</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">max_schema_agreement_wait</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="n">aggregate</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">max_schema_agreement_wait</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;User Aggregate metadata was not refreshed. See log for details.&quot;</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Cluster.refresh_nodes"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Cluster.refresh_nodes">[docs]</a>    <span class="k">def</span> <span class="nf">refresh_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1520,13 +1495,17 @@
 <span class="sd">    .. versionadded:: 2.0.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">default_consistency_level</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
+    <span class="n">default_consistency_level</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">LOCAL_ONE</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The default :class:`~ConsistencyLevel` for operations executed through</span>
 <span class="sd">    this session.  This default may be overridden by setting the</span>
 <span class="sd">    :attr:`~.Statement.consistency_level` on individual statements.</span>
 
 <span class="sd">    .. versionadded:: 1.2.0</span>
+
+<span class="sd">    .. versionchanged:: 3.0.0</span>
+
+<span class="sd">        default changed from ONE to LOCAL_ONE</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">max_trace_wait</span> <span class="o">=</span> <span class="mf">2.0</span>
@@ -1647,34 +1626,14 @@
 <span class="sd">        no timeout. Please see :meth:`.ResponseFuture.result` for details on</span>
 <span class="sd">        the scope and effect of this timeout.</span>
 
-<span class="sd">        If `trace` is set to :const:`True`, an attempt will be made to</span>
-<span class="sd">        fetch the trace details and attach them to the `query`&#39;s</span>
-<span class="sd">        :attr:`~.Statement.trace` attribute in the form of a :class:`.QueryTrace`</span>
-<span class="sd">        instance.  This requires that `query` be a :class:`.Statement` subclass</span>
-<span class="sd">        instance and not just a string.  If there is an error fetching the</span>
-<span class="sd">        trace details, the :attr:`~.Statement.trace` attribute will be left as</span>
-<span class="sd">        :const:`None`.</span>
+<span class="sd">        If `trace` is set to :const:`True`, the query will be sent with tracing enabled.</span>
+<span class="sd">        The trace details can be obtained using the returned :class:`.ResultSet` object.</span>
 
 <span class="sd">        `custom_payload` is a :ref:`custom_payload` dict to be passed to the server.</span>
 <span class="sd">        If `query` is a Statement with its own custom_payload. The message payload</span>
 <span class="sd">        will be a union of the two, with the values specified here taking precedence.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">trace</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">Statement</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="s">&quot;The query argument must be an instance of a subclass of &quot;</span>
-                <span class="s">&quot;cassandra.query.Statement when trace=True&quot;</span><span class="p">)</span>
-
-        <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">trace</span><span class="p">,</span> <span class="n">custom_payload</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
-        <span class="k">finally</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">trace</span><span class="p">:</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">query</span><span class="o">.</span><span class="n">trace</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">get_query_trace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_trace_wait</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Unable to fetch query trace:&quot;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">trace</span><span class="p">,</span> <span class="n">custom_payload</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="Session.execute_async"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Session.execute_async">[docs]</a>    <span class="k">def</span> <span class="nf">execute_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">custom_payload</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">_NOT_SET</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1684,9 +1643,9 @@
 <span class="sd">        on the :class:`.ResponseFuture` to syncronously block for results at</span>
 <span class="sd">        any time.</span>
 
-<span class="sd">        If `trace` is set to :const:`True`, you may call</span>
-<span class="sd">        :meth:`.ResponseFuture.get_query_trace()` after the request</span>
-<span class="sd">        completes to retrieve a :class:`.QueryTrace` instance.</span>
+<span class="sd">        If `trace` is set to :const:`True`, you may get the query trace descriptors using</span>
+<span class="sd">        :meth:`.ResponseFuture.get_query_trace()` or :meth:`.ResponseFuture.get_all_query_traces()`</span>
+<span class="sd">        on the future result.</span>
 
 <span class="sd">        `custom_payload` is a :ref:`custom_payload` dict to be passed to the server.</span>
 <span class="sd">        If `query` is a Statement with its own custom_payload. The message payload</span>
@@ -1753,8 +1712,6 @@
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">SimpleStatement</span><span class="p">):</span>
             <span class="n">query_string</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">query_string</span>
-            <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">):</span>
-                <span class="n">query_string</span> <span class="o">=</span> <span class="n">query_string</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
                 <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">)</span>
             <span class="n">message</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span>
@@ -1776,8 +1733,7 @@
                 <span class="n">query</span><span class="o">.</span><span class="n">batch_type</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="p">,</span> <span class="n">cl</span><span class="p">,</span>
                 <span class="n">query</span><span class="o">.</span><span class="n">serial_consistency_level</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">trace</span><span class="p">:</span>
-            <span class="n">message</span><span class="o">.</span><span class="n">tracing</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">message</span><span class="o">.</span><span class="n">tracing</span> <span class="o">=</span> <span class="n">trace</span>
 
         <span class="n">message</span><span class="o">.</span><span class="n">update_custom_payload</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">custom_payload</span><span class="p">)</span>
         <span class="n">message</span><span class="o">.</span><span class="n">update_custom_payload</span><span class="p">(</span><span class="n">custom_payload</span><span class="p">)</span>
@@ -2020,11 +1976,17 @@
             <span class="k">raise</span> <span class="n">UserTypeDoesNotExist</span><span class="p">(</span>
                 <span class="s">&#39;User type </span><span class="si">%s</span><span class="s"> does not exist in keyspace </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">user_type</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">))</span>
 
+        <span class="n">field_names</span> <span class="o">=</span> <span class="n">type_meta</span><span class="o">.</span><span class="n">field_names</span>
+        <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+            <span class="c"># go from unicode to string to avoid decode errors from implicit</span>
+            <span class="c"># decode when formatting non-ascii values</span>
+            <span class="n">field_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">fn</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">field_names</span><span class="p">]</span>
+
         <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
             <span class="k">return</span> <span class="s">&#39;{ </span><span class="si">%s</span><span class="s"> }&#39;</span> <span class="o">%</span> <span class="s">&#39; , &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
                 <span class="n">field_name</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">cql_encode_all_types</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
-            <span class="p">)</span> <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">type_meta</span><span class="o">.</span><span class="n">field_names</span><span class="p">)</span>
+            <span class="p">)</span> <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">field_names</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">mapping</span><span class="p">[</span><span class="n">klass</span><span class="p">]</span> <span class="o">=</span> <span class="n">encode</span>
 
@@ -2059,7 +2021,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="n">control_connection</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">try_reconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c"># we&#39;ll either get back a new Connection or a NoHostAvailable</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">_reconnect_internal</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">on_reconnection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
@@ -2101,16 +2062,8 @@
 <span class="sd">    Internal</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_SELECT_KEYSPACES</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_keyspaces&quot;</span>
-    <span class="n">_SELECT_COLUMN_FAMILIES</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_columnfamilies&quot;</span>
-    <span class="n">_SELECT_COLUMNS</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_columns&quot;</span>
-    <span class="n">_SELECT_USERTYPES</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_usertypes&quot;</span>
-    <span class="n">_SELECT_FUNCTIONS</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_functions&quot;</span>
-    <span class="n">_SELECT_AGGREGATES</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_aggregates&quot;</span>
-    <span class="n">_SELECT_TRIGGERS</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM system.schema_triggers&quot;</span>
-
     <span class="n">_SELECT_PEERS</span> <span class="o">=</span> <span class="s">&quot;SELECT peer, data_center, rack, tokens, rpc_address, schema_version FROM system.peers&quot;</span>
-    <span class="n">_SELECT_LOCAL</span> <span class="o">=</span> <span class="s">&quot;SELECT cluster_name, data_center, rack, tokens, partitioner, schema_version FROM system.local WHERE key=&#39;local&#39;&quot;</span>
+    <span class="n">_SELECT_LOCAL</span> <span class="o">=</span> <span class="s">&quot;SELECT cluster_name, data_center, rack, tokens, partitioner, release_version, schema_version FROM system.local WHERE key=&#39;local&#39;&quot;</span>
 
     <span class="n">_SELECT_SCHEMA_PEERS</span> <span class="o">=</span> <span class="s">&quot;SELECT peer, rpc_address, schema_version FROM system.peers&quot;</span>
     <span class="n">_SELECT_SCHEMA_LOCAL</span> <span class="o">=</span> <span class="s">&quot;SELECT schema_version FROM system.local WHERE key=&#39;local&#39;&quot;</span>
@@ -2300,16 +2253,14 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                 <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
 
-    <span class="k">def</span> <span class="nf">refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">usertype</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                       <span class="n">aggregate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta_refresh_enabled</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Skipping schema refresh because meta refresh is disabled&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">False</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span>
-                                            <span class="n">aggregate</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="n">schema_agreement_wait</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ReferenceError</span><span class="p">:</span>
             <span class="k">pass</span>  <span class="c"># our weak reference to the Cluster is no good</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -2317,12 +2268,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_signal_error</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">False</span>
 
-    <span class="k">def</span> <span class="nf">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">usertype</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                        <span class="n">aggregate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_refresh_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">schema_agreement_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">False</span>
-
-        <span class="k">assert</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">)</span> <span class="k">if</span> <span class="n">arg</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span>
 
         <span class="n">agreed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_schema_agreement</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span>
                                                 <span class="n">preloaded_results</span><span class="o">=</span><span class="n">preloaded_results</span><span class="p">,</span>
@@ -2331,148 +2279,8 @@
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Skipping schema refresh due to lack of schema agreement&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">False</span>
 
-        <span class="n">cl</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
-        <span class="k">if</span> <span class="n">table</span><span class="p">:</span>
-            <span class="k">def</span> <span class="nf">_handle_results</span><span class="p">(</span><span class="n">success</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="p">{}</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">result</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-            <span class="c"># a particular table changed</span>
-            <span class="n">where_clause</span> <span class="o">=</span> <span class="s">&quot; WHERE keyspace_name = &#39;</span><span class="si">%s</span><span class="s">&#39; AND columnfamily_name = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
-            <span class="n">cf_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_COLUMN_FAMILIES</span> <span class="o">+</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-            <span class="n">col_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_COLUMNS</span> <span class="o">+</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-            <span class="n">triggers_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_TRIGGERS</span> <span class="o">+</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-            <span class="p">(</span><span class="n">cf_success</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">),</span> <span class="p">(</span><span class="n">col_success</span><span class="p">,</span> <span class="n">col_result</span><span class="p">),</span> <span class="p">(</span><span class="n">triggers_success</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span> \
-                <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span><span class="n">cf_query</span><span class="p">,</span> <span class="n">col_query</span><span class="p">,</span> <span class="n">triggers_query</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">,</span> <span class="n">fail_on_error</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Fetched table info for </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">, rebuilding metadata&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
-            <span class="n">cf_result</span> <span class="o">=</span> <span class="n">_handle_results</span><span class="p">(</span><span class="n">cf_success</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">)</span>
-            <span class="n">col_result</span> <span class="o">=</span> <span class="n">_handle_results</span><span class="p">(</span><span class="n">col_success</span><span class="p">,</span> <span class="n">col_result</span><span class="p">)</span>
-
-            <span class="c"># handle the triggers table not existing in Cassandra 1.2</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">triggers_success</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">triggers_result</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">):</span>
-                <span class="n">triggers_result</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">triggers_result</span> <span class="o">=</span> <span class="n">_handle_results</span><span class="p">(</span><span class="n">triggers_success</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span>
-
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">table_changed</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">,</span> <span class="n">col_result</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">usertype</span><span class="p">:</span>
-            <span class="c"># user defined types within this keyspace changed</span>
-            <span class="n">where_clause</span> <span class="o">=</span> <span class="s">&quot; WHERE keyspace_name = &#39;</span><span class="si">%s</span><span class="s">&#39; AND type_name = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">usertype</span><span class="p">)</span>
-            <span class="n">types_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_USERTYPES</span> <span class="o">+</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-            <span class="n">types_result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_response</span><span class="p">(</span><span class="n">types_query</span><span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Fetched user type info for </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">, rebuilding metadata&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">usertype</span><span class="p">)</span>
-            <span class="n">types_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">types_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">types_result</span><span class="o">.</span><span class="n">results</span> <span class="k">else</span> <span class="p">{}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">usertype_changed</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">types_result</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">function</span><span class="p">:</span>
-            <span class="c"># user defined function within this keyspace changed</span>
-            <span class="n">where_clause</span> <span class="o">=</span> <span class="s">&quot; WHERE keyspace_name = &#39;</span><span class="si">%s</span><span class="s">&#39; AND function_name = &#39;</span><span class="si">%s</span><span class="s">&#39; AND signature = [</span><span class="si">%s</span><span class="s">]&quot;</span> \
-                           <span class="o">%</span> <span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">function</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">function</span><span class="o">.</span><span class="n">type_signature</span><span class="p">))</span>
-            <span class="n">functions_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_FUNCTIONS</span> <span class="o">+</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-            <span class="n">functions_result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_response</span><span class="p">(</span><span class="n">functions_query</span><span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Fetched user function info for </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">, rebuilding metadata&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">function</span><span class="o">.</span><span class="n">signature</span><span class="p">)</span>
-            <span class="n">functions_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">functions_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">functions_result</span><span class="o">.</span><span class="n">results</span> <span class="k">else</span> <span class="p">{}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">function_changed</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">functions_result</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">aggregate</span><span class="p">:</span>
-            <span class="c"># user defined aggregate within this keyspace changed</span>
-            <span class="n">where_clause</span> <span class="o">=</span> <span class="s">&quot; WHERE keyspace_name = &#39;</span><span class="si">%s</span><span class="s">&#39; AND aggregate_name = &#39;</span><span class="si">%s</span><span class="s">&#39; AND signature = [</span><span class="si">%s</span><span class="s">]&quot;</span> \
-                           <span class="o">%</span> <span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">aggregate</span><span class="o">.</span><span class="n">type_signature</span><span class="p">))</span>
-            <span class="n">aggregates_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_AGGREGATES</span> <span class="o">+</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-            <span class="n">aggregates_result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_response</span><span class="p">(</span><span class="n">aggregates_query</span><span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Fetched user aggregate info for </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">, rebuilding metadata&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">.</span><span class="n">signature</span><span class="p">)</span>
-            <span class="n">aggregates_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">aggregates_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">aggregates_result</span><span class="o">.</span><span class="n">results</span> <span class="k">else</span> <span class="p">{}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">aggregate_changed</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">,</span> <span class="n">aggregates_result</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">keyspace</span><span class="p">:</span>
-            <span class="c"># only the keyspace itself changed (such as replication settings)</span>
-            <span class="n">where_clause</span> <span class="o">=</span> <span class="s">&quot; WHERE keyspace_name = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">keyspace</span><span class="p">,)</span>
-            <span class="n">ks_query</span> <span class="o">=</span> <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_KEYSPACES</span> <span class="o">+</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-            <span class="n">ks_result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_response</span><span class="p">(</span><span class="n">ks_query</span><span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Fetched keyspace info for </span><span class="si">%s</span><span class="s">, rebuilding metadata&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">)</span>
-            <span class="n">ks_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">ks_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">ks_result</span><span class="o">.</span><span class="n">results</span> <span class="k">else</span> <span class="p">{}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspace_changed</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">ks_result</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c"># build everything from scratch</span>
-            <span class="n">queries</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_KEYSPACES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
-                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_COLUMN_FAMILIES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
-                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_COLUMNS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
-                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_USERTYPES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
-                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_FUNCTIONS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
-                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_AGGREGATES</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">),</span>
-                <span class="n">QueryMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_TRIGGERS</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
-            <span class="p">]</span>
-
-            <span class="n">responses</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">wait_for_responses</span><span class="p">(</span><span class="o">*</span><span class="n">queries</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">,</span> <span class="n">fail_on_error</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-            <span class="p">(</span><span class="n">ks_success</span><span class="p">,</span> <span class="n">ks_result</span><span class="p">),</span> <span class="p">(</span><span class="n">cf_success</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">),</span> \
-                <span class="p">(</span><span class="n">col_success</span><span class="p">,</span> <span class="n">col_result</span><span class="p">),</span> <span class="p">(</span><span class="n">types_success</span><span class="p">,</span> <span class="n">types_result</span><span class="p">),</span> \
-                <span class="p">(</span><span class="n">functions_success</span><span class="p">,</span> <span class="n">functions_result</span><span class="p">),</span> \
-                <span class="p">(</span><span class="n">aggregates_success</span><span class="p">,</span> <span class="n">aggregates_result</span><span class="p">),</span> \
-                <span class="p">(</span><span class="n">trigger_success</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span> <span class="o">=</span> <span class="n">responses</span>
-
-            <span class="k">if</span> <span class="n">ks_success</span><span class="p">:</span>
-                <span class="n">ks_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">ks_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ks_result</span>
-
-            <span class="k">if</span> <span class="n">cf_success</span><span class="p">:</span>
-                <span class="n">cf_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">cf_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">cf_result</span>
-
-            <span class="k">if</span> <span class="n">col_success</span><span class="p">:</span>
-                <span class="n">col_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">col_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">col_result</span>
-
-            <span class="c"># if we&#39;re connected to Cassandra &lt; 2.0, the trigges table will not exist</span>
-            <span class="k">if</span> <span class="n">trigger_success</span><span class="p">:</span>
-                <span class="n">triggers_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">triggers_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">triggers_result</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">):</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] triggers table not found&quot;</span><span class="p">)</span>
-                    <span class="n">triggers_result</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">triggers_result</span><span class="p">,</span> <span class="n">Unauthorized</span><span class="p">):</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;[control connection] this version of Cassandra does not allow access to schema_triggers metadata with authorization enabled (CASSANDRA-7967); &quot;</span>
-                                <span class="s">&quot;The driver will operate normally, but will not reflect triggers in the local metadata model, or schema strings.&quot;</span><span class="p">)</span>
-                    <span class="n">triggers_result</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">triggers_result</span>
-
-            <span class="c"># if we&#39;re connected to Cassandra &lt; 2.1, the usertypes table will not exist</span>
-            <span class="k">if</span> <span class="n">types_success</span><span class="p">:</span>
-                <span class="n">types_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">types_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">types_result</span><span class="o">.</span><span class="n">results</span> <span class="k">else</span> <span class="p">{}</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">types_result</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">):</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] user types table not found&quot;</span><span class="p">)</span>
-                    <span class="n">types_result</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">types_result</span>
-
-            <span class="c"># functions were introduced in Cassandra 2.2</span>
-            <span class="k">if</span> <span class="n">functions_success</span><span class="p">:</span>
-                <span class="n">functions_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">functions_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">functions_result</span><span class="o">.</span><span class="n">results</span> <span class="k">else</span> <span class="p">{}</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">functions_result</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">):</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] user functions table not found&quot;</span><span class="p">)</span>
-                    <span class="n">functions_result</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">functions_result</span>
-
-            <span class="c"># aggregates were introduced in Cassandra 2.2</span>
-            <span class="k">if</span> <span class="n">aggregates_success</span><span class="p">:</span>
-                <span class="n">aggregates_result</span> <span class="o">=</span> <span class="n">dict_factory</span><span class="p">(</span><span class="o">*</span><span class="n">aggregates_result</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="k">if</span> <span class="n">aggregates_result</span><span class="o">.</span><span class="n">results</span> <span class="k">else</span> <span class="p">{}</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">aggregates_result</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">):</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] user aggregates table not found&quot;</span><span class="p">)</span>
-                    <span class="n">aggregates_result</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">aggregates_result</span>
-
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;[control connection] Fetched schema, rebuilding metadata&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">rebuild_schema</span><span class="p">(</span><span class="n">ks_result</span><span class="p">,</span> <span class="n">types_result</span><span class="p">,</span> <span class="n">functions_result</span><span class="p">,</span>
-                                                  <span class="n">aggregates_result</span><span class="p">,</span> <span class="n">cf_result</span><span class="p">,</span> <span class="n">col_result</span><span class="p">,</span> <span class="n">triggers_result</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">refresh_node_list_and_token_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_token_rebuild</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
@@ -2527,6 +2335,8 @@
             <span class="n">tokens</span> <span class="o">=</span> <span class="n">local_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;tokens&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">partitioner</span> <span class="ow">and</span> <span class="n">tokens</span><span class="p">:</span>
                 <span class="n">token_map</span><span class="p">[</span><span class="n">host</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span>
+
+            <span class="n">connection</span><span class="o">.</span><span class="n">server_version</span> <span class="o">=</span> <span class="n">local_row</span><span class="p">[</span><span class="s">&#39;release_version&#39;</span><span class="p">]</span>
 
         <span class="c"># Check metadata.partitioner to see if we haven&#39;t built anything yet. If</span>
         <span class="c"># every node in the cluster was in the contact points, we won&#39;t discover</span>
@@ -2631,13 +2441,8 @@
     <span class="k">def</span> <span class="nf">_handle_schema_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema_event_refresh_window</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span>
-        <span class="n">keyspace</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;keyspace&#39;</span><span class="p">)</span>
-        <span class="n">table</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;table&#39;</span><span class="p">)</span>
-        <span class="n">usertype</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">)</span>
-        <span class="n">function</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;function&#39;</span><span class="p">)</span>
-        <span class="n">aggregate</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;aggregate&#39;</span><span class="p">)</span>
         <span class="n">delay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delay_for_event_type</span><span class="p">(</span><span class="s">&#39;schema_change&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema_event_refresh_window</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule_unique</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cluster</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule_unique</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="o">**</span><span class="n">event</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">wait_for_schema_agreement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preloaded_results</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">wait_time</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 
@@ -2820,11 +2625,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_insert_task</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_insert_task</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">())))</span>
 
-    <span class="k">def</span> <span class="nf">schedule_unique</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
-        <span class="n">task</span> <span class="o">=</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">schedule_unique</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
         <span class="k">if</span> <span class="n">task</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_insert_task</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2851,8 +2656,9 @@
                         <span class="k">return</span>
                     <span class="k">if</span> <span class="n">run_at</span> <span class="o">&lt;=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">():</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
-                        <span class="n">fn</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">task</span>
-                        <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+                        <span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">task</span>
+                        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+                        <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
                         <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_if_failed</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">((</span><span class="n">run_at</span><span class="p">,</span> <span class="n">task</span><span class="p">))</span>
@@ -2870,20 +2676,18 @@
                 <span class="n">exc_info</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">refresh_schema_and_set_result</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">,</span> <span class="n">control_conn</span><span class="p">,</span> <span class="n">response_future</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">refresh_schema_and_set_result</span><span class="p">(</span><span class="n">control_conn</span><span class="p">,</span> <span class="n">response_future</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">control_conn</span><span class="o">.</span><span class="n">_meta_refresh_enabled</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Refreshing schema in response to schema change. &quot;</span>
-                      <span class="s">&quot;Keyspace: </span><span class="si">%s</span><span class="s">; Table: </span><span class="si">%s</span><span class="s">, Type: </span><span class="si">%s</span><span class="s">, Function: </span><span class="si">%s</span><span class="s">, Aggregate: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
-                      <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">)</span>
-            <span class="n">control_conn</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="n">response_future</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">)</span>
+                      <span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">control_conn</span><span class="o">.</span><span class="n">_refresh_schema</span><span class="p">(</span><span class="n">response_future</span><span class="o">.</span><span class="n">_connection</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Skipping schema refresh in response to schema change because meta refresh is disabled; &quot;</span>
-                      <span class="s">&quot;Keyspace: </span><span class="si">%s</span><span class="s">; Table: </span><span class="si">%s</span><span class="s">, Type: </span><span class="si">%s</span><span class="s">, Function: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">)</span>
+                      <span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Exception refreshing schema in response to schema change:&quot;</span><span class="p">)</span>
-        <span class="n">response_future</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
-            <span class="n">control_conn</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">usertype</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">aggregate</span><span class="p">)</span>
+        <span class="n">response_future</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">control_conn</span><span class="o">.</span><span class="n">refresh_schema</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">response_future</span><span class="o">.</span><span class="n">_set_final_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
 
@@ -2913,8 +2717,9 @@
 
     <span class="n">_req_id</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_final_result</span> <span class="o">=</span> <span class="n">_NOT_SET</span>
+    <span class="n">_col_names</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_final_exception</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_query_trace</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_query_traces</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_callbacks</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_errbacks</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_current_host</span> <span class="o">=</span> <span class="bp">None</span>
@@ -3105,9 +2910,9 @@
 
             <span class="n">trace_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;trace_id&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">trace_id</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">trace_id</span> <span class="o">=</span> <span class="n">trace_id</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_query_trace</span> <span class="o">=</span> <span class="n">QueryTrace</span><span class="p">(</span><span class="n">trace_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_traces</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_query_traces</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_query_traces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">QueryTrace</span><span class="p">(</span><span class="n">trace_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">))</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_warnings</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;warnings&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_custom_payload</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;custom_payload&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
@@ -3130,17 +2935,13 @@
                     <span class="c"># thread instead of the event loop thread</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
                         <span class="n">refresh_schema_and_set_result</span><span class="p">,</span>
-                        <span class="n">response</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="s">&#39;keyspace&#39;</span><span class="p">],</span>
-                        <span class="n">response</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;table&#39;</span><span class="p">),</span>
-                        <span class="n">response</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">),</span>
-                        <span class="n">response</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;function&#39;</span><span class="p">),</span>
-                        <span class="n">response</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;aggregate&#39;</span><span class="p">),</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">control_connection</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">response</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">results</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;results&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">response</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">RESULT_KIND_ROWS</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">_paging_state</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">paging_state</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_col_names</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                         <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_factory</span><span class="p">(</span><span class="o">*</span><span class="n">results</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_set_final_result</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">ErrorMessage</span><span class="p">):</span>
@@ -3356,26 +3157,14 @@
         <span class="c"># otherwise, move onto another host</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">send_request</span><span class="p">()</span>
 
-<div class="viewcode-block" id="ResponseFuture.result"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.result">[docs]</a>    <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">_NOT_SET</span><span class="p">):</span>
+<div class="viewcode-block" id="ResponseFuture.result"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.result">[docs]</a>    <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the final result or raise an Exception if errors were</span>
 <span class="sd">        encountered.  If the final result or error has not been set</span>
-<span class="sd">        yet, this method will block until that time.</span>
+<span class="sd">        yet, this method will block until it is set, or the timeout</span>
+<span class="sd">        set for the request expires.</span>
 
-<span class="sd">        .. versionchanged:: 2.6.0</span>
-
-<span class="sd">        **`timeout` is deprecated. Use timeout in the Session execute functions instead.</span>
-<span class="sd">        The following description applies to deprecated behavior:**</span>
-
-<span class="sd">        You may set a timeout (in seconds) with the `timeout` parameter.</span>
-<span class="sd">        By default, the :attr:`~.default_timeout` for the :class:`.Session`</span>
-<span class="sd">        this was created through will be used for the timeout on this</span>
-<span class="sd">        operation.</span>
-
-<span class="sd">        This timeout applies to the entire request, including any retries</span>
-<span class="sd">        (decided internally by the :class:`.policies.RetryPolicy` used with</span>
-<span class="sd">        the request).</span>
-
+<span class="sd">        Timeout is specified in the Session request execution functions.</span>
 <span class="sd">        If the timeout is exceeded, an :exc:`cassandra.OperationTimedOut` will be raised.</span>
 <span class="sd">        This is a client-side timeout. For more information</span>
 <span class="sd">        about server-side coordinator timeouts, see :class:`.policies.RetryPolicy`.</span>
@@ -3393,41 +3182,46 @@
 <span class="sd">            ...     log.exception(&quot;Operation failed:&quot;)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_NOT_SET</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ResponseFuture</span><span class="o">.</span><span class="n">_warned_timeout</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;ResponseFuture.result timeout argument is deprecated. Specify the request timeout via Session.execute[_async].&quot;</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-            <span class="n">ResponseFuture</span><span class="o">.</span><span class="n">_warned_timeout</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">timeout</span> <span class="o">=</span> <span class="bp">None</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
-        <span class="c"># TODO: remove this conditional when deprecated timeout parameter is removed</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_on_timeout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_NOT_SET</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paging_state</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">PagedResult</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ResultSet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span>
 </div>
+    <span class="k">def</span> <span class="nf">get_query_trace_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the trace session ids for this future, if tracing was enabled (does not fetch trace data).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">trace</span><span class="o">.</span><span class="n">trace_id</span> <span class="k">for</span> <span class="n">trace</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_traces</span><span class="p">]</span>
+
 <div class="viewcode-block" id="ResponseFuture.get_query_trace"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.get_query_trace">[docs]</a>    <span class="k">def</span> <span class="nf">get_query_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_wait</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns the :class:`~.query.QueryTrace` instance representing a trace</span>
-<span class="sd">        of the last attempt for this operation, or :const:`None` if tracing was</span>
-<span class="sd">        not enabled for this query.  Note that this may raise an exception if</span>
-<span class="sd">        there are problems retrieving the trace details from Cassandra. If the</span>
-<span class="sd">        trace is not available after `max_wait` seconds,</span>
+<span class="sd">        Fetches and returns the query trace of the last response, or `None` if tracing was</span>
+<span class="sd">        not enabled.</span>
+
+<span class="sd">        Note that this may raise an exception if there are problems retrieving the trace</span>
+<span class="sd">        details from Cassandra. If the trace is not available after `max_wait_sec`,</span>
 <span class="sd">        :exc:`cassandra.query.TraceUnavailable` will be raised.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_trace</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_query_trace</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span><span class="n">max_wait</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_trace</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_traces</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_query_trace</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_query_traces</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">)</span>
 </div>
+<div class="viewcode-block" id="ResponseFuture.get_all_query_traces"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.get_all_query_traces">[docs]</a>    <span class="k">def</span> <span class="nf">get_all_query_traces</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_wait_per</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetches and returns the query traces for all query pages, if tracing was enabled.</span>
+
+<span class="sd">        See note in :meth:`~.get_query_trace` regarding possible exceptions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_traces</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_query_trace</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">max_wait_per</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_query_traces</span><span class="p">))]</span>
+        <span class="k">return</span> <span class="p">[]</span>
+</div>
+    <span class="k">def</span> <span class="nf">_get_query_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">):</span>
+        <span class="n">trace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_traces</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">trace</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
+            <span class="n">trace</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span><span class="n">max_wait</span><span class="o">=</span><span class="n">max_wait</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">trace</span>
+
 <div class="viewcode-block" id="ResponseFuture.add_callback"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.add_callback">[docs]</a>    <span class="k">def</span> <span class="nf">add_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Attaches a callback function to be called when the final results arrive.</span>
@@ -3542,12 +3336,13 @@
     <span class="k">pass</span>
 
 </div>
-<div class="viewcode-block" id="PagedResult"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.PagedResult">[docs]</a><span class="k">class</span> <span class="nc">PagedResult</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ResultSet"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResultSet">[docs]</a><span class="k">class</span> <span class="nc">ResultSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    An iterator over the rows from a paged query result.  Whenever the number</span>
-<span class="sd">    of result rows for a query exceed the :attr:`~.query.Statement.fetch_size`</span>
-<span class="sd">    (or :attr:`~.Session.default_fetch_size`, if not set) an instance of this</span>
-<span class="sd">    class will be returned.</span>
+<span class="sd">    An iterator over the rows from a query result. Also supplies basic equality</span>
+<span class="sd">    and indexing methods for backward-compatability. These methods materialize</span>
+<span class="sd">    the entire result set (loading all pages), and should only be used if the</span>
+<span class="sd">    total result size is understood. Warnings are emitted when paged results</span>
+<span class="sd">    are materialized in this fashion.</span>
 
 <span class="sd">    You can treat this as a normal iterator over rows::</span>
 
@@ -3560,36 +3355,115 @@
 <span class="sd">    be fetched transparently.  However, note that it *is* possible for</span>
 <span class="sd">    an :class:`Exception` to be raised while fetching the next page, just</span>
 <span class="sd">    like you might see on a normal call to ``session.execute()``.</span>
-
-<span class="sd">    .. versionadded: 2.0.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">response_future</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_future</span><span class="p">,</span> <span class="n">initial_response</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span> <span class="o">=</span> <span class="n">response_future</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_response</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">initial_response</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column_names</span> <span class="o">=</span> <span class="n">response_future</span><span class="o">.</span><span class="n">_col_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_current_rows</span><span class="p">(</span><span class="n">initial_response</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_page_iter</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_list_mode</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_more_pages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        True if the last response indicated more pages; False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">has_more_pages</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">current_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the list of current page rows. May be empty if the result was empty,</span>
+<span class="sd">        or this is the last page.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span> <span class="ow">or</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_list_mode</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_page_iter</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_response</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_page_iter</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">has_more_pages</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_list_mode</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">raise</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">start_fetching_next_page</span><span class="p">()</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fetch_next_page</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_page_iter</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_page_iter</span><span class="p">)</span>
+
+    <span class="n">__next__</span> <span class="o">=</span> <span class="nb">next</span>
+
+<div class="viewcode-block" id="ResultSet.fetch_next_page"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResultSet.fetch_next_page">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_next_page</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Manually, synchronously fetch the next page. Supplied for manually retrieving pages</span>
+<span class="sd">        and inspecting :meth:`~.current_page`. It is not necessary to call this when iterating</span>
+<span class="sd">        through results; paging happens implicitly in iteration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">has_more_pages</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">current_response</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">current_response</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">start_fetching_next_page</span><span class="p">()</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">_current_rows</span>  <span class="c"># ResultSet has already _set_current_rows to the appropriate form</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">current_response</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span> <span class="o">=</span> <span class="p">[]</span>
+</div>
+    <span class="k">def</span> <span class="nf">_set_current_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">result</span><span class="p">]</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="p">[]</span>
+            <span class="k">return</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">iter</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>  <span class="c"># can&#39;t check directly for generator types because cython generators are different</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span> <span class="o">=</span> <span class="n">result</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">result</span><span class="p">]</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="p">[]</span>
 
-        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_response</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_fetch_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_page_iter</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="n">__next__</span> <span class="o">=</span> <span class="nb">next</span></div>
+    <span class="k">def</span> <span class="nf">_enter_list_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operator</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_list_mode</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page_iter</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&quot;Cannot use </span><span class="si">%s</span><span class="s"> when results have been iterated.&quot;</span> <span class="o">%</span> <span class="n">operator</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">has_more_pages</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Using </span><span class="si">%s</span><span class="s"> on paged results causes entire result set to be materialized.&quot;</span><span class="p">,</span> <span class="n">operator</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_all</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_list_mode</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_enter_list_mode</span><span class="p">(</span><span class="s">&quot;equality operator&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span> <span class="o">==</span> <span class="n">other</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_enter_list_mode</span><span class="p">(</span><span class="s">&quot;index operator&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__nonzero__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_rows</span><span class="p">)</span>
+
+    <span class="n">__bool__</span> <span class="o">=</span> <span class="n">__nonzero__</span>
+
+<div class="viewcode-block" id="ResultSet.get_query_trace"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResultSet.get_query_trace">[docs]</a>    <span class="k">def</span> <span class="nf">get_query_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_wait_sec</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the last query trace from the associated future.</span>
+<span class="sd">        See :meth:`.ResponseFuture.get_query_trace` for details.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">get_query_trace</span><span class="p">(</span><span class="n">max_wait_sec</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ResultSet.get_all_query_traces"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.ResultSet.get_all_query_traces">[docs]</a>    <span class="k">def</span> <span class="nf">get_all_query_traces</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_wait_sec_per</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets all query traces from the associated future.</span>
+<span class="sd">        See :meth:`.ResponseFuture.get_all_query_traces` for details.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_future</span><span class="o">.</span><span class="n">get_all_query_traces</span><span class="p">(</span><span class="n">max_wait_sec_per</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>
@@ -3606,7 +3480,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

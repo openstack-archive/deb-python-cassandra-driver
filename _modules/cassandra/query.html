@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query &mdash; Cassandra Driver 2.7.2 documentation</title>
+    <title>cassandra.query &mdash; Cassandra Driver 3.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.7.2',
+        VERSION:     '3.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.7.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -98,7 +98,7 @@
 <span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">Encoder</span>
 <span class="kn">import</span> <span class="nn">cassandra.encoder</span>
 <span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="kn">import</span> <span class="n">_UNSET_VALUE</span>
-<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">_positional_rename_invalid_identifiers</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
@@ -190,7 +190,7 @@
                     <span class="s">&quot;Avoid this by choosing different names, using SELECT </span><span class="se">\&quot;</span><span class="s">&lt;col name&gt;</span><span class="se">\&quot;</span><span class="s"> AS aliases, &quot;</span>
                     <span class="s">&quot;or specifying a different row_factory on your Session&quot;</span> <span class="o">%</span>
                     <span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="n">clean_column_names</span><span class="p">))</span>
-        <span class="n">Row</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Row&#39;</span><span class="p">,</span> <span class="n">clean_column_names</span><span class="p">,</span> <span class="n">rename</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">Row</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Row&#39;</span><span class="p">,</span> <span class="n">_positional_rename_invalid_identifiers</span><span class="p">(</span><span class="n">clean_column_names</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="p">[</span><span class="n">Row</span><span class="p">(</span><span class="o">*</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
 
@@ -240,18 +240,6 @@
 <span class="sd">    An instance of a :class:`cassandra.policies.RetryPolicy` or one of its</span>
 <span class="sd">    subclasses.  This controls when a query will be retried and how it</span>
 <span class="sd">    will be retried.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">trace</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    If :meth:`.Session.execute()` is run with `trace` set to :const:`True`,</span>
-<span class="sd">    this will be set to a :class:`.QueryTrace` instance.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">trace_id</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    If :meth:`.Session.execute()` is run with `trace` set to :const:`True`,</span>
-<span class="sd">    this will be set to the tracing ID from the server.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
@@ -553,23 +541,24 @@
 <span class="sd">            * short sequences will be extended to match bind parameters with UNSET_VALUE</span>
 <span class="sd">            * names may be omitted from a dict with UNSET_VALUE implied.</span>
 
+<span class="sd">        .. versionchanged:: 3.0.0</span>
+
+<span class="sd">            method will not throw if extra keys are present in bound dict (PYTHON-178)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">()</span>
         <span class="n">proto_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">protocol_version</span>
         <span class="n">col_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">column_metadata</span>
-        <span class="n">col_meta_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_meta</span><span class="p">)</span>
-        <span class="n">value_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
 
         <span class="c"># special case for binding dicts</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">unbound_values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">values_dict</span> <span class="o">=</span> <span class="n">values</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
 
             <span class="c"># sort values accordingly</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">col_meta</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">unbound_values</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                    <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">values_dict</span><span class="p">[</span><span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
                 <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">proto_version</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">:</span>
                         <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">UNSET_VALUE</span><span class="p">)</span>
@@ -578,10 +567,8 @@
                             <span class="s">&#39;Column name `</span><span class="si">%s</span><span class="s">` not found in bound dict.&#39;</span> <span class="o">%</span>
                             <span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
 
-            <span class="n">value_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">unbound_values</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Unexpected arguments provided to bind(): </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">unbound_values</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">value_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">col_meta_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_meta</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">value_len</span> <span class="o">&gt;</span> <span class="n">col_meta_len</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -860,6 +847,8 @@
 
 
 <span class="k">def</span> <span class="nf">bind_params</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">encoder</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">):</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">query</span> <span class="o">%</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">encoder</span><span class="o">.</span><span class="n">cql_encode_all_types</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
@@ -938,7 +927,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span> <span class="o">=</span> <span class="n">trace_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">session</span>
 
-<div class="viewcode-block" id="QueryTrace.populate"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.QueryTrace.populate">[docs]</a>    <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_wait</span><span class="o">=</span><span class="mf">2.0</span><span class="p">):</span>
+<div class="viewcode-block" id="QueryTrace.populate"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.QueryTrace.populate">[docs]</a>    <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_wait</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">wait_for_complete</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Retrieves the actual tracing details from Cassandra and populates the</span>
 <span class="sd">        attributes of this instance.  Because tracing details are stored</span>
@@ -946,6 +935,9 @@
 <span class="sd">        detail fetch.  If the trace is still not available after `max_wait`</span>
 <span class="sd">        seconds, :exc:`.TraceUnavailable` will be raised; if `max_wait` is</span>
 <span class="sd">        :const:`None`, this will retry forever.</span>
+
+<span class="sd">        `wait_for_complete=False` bypasses the wait for duration to be populated.</span>
+<span class="sd">        This can be used to query events from partial sessions.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">attempt</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -959,15 +951,19 @@
             <span class="n">session_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SESSIONS_FORMAT</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,),</span> <span class="n">time_spent</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">session_results</span> <span class="ow">or</span> <span class="n">session_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">duration</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">is_complete</span> <span class="o">=</span> <span class="n">session_results</span> <span class="ow">and</span> <span class="n">session_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">duration</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">session_results</span> <span class="ow">or</span> <span class="p">(</span><span class="n">wait_for_complete</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_complete</span><span class="p">):</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_BASE_RETRY_SLEEP</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">attempt</span><span class="p">))</span>
                 <span class="n">attempt</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">continue</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Fetched trace info for trace ID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">is_complete</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Fetched trace info for trace ID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Fetching parital trace info for trace ID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">)</span>
 
             <span class="n">session_row</span> <span class="o">=</span> <span class="n">session_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">request_type</span> <span class="o">=</span> <span class="n">session_row</span><span class="o">.</span><span class="n">request</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="n">session_row</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="n">session_row</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_complete</span> <span class="k">else</span> <span class="bp">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="o">=</span> <span class="n">session_row</span><span class="o">.</span><span class="n">started_at</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span> <span class="o">=</span> <span class="n">session_row</span><span class="o">.</span><span class="n">coordinator</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">session_row</span><span class="o">.</span><span class="n">parameters</span>
@@ -1061,7 +1057,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

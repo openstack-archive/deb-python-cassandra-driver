@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.models - Table models for object mapping &mdash; Cassandra Driver 2.7.2 documentation</title>
+    <title>cassandra.cqlengine.models - Table models for object mapping &mdash; Cassandra Driver 3.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '2.7.2',
+        VERSION:     '3.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.7.2 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="../../../index.html" />
     <link rel="up" title="API Documentation" href="../../index.html" />
     <link rel="next" title="cassandra.cqlengine.columns - Column types for object mapping models" href="columns.html" />
     <link rel="prev" title="cassandra.io.twistedreactor - Twisted Event Loop" href="../io/twistedreactor.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../io/twistedreactor.html" title="cassandra.io.twistedreactor - Twisted Event Loop"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -110,8 +110,8 @@
 <span class="n">person</span><span class="o">.</span><span class="n">last_name</span>  <span class="c">#returns &#39;Eggleston&#39;</span>
 </pre></div>
 </div>
-<p><em>Model attributes define how the model maps to tables in the database. These are class variables that should be set
-when defining Model deriviatives.</em></p>
+<p>Model attributes define how the model maps to tables in the database. These are class variables that should be set
+when defining Model deriviatives.</p>
 <dl class="attribute">
 <dt id="cassandra.cqlengine.models.Model.__abstract__">
 <code class="descname">__abstract__</code><em class="property"> = False</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__abstract__" title="Permalink to this definition">¶</a></dt>
@@ -134,16 +134,7 @@ You can&#8217;t create tables for abstract models, but checks around schema vali
 <span class="target" id="ttl-change"></span><dl class="attribute">
 <dt id="cassandra.cqlengine.models.Model.__default_ttl__">
 <code class="descname">__default_ttl__</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__default_ttl__" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>Optional</em> The default ttl used by this model.</p>
-<p>This can be overridden by using the <a class="reference internal" href="#cassandra.cqlengine.models.Model.ttl" title="cassandra.cqlengine.models.Model.ttl"><code class="xref py py-meth docutils literal"><span class="pre">ttl()</span></code></a> method.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__polymorphic_key__">
-<code class="descname">__polymorphic_key__</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__polymorphic_key__" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>Deprecated.</em></p>
-<p>see <a class="reference internal" href="#cassandra.cqlengine.models.Model.__discriminator_value__" title="cassandra.cqlengine.models.Model.__discriminator_value__"><code class="xref py py-attr docutils literal"><span class="pre">__discriminator_value__</span></code></a></p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="attribute">
 <dt id="cassandra.cqlengine.models.Model.__discriminator_value__">
@@ -152,133 +143,41 @@ You can&#8217;t create tables for abstract models, but checks around schema vali
 <p>See <a class="reference internal" href="../../../cqlengine/models.html#model-inheritance"><span>Model Inheritance</span></a> for usage examples.</p>
 </dd></dl>
 
-<p><em>Each table can have its own set of configuration options.
-These can be specified on a model with the following attributes:</em></p>
+<p>Each table can have its own set of configuration options, including compaction. Unspecified, these default to sensible values in
+the server. To override defaults, set options using the model <code class="docutils literal"><span class="pre">__options__</span></code> attribute, which allows options specified a dict.</p>
+<p>When a table is synced, it will be altered to match the options set on your table.
+This means that if you are changing settings manually they will be changed back on resync.</p>
+<p>Do not use the options settings of cqlengine if you want to manage your compaction settings manually.</p>
 <p>See the <a class="reference external" href="http://www.datastax.com/documentation/cql/3.1/cql/cql_reference/tabProp.html">list of supported table properties for more information</a>.</p>
 <dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__bloom_filter_fp_chance">
-<code class="descname">__bloom_filter_fp_chance</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__bloom_filter_fp_chance" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__caching__">
-<code class="descname">__caching__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__caching__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__comment__">
-<code class="descname">__comment__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__comment__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__dclocal_read_repair_chance__">
-<code class="descname">__dclocal_read_repair_chance__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__dclocal_read_repair_chance__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__default_time_to_live__">
-<code class="descname">__default_time_to_live__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__default_time_to_live__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__gc_grace_seconds__">
-<code class="descname">__gc_grace_seconds__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__gc_grace_seconds__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__index_interval__">
-<code class="descname">__index_interval__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__index_interval__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__memtable_flush_period_in_ms__">
-<code class="descname">__memtable_flush_period_in_ms__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__memtable_flush_period_in_ms__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__populate_io_cache_on_flush__">
-<code class="descname">__populate_io_cache_on_flush__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__populate_io_cache_on_flush__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__read_repair_chance__">
-<code class="descname">__read_repair_chance__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__read_repair_chance__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__replicate_on_write__">
-<code class="descname">__replicate_on_write__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__replicate_on_write__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<p><em>Model presently supports specifying compaction options via class attributes.
-cqlengine will only use your compaction options if you have a strategy set.
-When a table is synced, it will be altered to match the compaction options set on your table.
-This means that if you are changing settings manually they will be changed back on resync.</em></p>
-<p><em>Do not use the compaction settings of cqlengine if you want to manage your compaction settings manually.</em></p>
-<p><em>cqlengine supports all compaction options as of Cassandra 1.2.8.</em></p>
-<p><strong>These attibutes will likely be replaced by a single options string in a future version, and are therefore deprecated.</strong></p>
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__compaction_bucket_high__">
-<code class="descname">__compaction_bucket_high__</code><em class="property"> Deprecated</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__compaction_bucket_high__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__compaction_bucket_low__">
-<code class="descname">__compaction_bucket_low__</code><em class="property"> Deprecated</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__compaction_bucket_low__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__compaction_max_compaction_threshold__">
-<code class="descname">__compaction_max_compaction_threshold__</code><em class="property"> Deprecated</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__compaction_max_compaction_threshold__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__compaction_min_compaction_threshold__">
-<code class="descname">__compaction_min_compaction_threshold__</code><em class="property"> Deprecated</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__compaction_min_compaction_threshold__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__compaction_min_sstable_size__">
-<code class="descname">__compaction_min_sstable_size__</code><em class="property"> Deprecated</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__compaction_min_sstable_size__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__compaction_sstable_size_in_mb__">
-<code class="descname">__compaction_sstable_size_in_mb__</code><em class="property"> Deprecated</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__compaction_sstable_size_in_mb__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__compaction_tombstone_compaction_interval__">
-<code class="descname">__compaction_tombstone_compaction_interval__</code><em class="property"> Deprecated</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__compaction_tombstone_compaction_interval__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cqlengine.models.Model.__compaction_tombstone_threshold__">
-<code class="descname">__compaction_tombstone_threshold__</code><em class="property"> Deprecated</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__compaction_tombstone_threshold__" title="Permalink to this definition">¶</a></dt>
+<dt id="cassandra.cqlengine.models.Model.__options__">
+<code class="descname">__options__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__options__" title="Permalink to this definition">¶</a></dt>
 <dd><p>For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
-    <span class="n">__compaction__</span> <span class="o">=</span> <span class="n">cqlengine</span><span class="o">.</span><span class="n">LeveledCompactionStrategy</span>
-    <span class="n">__compaction_sstable_size_in_mb__</span> <span class="o">=</span> <span class="mi">64</span>
-    <span class="n">__compaction_tombstone_threshold__</span> <span class="o">=</span> <span class="o">.</span><span class="mi">2</span>
+    <span class="n">__options__</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;compaction&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;class&#39;</span><span class="p">:</span> <span class="s">&#39;LeveledCompactionStrategy&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;sstable_size_in_mb&#39;</span><span class="p">:</span> <span class="s">&#39;64&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;tombstone_threshold&#39;</span><span class="p">:</span> <span class="s">&#39;.2&#39;</span><span class="p">},</span>
+                   <span class="s">&#39;read_repair_chance&#39;</span><span class="p">:</span> <span class="s">&#39;0.5&#39;</span><span class="p">,</span>
+                   <span class="s">&#39;comment&#39;</span><span class="p">:</span> <span class="s">&#39;User data stored here&#39;</span><span class="p">}</span>
 
     <span class="n">user_id</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>or for SizeTieredCompaction:</p>
+<p>or :</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">TimeData</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
-    <span class="n">__compaction__</span> <span class="o">=</span> <span class="n">SizeTieredCompactionStrategy</span>
-    <span class="n">__compaction_bucket_low__</span> <span class="o">=</span> <span class="o">.</span><span class="mi">3</span>
-    <span class="n">__compaction_bucket_high__</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="n">__compaction_min_threshold__</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="n">__compaction_max_threshold__</span> <span class="o">=</span> <span class="mi">64</span>
-    <span class="n">__compaction_tombstone_compaction_interval__</span> <span class="o">=</span> <span class="mi">86400</span>
+    <span class="n">__options__</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;compaction&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;class&#39;</span><span class="p">:</span> <span class="s">&#39;SizeTieredCompactionStrategy&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;bucket_low&#39;</span><span class="p">:</span> <span class="s">&#39;.3&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;bucket_high&#39;</span><span class="p">:</span> <span class="s">&#39;2&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;min_threshold&#39;</span><span class="p">:</span> <span class="s">&#39;2&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;max_threshold&#39;</span><span class="p">:</span> <span class="s">&#39;64&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;tombstone_compaction_interval&#39;</span><span class="p">:</span> <span class="s">&#39;86400&#39;</span><span class="p">},</span>
+                   <span class="s">&#39;gc_grace_seconds&#39;</span><span class="p">:</span> <span class="s">&#39;0&#39;</span><span class="p">}</span>
 </pre></div>
 </div>
-<p>Tables may use <cite>LeveledCompactionStrategy</cite> or <cite>SizeTieredCompactionStrategy</cite>.  Both options are available in the top level cqlengine module.  To reiterate, you will need to set your <cite>__compaction__</cite> option explicitly in order for cqlengine to handle any of your settings.</p>
 </dd></dl>
 
-<p><em>The base methods allow creating, storing, and querying modeled objects.</em></p>
+<p>The base methods allow creating, storing, and querying modeled objects.</p>
 <dl class="method">
 <dt id="cassandra.cqlengine.models.Model.create">
 <code class="descname">create</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.create" title="Permalink to this definition">¶</a></dt>
@@ -466,7 +365,7 @@ otherwise, it creates it from the module and class name</p>
         <li class="right" >
           <a href="../io/twistedreactor.html" title="cassandra.io.twistedreactor - Twisted Event Loop"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

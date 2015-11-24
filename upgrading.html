@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Upgrading &mdash; Cassandra Driver 2.7.2 documentation</title>
+    <title>Upgrading &mdash; Cassandra Driver 3.0.0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '2.7.2',
+        VERSION:     '3.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.7.2 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="index.html" />
     <link rel="next" title="Performance Notes" href="performance.html" />
     <link rel="prev" title="Getting Started" href="getting_started.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="getting_started.html" title="Getting Started"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -51,6 +51,19 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Upgrading</a><ul>
+<li><a class="reference internal" href="#upgrading-to-3-0">Upgrading to 3.0</a><ul>
+<li><a class="reference internal" href="#default-consistency-is-now-local-one">Default consistency is now <code class="docutils literal"><span class="pre">LOCAL_ONE</span></code></a></li>
+<li><a class="reference internal" href="#execution-api-updates">Execution API Updates</a><ul>
+<li><a class="reference internal" href="#result-return-normalization">Result return normalization</a></li>
+<li><a class="reference internal" href="#trace-information-is-not-attached-to-executed-statements">Trace information is not attached to executed Statements</a></li>
+<li><a class="reference internal" href="#binding-named-parameters-now-ignores-extra-names">Binding named parameters now ignores extra names</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#blist-removed-as-soft-dependency">blist removed as soft dependency</a></li>
+<li><a class="reference internal" href="#metadata-api-updates">Metadata API Updates</a></li>
+<li><a class="reference internal" href="#several-deprecated-features-are-removed">Several deprecated features are removed</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#upgrading-to-2-1-from-2-0">Upgrading to 2.1 from 2.0</a><ul>
 <li><a class="reference internal" href="#using-the-v3-native-protocol">Using the v3 Native Protocol</a></li>
 <li><a class="reference internal" href="#working-with-user-defined-types">Working with User-Defined Types</a></li>
@@ -112,6 +125,109 @@
 <div class="toctree-wrapper compound">
 <ul class="simple">
 </ul>
+</div>
+<div class="section" id="upgrading-to-3-0">
+<h2>Upgrading to 3.0<a class="headerlink" href="#upgrading-to-3-0" title="Permalink to this headline">¶</a></h2>
+<p>Version 3.0 of the DataStax Python driver for Apache Cassandra
+adds support for Cassandra 3.0 while maintaining support for
+previously supported versions. In addition to substantial internal rework,
+there are several updates to the API that integrators will need
+to consider:</p>
+<div class="section" id="default-consistency-is-now-local-one">
+<h3>Default consistency is now <code class="docutils literal"><span class="pre">LOCAL_ONE</span></code><a class="headerlink" href="#default-consistency-is-now-local-one" title="Permalink to this headline">¶</a></h3>
+<p>Previous value was <code class="docutils literal"><span class="pre">ONE</span></code>. The new value is introduced to mesh with the default
+DC-aware load balancing policy and to match other drivers.</p>
+</div>
+<div class="section" id="execution-api-updates">
+<h3>Execution API Updates<a class="headerlink" href="#execution-api-updates" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="result-return-normalization">
+<h4>Result return normalization<a class="headerlink" href="#result-return-normalization" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://datastax-oss.atlassian.net/browse/PYTHON-368">PYTHON-368</a></p>
+<p>Previously results would be returned as a <code class="docutils literal"><span class="pre">list</span></code> of rows for result rows
+up to <code class="docutils literal"><span class="pre">fetch_size</span></code>, and <code class="docutils literal"><span class="pre">PagedResult</span></code> afterward. This could break
+application code that assumed one type and got another.</p>
+<p>Now, all results are returned as an iterable <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResultSet" title="cassandra.cluster.ResultSet"><code class="xref py py-class docutils literal"><span class="pre">ResultSet</span></code></a>.</p>
+<p>The preferred way to consume results of unknown size is to iterate through
+them, letting automatic paging occur as they are consumed.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT * FROM system.local&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+    <span class="n">process</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If the expected size of the results is known, it is still possible to
+materialize a list using the iterator:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT * FROM system.local&quot;</span><span class="p">)</span>
+<span class="n">row_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For backward compatability, <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResultSet" title="cassandra.cluster.ResultSet"><code class="xref py py-class docutils literal"><span class="pre">ResultSet</span></code></a> supports indexing. If
+the result is paged, all pages will be materialized. A warning will
+be logged if a paged query is implicitly materialized.</p>
+</div>
+<div class="section" id="trace-information-is-not-attached-to-executed-statements">
+<h4>Trace information is not attached to executed Statements<a class="headerlink" href="#trace-information-is-not-attached-to-executed-statements" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://datastax-oss.atlassian.net/browse/PYTHON-318">PYTHON-318</a></p>
+<p>Previously trace data was attached to Statements if tracing was enabled. This
+could lead to confusion if the same statement was used for multiple executions.</p>
+<p>Now, trace data is associated with the <code class="docutils literal"><span class="pre">ResponseFuture</span></code> and <code class="docutils literal"><span class="pre">ResultSet</span></code>
+returned for each query:</p>
+<p><a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></code></a></p>
+<p><a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.get_all_query_traces" title="cassandra.cluster.ResponseFuture.get_all_query_traces"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_all_query_traces()</span></code></a></p>
+<p><a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResultSet.get_query_trace" title="cassandra.cluster.ResultSet.get_query_trace"><code class="xref py py-meth docutils literal"><span class="pre">ResultSet.get_query_trace()</span></code></a></p>
+<p><a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResultSet.get_all_query_traces" title="cassandra.cluster.ResultSet.get_all_query_traces"><code class="xref py py-meth docutils literal"><span class="pre">ResultSet.get_all_query_traces()</span></code></a></p>
+</div>
+<div class="section" id="binding-named-parameters-now-ignores-extra-names">
+<h4>Binding named parameters now ignores extra names<a class="headerlink" href="#binding-named-parameters-now-ignores-extra-names" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://datastax-oss.atlassian.net/browse/PYTHON-178Cassadfasdf">PYTHON-178</a></p>
+<p>Previously, <a class="reference internal" href="api/cassandra/query.html#cassandra.query.BoundStatement.bind" title="cassandra.query.BoundStatement.bind"><code class="xref py py-meth docutils literal"><span class="pre">BoundStatement.bind()</span></code></a> would raise if a mapping
+was passed with extra names not found in the prepared statement.</p>
+<p>Behavior in 3.0+ is to ignore extra names.</p>
+</div>
+</div>
+<div class="section" id="blist-removed-as-soft-dependency">
+<h3>blist removed as soft dependency<a class="headerlink" href="#blist-removed-as-soft-dependency" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://datastax-oss.atlassian.net/browse/PYTHON-385">PYTHON-385</a></p>
+<p>Previously the driver had a soft dependency on <code class="docutils literal"><span class="pre">blist</span> <span class="pre">sortedset</span></code>, using
+that where available and using an internal fallback where possible.</p>
+<p>Now, the driver never chooses the <code class="docutils literal"><span class="pre">blist</span></code> variant, instead returning the
+internal <a class="reference internal" href="api/cassandra/util.html#cassandra.util.SortedSet" title="cassandra.util.SortedSet"><code class="xref py py-class docutils literal"><span class="pre">util.SortedSet</span></code></a> for all <code class="docutils literal"><span class="pre">set</span></code> results. The class implements
+all standard set operations, so no integration code should need to change unless
+it explicitly checks for <code class="docutils literal"><span class="pre">sortedset</span></code> type.</p>
+</div>
+<div class="section" id="metadata-api-updates">
+<h3>Metadata API Updates<a class="headerlink" href="#metadata-api-updates" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://datastax-oss.atlassian.net/browse/PYTHON-276">PYTHON-276</a>, <a class="reference external" href="https://datastax-oss.atlassian.net/browse/PYTHON-408">PYTHON-408</a>, <a class="reference external" href="https://datastax-oss.atlassian.net/browse/PYTHON-400">PYTHON-400</a>, <a class="reference external" href="https://datastax-oss.atlassian.net/browse/PYTHON-422">PYTHON-422</a></p>
+<p>Cassandra 3.0 brought a substantial overhaul to the internal schema metadata representation.
+This version of the driver supports that metadata in addition to the legacy version. Doing so
+also brought some changes to the metadata model.</p>
+<p>The present API is documented: <a class="reference internal" href="api/cassandra/metadata.html#module-cassandra.metadata" title="cassandra.metadata"><code class="xref any py py-mod docutils literal"><span class="pre">cassandra.metadata</span></code></a>. Changes highlighted below:</p>
+<ul class="simple">
+<li>All types are now exposed as CQL types instead of types derived from the internal server implementation</li>
+<li>Some metadata attributes have changed names to match current nomenclature (for example, <code class="xref py py-attr docutils literal"><span class="pre">Index.kind</span></code> in place of <code class="docutils literal"><span class="pre">Index.type</span></code>).</li>
+<li>Some metadata attributes removed<ul>
+<li><code class="docutils literal"><span class="pre">TableMetadata.keyspace</span></code> reference replaced with <a class="reference internal" href="api/cassandra/metadata.html#cassandra.metadata.TableMetadata.keyspace_name" title="cassandra.metadata.TableMetadata.keyspace_name"><code class="xref py py-attr docutils literal"><span class="pre">TableMetadata.keyspace_name</span></code></a></li>
+<li><code class="docutils literal"><span class="pre">ColumnMetadata.index</span></code> is removed table- and keyspace-level mappings are still maintained</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="several-deprecated-features-are-removed">
+<h3>Several deprecated features are removed<a class="headerlink" href="#several-deprecated-features-are-removed" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://datastax-oss.atlassian.net/browse/PYTHON-292">PYTHON-292</a></p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">ResponseFuture.result</span></code> timeout parameter is removed, use <code class="docutils literal"><span class="pre">Session.execute</span></code> timeout instead (<a class="reference external" href="https://github.com/datastax/python-driver/commit/031ebb0">031ebb0</a>)</li>
+<li><code class="docutils literal"><span class="pre">Cluster.refresh_schema</span></code> removed, use <code class="docutils literal"><span class="pre">Cluster.refresh_*_metadata</span></code> instead (<a class="reference external" href="https://github.com/datastax/python-driver/commit/419fcdf">419fcdf</a>)</li>
+<li><code class="docutils literal"><span class="pre">Cluster.submit_schema_refresh</span></code> removed (<a class="reference external" href="https://github.com/datastax/python-driver/commit/574266d">574266d</a>)</li>
+<li><code class="docutils literal"><span class="pre">cqltypes</span></code> time/date functions removed, use <code class="docutils literal"><span class="pre">util</span></code> entry points instead (<a class="reference external" href="https://github.com/datastax/python-driver/commit/bb984ee">bb984ee</a>)</li>
+<li><code class="docutils literal"><span class="pre">decoder</span></code> module removed (<a class="reference external" href="https://github.com/datastax/python-driver/commit/e16a073">e16a073</a>)</li>
+<li><code class="docutils literal"><span class="pre">TableMetadata.keyspace</span></code> attribute replaced with <code class="docutils literal"><span class="pre">keyspace_name</span></code> (<a class="reference external" href="https://github.com/datastax/python-driver/commit/cc94073">cc94073</a>)</li>
+<li><code class="docutils literal"><span class="pre">cqlengine.columns.TimeUUID.from_datetime</span></code> removed, use <code class="docutils literal"><span class="pre">util</span></code> variant instead (<a class="reference external" href="https://github.com/datastax/python-driver/commit/96489cc">96489cc</a>)</li>
+<li><code class="docutils literal"><span class="pre">cqlengine.columns.Float(double_precision)</span></code> parameter removed, use <code class="docutils literal"><span class="pre">columns.Double</span></code> instead (<a class="reference external" href="https://github.com/datastax/python-driver/commit/a2d3a98">a2d3a98</a>)</li>
+<li><code class="docutils literal"><span class="pre">cqlengine</span></code> keyspace management functions are removed in favor of the strategy-specific entry points (<a class="reference external" href="https://github.com/datastax/python-driver/commit/4bd5909">4bd5909</a>)</li>
+<li><code class="docutils literal"><span class="pre">cqlengine.Model.__polymorphic_*__</span></code> attributes removed, use <code class="docutils literal"><span class="pre">__discriminator*</span></code> attributes instead (<a class="reference external" href="https://github.com/datastax/python-driver/commit/9d98c8e">9d98c8e</a>)</li>
+<li><code class="docutils literal"><span class="pre">cqlengine.statements</span></code> will no longer warn about list list prepend behavior (<a class="reference external" href="https://github.com/datastax/python-driver/commit/79efe97">79efe97</a>)</li>
+</ul>
+</div>
 </div>
 <div class="section" id="upgrading-to-2-1-from-2-0">
 <h2>Upgrading to 2.1 from 2.0<a class="headerlink" href="#upgrading-to-2-1-from-2-0" title="Permalink to this headline">¶</a></h2>
@@ -300,7 +416,7 @@ now:</p>
         <li class="right" >
           <a href="getting_started.html" title="Getting Started"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query - Prepared Statements, Batch Statements, Tracing, and Row Factories &mdash; Cassandra Driver 2.7.2 documentation</title>
+    <title>cassandra.query - Prepared Statements, Batch Statements, Tracing, and Row Factories &mdash; Cassandra Driver 3.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.7.2',
+        VERSION:     '3.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.7.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.pool - Hosts and Connection Pools" href="pool.html" />
     <link rel="prev" title="cassandra.metrics - Performance Metrics" href="metrics.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="metrics.html" title="cassandra.metrics - Performance Metrics"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -169,20 +169,6 @@ so the order of the columns is preserved.</p>
 <dd><p>An abstract class representing a single query. There are three subclasses:
 <a class="reference internal" href="#cassandra.query.SimpleStatement" title="cassandra.query.SimpleStatement"><code class="xref py py-class docutils literal"><span class="pre">SimpleStatement</span></code></a>, <a class="reference internal" href="#cassandra.query.BoundStatement" title="cassandra.query.BoundStatement"><code class="xref py py-class docutils literal"><span class="pre">BoundStatement</span></code></a>, and <a class="reference internal" href="#cassandra.query.BatchStatement" title="cassandra.query.BatchStatement"><code class="xref py py-class docutils literal"><span class="pre">BatchStatement</span></code></a>.
 These can be passed to <a class="reference internal" href="cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></code></a>.</p>
-<dl class="attribute">
-<dt id="cassandra.query.Statement.trace">
-<code class="descname">trace</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.query.Statement.trace" title="Permalink to this definition">¶</a></dt>
-<dd><p>If <a class="reference internal" href="cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></code></a> is run with <cite>trace</cite> set to <code class="xref py py-const docutils literal"><span class="pre">True</span></code>,
-this will be set to a <a class="reference internal" href="#cassandra.query.QueryTrace" title="cassandra.query.QueryTrace"><code class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></code></a> instance.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.query.Statement.trace_id">
-<code class="descname">trace_id</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.query.Statement.trace_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>If <a class="reference internal" href="cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></code></a> is run with <cite>trace</cite> set to <code class="xref py py-const docutils literal"><span class="pre">True</span></code>,
-this will be set to the tracing ID from the server.</p>
-</dd></dl>
-
 <dl class="attribute">
 <dt id="cassandra.query.Statement.retry_policy">
 <code class="descname">retry_policy</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.query.Statement.retry_policy" title="Permalink to this definition">¶</a></dt>
@@ -339,6 +325,9 @@ in a sequence, or by name in a dict. Additionally, when using protocol v4+:</p>
 <li>short sequences will be extended to match bind parameters with UNSET_VALUE</li>
 <li>names may be omitted from a dict with UNSET_VALUE implied.</li>
 </ul>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 3.0.0: </span>method will not throw if extra keys are present in bound dict (PYTHON-178)</p>
 </div>
 </dd></dl>
 
@@ -539,13 +528,15 @@ the <code class="docutils literal"><span class="pre">session_id</span></code> co
 
 <dl class="method">
 <dt id="cassandra.query.QueryTrace.populate">
-<code class="descname">populate</code><span class="sig-paren">(</span><em>max_wait=2.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#QueryTrace.populate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.QueryTrace.populate" title="Permalink to this definition">¶</a></dt>
+<code class="descname">populate</code><span class="sig-paren">(</span><em>max_wait=2.0</em>, <em>wait_for_complete=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#QueryTrace.populate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.QueryTrace.populate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieves the actual tracing details from Cassandra and populates the
 attributes of this instance.  Because tracing details are stored
 asynchronously by Cassandra, this may need to retry the session
 detail fetch.  If the trace is still not available after <cite>max_wait</cite>
 seconds, <a class="reference internal" href="#cassandra.query.TraceUnavailable" title="cassandra.query.TraceUnavailable"><code class="xref py py-exc docutils literal"><span class="pre">TraceUnavailable</span></code></a> will be raised; if <cite>max_wait</cite> is
 <code class="xref py py-const docutils literal"><span class="pre">None</span></code>, this will retry forever.</p>
+<p><cite>wait_for_complete=False</cite> bypasses the wait for duration to be populated.
+This can be used to query events from partial sessions.</p>
 </dd></dl>
 
 </dd></dl>
@@ -617,7 +608,7 @@ received the query.</p>
         <li class="right" >
           <a href="metrics.html" title="cassandra.metrics - Performance Metrics"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

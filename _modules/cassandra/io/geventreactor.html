@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.io.geventreactor &mdash; Cassandra Driver 2.7.2 documentation</title>
+    <title>cassandra.io.geventreactor &mdash; Cassandra Driver 3.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '2.7.2',
+        VERSION:     '3.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.7.2 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -84,7 +84,6 @@
 <span class="kn">from</span> <span class="nn">gevent</span> <span class="kn">import</span> <span class="n">select</span><span class="p">,</span> <span class="n">socket</span>
 <span class="kn">import</span> <span class="nn">gevent.ssl</span>
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
@@ -103,13 +102,16 @@
 <span class="k">def</span> <span class="nf">is_timeout</span><span class="p">(</span><span class="n">err</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">err</span> <span class="ow">in</span> <span class="p">(</span><span class="n">EINPROGRESS</span><span class="p">,</span> <span class="n">EALREADY</span><span class="p">,</span> <span class="n">EWOULDBLOCK</span><span class="p">)</span> <span class="ow">or</span>
-        <span class="p">(</span><span class="n">err</span> <span class="o">==</span> <span class="n">EINVAL</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;nt&#39;</span><span class="p">,</span> <span class="s">&#39;ce&#39;</span><span class="p">))</span>
+        <span class="p">(</span><span class="n">err</span> <span class="o">==</span> <span class="n">EINVAL</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;nt&#39;</span><span class="p">,</span> <span class="s">&#39;ce&#39;</span><span class="p">))</span> <span class="ow">or</span>
+	<span class="nb">isinstance</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
     <span class="p">)</span>
 
 
 <div class="viewcode-block" id="GeventConnection"><a class="viewcode-back" href="../../../api/cassandra/io/geventreactor.html#cassandra.io.geventreactor.GeventConnection">[docs]</a><span class="k">class</span> <span class="nc">GeventConnection</span><span class="p">(</span><span class="n">Connection</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An implementation of :class:`.Connection` that utilizes ``gevent``.</span>
+
+<span class="sd">    This implementation assumes all gevent monkey patching is active. It is not tested with partial patching.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_read_watcher</span> <span class="o">=</span> <span class="bp">None</span>
@@ -251,7 +253,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

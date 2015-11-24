@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 2.7.2 documentation</title>
+    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 3.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.7.2',
+        VERSION:     '3.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.7.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" />
     <link rel="prev" title="cassandra - Exceptions and Enums" href="../cassandra.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -236,16 +236,15 @@ I/O with Cassandra.  These are the current options:</p>
 <ul class="simple">
 <li><a class="reference internal" href="io/asyncorereactor.html#cassandra.io.asyncorereactor.AsyncoreConnection" title="cassandra.io.asyncorereactor.AsyncoreConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.asyncorereactor.AsyncoreConnection</span></code></a></li>
 <li><a class="reference internal" href="io/libevreactor.html#cassandra.io.libevreactor.LibevConnection" title="cassandra.io.libevreactor.LibevConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.LibevConnection</span></code></a></li>
-<li><a class="reference internal" href="io/geventreactor.html#cassandra.io.geventreactor.GeventConnection" title="cassandra.io.geventreactor.GeventConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.geventreactor.GeventConnection</span></code></a> (requires monkey-patching)</li>
+<li><a class="reference internal" href="io/eventletreactor.html#cassandra.io.eventletreactor.EventletConnection" title="cassandra.io.eventletreactor.EventletConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.eventletreactor.EventletConnection</span></code></a> (requires monkey-patching - see doc for details)</li>
+<li><a class="reference internal" href="io/geventreactor.html#cassandra.io.geventreactor.GeventConnection" title="cassandra.io.geventreactor.GeventConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.geventreactor.GeventConnection</span></code></a> (requires monkey-patching - see doc for details)</li>
 <li><a class="reference internal" href="io/twistedreactor.html#cassandra.io.twistedreactor.TwistedConnection" title="cassandra.io.twistedreactor.TwistedConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.twistedreactor.TwistedConnection</span></code></a></li>
 </ul>
 <p>By default, <code class="docutils literal"><span class="pre">AsyncoreConnection</span></code> will be used, which uses
-the <code class="docutils literal"><span class="pre">asyncore</span></code> module in the Python standard library.  The
-performance is slightly worse than with <code class="docutils literal"><span class="pre">libev</span></code>, but it is
-supported on a wider range of systems.</p>
+the <code class="docutils literal"><span class="pre">asyncore</span></code> module in the Python standard library.</p>
 <p>If <code class="docutils literal"><span class="pre">libev</span></code> is installed, <code class="docutils literal"><span class="pre">LibevConnection</span></code> will be used instead.</p>
-<p>If gevent monkey-patching of the standard library is detected,
-GeventConnection will be used automatically.</p>
+<p>If <code class="docutils literal"><span class="pre">gevent</span></code> or <code class="docutils literal"><span class="pre">eventlet</span></code> monkey-patching is detected, the corresponding
+connection class will be used automatically.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -285,6 +284,9 @@ Cassandra&#8217;s default protocol.</p>
 <code class="descname">sockopts</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.sockopts" title="Permalink to this definition">¶</a></dt>
 <dd><p>An optional list of tuples which will be used as arguments to
 <code class="docutils literal"><span class="pre">socket.setsockopt()</span></code> for all created sockets.</p>
+<p>Note: some drivers find setting TCPNODELAY beneficial in the context of
+their execution model. It was not found generally beneficial for this driver.
+To try with your own workload, set <code class="docutils literal"><span class="pre">sockopts</span> <span class="pre">=</span> <span class="pre">[(socket.IPPROTO_TCP,</span> <span class="pre">socket.TCP_NODELAY,</span> <span class="pre">1)]</span></code></p>
 </dd></dl>
 
 <dl class="attribute">
@@ -554,28 +556,6 @@ to the table.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="cassandra.cluster.Cluster.refresh_schema">
-<code class="descname">refresh_schema</code><span class="sig-paren">(</span><em>keyspace=None</em>, <em>table=None</em>, <em>usertype=None</em>, <em>function=None</em>, <em>aggregate=None</em>, <em>max_schema_agreement_wait=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_schema" title="Permalink to this definition">¶</a></dt>
-<dd><div class="deprecated">
-<p><span class="versionmodified">Deprecated since version 2.6.0: </span>Use refresh_*_metadata instead</p>
-</div>
-<p>Synchronously refresh schema metadata.</p>
-<p>{keyspace, table, usertype} are string names of the respective entities.
-<code class="docutils literal"><span class="pre">function</span></code> is a <a class="reference internal" href="../cassandra.html#cassandra.UserFunctionDescriptor" title="cassandra.UserFunctionDescriptor"><code class="xref py py-class docutils literal"><span class="pre">cassandra.UserFunctionDescriptor</span></code></a>.
-<code class="docutils literal"><span class="pre">aggregate</span></code> is a <a class="reference internal" href="../cassandra.html#cassandra.UserAggregateDescriptor" title="cassandra.UserAggregateDescriptor"><code class="xref py py-class docutils literal"><span class="pre">cassandra.UserAggregateDescriptor</span></code></a>.</p>
-<p>If none of <code class="docutils literal"><span class="pre">{keyspace,</span> <span class="pre">table,</span> <span class="pre">usertype,</span> <span class="pre">function,</span> <span class="pre">aggregate}</span></code> are specified, the entire schema is refreshed.</p>
-<p>If any of <code class="docutils literal"><span class="pre">{keyspace,</span> <span class="pre">table,</span> <span class="pre">usertype,</span> <span class="pre">function,</span> <span class="pre">aggregate}</span></code> are specified, <code class="docutils literal"><span class="pre">keyspace</span></code> is required.</p>
-<p>If only <code class="docutils literal"><span class="pre">keyspace</span></code> is specified, just the top-level keyspace metadata is refreshed (e.g. replication).</p>
-<p>The remaining arguments <code class="docutils literal"><span class="pre">{table,</span> <span class="pre">usertype,</span> <span class="pre">function,</span> <span class="pre">aggregate}</span></code>
-are mutually exclusive &#8211; only one may be specified.</p>
-<p>By default, the timeout for this operation is governed by <a class="reference internal" href="#cassandra.cluster.Cluster.max_schema_agreement_wait" title="cassandra.cluster.Cluster.max_schema_agreement_wait"><code class="xref py py-attr docutils literal"><span class="pre">max_schema_agreement_wait</span></code></a>
-and <a class="reference internal" href="#cassandra.cluster.Cluster.control_connection_timeout" title="cassandra.cluster.Cluster.control_connection_timeout"><code class="xref py py-attr docutils literal"><span class="pre">control_connection_timeout</span></code></a>.</p>
-<p>Passing max_schema_agreement_wait here overrides <a class="reference internal" href="#cassandra.cluster.Cluster.max_schema_agreement_wait" title="cassandra.cluster.Cluster.max_schema_agreement_wait"><code class="xref py py-attr docutils literal"><span class="pre">max_schema_agreement_wait</span></code></a>.</p>
-<p>Setting max_schema_agreement_wait &lt;= 0 will bypass schema agreement and refresh schema immediately.</p>
-<p>An Exception is raised if schema refresh fails for any reason.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="cassandra.cluster.Cluster.refresh_nodes">
 <code class="descname">refresh_nodes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_nodes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Synchronously refresh the node list and token metadata</p>
@@ -620,6 +600,20 @@ overridden with the <cite>timeout</cite> parameter for either of those methods.<
 effect of this timeout.</p>
 <div class="versionadded">
 <p><span class="versionmodified">New in version 2.0.0.</span></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Session.default_consistency_level">
+<code class="descname">default_consistency_level</code><em class="property"> = LOCAL_ONE</em><a class="headerlink" href="#cassandra.cluster.Session.default_consistency_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default <code class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></code> for operations executed through
+this session.  This default may be overridden by setting the
+<a class="reference internal" href="query.html#cassandra.query.Statement.consistency_level" title="cassandra.query.Statement.consistency_level"><code class="xref py py-attr docutils literal"><span class="pre">consistency_level</span></code></a> on individual statements.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 1.2.0.</span></p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 3.0.0: </span>default changed from ONE to LOCAL_ONE</p>
 </div>
 </dd></dl>
 
@@ -719,13 +713,8 @@ has not completed.  If not set, the timeout defaults to
 <a class="reference internal" href="#cassandra.cluster.Session.default_timeout" title="cassandra.cluster.Session.default_timeout"><code class="xref py py-attr docutils literal"><span class="pre">default_timeout</span></code></a>.  If set to <code class="xref py py-const docutils literal"><span class="pre">None</span></code>, there is
 no timeout. Please see <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.result()</span></code></a> for details on
 the scope and effect of this timeout.</p>
-<p>If <cite>trace</cite> is set to <code class="xref py py-const docutils literal"><span class="pre">True</span></code>, an attempt will be made to
-fetch the trace details and attach them to the <cite>query</cite>&#8216;s
-<a class="reference internal" href="query.html#cassandra.query.Statement.trace" title="cassandra.query.Statement.trace"><code class="xref py py-attr docutils literal"><span class="pre">trace</span></code></a> attribute in the form of a <a class="reference internal" href="query.html#cassandra.query.QueryTrace" title="cassandra.query.QueryTrace"><code class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></code></a>
-instance.  This requires that <cite>query</cite> be a <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><code class="xref py py-class docutils literal"><span class="pre">Statement</span></code></a> subclass
-instance and not just a string.  If there is an error fetching the
-trace details, the <a class="reference internal" href="query.html#cassandra.query.Statement.trace" title="cassandra.query.Statement.trace"><code class="xref py py-attr docutils literal"><span class="pre">trace</span></code></a> attribute will be left as
-<code class="xref py py-const docutils literal"><span class="pre">None</span></code>.</p>
+<p>If <cite>trace</cite> is set to <code class="xref py py-const docutils literal"><span class="pre">True</span></code>, the query will be sent with tracing enabled.
+The trace details can be obtained using the returned <a class="reference internal" href="#cassandra.cluster.ResultSet" title="cassandra.cluster.ResultSet"><code class="xref py py-class docutils literal"><span class="pre">ResultSet</span></code></a> object.</p>
 <p><cite>custom_payload</cite> is a <a class="reference internal" href="protocol.html#custom-payload"><span>Custom Payloads</span></a> dict to be passed to the server.
 If <cite>query</cite> is a Statement with its own custom_payload. The message payload
 will be a union of the two, with the values specified here taking precedence.</p>
@@ -739,9 +728,9 @@ which callbacks may be attached to for asynchronous response
 delivery.  You may also call <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><code class="xref py py-meth docutils literal"><span class="pre">result()</span></code></a>
 on the <a class="reference internal" href="#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><code class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></code></a> to syncronously block for results at
 any time.</p>
-<p>If <cite>trace</cite> is set to <code class="xref py py-const docutils literal"><span class="pre">True</span></code>, you may call
-<a class="reference internal" href="#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></code></a> after the request
-completes to retrieve a <a class="reference internal" href="query.html#cassandra.query.QueryTrace" title="cassandra.query.QueryTrace"><code class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></code></a> instance.</p>
+<p>If <cite>trace</cite> is set to <code class="xref py py-const docutils literal"><span class="pre">True</span></code>, you may get the query trace descriptors using
+<a class="reference internal" href="#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></code></a> or <a class="reference internal" href="#cassandra.cluster.ResponseFuture.get_all_query_traces" title="cassandra.cluster.ResponseFuture.get_all_query_traces"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_all_query_traces()</span></code></a>
+on the future result.</p>
 <p><cite>custom_payload</cite> is a <a class="reference internal" href="protocol.html#custom-payload"><span>Custom Payloads</span></a> dict to be passed to the server.
 If <cite>query</cite> is a Statement with its own custom_payload. The message payload
 will be a union of the two, with the values specified here taking precedence.</p>
@@ -847,20 +836,10 @@ to <a class="reference internal" href="#cassandra.cluster.Session.execute_async"
 <code class="descname">result</code><span class="sig-paren">(</span><span class="optional">[</span><em>timeout</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResponseFuture.result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResponseFuture.result" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the final result or raise an Exception if errors were
 encountered.  If the final result or error has not been set
-yet, this method will block until that time.</p>
-<div class="versionchanged">
-<p><span class="versionmodified">Changed in version 2.6.0.</span></p>
-</div>
-<p><strong>`timeout` is deprecated. Use timeout in the Session execute functions instead.
-The following description applies to deprecated behavior:</strong></p>
-<p>You may set a timeout (in seconds) with the <cite>timeout</cite> parameter.
-By default, the <a class="reference internal" href="#cassandra.cluster.Session.default_timeout" title="cassandra.cluster.Session.default_timeout"><code class="xref py py-attr docutils literal"><span class="pre">default_timeout</span></code></a> for the <a class="reference internal" href="#cassandra.cluster.Session" title="cassandra.cluster.Session"><code class="xref py py-class docutils literal"><span class="pre">Session</span></code></a>
-this was created through will be used for the timeout on this
-operation.</p>
-<p>This timeout applies to the entire request, including any retries
-(decided internally by the <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><code class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></code></a> used with
-the request).</p>
-<p>If the timeout is exceeded, an <a class="reference internal" href="../cassandra.html#cassandra.OperationTimedOut" title="cassandra.OperationTimedOut"><code class="xref py py-exc docutils literal"><span class="pre">cassandra.OperationTimedOut</span></code></a> will be raised.
+yet, this method will block until it is set, or the timeout
+set for the request expires.</p>
+<p>Timeout is specified in the Session request execution functions.
+If the timeout is exceeded, an <a class="reference internal" href="../cassandra.html#cassandra.OperationTimedOut" title="cassandra.OperationTimedOut"><code class="xref py py-exc docutils literal"><span class="pre">cassandra.OperationTimedOut</span></code></a> will be raised.
 This is a client-side timeout. For more information
 about server-side coordinator timeouts, see <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><code class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></code></a>.</p>
 <p>Example usage:</p>
@@ -880,12 +859,18 @@ about server-side coordinator timeouts, see <a class="reference internal" href="
 <dl class="method">
 <dt id="cassandra.cluster.ResponseFuture.get_query_trace">
 <code class="descname">get_query_trace</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResponseFuture.get_query_trace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResponseFuture.get_query_trace" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the <a class="reference internal" href="query.html#cassandra.query.QueryTrace" title="cassandra.query.QueryTrace"><code class="xref py py-class docutils literal"><span class="pre">QueryTrace</span></code></a> instance representing a trace
-of the last attempt for this operation, or <code class="xref py py-const docutils literal"><span class="pre">None</span></code> if tracing was
-not enabled for this query.  Note that this may raise an exception if
-there are problems retrieving the trace details from Cassandra. If the
-trace is not available after <cite>max_wait</cite> seconds,
+<dd><p>Fetches and returns the query trace of the last response, or <cite>None</cite> if tracing was
+not enabled.</p>
+<p>Note that this may raise an exception if there are problems retrieving the trace
+details from Cassandra. If the trace is not available after <cite>max_wait_sec</cite>,
 <a class="reference internal" href="query.html#cassandra.query.TraceUnavailable" title="cassandra.query.TraceUnavailable"><code class="xref py py-exc docutils literal"><span class="pre">cassandra.query.TraceUnavailable</span></code></a> will be raised.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.ResponseFuture.get_all_query_traces">
+<code class="descname">get_all_query_traces</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResponseFuture.get_all_query_traces"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResponseFuture.get_all_query_traces" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetches and returns the query traces for all query pages, if tracing was enabled.</p>
+<p>See note in <a class="reference internal" href="#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><code class="xref py py-meth docutils literal"><span class="pre">get_query_trace()</span></code></a> regarding possible exceptions.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -1010,12 +995,13 @@ to <cite>fn</cite>.</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="cassandra.cluster.PagedResult">
-<em class="property">class </em><code class="descclassname">cassandra.cluster.</code><code class="descname">PagedResult</code><a class="reference internal" href="../../_modules/cassandra/cluster.html#PagedResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.PagedResult" title="Permalink to this definition">¶</a></dt>
-<dd><p>An iterator over the rows from a paged query result.  Whenever the number
-of result rows for a query exceed the <a class="reference internal" href="query.html#cassandra.query.Statement.fetch_size" title="cassandra.query.Statement.fetch_size"><code class="xref py py-attr docutils literal"><span class="pre">fetch_size</span></code></a>
-(or <a class="reference internal" href="#cassandra.cluster.Session.default_fetch_size" title="cassandra.cluster.Session.default_fetch_size"><code class="xref py py-attr docutils literal"><span class="pre">default_fetch_size</span></code></a>, if not set) an instance of this
-class will be returned.</p>
+<dt id="cassandra.cluster.ResultSet">
+<em class="property">class </em><code class="descclassname">cassandra.cluster.</code><code class="descname">ResultSet</code><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResultSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResultSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>An iterator over the rows from a query result. Also supplies basic equality
+and indexing methods for backward-compatability. These methods materialize
+the entire result set (loading all pages), and should only be used if the
+total result size is understood. Warnings are emitted when paged results
+are materialized in this fashion.</p>
 <p>You can treat this as a normal iterator over rows:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="n">SimpleStatement</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">statement</span> <span class="o">=</span> <span class="n">SimpleStatement</span><span class="p">(</span><span class="s">&quot;SELECT * FROM users&quot;</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -1027,6 +1013,48 @@ class will be returned.</p>
 be fetched transparently.  However, note that it <em>is</em> possible for
 an <code class="xref py py-class docutils literal"><span class="pre">Exception</span></code> to be raised while fetching the next page, just
 like you might see on a normal call to <code class="docutils literal"><span class="pre">session.execute()</span></code>.</p>
+<dl class="attribute">
+<dt id="cassandra.cluster.ResultSet.has_more_pages">
+<code class="descname">has_more_pages</code><a class="headerlink" href="#cassandra.cluster.ResultSet.has_more_pages" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if the last response indicated more pages; False otherwise</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.ResultSet.current_rows">
+<code class="descname">current_rows</code><a class="headerlink" href="#cassandra.cluster.ResultSet.current_rows" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the list of current page rows. May be empty if the result was empty,</td>
+</tr>
+</tbody>
+</table>
+<p>or this is the last page.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.ResultSet.fetch_next_page">
+<code class="descname">fetch_next_page</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResultSet.fetch_next_page"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResultSet.fetch_next_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manually, synchronously fetch the next page. Supplied for manually retrieving pages
+and inspecting <code class="xref py py-meth docutils literal"><span class="pre">current_page()</span></code>. It is not necessary to call this when iterating
+through results; paging happens implicitly in iteration.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.ResultSet.get_query_trace">
+<code class="descname">get_query_trace</code><span class="sig-paren">(</span><em>max_wait_sec=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResultSet.get_query_trace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResultSet.get_query_trace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the last query trace from the associated future.
+See <a class="reference internal" href="#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></code></a> for details.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.ResultSet.get_all_query_traces">
+<code class="descname">get_all_query_traces</code><span class="sig-paren">(</span><em>max_wait_sec_per=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#ResultSet.get_all_query_traces"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ResultSet.get_all_query_traces" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets all query traces from the associated future.
+See <a class="reference internal" href="#cassandra.cluster.ResponseFuture.get_all_query_traces" title="cassandra.cluster.ResponseFuture.get_all_query_traces"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_all_query_traces()</span></code></a> for details.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="exception">
@@ -1087,7 +1115,7 @@ against.</p>
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.connection &mdash; Cassandra Driver 2.7.2 documentation</title>
+    <title>cassandra.cqlengine.connection &mdash; Cassandra Driver 3.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '2.7.2',
+        VERSION:     '3.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.7.2 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -83,7 +83,6 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">six</span>
 
-<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span>
 <span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span><span class="p">,</span> <span class="n">_NOT_SET</span><span class="p">,</span> <span class="n">NoHostAvailable</span><span class="p">,</span> <span class="n">UserTypeDoesNotExist</span>
 <span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="n">SimpleStatement</span><span class="p">,</span> <span class="n">Statement</span><span class="p">,</span> <span class="n">dict_factory</span>
 
@@ -100,7 +99,6 @@
 <span class="n">cluster</span> <span class="o">=</span> <span class="bp">None</span>
 <span class="n">session</span> <span class="o">=</span> <span class="bp">None</span>
 <span class="n">lazy_connect_args</span> <span class="o">=</span> <span class="bp">None</span>
-<span class="n">default_consistency_level</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
 
 
 <span class="c"># Because type models may be registered before a connection is present,</span>
@@ -162,7 +160,7 @@
 <div class="viewcode-block" id="setup"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/connection.html#cassandra.cqlengine.connection.setup">[docs]</a><span class="k">def</span> <span class="nf">setup</span><span class="p">(</span>
         <span class="n">hosts</span><span class="p">,</span>
         <span class="n">default_keyspace</span><span class="p">,</span>
-        <span class="n">consistency</span><span class="o">=</span><span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span><span class="p">,</span>
+        <span class="n">consistency</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
         <span class="n">lazy_connect</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
         <span class="n">retry_connect</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -171,12 +169,12 @@
 
 <span class="sd">    :param list hosts: list of hosts, (``contact_points`` for :class:`cassandra.cluster.Cluster`)</span>
 <span class="sd">    :param str default_keyspace: The default keyspace to use</span>
-<span class="sd">    :param int consistency: The global default :class:`~.ConsistencyLevel`</span>
+<span class="sd">    :param int consistency: The global default :class:`~.ConsistencyLevel` - default is the same as :attr:`.Session.default_consistency_level`</span>
 <span class="sd">    :param bool lazy_connect: True if should not connect until first use</span>
 <span class="sd">    :param bool retry_connect: True if we should retry to connect even if there was a connection failure initially</span>
 <span class="sd">    :param \*\*kwargs: Pass-through keyword arguments for :class:`cassandra.cluster.Cluster`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">global</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">default_consistency_level</span><span class="p">,</span> <span class="n">lazy_connect_args</span>
+    <span class="k">global</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">lazy_connect_args</span>
 
     <span class="k">if</span> <span class="s">&#39;username&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="s">&#39;password&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;Username &amp; Password are now handled by using the native driver&#39;s auth_provider&quot;</span><span class="p">)</span>
@@ -184,7 +182,6 @@
     <span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">models</span>
     <span class="n">models</span><span class="o">.</span><span class="n">DEFAULT_KEYSPACE</span> <span class="o">=</span> <span class="n">default_keyspace</span>
 
-    <span class="n">default_consistency_level</span> <span class="o">=</span> <span class="n">consistency</span>
     <span class="k">if</span> <span class="n">lazy_connect</span><span class="p">:</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;default_keyspace&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">default_keyspace</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;consistency&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">consistency</span>
@@ -206,6 +203,8 @@
             <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;retry_connect&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">retry_connect</span>
             <span class="n">lazy_connect_args</span> <span class="o">=</span> <span class="p">(</span><span class="n">hosts</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
         <span class="k">raise</span>
+    <span class="k">if</span> <span class="n">consistency</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">session</span><span class="o">.</span><span class="n">default_consistency_level</span> <span class="o">=</span> <span class="n">consistency</span>
     <span class="n">session</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">dict_factory</span>
 
     <span class="n">_register_known_types</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
@@ -217,9 +216,6 @@
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">session</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;It is required to setup() cqlengine before executing queries&quot;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">consistency_level</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">consistency_level</span> <span class="o">=</span> <span class="n">default_consistency_level</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">Statement</span><span class="p">):</span>
         <span class="k">pass</span>
@@ -298,7 +294,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

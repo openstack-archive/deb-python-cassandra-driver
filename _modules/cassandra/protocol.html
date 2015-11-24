@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.protocol &mdash; Cassandra Driver 2.7.2 documentation</title>
+    <title>cassandra.protocol &mdash; Cassandra Driver 3.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.7.2',
+        VERSION:     '3.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 2.7.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -94,7 +94,7 @@
                        <span class="n">WriteFailure</span><span class="p">,</span> <span class="n">ReadFailure</span><span class="p">,</span> <span class="n">FunctionFailure</span><span class="p">,</span>
                        <span class="n">AlreadyExists</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">,</span> <span class="n">Unauthorized</span><span class="p">,</span>
                        <span class="n">UnsupportedOperation</span><span class="p">,</span> <span class="n">UserFunctionDescriptor</span><span class="p">,</span>
-                       <span class="n">UserAggregateDescriptor</span><span class="p">)</span>
+                       <span class="n">UserAggregateDescriptor</span><span class="p">,</span> <span class="n">SchemaTargetType</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.marshal</span> <span class="kn">import</span> <span class="p">(</span><span class="n">int32_pack</span><span class="p">,</span> <span class="n">int32_unpack</span><span class="p">,</span> <span class="n">uint16_pack</span><span class="p">,</span> <span class="n">uint16_unpack</span><span class="p">,</span>
                                <span class="n">int8_pack</span><span class="p">,</span> <span class="n">int8_unpack</span><span class="p">,</span> <span class="n">uint64_pack</span><span class="p">,</span> <span class="n">header_pack</span><span class="p">,</span>
                                <span class="n">v3_header_pack</span><span class="p">)</span>
@@ -137,11 +137,14 @@
 
 <span class="n">_UNSET_VALUE</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
 
+
 <span class="k">def</span> <span class="nf">register_class</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
     <span class="n">_message_types_by_opcode</span><span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">opcode</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span>
 
+
 <span class="k">def</span> <span class="nf">get_registered_classes</span><span class="p">():</span>
     <span class="k">return</span> <span class="n">_message_types_by_opcode</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
 
 <span class="k">class</span> <span class="nc">_RegisterMessageType</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">dct</span><span class="p">):</span>
@@ -744,11 +747,11 @@
             <span class="n">ks</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">udt_name</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">num_fields</span> <span class="o">=</span> <span class="n">read_short</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-            <span class="n">names_and_types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">cls</span><span class="o">.</span><span class="n">read_type</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">))</span>
-                                    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_fields</span><span class="p">))</span>
-            <span class="n">mapped_class</span> <span class="o">=</span> <span class="n">user_type_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">udt_name</span><span class="p">)</span>
-            <span class="n">typeclass</span> <span class="o">=</span> <span class="n">typeclass</span><span class="o">.</span><span class="n">make_udt_class</span><span class="p">(</span>
-                <span class="n">ks</span><span class="p">,</span> <span class="n">udt_name</span><span class="p">,</span> <span class="n">names_and_types</span><span class="p">,</span> <span class="n">mapped_class</span><span class="p">)</span>
+            <span class="n">names</span><span class="p">,</span> <span class="n">types</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">((</span><span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">cls</span><span class="o">.</span><span class="n">read_type</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">))</span>
+                                 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_fields</span><span class="p">)))</span>
+            <span class="n">specialized_type</span> <span class="o">=</span> <span class="n">typeclass</span><span class="o">.</span><span class="n">make_udt_class</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="n">udt_name</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
+            <span class="n">specialized_type</span><span class="o">.</span><span class="n">mapped_class</span> <span class="o">=</span> <span class="n">user_type_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">udt_name</span><span class="p">)</span>
+            <span class="n">typeclass</span> <span class="o">=</span> <span class="n">specialized_type</span>
         <span class="k">elif</span> <span class="n">typeclass</span> <span class="o">==</span> <span class="n">CUSTOM_TYPE</span><span class="p">:</span>
             <span class="n">classname</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">typeclass</span> <span class="o">=</span> <span class="n">lookup_casstype</span><span class="p">(</span><span class="n">classname</span><span class="p">)</span>
@@ -929,19 +932,22 @@
         <span class="k">if</span> <span class="n">protocol_version</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
             <span class="n">target</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">keyspace</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-            <span class="n">event</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;change_type&#39;</span><span class="p">:</span> <span class="n">change_type</span><span class="p">,</span> <span class="s">&#39;keyspace&#39;</span><span class="p">:</span> <span class="n">keyspace</span><span class="p">}</span>
-            <span class="k">if</span> <span class="n">target</span> <span class="o">!=</span> <span class="s">&quot;KEYSPACE&quot;</span><span class="p">:</span>
+            <span class="n">event</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;target_type&#39;</span><span class="p">:</span> <span class="n">target</span><span class="p">,</span> <span class="s">&#39;change_type&#39;</span><span class="p">:</span> <span class="n">change_type</span><span class="p">,</span> <span class="s">&#39;keyspace&#39;</span><span class="p">:</span> <span class="n">keyspace</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">target</span> <span class="o">!=</span> <span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">KEYSPACE</span><span class="p">:</span>
                 <span class="n">target_name</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="s">&#39;FUNCTION&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">FUNCTION</span><span class="p">:</span>
                     <span class="n">event</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">UserFunctionDescriptor</span><span class="p">(</span><span class="n">target_name</span><span class="p">,</span> <span class="p">[</span><span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">read_short</span><span class="p">(</span><span class="n">f</span><span class="p">))])</span>
-                <span class="k">elif</span> <span class="n">target</span> <span class="o">==</span> <span class="s">&#39;AGGREGATE&#39;</span><span class="p">:</span>
+                <span class="k">elif</span> <span class="n">target</span> <span class="o">==</span> <span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">:</span>
                     <span class="n">event</span><span class="p">[</span><span class="s">&#39;aggregate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">UserAggregateDescriptor</span><span class="p">(</span><span class="n">target_name</span><span class="p">,</span> <span class="p">[</span><span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">read_short</span><span class="p">(</span><span class="n">f</span><span class="p">))])</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">event</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="n">target_name</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">keyspace</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">table</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-            <span class="n">event</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;change_type&#39;</span><span class="p">:</span> <span class="n">change_type</span><span class="p">,</span> <span class="s">&#39;keyspace&#39;</span><span class="p">:</span> <span class="n">keyspace</span><span class="p">,</span> <span class="s">&#39;table&#39;</span><span class="p">:</span> <span class="n">table</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">table</span><span class="p">:</span>
+                <span class="n">event</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;target_type&#39;</span><span class="p">:</span> <span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">TABLE</span><span class="p">,</span> <span class="s">&#39;change_type&#39;</span><span class="p">:</span> <span class="n">change_type</span><span class="p">,</span> <span class="s">&#39;keyspace&#39;</span><span class="p">:</span> <span class="n">keyspace</span><span class="p">,</span> <span class="s">&#39;table&#39;</span><span class="p">:</span> <span class="n">table</span><span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">event</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;target_type&#39;</span><span class="p">:</span> <span class="n">SchemaTargetType</span><span class="o">.</span><span class="n">KEYSPACE</span><span class="p">,</span> <span class="s">&#39;change_type&#39;</span><span class="p">:</span> <span class="n">change_type</span><span class="p">,</span> <span class="s">&#39;keyspace&#39;</span><span class="p">:</span> <span class="n">keyspace</span><span class="p">}</span>
         <span class="k">return</span> <span class="n">event</span>
 
 
@@ -1060,7 +1066,6 @@
                 <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Server warning: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">msg</span>
-
 </div></div>
 <span class="k">def</span> <span class="nf">cython_protocol_handler</span><span class="p">(</span><span class="n">colparser</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1306,7 +1311,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 2.7.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
