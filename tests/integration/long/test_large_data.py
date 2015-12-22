@@ -153,8 +153,8 @@ class LargeDataTests(unittest.TestCase):
             session.execute(statement,timeout=30.0)
 
         except OperationTimedOut:
-            #If we timeout on insertion that's bad but it could be just slow underlying c*
-            #Attempt to validate anyway, we will fail if we don't get the right data back.
+            # If we timeout on insertion that's bad but it could be just slow underlying c*
+            # Attempt to validate anyway, we will fail if we don't get the right data back.
             ex_type, ex, tb = sys.exc_info()
             log.warn("Batch wide row insertion timed out, this may require additional investigation")
             log.warn("{0}: {1} Backtrace: {2}".format(ex_type.__name__, ex, traceback.extract_tb(tb)))
@@ -167,11 +167,36 @@ class LargeDataTests(unittest.TestCase):
             lastValue=row['i']
             self.assertEqual(lastValue, j)
 
-        #check the last value make sure it's what we expect
+        # check the last value make sure it's what we expect
         index_value = to_insert-1
         self.assertEqual(lastValue,index_value,"Verification failed only found {0} inserted we were expecting {1}".format(j,index_value))
 
         session.cluster.shutdown()
+
+    def test_large_map(self):
+
+        # Table Creation
+
+        # This is only an issue with protocol version 2
+        cluster = Cluster(protocol_version=2)
+        session = cluster.connect()
+        session.default_timeout = 20.0  # increase the default timeout
+        session.row_factory = dict_factory
+
+        create_schema(cluster, session, self.keyspace)
+
+        session.execute("""
+            CREATE TABLE maps (
+                userid text PRIMARY KEY,
+                properties map<int, text>
+            );
+        """)
+
+        # The error only occurs when the map size is 8000 or larger.
+        for i in range(8000):
+            session.execute("UPDATE maps SET properties[%i] = 'x' WHERE userid = 'user'" % i)
+        # Query for the data will throw an exception
+        session.execute("SELECT properties FROM maps WHERE userid = 'user'")
 
     def test_wide_byte_rows(self):
         """
