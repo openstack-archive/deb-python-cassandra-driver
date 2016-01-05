@@ -25,6 +25,7 @@ from itertools import groupby
 from cassandra import OperationTimedOut, ReadTimeout, ReadFailure, WriteTimeout, WriteFailure, AlreadyExists
 from cassandra.cluster import Cluster
 from cassandra.protocol import ConfigurationException
+from dse.graph import GraphSession, GraphStatement
 
 try:
     from ccmlib.cluster import Cluster as CCMCluster
@@ -32,6 +33,8 @@ try:
     from ccmlib import common
 except ImportError as e:
     CCMClusterFactory = None
+
+
 
 log = logging.getLogger(__name__)
 
@@ -79,6 +82,7 @@ def _tuple_version(version_string):
 
 
 USE_CASS_EXTERNAL = bool(os.getenv('USE_CASS_EXTERNAL', False))
+DSE_GRAPH = bool(os.getenv('DSE_GRAPH', False))
 
 default_cassandra_version = '2.2.0'
 
@@ -133,6 +137,7 @@ greaterthanprotocolv3 = unittest.skipUnless(PROTOCOL_VERSION >= 4, 'Protocol ver
 greaterthancass20 = unittest.skipUnless(CASSANDRA_VERSION >= '2.1', 'Cassandra version 2.1 or greater required')
 greaterthanorequalcass30 = unittest.skipUnless(CASSANDRA_VERSION >= '3.0', 'Cassandra version 3.0 or greater required')
 lessthancass30 = unittest.skipUnless(CASSANDRA_VERSION < '3.0', 'Cassandra version less then 3.0 required')
+dsegraph = unittest.skipUnless(DSE_GRAPH, "DSE_GRAPH is not set skipping DSE_GRAPH Test")
 
 
 def get_cluster():
@@ -401,7 +406,7 @@ class BasicKeyspaceUnitTestCase(unittest.TestCase):
         execute_with_long_wait_retry(cls.session, "DROP KEYSPACE {0}".format(cls.ks_name))
 
     @classmethod
-    def create_keyspace(cls, rf):
+    def create_keyspace(cls, rf,):
         ddl = "CREATE KEYSPACE {0} WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '{1}'}}".format(cls.ks_name, rf)
         execute_with_long_wait_retry(cls.session, ddl)
 
@@ -549,3 +554,36 @@ class BasicExistingSegregatedKeyspaceUnitTestCase(BasicKeyspaceUnitTestCase):
 
     def tearDown(self):
         self.cluster.shutdown()
+
+
+class BasicGraphUnitTestCase(BasicKeyspaceUnitTestCase):
+    """
+    This is basic unit test case that provides various utility methods that can be leveraged for testcase setup and tear
+    down
+    """
+    @property
+    def graph_name_space(self):
+        return self.ks_name
+
+    @classmethod
+    def setUpClass(cls):
+        cls.graph_setup()
+
+    @classmethod
+    def graph_setup(cls):
+        cls.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
+        cls.session = cls.cluster.connect()
+        cls.ks_name = cls.__name__.lower()
+        graph_name_space_param = {'graph-keyspace': cls.ks_name}
+        cls.graph_session = GraphSession(cls.session, graph_name_space_param)
+        cls.graph_session.execute("g.V().drop().iterate(); g.V()")
+        cls.cass_version, cls.cql_version = get_server_versions()
+
+    def setUp(self):
+        self.drop_all_verticies()
+
+    def drop_all_verticies(self):
+        print("clearing all graph data")
+        return self.graph_session.execute("g.V().drop().iterate(); g.V()")
+
+
