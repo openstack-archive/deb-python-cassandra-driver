@@ -25,7 +25,7 @@ from itertools import groupby
 from cassandra import OperationTimedOut, ReadTimeout, ReadFailure, WriteTimeout, WriteFailure, AlreadyExists
 from cassandra.cluster import Cluster
 from cassandra.protocol import ConfigurationException
-from dse.graph import GraphSession, GraphStatement
+
 
 try:
     from ccmlib.cluster import Cluster as CCMCluster
@@ -555,35 +555,5 @@ class BasicExistingSegregatedKeyspaceUnitTestCase(BasicKeyspaceUnitTestCase):
     def tearDown(self):
         self.cluster.shutdown()
 
-
-class BasicGraphUnitTestCase(BasicKeyspaceUnitTestCase):
-    """
-    This is basic unit test case that provides various utility methods that can be leveraged for testcase setup and tear
-    down
-    """
-    @property
-    def graph_name_space(self):
-        return self.ks_name
-
-    @classmethod
-    def setUpClass(cls):
-        cls.graph_setup()
-
-    @classmethod
-    def graph_setup(cls):
-        cls.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
-        cls.session = cls.cluster.connect()
-        cls.ks_name = cls.__name__.lower()
-        graph_name_space_param = {'graph-keyspace': cls.ks_name}
-        cls.graph_session = GraphSession(cls.session, graph_name_space_param)
-        cls.graph_session.execute("g.V().drop().iterate(); g.V()")
-        cls.cass_version, cls.cql_version = get_server_versions()
-
-    def setUp(self):
-        self.drop_all_verticies()
-
-    def drop_all_verticies(self):
-        print("clearing all graph data")
-        return self.graph_session.execute("g.V().drop().iterate(); g.V()")
 
 
