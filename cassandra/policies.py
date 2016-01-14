@@ -16,11 +16,8 @@ from itertools import islice, cycle, groupby, repeat
 import logging
 from random import randint
 from threading import Lock
-import six
 
 from cassandra import ConsistencyLevel
-
-from six.moves import range
 
 log = logging.getLogger(__name__)
 
@@ -335,15 +332,6 @@ class TokenAwarePolicy(LoadBalancingPolicy):
         self._cluster_metadata = cluster.metadata
         self._child_policy.populate(cluster, hosts)
 
-    def check_supported(self):
-        if not self._cluster_metadata.can_support_partitioner():
-            raise Exception(
-                '%s cannot be used with the cluster partitioner (%s) because '
-                'the relevant C extension for this driver was not compiled. '
-                'See the installation instructions for details on building '
-                'and installing the C extensions.' %
-                (self.__class__.__name__, self._cluster_metadata.partitioner))
-
     def distance(self, *args, **kwargs):
         return self._child_policy.distance(*args, **kwargs)
 
@@ -554,8 +542,8 @@ class ExponentialReconnectionPolicy(ReconnectionPolicy):
         self.max_attempts = max_attempts
 
     def new_schedule(self):
-        i=0
-        while self.max_attempts == None or i < self.max_attempts:
+        i = 0
+        while self.max_attempts is None or i < self.max_attempts:
             yield min(self.base_delay * (2 ** i), self.max_delay)
             i += 1
 

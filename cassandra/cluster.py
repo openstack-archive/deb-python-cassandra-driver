@@ -27,7 +27,6 @@ import socket
 import sys
 import time
 from threading import Lock, RLock, Thread, Event
-import warnings
 
 import six
 from six.moves import range
@@ -62,7 +61,7 @@ from cassandra.protocol import (QueryMessage, ResultMessage,
                                 RESULT_KIND_SET_KEYSPACE, RESULT_KIND_ROWS,
                                 RESULT_KIND_SCHEMA_CHANGE, MIN_SUPPORTED_VERSION,
                                 ProtocolHandler)
-from cassandra.metadata import Metadata, protect_name, murmur3
+from cassandra.metadata import Metadata, protect_name
 from cassandra.policies import (TokenAwarePolicy, DCAwareRoundRobinPolicy, SimpleConvictionPolicy,
                                 ExponentialReconnectionPolicy, HostDistance,
                                 RetryPolicy)
@@ -70,7 +69,7 @@ from cassandra.pool import (Host, _ReconnectionHandler, _HostReconnectionHandler
                             HostConnectionPool, HostConnection,
                             NoConnectionsAvailable)
 from cassandra.query import (SimpleStatement, PreparedStatement, BoundStatement,
-                             BatchStatement, bind_params, QueryTrace, Statement,
+                             BatchStatement, bind_params, QueryTrace,
                              named_tuple_factory, dict_factory, FETCH_SIZE_UNSET)
 
 
@@ -169,18 +168,6 @@ def run_in_executor(f):
 def _shutdown_cluster(cluster):
     if cluster and not cluster.is_shutdown:
         cluster.shutdown()
-
-
-# murmur3 implementation required for TokenAware is only available for CPython
-import platform
-if platform.python_implementation() == 'CPython':
-    def default_lbp_factory():
-        if murmur3 is not None:
-            return TokenAwarePolicy(DCAwareRoundRobinPolicy())
-        return DCAwareRoundRobinPolicy()
-else:
-    def default_lbp_factory():
-        return DCAwareRoundRobinPolicy()
 
 
 class Cluster(object):
@@ -542,7 +529,7 @@ class Cluster(object):
 
             self.load_balancing_policy = load_balancing_policy
         else:
-            self.load_balancing_policy = default_lbp_factory()
+            self.load_balancing_policy = TokenAwarePolicy(DCAwareRoundRobinPolicy())
 
         if reconnection_policy is not None:
             if isinstance(reconnection_policy, type):

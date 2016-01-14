@@ -24,16 +24,11 @@ from six.moves import zip
 import sys
 from threading import RLock
 
-murmur3 = None
-try:
-    from cassandra.murmur3 import murmur3
-except ImportError as e:
-    pass
-
 from cassandra import SignatureDescriptor, ConsistencyLevel, InvalidRequest, Unauthorized
 import cassandra.cqltypes as types
 from cassandra.encoder import Encoder
 from cassandra.marshal import varint_unpack
+from cassandra.murmur3 import murmur3
 from cassandra.protocol import QueryMessage
 from cassandra.query import dict_factory, bind_params
 from cassandra.util import OrderedDict
@@ -294,12 +289,6 @@ class Metadata(object):
             return t.get_replicas(keyspace, t.token_class.from_key(key))
         except NoMurmur3:
             return []
-
-    def can_support_partitioner(self):
-        if self.partitioner.endswith('Murmur3Partitioner') and murmur3 is None:
-            return False
-        else:
-            return True
 
     def add_or_return_host(self, host):
         """
@@ -2461,6 +2450,7 @@ def get_schema_parser(connection, timeout):
         # we could further specialize by version. Right now just refactoring the
         # multi-version parser we have as of C* 2.2.0rc1.
         return SchemaParserV22(connection, timeout)
+
 
 def _cql_from_cass_type(cass_type):
     """

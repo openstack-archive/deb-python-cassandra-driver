@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import struct, time, logging, sys, traceback
+import logging
+import struct
+import sys
+import time
+import traceback
 
 from cassandra import ConsistencyLevel, Unavailable, OperationTimedOut, ReadTimeout, ReadFailure, \
     WriteTimeout, WriteFailure
-from cassandra.cluster import Cluster, NoHostAvailable, Session
+from cassandra.cluster import Cluster, NoHostAvailable
 from cassandra.concurrent import execute_concurrent_with_args
-from cassandra.metadata import murmur3
 from cassandra.policies import (RoundRobinPolicy, DCAwareRoundRobinPolicy,
                                 TokenAwarePolicy, WhiteListRoundRobinPolicy)
 from cassandra.query import SimpleStatement
@@ -40,7 +43,7 @@ log = logging.getLogger(__name__)
 class LoadBalancingPolicyTests(unittest.TestCase):
 
     def setUp(self):
-        remove_cluster() # clear ahead of test so it doesn't use one left in unknown state
+        remove_cluster()  # clear ahead of test so it doesn't use one left in unknown state
         self.coordinator_stats = CoordinatorStats()
         self.prepared = None
 
@@ -72,7 +75,7 @@ class LoadBalancingPolicyTests(unittest.TestCase):
             query_string = 'SELECT * FROM %s.cf WHERE k = ?' % keyspace
             if not self.prepared or self.prepared.query_string != query_string:
                 self.prepared = session.prepare(query_string)
-                self.prepared.consistency_level=consistency_level
+                self.prepared.consistency_level = consistency_level
             for i in range(count):
                 tries = 0
                 while True:
@@ -105,13 +108,11 @@ class LoadBalancingPolicyTests(unittest.TestCase):
                         del tb
                         tries += 1
 
-    def test_token_aware_is_used_by_default(self):
+    def test_token_aware_default(self):
         """
         Test for default loadbalacing policy
 
         test_token_aware_is_used_by_default tests that the default loadbalancing policy is policies.TokenAwarePolicy.
-        It creates a simple Cluster and verifies that the default loadbalancing policy is TokenAwarePolicy if the
-        murmur3 C extension is found. Otherwise, the default loadbalancing policy is DCAwareRoundRobinPolicy.
 
         @since 2.6.0
         @jira_ticket PYTHON-160
@@ -121,12 +122,7 @@ class LoadBalancingPolicyTests(unittest.TestCase):
         """
 
         cluster = Cluster(protocol_version=PROTOCOL_VERSION)
-
-        if murmur3 is not None:
-            self.assertTrue(isinstance(cluster.load_balancing_policy, TokenAwarePolicy))
-        else:
-            self.assertTrue(isinstance(cluster.load_balancing_policy, DCAwareRoundRobinPolicy))
-
+        self.assertTrue(isinstance(cluster.load_balancing_policy, TokenAwarePolicy))
         cluster.shutdown()
 
     def test_roundrobin(self):
@@ -547,8 +543,8 @@ class LoadBalancingPolicyTests(unittest.TestCase):
         keyspace = 'test_white_list'
 
         cluster = Cluster(('127.0.0.2',),
-            load_balancing_policy=WhiteListRoundRobinPolicy((IP_FORMAT % 2,)),
-            protocol_version=PROTOCOL_VERSION)
+                          load_balancing_policy=WhiteListRoundRobinPolicy((IP_FORMAT % 2,)),
+                          protocol_version=PROTOCOL_VERSION)
         session = cluster.connect()
         wait_for_up(cluster, 1, wait=False)
         wait_for_up(cluster, 2, wait=False)

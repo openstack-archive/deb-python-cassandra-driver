@@ -28,7 +28,7 @@ from cassandra import AlreadyExists, SignatureDescriptor, UserFunctionDescriptor
 from cassandra.cluster import Cluster
 from cassandra.encoder import Encoder
 from cassandra.metadata import (Metadata, KeyspaceMetadata, IndexMetadata,
-                                Token, MD5Token, TokenMap, murmur3, Function, Aggregate, protect_name, protect_names,
+                                Token, MD5Token, TokenMap, Function, Aggregate, protect_name, protect_names,
                                 get_schema_parser)
 from cassandra.policies import SimpleConvictionPolicy
 from cassandra.pool import Host
@@ -36,7 +36,6 @@ from cassandra.pool import Host
 from tests.integration import get_cluster, use_singledc, PROTOCOL_VERSION, get_server_versions, execute_until_pass, \
     BasicSegregatedKeyspaceUnitTestCase, BasicSharedKeyspaceUnitTestCase, drop_keyspace_shutdown_cluster
 
-from tests.unit.cython.utils import notcython
 
 def setup_module():
     use_singledc()
@@ -925,9 +924,6 @@ CREATE TABLE export_udts.users (
         """
         Ensure cluster.metadata.get_replicas return correctly when not attached to keyspace
         """
-        if murmur3 is None:
-            raise unittest.SkipTest('the murmur3 extension is not available')
-
         cluster = Cluster(protocol_version=PROTOCOL_VERSION)
         self.assertEqual(cluster.metadata.get_replicas('test3rf', 'key'), [])
 
@@ -2018,7 +2014,7 @@ class MaterializedViewMetadataTestSimple(BasicSharedKeyspaceUnitTestCase):
 
         @test_category metadata
         """
-        self.assertIn("SizeTieredCompactionStrategy", self.cluster.metadata.keyspaces[self.keyspace_name].tables[self.function_table_name].views["mv1"].options["compaction"]["class"] )
+        self.assertIn("SizeTieredCompactionStrategy", self.cluster.metadata.keyspaces[self.keyspace_name].tables[self.function_table_name].views["mv1"].options["compaction"]["class"])
 
         self.session.execute("ALTER MATERIALIZED VIEW {0}.mv1 WITH compaction = {{ 'class' : 'LeveledCompactionStrategy' }}".format(self.keyspace_name))
         self.assertIn("LeveledCompactionStrategy", self.cluster.metadata.keyspaces[self.keyspace_name].tables[self.function_table_name].views["mv1"].options["compaction"]["class"])
