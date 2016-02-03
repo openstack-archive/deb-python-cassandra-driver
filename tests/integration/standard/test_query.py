@@ -20,13 +20,15 @@ try:
 except ImportError:
     import unittest  # noqa
 
+
 from cassandra import ConsistencyLevel
 from cassandra.query import (PreparedStatement, BoundStatement, SimpleStatement,
                              BatchStatement, BatchType, dict_factory, TraceUnavailable)
 from cassandra.cluster import Cluster
 from cassandra.policies import HostDistance
 
-from tests.integration import use_singledc, PROTOCOL_VERSION, BasicSharedKeyspaceUnitTestCase, get_server_versions, greaterthanprotocolv3
+from tests.integration import use_singledc, PROTOCOL_VERSION, BasicSharedKeyspaceUnitTestCase, get_server_versions, \
+    greaterthanprotocolv3, CONTACT_POINTS, IP_FORMAT, notipv6
 
 import time
 import re
@@ -41,7 +43,6 @@ def setup_module():
 class QueryTests(BasicSharedKeyspaceUnitTestCase):
 
     def test_query(self):
-
         prepared = self.session.prepare(
             """
             INSERT INTO test3rf.test (k, v) VALUES  (?, ?)
@@ -132,7 +133,12 @@ class QueryTests(BasicSharedKeyspaceUnitTestCase):
         client_ip = trace.client
 
         # Ip address should be in the local_host range
-        pat = re.compile("127.0.0.\d{1,3}")
+        if os.environ.get("IP") == "IPV6":
+            pat = re.compile("::\d{1,3}")
+
+        else:
+            pat = re.compile("127.0.0.\d{1,3}")
+
 
         # Ensure that ip is set
         self.assertIsNotNone(client_ip, "Client IP was not set in trace with C* >= 2.2")
@@ -233,7 +239,7 @@ class QueryTests(BasicSharedKeyspaceUnitTestCase):
 class PreparedStatementTests(unittest.TestCase):
 
     def setUp(self):
-        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
+        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         self.session = self.cluster.connect()
 
     def tearDown(self):
@@ -333,7 +339,8 @@ class PrintStatementTests(unittest.TestCase):
         Highlight the difference between Prepared and Bound statements
         """
 
-        cluster = Cluster(protocol_version=PROTOCOL_VERSION)
+        cluster = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
+
         session = cluster.connect()
 
         prepared = session.prepare('INSERT INTO test3rf.test (k, v) VALUES (?, ?)')
@@ -357,7 +364,8 @@ class BatchStatementTests(BasicSharedKeyspaceUnitTestCase):
                 "Protocol 2.0+ is required for BATCH operations, currently testing against %r"
                 % (PROTOCOL_VERSION,))
 
-        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
+        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
+
         if PROTOCOL_VERSION < 3:
             self.cluster.set_core_connections_per_host(HostDistance.LOCAL, 1)
         self.session = self.cluster.connect()
@@ -473,7 +481,8 @@ class SerialConsistencyTests(unittest.TestCase):
                 "Protocol 2.0+ is required for Serial Consistency, currently testing against %r"
                 % (PROTOCOL_VERSION,))
 
-        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
+        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
+
         if PROTOCOL_VERSION < 3:
             self.cluster.set_core_connections_per_host(HostDistance.LOCAL, 1)
         self.session = self.cluster.connect()
@@ -564,7 +573,7 @@ class LightweightTransactionTests(unittest.TestCase):
                 "Protocol 2.0+ is required for Lightweight transactions, currently testing against %r"
                 % (PROTOCOL_VERSION,))
 
-        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
+        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         self.session = self.cluster.connect()
 
         ddl = '''
@@ -632,7 +641,8 @@ class BatchStatementDefaultRoutingKeyTests(unittest.TestCase):
             raise unittest.SkipTest(
                 "Protocol 2.0+ is required for BATCH operations, currently testing against %r"
                 % (PROTOCOL_VERSION,))
-        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
+
+        self.cluster = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         self.session = self.cluster.connect()
         query = """
                 INSERT INTO test3rf.test (k, v) VALUES  (?, ?)

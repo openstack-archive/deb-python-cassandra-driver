@@ -19,7 +19,7 @@ from cassandra.cluster import Cluster, NoHostAvailable
 from cassandra.io.asyncorereactor import AsyncoreConnection
 
 from tests import is_monkey_patched
-from tests.integration import use_cluster, remove_cluster, PROTOCOL_VERSION
+from tests.integration import use_cluster, remove_cluster, PROTOCOL_VERSION, IPV6_FORMAT
 
 if is_monkey_patched():
     LibevConnection = -1
@@ -47,7 +47,7 @@ def setup_module(module):
         # We use a dedicated cluster (instead of common singledc, as in other tests) because
         # it's most likely that the test host will only have one local ipv6 address (::1)
         # singledc has three
-        use_cluster(IPV6_CLUSTER_NAME, [1], ipformat='::%d')
+        use_cluster(IPV6_CLUSTER_NAME, [1], ipformat=IPV6_FORMAT)
 
 
 def teardown_module():

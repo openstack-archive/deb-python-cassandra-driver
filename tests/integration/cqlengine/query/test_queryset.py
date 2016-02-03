@@ -22,7 +22,6 @@ from datetime import datetime
 import time
 from uuid import uuid1, uuid4
 import uuid
-import sys
 
 from cassandra.cluster import Session
 from cassandra import InvalidRequest
@@ -878,11 +877,12 @@ class TestValuesList(BaseQuerySetUsage):
 class TestObjectsProperty(BaseQuerySetUsage):
     def test_objects_property_returns_fresh_queryset(self):
         assert TestModel.objects._result_cache is None
-        len(TestModel.objects) # evaluate queryset
+        len(TestModel.objects)  # evaluate queryset
         assert TestModel.objects._result_cache is None
 
 
 class PageQueryTests(BaseCassEngTestCase):
+
     def test_paged_result_handling(self):
         if PROTOCOL_VERSION < 2:
             raise unittest.SkipTest("Paging requires native protocol 2+, currently using: {0}".format(PROTOCOL_VERSION))
@@ -903,6 +903,7 @@ class PageQueryTests(BaseCassEngTestCase):
         assert len(results) == 2
 
 
+# @notipv6
 class ModelQuerySetTimeoutTestCase(BaseQuerySetUsage):
     def test_default_timeout(self):
         with mock.patch.object(Session, 'execute') as mock_execute:

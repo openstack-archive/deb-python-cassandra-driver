@@ -13,13 +13,13 @@
 # limitations under the License.
 
 import copy
-from mock import patch
+
 import six
+from mock import patch
 
 from cassandra.cqlengine import columns
 from cassandra.cqlengine.management import drop_table, sync_table, _get_table_metadata, _update_options
 from cassandra.cqlengine.models import Model
-
 from tests.integration.cqlengine.base import BaseCassEngTestCase
 
 

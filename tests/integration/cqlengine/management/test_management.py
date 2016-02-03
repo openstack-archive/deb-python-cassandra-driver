@@ -16,20 +16,24 @@ try:
 except ImportError:
     import unittest  # noqa
 
-import mock
 import logging
-from cassandra.cqlengine.connection import get_session, get_cluster
-from cassandra.cqlengine import CQLEngineException
-from cassandra.cqlengine import management
-from cassandra.cqlengine.management import _get_table_metadata, sync_table, drop_table, sync_type
-from cassandra.cqlengine.models import Model
-from cassandra.cqlengine import columns
 
-from tests.integration import PROTOCOL_VERSION, greaterthancass20, MockLoggingHandler, CASSANDRA_VERSION
+import mock
+
+from cassandra.cqlengine import CQLEngineException
+from cassandra.cqlengine import columns
+from cassandra.cqlengine import management
+from cassandra.cqlengine.connection import get_session, get_cluster
+from cassandra.cqlengine.management import _get_table_metadata, sync_table, drop_table
+from cassandra.cqlengine.management import sync_type
+from cassandra.cqlengine.models import Model
+from cassandra.cqlengine.usertype import UserType
+from tests.integration import CASSANDRA_VERSION
+from tests.integration import MockLoggingHandler
+from tests.integration import PROTOCOL_VERSION
+from tests.integration.cqlengine import DEFAULT_KEYSPACE
 from tests.integration.cqlengine.base import BaseCassEngTestCase
 from tests.integration.cqlengine.query.test_queryset import TestModel
-from cassandra.cqlengine.usertype import UserType
-from tests.integration.cqlengine import DEFAULT_KEYSPACE
 
 
 class KeyspaceManagementTest(BaseCassEngTestCase):
@@ -188,7 +192,7 @@ class TablePropertiesTests(BaseCassEngTestCase):
                     'comment': 'TxfguvBdzwROQALmQBOziRMbkqVGFjqcJfVhwGR',
                     'gc_grace_seconds': 2063,
                     'read_repair_chance': 0.17985,
-                     # For some reason 'dclocal_read_repair_chance' in CQL is called
+                     #  For some reason 'dclocal_read_repair_chance' in CQL is called
                      #  just 'local_read_repair_chance' in the schema table.
                      #  Source: https://issues.apache.org/jira/browse/CASSANDRA-6717
                      #  TODO: due to a bug in the native driver i'm not seeing the local read repair chance show up

@@ -29,7 +29,7 @@ from cassandra.io.asyncorereactor import AsyncoreConnection
 from cassandra.protocol import QueryMessage
 
 from tests import is_monkey_patched
-from tests.integration import use_singledc, PROTOCOL_VERSION
+from tests.integration import use_singledc, PROTOCOL_VERSION, CONTACT_POINTS, notipv6
 
 try:
     from cassandra.io.libevreactor import LibevConnection
@@ -60,7 +60,7 @@ class ConnectionTests(object):
         e = None
         for i in range(5):
             try:
-                conn = self.klass.factory(host='127.0.0.1', timeout=timeout, protocol_version=PROTOCOL_VERSION)
+                conn = self.klass.factory(host=CONTACT_POINTS[0], timeout=timeout, protocol_version=PROTOCOL_VERSION)
                 break
             except (OperationTimedOut, NoHostAvailable) as e:
                 continue

@@ -18,7 +18,7 @@ from cassandra import ConsistencyLevel, OperationTimedOut, ReadTimeout, WriteTim
 from cassandra.cluster import Cluster
 from cassandra.policies import TokenAwarePolicy, RoundRobinPolicy, DowngradingConsistencyRetryPolicy
 from cassandra.query import SimpleStatement
-from tests.integration import use_singledc, PROTOCOL_VERSION, execute_until_pass
+from tests.integration import use_singledc, PROTOCOL_VERSION, execute_until_pass, CONTACT_POINTS, notipv6
 
 from tests.integration.long.utils import (force_stop, create_schema, wait_for_down, wait_for_up,
                                           start, CoordinatorStats)
@@ -129,9 +129,11 @@ class ConsistencyTests(unittest.TestCase):
     def _test_tokenaware_one_node_down(self, keyspace, rf, accepted):
         cluster = Cluster(
             load_balancing_policy=TokenAwarePolicy(RoundRobinPolicy()),
-            protocol_version=PROTOCOL_VERSION)
+            protocol_version=PROTOCOL_VERSION,
+            contact_points=CONTACT_POINTS)
         session = cluster.connect()
         wait_for_up(cluster, 1, wait=False)
+        cluster.control_connection.refresh_schema()
         wait_for_up(cluster, 2)
 
         create_schema(cluster, session, keyspace, replication_factor=rf)
@@ -158,18 +160,21 @@ class ConsistencyTests(unittest.TestCase):
 
         cluster.shutdown()
 
+    @notipv6
     def test_rfone_tokenaware_one_node_down(self):
         self._test_tokenaware_one_node_down(
             keyspace='test_rfone_tokenaware',
             rf=1,
             accepted=set([ConsistencyLevel.ANY]))
 
+    @notipv6
     def test_rftwo_tokenaware_one_node_down(self):
         self._test_tokenaware_one_node_down(
             keyspace='test_rftwo_tokenaware',
             rf=2,
             accepted=set([ConsistencyLevel.ANY, ConsistencyLevel.ONE]))
 
+    @notipv6
     def test_rfthree_tokenaware_one_node_down(self):
         self._test_tokenaware_one_node_down(
             keyspace='test_rfthree_tokenaware',
@@ -177,11 +182,13 @@ class ConsistencyTests(unittest.TestCase):
             accepted=set([ConsistencyLevel.ANY, ConsistencyLevel.ONE,
                           ConsistencyLevel.TWO, ConsistencyLevel.QUORUM]))
 
+    @notipv6
     def test_rfthree_tokenaware_none_down(self):
         keyspace = 'test_rfthree_tokenaware_none_down'
         cluster = Cluster(
             load_balancing_policy=TokenAwarePolicy(RoundRobinPolicy()),
-            protocol_version=PROTOCOL_VERSION)
+            protocol_version=PROTOCOL_VERSION,
+            contact_points=CONTACT_POINTS)
         session = cluster.connect()
         wait_for_up(cluster, 1, wait=False)
         wait_for_up(cluster, 2)
@@ -206,7 +213,8 @@ class ConsistencyTests(unittest.TestCase):
         cluster = Cluster(
             load_balancing_policy=TokenAwarePolicy(RoundRobinPolicy()),
             default_retry_policy=DowngradingConsistencyRetryPolicy(),
-            protocol_version=PROTOCOL_VERSION)
+            protocol_version=PROTOCOL_VERSION,
+            contact_points=CONTACT_POINTS)
         session = cluster.connect()
 
         create_schema(cluster, session, keyspace, replication_factor=rf)
@@ -233,32 +241,38 @@ class ConsistencyTests(unittest.TestCase):
 
         cluster.shutdown()
 
+    @notipv6
     def test_rfone_downgradingcl(self):
         self._test_downgrading_cl(
             keyspace='test_rfone_downgradingcl',
             rf=1,
             accepted=set([ConsistencyLevel.ANY]))
 
+    @notipv6
     def test_rftwo_downgradingcl(self):
         self._test_downgrading_cl(
             keyspace='test_rftwo_downgradingcl',
             rf=2,
             accepted=SINGLE_DC_CONSISTENCY_LEVELS)
 
+    @notipv6
     def test_rfthree_roundrobin_downgradingcl(self):
         keyspace = 'test_rfthree_roundrobin_downgradingcl'
         cluster = Cluster(
             load_balancing_policy=RoundRobinPolicy(),
             default_retry_policy=DowngradingConsistencyRetryPolicy(),
-            protocol_version=PROTOCOL_VERSION)
+            protocol_version=PROTOCOL_VERSION,
+            contact_points=CONTACT_POINTS)
         self.rfthree_downgradingcl(cluster, keyspace, True)
 
+    @notipv6
     def test_rfthree_tokenaware_downgradingcl(self):
         keyspace = 'test_rfthree_tokenaware_downgradingcl'
         cluster = Cluster(
             load_balancing_policy=TokenAwarePolicy(RoundRobinPolicy()),
             default_retry_policy=DowngradingConsistencyRetryPolicy(),
-            protocol_version=PROTOCOL_VERSION)
+            protocol_version=PROTOCOL_VERSION,
+            contact_points=CONTACT_POINTS)
         self.rfthree_downgradingcl(cluster, keyspace, False)
 
     def rfthree_downgradingcl(self, cluster, keyspace, roundrobin):

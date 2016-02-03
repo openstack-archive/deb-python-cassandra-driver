@@ -26,7 +26,8 @@ from cassandra.cluster import Cluster, UserTypeDoesNotExist
 from cassandra.query import dict_factory
 from cassandra.util import OrderedMap
 
-from tests.integration import get_server_versions, use_singledc, PROTOCOL_VERSION, execute_until_pass, BasicSegregatedKeyspaceUnitTestCase, greaterthancass20
+from tests.integration import get_server_versions, use_singledc, PROTOCOL_VERSION, execute_until_pass, \
+    BasicSegregatedKeyspaceUnitTestCase, greaterthancass20, CONTACT_POINTS
 from tests.integration.datatype_utils import update_datatypes, PRIMITIVE_DATATYPES, COLLECTION_TYPES, \
     get_sample, get_collection_sample
 
@@ -55,7 +56,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         Test the insertion of unprepared, registered UDTs
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
 
         s.execute("CREATE TYPE user (age int, name text)")
@@ -99,7 +100,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         Test the registration of UDTs before session creation
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect()
 
         s.execute("""
@@ -120,7 +121,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
 
         # now that types are defined, shutdown and re-create Cluster
         c.shutdown()
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
 
         User1 = namedtuple('user', ('age', 'name'))
         User2 = namedtuple('user', ('state', 'is_cool'))
@@ -157,7 +158,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         Test the insertion of prepared, unregistered UDTs
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
 
         s.execute("CREATE TYPE user (age int, name text)")
@@ -201,7 +202,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         Test the insertion of prepared, registered UDTs
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
 
         s.execute("CREATE TYPE user (age int, name text)")
@@ -251,7 +252,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         Test the insertion of UDTs with null and empty string fields
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
 
         s.execute("CREATE TYPE user (a text, b int, c uuid, d blob)")
@@ -281,7 +282,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         Test for ensuring extra-lengthy udts are properly inserted
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
 
         MAX_TEST_LENGTH = 254
@@ -365,7 +366,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         Test for ensuring nested registered udts are properly inserted
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
         s.row_factory = dict_factory
 
@@ -396,7 +397,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         Test for ensuring nested unregistered udts are properly inserted
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
         s.row_factory = dict_factory
 
@@ -436,7 +437,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         created namedtuples are use names that are different the cql type.
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
         s.row_factory = dict_factory
 
@@ -467,7 +468,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         Test for ensuring that an error is raised for operating on a nonexisting udt or an invalid keyspace
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
         User = namedtuple('user', ('age', 'name'))
 
@@ -487,7 +488,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         Test for inserting various types of PRIMITIVE_DATATYPES into UDT's
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
 
         # create UDT
@@ -532,7 +533,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         Test for inserting various types of COLLECTION_TYPES into UDT's
         """
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
 
         # create UDT
@@ -599,7 +600,7 @@ class UDTTests(BasicSegregatedKeyspaceUnitTestCase):
         if self.cass_version < (2, 1, 3):
             raise unittest.SkipTest("Support for nested collections was introduced in Cassandra 2.1.3")
 
-        c = Cluster(protocol_version=PROTOCOL_VERSION)
+        c = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         s = c.connect(self.keyspace_name)
         s.encoder.mapping[tuple] = s.encoder.cql_encode_tuple
 

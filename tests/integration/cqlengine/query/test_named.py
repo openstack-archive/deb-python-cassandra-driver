@@ -18,26 +18,23 @@ except ImportError:
     import unittest  # noqa
 
 from cassandra import ConsistencyLevel
+from cassandra.concurrent import execute_concurrent_with_args
+from cassandra.cqlengine import models
 from cassandra.cqlengine import operators
 from cassandra.cqlengine.named import NamedKeyspace
 from cassandra.cqlengine.operators import EqualsOperator, GreaterThanOrEqualOperator
 from cassandra.cqlengine.query import ResultObject
-from cassandra.concurrent import execute_concurrent_with_args
-from cassandra.cqlengine import models
-
+from tests.integration import BasicSharedKeyspaceUnitTestCase, greaterthanorequalcass30
 from tests.integration.cqlengine import setup_connection
 from tests.integration.cqlengine.base import BaseCassEngTestCase
 from tests.integration.cqlengine.query.test_queryset import BaseQuerySetUsage
 
 
-from tests.integration import BasicSharedKeyspaceUnitTestCase, greaterthanorequalcass30
-
-
-class TestQuerySetOperation(BaseCassEngTestCase):
+class TestNamedOperation(BaseCassEngTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestQuerySetOperation, cls).setUpClass()
+        super(TestNamedOperation, cls).setUpClass()
         cls.keyspace = NamedKeyspace('cqlengine_test')
         cls.table = cls.keyspace.table('test_model')
 
@@ -122,11 +119,11 @@ class TestQuerySetOperation(BaseCassEngTestCase):
         self.assertEqual(where.value, 1)
 
 
-class TestQuerySetCountSelectionAndIteration(BaseQuerySetUsage):
+class TestNamedSelectionAndIteration(BaseQuerySetUsage):
 
     @classmethod
     def setUpClass(cls):
-        super(TestQuerySetCountSelectionAndIteration, cls).setUpClass()
+        super(TestNamedSelectionAndIteration, cls).setUpClass()
 
         from tests.integration.cqlengine.query.test_queryset import TestModel
 

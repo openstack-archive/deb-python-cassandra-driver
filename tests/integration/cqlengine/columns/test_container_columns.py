@@ -28,7 +28,6 @@ from cassandra.cqlengine.management import sync_table, drop_table
 from tests.integration.cqlengine import is_prepend_reversed
 from tests.integration.cqlengine.base import BaseCassEngTestCase
 from tests.integration import greaterthancass20, CASSANDRA_VERSION
-
 log = logging.getLogger(__name__)
 
 
@@ -345,7 +344,6 @@ class TestMapModel(Model):
     partition = columns.UUID(primary_key=True, default=uuid4)
     int_map = columns.Map(columns.Integer, columns.UUID, required=False)
     text_map = columns.Map(columns.Text, columns.DateTime, required=False)
-
 
 class TestMapColumn(BaseCassEngTestCase):
 

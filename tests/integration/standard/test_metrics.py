@@ -23,7 +23,8 @@ from cassandra.query import SimpleStatement
 from cassandra import ConsistencyLevel, WriteTimeout, Unavailable, ReadTimeout
 
 from cassandra.cluster import Cluster, NoHostAvailable
-from tests.integration import get_cluster, get_node, use_singledc, PROTOCOL_VERSION, execute_until_pass
+from tests.integration import get_cluster, get_node, use_singledc, PROTOCOL_VERSION, execute_until_pass, \
+    CONTACT_POINTS, notipv6
 
 
 def setup_module():
@@ -33,7 +34,7 @@ def setup_module():
 class MetricsTests(unittest.TestCase):
 
     def setUp(self):
-        self.cluster = Cluster(metrics_enabled=True, protocol_version=PROTOCOL_VERSION)
+        self.cluster = Cluster(metrics_enabled=True, protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         self.session = self.cluster.connect("test3rf")
 
     def tearDown(self):
@@ -99,7 +100,6 @@ class MetricsTests(unittest.TestCase):
         Write a key, value pair. Pause a node without the coordinator node knowing about the "DOWN" state.
         Attempt a read at cl.ALL and receive a ReadTimeout.
         """
-
 
         # Test write
         self.session.execute("INSERT INTO test (k, v) VALUES (1, 1)")

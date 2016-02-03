@@ -17,15 +17,11 @@ try:
 except ImportError:
     import unittest  # noqa
 
-import logging
-import os
-import socket
-import sys
-import time
-import traceback
+import os, six, time, sys, logging, traceback, argparse, socket
 from threading import Event
 from subprocess import call
 from itertools import groupby
+
 
 from cassandra import OperationTimedOut, ReadTimeout, ReadFailure, WriteTimeout, WriteFailure, AlreadyExists
 from cassandra.cluster import Cluster
@@ -44,6 +40,7 @@ log = logging.getLogger(__name__)
 CLUSTER_NAME = 'test_cluster'
 SINGLE_NODE_CLUSTER_NAME = 'single_node'
 MULTIDC_CLUSTER_NAME = 'multidc_test_cluster'
+IS_IPV6 = False
 
 CCM_CLUSTER = None
 
@@ -53,6 +50,16 @@ if not os.path.exists(path):
 
 cass_version = None
 cql_version = None
+IPV6_FORMAT = '::%d'
+IPV4_FORMAT = '127.0.0.%d'
+
+if os.environ.get('IP') == "IPV6":
+    IS_IPV6 = True
+    CONTACT_POINTS = ["::1"]
+    IP_FORMAT = IPV6_FORMAT
+else:
+    CONTACT_POINTS = ["127.0.0.1"]
+    IP_FORMAT = IPV4_FORMAT
 
 
 def get_server_versions():
@@ -65,7 +72,7 @@ def get_server_versions():
     if cass_version is not None:
         return (cass_version, cql_version)
 
-    c = Cluster()
+    c = Cluster(CONTACT_POINTS)
     s = c.connect()
     row = s.execute('SELECT cql_version, release_version FROM system.local')[0]
 
@@ -148,20 +155,29 @@ greaterthancass21 = unittest.skipUnless(CASSANDRA_VERSION >= '2.2', 'Cassandra v
 greaterthanorequalcass30 = unittest.skipUnless(CASSANDRA_VERSION >= '3.0', 'Cassandra version 3.0 or greater required')
 lessthancass30 = unittest.skipUnless(CASSANDRA_VERSION < '3.0', 'Cassandra version less then 3.0 required')
 
+notipv6 = unittest.skipIf(IS_IPV6, 'IPv6 not supported for this test')
+
 
 def wait_for_node_socket(node, timeout):
     binary_itf = node.network_interfaces['binary']
-    if not common.check_socket_listening(binary_itf, timeout=timeout):
+    if not check_socket_listening(binary_itf, timeout=timeout):
         log.warn("Unable to connect to binary socket for node " + node.name)
     else:
         log.debug("Node %s is up and listening " % (node.name,))
 
 
 def check_socket_listening(itf, timeout=60):
+
     end = time.time() + timeout
+    print("waiting for itf"+str(itf))
+    print type(itf)
+
     while time.time() <= end:
         try:
-            sock = socket.socket()
+            if ":" in itf[0]:
+                sock = socket.socket(socket.AF_INET6)
+            else:
+                sock = socket.socket()
             sock.connect(itf)
             sock.close()
             return True
@@ -181,15 +197,15 @@ def get_node(node_id):
 
 
 def use_multidc(dc_list, workloads=[]):
-    use_cluster(MULTIDC_CLUSTER_NAME, dc_list, start=True, workloads=workloads)
+    use_cluster(MULTIDC_CLUSTER_NAME, dc_list, ipformat=IP_FORMAT, start=True, workloads=workloads)
 
 
-def use_singledc(start=True, workloads=[]):
-    use_cluster(CLUSTER_NAME, [3], start=start, workloads=workloads)
+def use_singledc(start=True):
+    use_cluster(CLUSTER_NAME, [3], start=start, ipformat=IP_FORMAT,  workloads=[])
 
 
 def use_single_node(start=True, workloads=[]):
-    use_cluster(SINGLE_NODE_CLUSTER_NAME, [1], start=start, workloads=workloads)
+    use_cluster(SINGLE_NODE_CLUSTER_NAME, [1], ipformat=IP_FORMAT, start=start, workloads=workloads)
 
 
 def remove_cluster():
@@ -265,6 +281,7 @@ def use_cluster(cluster_name, nodes, ipformat=None, start=True, workloads=[]):
                 config_options = {"initial_spark_worker_resources": 0.1}
                 CCM_CLUSTER.set_dse_configuration_options(config_options)
             common.switch_cluster(path, cluster_name)
+
             CCM_CLUSTER.populate(nodes, ipformat=ipformat)
     try:
         jvm_args = []
@@ -278,6 +295,7 @@ def use_cluster(cluster_name, nodes, ipformat=None, start=True, workloads=[]):
                         node.set_workloads(workloads)
             log.debug("Starting CCM cluster: {0}".format(cluster_name))
             CCM_CLUSTER.start(wait_for_binary_proto=True, wait_other_notice=True, jvm_args=jvm_args)
+
             # Added to wait for slow nodes to start up
             for node in CCM_CLUSTER.nodes.values():
                 wait_for_node_socket(node, 120)
@@ -365,11 +383,10 @@ def drop_keyspace_shutdown_cluster(keyspace_name, session, cluster):
 def setup_keyspace(ipformat=None):
     # wait for nodes to startup
     time.sleep(10)
-
-    if not ipformat:
-        cluster = Cluster(protocol_version=PROTOCOL_VERSION)
-    else:
+    if ipformat == IPV6_FORMAT:
         cluster = Cluster(contact_points=["::1"], protocol_version=PROTOCOL_VERSION)
+    else:
+        cluster = Cluster(contact_points=CONTACT_POINTS, protocol_version=PROTOCOL_VERSION)
     session = cluster.connect()
 
     try:
@@ -430,6 +447,7 @@ class BasicKeyspaceUnitTestCase(unittest.TestCase):
     This is basic unit test case that provides various utility methods that can be leveraged for testcase setup and tear
     down
     """
+
     @property
     def keyspace_name(self):
         return self.ks_name
@@ -457,7 +475,8 @@ class BasicKeyspaceUnitTestCase(unittest.TestCase):
 
     @classmethod
     def common_setup(cls, rf, keyspace_creation=True, create_class_table=False):
-        cls.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
+
+        cls.cluster = Cluster(protocol_version=PROTOCOL_VERSION, contact_points=CONTACT_POINTS)
         cls.session = cls.cluster.connect()
         cls.ks_name = cls.__name__.lower()
         if keyspace_creation:
@@ -576,6 +595,7 @@ class BasicSharedKeyspaceUnitTestCaseRF3WTable(BasicSharedKeyspaceUnitTestCase):
     This is basic unit test case that can be leveraged to scope a keyspace to a specific test class.
     creates a keyspace named after the test class with a rf of 3 and a table named after the class
     """
+
     @classmethod
     def setUpClass(self):
         self.common_setup(3, True)

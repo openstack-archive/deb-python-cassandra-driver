@@ -15,6 +15,7 @@
 from __future__ import print_function
 import logging
 import time
+import os
 
 from collections import defaultdict
 from ccmlib.node import Node
@@ -23,7 +24,10 @@ from cassandra.query import named_tuple_factory
 
 from tests.integration import get_node, get_cluster
 
-IP_FORMAT = '127.0.0.%s'
+if os.environ.get('IP') == "IPV6":
+    IP_FORMAT = "::%s"
+else:
+    IP_FORMAT = '127.0.0.%s'
 
 log = logging.getLogger(__name__)
 
@@ -45,11 +49,11 @@ class CoordinatorStats():
         self.coordinator_counts = defaultdict(int)
 
     def get_query_count(self, node):
-        ip = '127.0.0.%d' % node
+        ip = IP_FORMAT % node
         return self.coordinator_counts[ip]
 
     def assert_query_count_equals(self, testcase, node, expected):
-        ip = '127.0.0.%d' % node
+        ip = IP_FORMAT % node
         if self.get_query_count(node) != expected:
             testcase.fail('Expected %d queries to %s, but got %d. Query counts: %s' % (
                 expected, ip, self.coordinator_counts[ip], dict(self.coordinator_counts)))
@@ -139,7 +143,7 @@ def wait_for_up(cluster, node, wait=True):
             tries += 1
             time.sleep(1)
 
-    raise RuntimeError("Host {0} is not up after 100 attempts".format(IP_FORMAT.format(node)))
+    raise RuntimeError("Host {0} is not up after 100 attempts".format(str(IP_FORMAT).format(node)))
 
 
 def wait_for_down(cluster, node, wait=True):
@@ -155,4 +159,4 @@ def wait_for_down(cluster, node, wait=True):
             tries += 1
             time.sleep(1)
 
-    raise RuntimeError("Host {0} is not down after 100 attempts".format(IP_FORMAT.format(node)))
+    raise RuntimeError("Host {0} is not down after 100 attempts".format(str(IP_FORMAT).format(node)))

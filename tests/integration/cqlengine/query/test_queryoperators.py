@@ -21,8 +21,8 @@ from cassandra.cqlengine.management import sync_table, drop_table
 from cassandra.cqlengine.models import Model
 from cassandra.cqlengine.operators import EqualsOperator
 from cassandra.cqlengine.statements import WhereClause
-
 from tests.integration.cqlengine.base import BaseCassEngTestCase
+
 
 class TestQuerySetOperation(BaseCassEngTestCase):
 

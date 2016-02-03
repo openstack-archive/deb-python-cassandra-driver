@@ -22,22 +22,21 @@ from decimal import Decimal as D
 from uuid import uuid4, uuid1
 
 from cassandra import InvalidRequest
-from cassandra.cqlengine.columns import TimeUUID
-from cassandra.cqlengine.columns import Text
-from cassandra.cqlengine.columns import Integer
+from cassandra import util
 from cassandra.cqlengine.columns import BigInt
-from cassandra.cqlengine.columns import VarInt
-from cassandra.cqlengine.columns import DateTime
-from cassandra.cqlengine.columns import Date
-from cassandra.cqlengine.columns import UUID
 from cassandra.cqlengine.columns import Boolean
+from cassandra.cqlengine.columns import Date
+from cassandra.cqlengine.columns import DateTime
 from cassandra.cqlengine.columns import Decimal
 from cassandra.cqlengine.columns import Inet
+from cassandra.cqlengine.columns import Integer
+from cassandra.cqlengine.columns import Text
+from cassandra.cqlengine.columns import TimeUUID
+from cassandra.cqlengine.columns import UUID
+from cassandra.cqlengine.columns import VarInt
 from cassandra.cqlengine.connection import execute
 from cassandra.cqlengine.management import sync_table, drop_table
 from cassandra.cqlengine.models import Model, ValidationError
-from cassandra import util
-
 from tests.integration import PROTOCOL_VERSION
 from tests.integration.cqlengine.base import BaseCassEngTestCase
 
@@ -66,6 +65,7 @@ class TestDatetime(BaseCassEngTestCase):
         class TZ(tzinfo):
             def utcoffset(self, date_time):
                 return timedelta(hours=-1)
+
             def dst(self, date_time):
                 return None
 
@@ -89,7 +89,7 @@ class TestDatetime(BaseCassEngTestCase):
         assert dts[0][0] is None
 
     def test_datetime_invalid(self):
-        dt_value= 'INVALID'
+        dt_value = 'INVALID'
         with self.assertRaises(TypeError):
             self.DatetimeTest.objects.create(test_id=4, created_at=dt_value)
 
@@ -122,6 +122,7 @@ class TestBoolDefault(BaseCassEngTestCase):
         tmp2 = self.BoolDefaultValueTest.get(test_id=1)
         self.assertEqual(True, tmp2.stuff)
 
+
 class TestBoolValidation(BaseCassEngTestCase):
     class BoolValidationTest(Model):
 
@@ -137,6 +138,7 @@ class TestBoolValidation(BaseCassEngTestCase):
 
         test_obj.validate()
         self.assertIsNone(test_obj.bool_column)
+
 
 class TestVarInt(BaseCassEngTestCase):
     class VarIntTest(Model):
@@ -228,6 +230,7 @@ class TestDecimal(BaseCassEngTestCase):
         dt2 = self.DecimalTest.objects(test_id=0).first()
         assert dt2.dec_val == D('5')
 
+
 class TestUUID(BaseCassEngTestCase):
     class UUIDTest(Model):
 
@@ -261,6 +264,7 @@ class TestUUID(BaseCassEngTestCase):
         t1 = self.UUIDTest.get(test_id=0)
         assert a_uuid == t1.a_uuid
 
+
 class TestTimeUUID(BaseCassEngTestCase):
     class TimeUUIDTest(Model):
 
@@ -285,27 +289,30 @@ class TestTimeUUID(BaseCassEngTestCase):
 
         assert t1.timeuuid.time == t1.timeuuid.time
 
+
 class TestInteger(BaseCassEngTestCase):
     class IntegerTest(Model):
 
-        test_id = UUID(primary_key=True, default=lambda:uuid4())
-        value   = Integer(default=0, required=True)
+        test_id = UUID(primary_key=True, default=lambda: uuid4())
+        value = Integer(default=0, required=True)
 
     def test_default_zero_fields_validate(self):
         """ Tests that integer columns with a default value of 0 validate """
         it = self.IntegerTest()
         it.validate()
 
+
 class TestBigInt(BaseCassEngTestCase):
     class BigIntTest(Model):
 
-        test_id = UUID(primary_key=True, default=lambda:uuid4())
-        value   = BigInt(default=0, required=True)
+        test_id = UUID(primary_key=True, default=lambda: uuid4())
+        value = BigInt(default=0, required=True)
 
     def test_default_zero_fields_validate(self):
         """ Tests that bigint columns with a default value of 0 validate """
         it = self.BigIntTest()
         it.validate()
+
 
 class TestText(BaseCassEngTestCase):
 
@@ -319,7 +326,7 @@ class TestText(BaseCassEngTestCase):
         with self.assertRaises(ValidationError):
             Text(required=True).validate('')
 
-        #test arbitrary lengths
+        # test arbitrary lengths
         Text(min_length=0).validate('')
         Text(min_length=5).validate('blake')
         Text(min_length=5).validate('blaketastic')
@@ -352,8 +359,6 @@ class TestText(BaseCassEngTestCase):
         Text().validate(None)
 
 
-
-
 class TestExtraFieldsRaiseException(BaseCassEngTestCase):
     class TestModel(Model):
 
@@ -362,6 +367,7 @@ class TestExtraFieldsRaiseException(BaseCassEngTestCase):
     def test_extra_field(self):
         with self.assertRaises(ValidationError):
             self.TestModel.create(bacon=5000)
+
 
 class TestPythonDoesntDieWhenExtraFieldIsInCassandra(BaseCassEngTestCase):
     class TestModel(Model):
@@ -375,6 +381,7 @@ class TestPythonDoesntDieWhenExtraFieldIsInCassandra(BaseCassEngTestCase):
         self.TestModel.create()
         execute("ALTER TABLE {0} add blah int".format(self.TestModel.column_family_name(include_keyspace=True)))
         self.TestModel.objects().all()
+
 
 class TestTimeUUIDFromDatetime(BaseCassEngTestCase):
     def test_conversion_specific_date(self):
@@ -390,6 +397,7 @@ class TestTimeUUIDFromDatetime(BaseCassEngTestCase):
 
         # checks that we created a UUID1 with the proper timestamp
         assert new_dt == dt
+
 
 class TestInet(BaseCassEngTestCase):
 

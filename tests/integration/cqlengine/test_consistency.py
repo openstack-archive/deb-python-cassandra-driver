@@ -24,6 +24,7 @@ from cassandra.cqlengine.models import Model
 from cassandra.cqlengine.query import BatchQuery
 
 from tests.integration.cqlengine.base import BaseCassEngTestCase
+from tests.integration import notipv6
 
 class TestConsistencyModel(Model):
 
