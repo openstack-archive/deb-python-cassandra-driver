@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies - Load balancing and Failure Handling Policies &mdash; Cassandra Driver 3.0.0 documentation</title>
+    <title>cassandra.policies - Load balancing and Failure Handling Policies &mdash; Cassandra Driver 3.1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.0.0',
+        VERSION:     '3.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.1.0 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.auth - Authentication" href="auth.html" />
     <link rel="prev" title="cassandra.cluster - Clusters and Sessions" href="cluster.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -159,7 +159,7 @@ terms of the <a class="reference internal" href="#cassandra.policies.HostDistanc
 <dd><p>This method is called to initialize the load balancing
 policy with a set of <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><code class="xref py py-class docutils literal"><span class="pre">Host</span></code></a> instances before its
 first use.  The <cite>cluster</cite> parameter is an instance of
-<a class="reference internal" href="cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code></a>.</p>
+<code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -172,7 +172,7 @@ of this method.</p>
 <p>Note that the <cite>query</cite> argument may be <code class="xref py py-const docutils literal"><span class="pre">None</span></code> when preparing
 statements.</p>
 <p><cite>working_keyspace</cite> should be the string name of the current keyspace,
-as set through <a class="reference internal" href="cluster.html#cassandra.cluster.Session.set_keyspace" title="cassandra.cluster.Session.set_keyspace"><code class="xref py py-meth docutils literal"><span class="pre">Session.set_keyspace()</span></code></a> or with a <code class="docutils literal"><span class="pre">USE</span></code>
+as set through <code class="xref py py-meth docutils literal"><span class="pre">Session.set_keyspace()</span></code> or with a <code class="docutils literal"><span class="pre">USE</span></code>
 statement.</p>
 </dd></dl>
 
@@ -314,12 +314,15 @@ The default is 64.</p>
 
 <dl class="class">
 <dt id="cassandra.policies.ExponentialReconnectionPolicy">
-<em class="property">class </em><code class="descclassname">cassandra.policies.</code><code class="descname">ExponentialReconnectionPolicy</code><span class="sig-paren">(</span><em>base_delay</em>, <em>max_delay</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/policies.html#ExponentialReconnectionPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.ExponentialReconnectionPolicy" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">cassandra.policies.</code><code class="descname">ExponentialReconnectionPolicy</code><span class="sig-paren">(</span><em>base_delay</em>, <em>max_delay</em>, <em>max_attempts=64</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/policies.html#ExponentialReconnectionPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.ExponentialReconnectionPolicy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#cassandra.policies.ReconnectionPolicy" title="cassandra.policies.ReconnectionPolicy"><code class="xref py py-class docutils literal"><span class="pre">ReconnectionPolicy</span></code></a> subclass which exponentially increases
 the length of the delay inbetween each reconnection attempt up to
 a set maximum delay.</p>
 <p><cite>base_delay</cite> and <cite>max_delay</cite> should be in floating point units of
 seconds.</p>
+<p><cite>max_attempts</cite> should be a total number of attempts to be made before
+giving up, or <code class="xref py py-const docutils literal"><span class="pre">None</span></code> to continue reconnection attempts forever.
+The default is 64.</p>
 </dd></dl>
 
 </div>
@@ -384,7 +387,7 @@ Unavailable failures occur when the coordinator cannot acheive the consistency
 level for a request. For further information see the method descriptions
 below.</p>
 <p>To specify a default retry policy, set the
-<a class="reference internal" href="cluster.html#cassandra.cluster.Cluster.default_retry_policy" title="cassandra.cluster.Cluster.default_retry_policy"><code class="xref py py-attr docutils literal"><span class="pre">Cluster.default_retry_policy</span></code></a> attribute to an instance of this
+<code class="xref py py-attr docutils literal"><span class="pre">Cluster.default_retry_policy</span></code> attribute to an instance of this
 class or one of its subclasses.</p>
 <p>To specify a retry policy per query, set the <a class="reference internal" href="query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><code class="xref py py-attr docutils literal"><span class="pre">Statement.retry_policy</span></code></a>
 attribute to an instance of this class or one of its subclasses.</p>
@@ -554,13 +557,13 @@ than reading nothing, even if there is a risk of reading stale data.</p>
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2014, DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+        &copy; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
     </div>
   </body>
 </html>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Making Queries &mdash; Cassandra Driver 3.0.0 documentation</title>
+    <title>Making Queries &mdash; Cassandra Driver 3.1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.0.0',
+        VERSION:     '3.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="../index.html" />
+    <link rel="top" title="Cassandra Driver 3.1.0 documentation" href="../index.html" />
     <link rel="up" title="Object Mapper" href="../object_mapper.html" />
     <link rel="next" title="Batch Queries" href="batches.html" />
     <link rel="prev" title="Models" href="models.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="models.html" title="Models"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" accesskey="U">Object Mapper</a> &raquo;</li> 
       </ul>
     </div>
@@ -133,14 +133,15 @@
     <span class="n">year</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
     <span class="n">price</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Decimal</span><span class="p">()</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>...and assuming the Automobile table contains a record of every car model manufactured in the last 20 years or so, we can retrieve only the cars made by a single manufacturer like this:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>You can also use the more convenient syntax:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">Automobile</span><span class="o">.</span><span class="n">manufacturer</span> <span class="o">==</span> <span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">Automobile</span><span class="o">.</span><span class="n">manufacturer</span> <span class="o">==</span> <span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>We can then further filter our query with another call to <strong>.filter</strong></p>
@@ -159,7 +160,7 @@
 <li><dl class="first docutils">
 <dt>iterating over the queryset</dt>
 <dd><div class="first last highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">car</span> <span class="ow">in</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-    <span class="c">#...do something to the car instance</span>
+    <span class="c1">#...do something to the car instance</span>
     <span class="k">pass</span>
 </pre></div>
 </div>
@@ -168,10 +169,17 @@
 </li>
 <li><dl class="first docutils">
 <dt>list index</dt>
-<dd><div class="first last highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-<span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c">#returns the first result</span>
-<span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="c">#returns the second result</span>
+<dd><div class="first highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c1">#returns the first result</span>
+<span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="c1">#returns the second result</span>
 </pre></div>
+</div>
+<div class="last admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li>CQL does not support specifying a start position in it&#8217;s queries. Therefore, accessing elements using array indexing will load every result up to the index value requested</li>
+<li>Using negative indices requires a &#8220;SELECT COUNT()&#8221; to be executed. This has a performance cost on large datasets.</li>
+</ul>
 </div>
 </dd>
 </dl>
@@ -179,17 +187,23 @@
 <li><dl class="first docutils">
 <dt>list slicing</dt>
 <dd><div class="first highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-<span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="c">#returns all results except the first</span>
-<span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">9</span><span class="p">]</span> <span class="c">#returns a slice of the results</span>
+<span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="c1">#returns all results except the first</span>
+<span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">9</span><span class="p">]</span> <span class="c1">#returns a slice of the results</span>
 </pre></div>
 </div>
-<p class="last"><em>Note: CQL does not support specifying a start position in it&#8217;s queries. Therefore, accessing elements using array indexing / slicing will load every result up to the index value requested</em></p>
+<div class="last admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li>CQL does not support specifying a start position in it&#8217;s queries. Therefore, accessing elements using array slicing will load every result up to the index value requested</li>
+<li>Using negative indices requires a &#8220;SELECT COUNT()&#8221; to be executed. This has a performance cost on large datasets.</li>
+</ul>
+</div>
 </dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>calling <code class="xref py py-attr docutils literal"><span class="pre">get()</span></code> on the queryset</dt>
-<dd><div class="first highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<dd><div class="first highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
 <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>
 <span class="n">car</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 </pre></div>
@@ -200,7 +214,7 @@
 </li>
 <li><dl class="first docutils">
 <dt>calling <code class="xref py py-attr docutils literal"><span class="pre">first()</span></code> on the queryset</dt>
-<dd><div class="first highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<dd><div class="first highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
 <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>
 <span class="n">car</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 </pre></div>
@@ -218,25 +232,25 @@
 <div><p><code class="xref py py-attr docutils literal"><span class="pre">Equal</span> <span class="pre">To</span></code></p>
 <blockquote>
 <div><p>The default filtering operator.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
-<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>  <span class="c">#year == 2012</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>  <span class="c1">#year == 2012</span>
 </pre></div>
 </div>
 </div></blockquote>
 <p>In addition to simple equal to queries, cqlengine also supports querying with other operators by appending a <code class="docutils literal"><span class="pre">__&lt;op&gt;</span></code> to the field name on the filtering call</p>
 <p><code class="xref py py-attr docutils literal"><span class="pre">in</span> <span class="pre">(__in)</span></code></p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
 <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__in</span><span class="o">=</span><span class="p">[</span><span class="mi">2011</span><span class="p">,</span> <span class="mi">2012</span><span class="p">])</span>
 </pre></div>
 </div>
 </div></blockquote>
 <p><code class="xref py py-attr docutils literal"><span class="pre">&gt;</span> <span class="pre">(__gt)</span></code></p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
-<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__gt</span><span class="o">=</span><span class="mi">2010</span><span class="p">)</span>  <span class="c"># year &gt; 2010</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__gt</span><span class="o">=</span><span class="mi">2010</span><span class="p">)</span>  <span class="c1"># year &gt; 2010</span>
 
-<span class="c"># or the nicer syntax</span>
+<span class="c1"># or the nicer syntax</span>
 
 <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Automobile</span><span class="o">.</span><span class="n">year</span> <span class="o">&gt;</span> <span class="mi">2010</span><span class="p">)</span>
 </pre></div>
@@ -244,10 +258,10 @@
 </div></blockquote>
 <p><code class="xref py py-attr docutils literal"><span class="pre">&gt;=</span> <span class="pre">(__gte)</span></code></p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
-<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__gte</span><span class="o">=</span><span class="mi">2010</span><span class="p">)</span>  <span class="c"># year &gt;= 2010</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__gte</span><span class="o">=</span><span class="mi">2010</span><span class="p">)</span>  <span class="c1"># year &gt;= 2010</span>
 
-<span class="c"># or the nicer syntax</span>
+<span class="c1"># or the nicer syntax</span>
 
 <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Automobile</span><span class="o">.</span><span class="n">year</span> <span class="o">&gt;=</span> <span class="mi">2010</span><span class="p">)</span>
 </pre></div>
@@ -255,10 +269,10 @@
 </div></blockquote>
 <p><code class="xref py py-attr docutils literal"><span class="pre">&lt;</span> <span class="pre">(__lt)</span></code></p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
-<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__lt</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>  <span class="c"># year &lt; 2012</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__lt</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>  <span class="c1"># year &lt; 2012</span>
 
-<span class="c"># or...</span>
+<span class="c1"># or...</span>
 
 <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Automobile</span><span class="o">.</span><span class="n">year</span> <span class="o">&lt;</span> <span class="mi">2012</span><span class="p">)</span>
 </pre></div>
@@ -266,12 +280,21 @@
 </div></blockquote>
 <p><code class="xref py py-attr docutils literal"><span class="pre">&lt;=</span> <span class="pre">(__lte)</span></code></p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
-<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__lte</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>  <span class="c"># year &lt;= 2012</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year__lte</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>  <span class="c1"># year &lt;= 2012</span>
 
 <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Automobile</span><span class="o">.</span><span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">2012</span><span class="p">)</span>
 </pre></div>
 </div>
+</div></blockquote>
+<p><code class="xref py py-attr docutils literal"><span class="pre">CONTAINS</span> <span class="pre">(__contains)</span></code></p>
+<blockquote>
+<div><p>The CONTAINS operator is available for all collection types (List, Set, Map).</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">options__contains</span><span class="o">=</span><span class="s1">&#39;backup camera&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">allow_filtering</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Note that we need to use allow_filtering() since the <em>options</em> column has no secondary index.</p>
 </div></blockquote>
 </div></blockquote>
 </div>
@@ -329,11 +352,11 @@ Cassandra orders returned items by value of partition key token, so using cqleng
 <blockquote>
 <div><p>When calling any method that changes a queryset, the method does not actually change the queryset object it&#8217;s called on, but returns a new queryset object with the attributes of the original queryset, plus the attributes added in the method call.</p>
 <p><em>Example</em></p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c">#this produces 3 different querysets</span>
-<span class="c">#q does not change after it&#39;s initial definition</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="c1">#this produces 3 different querysets</span>
+<span class="c1">#q does not change after it&#39;s initial definition</span>
 <span class="n">q</span> <span class="o">=</span> <span class="n">Automobiles</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2012</span><span class="p">)</span>
-<span class="n">tesla2012</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Tesla&#39;</span><span class="p">)</span>
-<span class="n">honda2012</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;Honda&#39;</span><span class="p">)</span>
+<span class="n">tesla2012</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
+<span class="n">honda2012</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Honda&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -344,10 +367,10 @@ Cassandra orders returned items by value of partition key token, so using cqleng
 <div><p>Since Cassandra is essentially a distributed hash table on steroids, the order you get records back in will not be particularly predictable.</p>
 <p>However, you can set a column to order on with the <code class="docutils literal"><span class="pre">.order_by(column_name)</span></code> method.</p>
 <p><em>Example</em></p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c">#sort ascending</span>
-<span class="n">q</span> <span class="o">=</span> <span class="n">Automobiles</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s">&#39;year&#39;</span><span class="p">)</span>
-<span class="c">#sort descending</span>
-<span class="n">q</span> <span class="o">=</span> <span class="n">Automobiles</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s">&#39;-year&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="c1">#sort ascending</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">Automobiles</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">&#39;year&#39;</span><span class="p">)</span>
+<span class="c1">#sort descending</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">Automobiles</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">&#39;-year&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><em>Note: Cassandra only supports ordering on a clustering key. In other words, to support ordering results, your model must have more than one primary key, and you must order on a primary key, excluding the first one.</em></p>
@@ -364,8 +387,8 @@ Each tuple contains the value from the respective field passed into the <code cl
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
     <span class="n">TestModel</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">clustering_key</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
 
-<span class="n">values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">TestModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s">&#39;clustering_key&#39;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
-<span class="c"># [19L, 18L, 17L, 16L, 15L, 14L, 13L, 12L, 11L, 10L, 9L, 8L, 7L, 6L, 5L, 4L, 3L, 2L, 1L, 0L]</span>
+<span class="n">values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">TestModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s1">&#39;clustering_key&#39;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+<span class="c1"># [19L, 18L, 17L, 16L, 15L, 14L, 13L, 12L, 11L, 10L, 9L, 8L, 7L, 6L, 5L, 4L, 3L, 2L, 1L, 0L]</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -387,7 +410,7 @@ None means no timeout.</p>
 </pre></div>
 </div>
 <p>Create a single row with a 50ms timeout</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Jon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Jon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Delete a single row with no timeout</p>
@@ -395,12 +418,12 @@ None means no timeout.</p>
 </pre></div>
 </div>
 <p>Update a single row with no timeout</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;Blake&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Blake&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Batch query timeouts</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">BatchQuery</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
-    <span class="n">Row</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Jon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+    <span class="n">Row</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Jon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>NOTE: You cannot set both timeout and batch at the same time, batch will use the timeout defined in it&#8217;s constructor.
@@ -412,14 +435,14 @@ Setting the timeout on the model is meaningless and will raise an AssertionError
 <p>Named tables are a way of querying a table without creating an class.  They&#8217;re useful for querying system tables or exploring an unfamiliar database.</p>
 <blockquote>
 <div><div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cqlengine.connection</span> <span class="kn">import</span> <span class="n">setup</span>
-<span class="n">setup</span><span class="p">(</span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="s">&quot;cqlengine_test&quot;</span><span class="p">)</span>
+<span class="n">setup</span><span class="p">(</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="s2">&quot;cqlengine_test&quot;</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">cqlengine.named</span> <span class="kn">import</span> <span class="n">NamedTable</span>
-<span class="n">user</span> <span class="o">=</span> <span class="n">NamedTable</span><span class="p">(</span><span class="s">&quot;cqlengine_test&quot;</span><span class="p">,</span> <span class="s">&quot;user&quot;</span><span class="p">)</span>
+<span class="n">user</span> <span class="o">=</span> <span class="n">NamedTable</span><span class="p">(</span><span class="s2">&quot;cqlengine_test&quot;</span><span class="p">,</span> <span class="s2">&quot;user&quot;</span><span class="p">)</span>
 <span class="n">user</span><span class="o">.</span><span class="n">objects</span><span class="p">()</span>
 <span class="n">user</span><span class="o">.</span><span class="n">objects</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
 
-<span class="c"># {u&#39;pk&#39;: 1, u&#39;t&#39;: datetime.datetime(2014, 6, 26, 17, 10, 31, 774000)}</span>
+<span class="c1"># {u&#39;pk&#39;: 1, u&#39;t&#39;: datetime.datetime(2014, 6, 26, 17, 10, 31, 774000)}</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -447,13 +470,13 @@ Setting the timeout on the model is meaningless and will raise an AssertionError
         <li class="right" >
           <a href="models.html" title="Models"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" >Object Mapper</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2014, DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+        &copy; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
     </div>
   </body>
 </html>

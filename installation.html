@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Installation &mdash; Cassandra Driver 3.0.0 documentation</title>
+    <title>Installation &mdash; Cassandra Driver 3.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.0.0',
+        VERSION:     '3.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 3.1.0 documentation" href="index.html" />
     <link rel="next" title="Getting Started" href="getting_started.html" />
     <link rel="prev" title="cassandra.cqlengine.usertype - Model classes for User Defined Types" href="api/cassandra/cqlengine/usertype.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="api/cassandra/cqlengine/usertype.html" title="cassandra.cqlengine.usertype - Model classes for User Defined Types"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -190,7 +190,7 @@ just run <code class="docutils literal"><span class="pre">apt-get</span> <span c
 </div>
 <div class="section" id="optional-metrics-support">
 <h2>(<em>Optional</em>) Metrics Support<a class="headerlink" href="#optional-metrics-support" title="Permalink to this headline">¶</a></h2>
-<p>The driver has built-in support for capturing <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.metrics" title="cassandra.cluster.Cluster.metrics"><code class="xref py py-attr docutils literal"><span class="pre">Cluster.metrics</span></code></a> about
+<p>The driver has built-in support for capturing <code class="xref py py-attr docutils literal"><span class="pre">Cluster.metrics</span></code> about
 the queries you run.  However, the <code class="docutils literal"><span class="pre">scales</span></code> library is required to
 support this:</p>
 <div class="highlight-python"><div class="highlight"><pre>pip install scales
@@ -225,15 +225,30 @@ with <code class="docutils literal"><span class="pre">--no-murmur3</span></code>
 <p>By default, this package uses <a class="reference external" href="http://cython.org/">Cython</a> to optimize core modules and build custom extensions.
 This is not a hard requirement, but is engaged by default to build extensions offering better performance than the
 pure Python implementation.</p>
-<p>This build phase can be avoided using the build switch, or an environment variable:</p>
+<p>This is a costly build phase, especially in clean environments where the Cython compiler must be built
+This build phase can be avoided using the build switch, or an environment variable:</p>
 <div class="highlight-python"><div class="highlight"><pre>python setup.py install --no-cython
--or-
-pip install --install-option=&quot;--no-cython&quot; &lt;spec-or-path&gt;
 </pre></div>
 </div>
 <p>Alternatively, an environment variable can be used to switch this option regardless of
 context:</p>
 <div class="highlight-python"><div class="highlight"><pre>CASS_DRIVER_NO_CYTHON=1 &lt;your script here&gt;
+- or, to disable all extensions:
+CASS_DRIVER_NO_EXTENSIONS=1 &lt;your script here&gt;
+</pre></div>
+</div>
+<p>This method is required when using pip, which provides no other way of injecting user options in a single command:</p>
+<div class="highlight-python"><div class="highlight"><pre>CASS_DRIVER_NO_CYTHON=1 pip install cassandra-driver
+CASS_DRIVER_NO_CYTHON=1 sudo -E pip install ~/python-driver
+</pre></div>
+</div>
+<p>The environment variable is the preferred option because it spans all invocations of setup.py, and will
+prevent Cython from being materialized as a setup requirement.</p>
+<p>If your sudo configuration does not allow SETENV, you must push the option flag down via pip. However, pip
+applies these options to all dependencies (which break on the custom flag). Therefore, you must first install
+dependencies, then use install-option:</p>
+<div class="highlight-python"><div class="highlight"><pre>sudo pip install six futures
+sudo pip install --install-option=&quot;--no-cython&quot;
 </pre></div>
 </div>
 </div>
@@ -300,12 +315,12 @@ the libev event loop by doing the following:</p>
         <li class="right" >
           <a href="api/cassandra/cqlengine/usertype.html" title="cassandra.cqlengine.usertype - Model classes for User Defined Types"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2014, DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+        &copy; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
     </div>
   </body>
 </html>

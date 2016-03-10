@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Paging Large Queries &mdash; Cassandra Driver 3.0.0 documentation</title>
+    <title>Paging Large Queries &mdash; Cassandra Driver 3.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.0.0',
+        VERSION:     '3.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,8 +23,8 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="index.html" />
-    <link rel="next" title="Security" href="security.html" />
+    <link rel="top" title="Cassandra Driver 3.1.0 documentation" href="index.html" />
+    <link rel="next" title="Lightweight Transactions (Compare-and-set)" href="lwt.html" />
     <link rel="prev" title="Performance Notes" href="performance.html" /> 
   </head>
   <body role="document">
@@ -38,12 +38,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="security.html" title="Security"
+          <a href="lwt.html" title="Lightweight Transactions (Compare-and-set)"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="performance.html" title="Performance Notes"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -62,8 +62,8 @@
   <p class="topless"><a href="performance.html"
                         title="previous chapter">Performance Notes</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="security.html"
-                        title="next chapter">Security</a></p>
+  <p class="topless"><a href="lwt.html"
+                        title="next chapter">Lightweight Transactions (Compare-and-set)</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -95,12 +95,12 @@
   <div class="section" id="paging-large-queries">
 <span id="query-paging"></span><h1>Paging Large Queries<a class="headerlink" href="#paging-large-queries" title="Permalink to this headline">¶</a></h1>
 <p>Cassandra 2.0+ offers support for automatic query paging.  Starting with
-version 2.0 of the driver, if <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code></a> is set to
-<code class="xref py py-const docutils literal"><span class="pre">4</span></code> (it is by default), queries returning large result sets will be
+version 2.0 of the driver, if <code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code> is greater than
+<code class="xref py py-const docutils literal"><span class="pre">2</span></code> (it is by default), queries returning large result sets will be
 automatically paged.</p>
 <div class="section" id="controlling-the-page-size">
 <h2>Controlling the Page Size<a class="headerlink" href="#controlling-the-page-size" title="Permalink to this headline">¶</a></h2>
-<p>By default, <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.default_fetch_size" title="cassandra.cluster.Session.default_fetch_size"><code class="xref py py-attr docutils literal"><span class="pre">Session.default_fetch_size</span></code></a> controls how many rows will
+<p>By default, <code class="xref py py-attr docutils literal"><span class="pre">Session.default_fetch_size</span></code> controls how many rows will
 be fetched per page.  This can be overridden per-query by setting
 <a class="reference internal" href="api/cassandra/query.html#cassandra.query.Statement.fetch_size" title="cassandra.query.Statement.fetch_size"><code class="xref py py-attr docutils literal"><span class="pre">fetch_size</span></code></a> on a <a class="reference internal" href="api/cassandra/query.html#cassandra.query.Statement" title="cassandra.query.Statement"><code class="xref py py-class docutils literal"><span class="pre">Statement</span></code></a>.  By default, each page
 will contain at most 5000 rows.</p>
@@ -112,7 +112,7 @@ instance of <code class="xref py py-class docutils literal"><span class="pre">Pa
 list.  This class implements the iterator interface, so you can treat
 it like a normal iterator over rows:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="n">SimpleStatement</span>
-<span class="n">query</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM users&quot;</span>  <span class="c"># users contains 100 rows</span>
+<span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT * FROM users&quot;</span>  <span class="c1"># users contains 100 rows</span>
 <span class="n">statement</span> <span class="o">=</span> <span class="n">SimpleStatement</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">user_row</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">statement</span><span class="p">):</span>
     <span class="n">process_user</span><span class="p">(</span><span class="n">user_row</span><span class="p">)</span>
@@ -122,17 +122,17 @@ it like a normal iterator over rows:</p>
 be fetched transparently.  However, note that it <em>is</em> possible for
 an <code class="xref py py-class docutils literal"><span class="pre">Exception</span></code> to be raised while fetching the next page, just
 like you might see on a normal call to <code class="docutils literal"><span class="pre">session.execute()</span></code>.</p>
-<p>If you use <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute_async()</span></code></a> along with,
-<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.result()</span></code></a>, the first page will be fetched before
-<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><code class="xref py py-meth docutils literal"><span class="pre">result()</span></code></a> returns, but latter pages will be
+<p>If you use <code class="xref py py-meth docutils literal"><span class="pre">Session.execute_async()</span></code> along with,
+<code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.result()</span></code>, the first page will be fetched before
+<code class="xref py py-meth docutils literal"><span class="pre">result()</span></code> returns, but latter pages will be
 transparently fetched synchronously while iterating the result.</p>
 </div>
 <div class="section" id="handling-paged-results-with-callbacks">
 <h2>Handling Paged Results with Callbacks<a class="headerlink" href="#handling-paged-results-with-callbacks" title="Permalink to this headline">¶</a></h2>
 <p>If callbacks are attached to a query that returns a paged result,
 the callback will be called once per page with a normal list of rows.</p>
-<p>Use <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.has_more_pages" title="cassandra.cluster.ResponseFuture.has_more_pages"><code class="xref py py-attr docutils literal"><span class="pre">ResponseFuture.has_more_pages</span></code></a> and
-<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.start_fetching_next_page" title="cassandra.cluster.ResponseFuture.start_fetching_next_page"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.start_fetching_next_page()</span></code></a> to continue fetching
+<p>Use <code class="xref py py-attr docutils literal"><span class="pre">ResponseFuture.has_more_pages</span></code> and
+<code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.start_fetching_next_page()</span></code> to continue fetching
 pages.  For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PagedResultHandler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
@@ -157,7 +157,7 @@ pages.  For example:</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">exc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">finished_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 
-<span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+<span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
 <span class="n">handler</span> <span class="o">=</span> <span class="n">PagedResultHandler</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
 <span class="n">handler</span><span class="o">.</span><span class="n">finished_event</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 <span class="k">if</span> <span class="n">handler</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
@@ -183,17 +183,17 @@ pages.  For example:</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="security.html" title="Security"
+          <a href="lwt.html" title="Lightweight Transactions (Compare-and-set)"
              >next</a> |</li>
         <li class="right" >
           <a href="performance.html" title="Performance Notes"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2014, DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+        &copy; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
     </div>
   </body>
 </html>

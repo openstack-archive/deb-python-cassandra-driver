@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>User Defined Types &mdash; Cassandra Driver 3.0.0 documentation</title>
+    <title>User Defined Types &mdash; Cassandra Driver 3.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.0.0',
+        VERSION:     '3.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 3.1.0 documentation" href="index.html" />
     <link rel="next" title="Object Mapper" href="object_mapper.html" />
     <link rel="prev" title="Security" href="security.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="security.html" title="Security"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -102,29 +102,29 @@ new type through <code class="docutils literal"><span class="pre">CREATE</span> 
 <div class="section" id="registering-a-class-to-map-to-a-udt">
 <h2>Registering a Class to Map to a UDT<a class="headerlink" href="#registering-a-class-to-map-to-a-udt" title="Permalink to this headline">¶</a></h2>
 <p>You can tell the Python driver to return columns of a specific UDT as
-instances of a class by registering them with your <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code></a>
-instance through <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.register_user_type" title="cassandra.cluster.Cluster.register_user_type"><code class="xref py py-meth docutils literal"><span class="pre">Cluster.register_user_type()</span></code></a>:</p>
+instances of a class by registering them with your <code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code>
+instance through <code class="xref py py-meth docutils literal"><span class="pre">Cluster.register_user_type()</span></code>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-<span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s">&#39;mykeyspace&#39;</span><span class="p">)</span>
-<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TYPE address (street text, zipcode int)&quot;</span><span class="p">)</span>
-<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TABLE users (id int PRIMARY KEY, location frozen&lt;address&gt;)&quot;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s1">&#39;mykeyspace&#39;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TYPE address (street text, zipcode int)&quot;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE users (id int PRIMARY KEY, location frozen&lt;address&gt;)&quot;</span><span class="p">)</span>
 
-<span class="c"># create a class to map to the &quot;address&quot; UDT</span>
+<span class="c1"># create a class to map to the &quot;address&quot; UDT</span>
 <span class="k">class</span> <span class="nc">Address</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">street</span><span class="p">,</span> <span class="n">zipcode</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">street</span> <span class="o">=</span> <span class="n">street</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">zipcode</span> <span class="o">=</span> <span class="n">zipcode</span>
 
-<span class="n">cluster</span><span class="o">.</span><span class="n">register_user_type</span><span class="p">(</span><span class="s">&#39;mykeyspace&#39;</span><span class="p">,</span> <span class="s">&#39;address&#39;</span><span class="p">,</span> <span class="n">Address</span><span class="p">)</span>
+<span class="n">cluster</span><span class="o">.</span><span class="n">register_user_type</span><span class="p">(</span><span class="s1">&#39;mykeyspace&#39;</span><span class="p">,</span> <span class="s1">&#39;address&#39;</span><span class="p">,</span> <span class="n">Address</span><span class="p">)</span>
 
-<span class="c"># insert a row using an instance of Address</span>
-<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;INSERT INTO users (id, location) VALUES (</span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">)&quot;</span><span class="p">,</span>
-                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Address</span><span class="p">(</span><span class="s">&quot;123 Main St.&quot;</span><span class="p">,</span> <span class="mi">78723</span><span class="p">)))</span>
+<span class="c1"># insert a row using an instance of Address</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO users (id, location) VALUES (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Address</span><span class="p">(</span><span class="s2">&quot;123 Main St.&quot;</span><span class="p">,</span> <span class="mi">78723</span><span class="p">)))</span>
 
-<span class="c"># results will include Address instances</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+<span class="c1"># results will include Address instances</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
 <span class="n">row</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="k">print</span> <span class="n">row</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">street</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">zipcode</span>
 </pre></div>
@@ -133,7 +133,7 @@ instance through <a class="reference internal" href="api/cassandra/cluster.html#
 <div class="section" id="using-udts-without-registering-them">
 <h2>Using UDTs Without Registering Them<a class="headerlink" href="#using-udts-without-registering-them" title="Permalink to this headline">¶</a></h2>
 <p>Although it is recommended to register your types with
-<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.register_user_type" title="cassandra.cluster.Cluster.register_user_type"><code class="xref py py-meth docutils literal"><span class="pre">Cluster.register_user_type()</span></code></a>, the driver gives you some options
+<code class="xref py py-meth docutils literal"><span class="pre">Cluster.register_user_type()</span></code>, the driver gives you some options
 for working with unregistered UDTS.</p>
 <p>When you use prepared statements, the driver knows what data types to
 expect for each placeholder.  This allows you to pass any object you
@@ -141,9 +141,9 @@ want for a UDT, as long as it has attributes that match the field names
 for the UDT:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-<span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s">&#39;mykeyspace&#39;</span><span class="p">)</span>
-<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TYPE address (street text, zipcode int)&quot;</span><span class="p">)</span>
-<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;CREATE TABLE users (id int PRIMARY KEY, location frozen&lt;address&gt;)&quot;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s1">&#39;mykeyspace&#39;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TYPE address (street text, zipcode int)&quot;</span><span class="p">)</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TABLE users (id int PRIMARY KEY, location frozen&lt;address&gt;)&quot;</span><span class="p">)</span>
 
 <span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
@@ -152,19 +152,19 @@ for the UDT:</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">zipcode</span> <span class="o">=</span> <span class="n">zipcode</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">otherstuff</span> <span class="o">=</span> <span class="n">otherstuff</span>
 
-<span class="n">insert_statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s">&quot;INSERT INTO users (id, location) VALUES (?, ?)&quot;</span><span class="p">)</span>
+<span class="n">insert_statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s2">&quot;INSERT INTO users (id, location) VALUES (?, ?)&quot;</span><span class="p">)</span>
 
-<span class="c"># since we&#39;re using a prepared statement, we don&#39;t *have* to register</span>
-<span class="c"># a class to map to the UDT to insert data.  The object just needs to have</span>
-<span class="c"># &quot;street&quot; and &quot;zipcode&quot; attributes (which Foo does):</span>
-<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_statement</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">Foo</span><span class="p">(</span><span class="s">&quot;123 Main St.&quot;</span><span class="p">,</span> <span class="mi">78723</span><span class="p">,</span> <span class="s">&quot;some other stuff&quot;</span><span class="p">)])</span>
+<span class="c1"># since we&#39;re using a prepared statement, we don&#39;t *have* to register</span>
+<span class="c1"># a class to map to the UDT to insert data.  The object just needs to have</span>
+<span class="c1"># &quot;street&quot; and &quot;zipcode&quot; attributes (which Foo does):</span>
+<span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_statement</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">Foo</span><span class="p">(</span><span class="s2">&quot;123 Main St.&quot;</span><span class="p">,</span> <span class="mi">78723</span><span class="p">,</span> <span class="s2">&quot;some other stuff&quot;</span><span class="p">)])</span>
 
-<span class="c"># when we query data, UDT columns that don&#39;t have a class registered</span>
-<span class="c"># will be returned as namedtuples:</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+<span class="c1"># when we query data, UDT columns that don&#39;t have a class registered</span>
+<span class="c1"># will be returned as namedtuples:</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
 <span class="n">first_row</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">address</span> <span class="o">=</span> <span class="n">first_row</span><span class="o">.</span><span class="n">location</span>
-<span class="k">print</span> <span class="n">address</span>  <span class="c"># prints &quot;Address(street=&#39;123 Main St.&#39;, zipcode=78723)&quot;</span>
+<span class="k">print</span> <span class="n">address</span>  <span class="c1"># prints &quot;Address(street=&#39;123 Main St.&#39;, zipcode=78723)&quot;</span>
 <span class="n">street</span> <span class="o">=</span> <span class="n">address</span><span class="o">.</span><span class="n">street</span>
 <span class="n">zipcode</span> <span class="o">=</span> <span class="n">address</span><span class="o">.</span><span class="n">street</span>
 </pre></div>
@@ -199,12 +199,12 @@ simply return <code class="docutils literal"><span class="pre">namedtuple</span>
         <li class="right" >
           <a href="security.html" title="Security"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2014, DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+        &copy; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
     </div>
   </body>
 </html>
