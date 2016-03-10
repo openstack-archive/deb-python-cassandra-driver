@@ -96,6 +96,275 @@
 <span id="cassandra-cqlengine-models-table-models-for-object-mapping"></span><h1><code class="docutils literal"><span class="pre">cassandra.cqlengine.models</span></code> - Table models for object mapping<a class="headerlink" href="#module-cassandra.cqlengine.models" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="model">
 <h2>Model<a class="headerlink" href="#model" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="cassandra.cqlengine.models.Model">
+<em class="property">class </em><code class="descclassname">cassandra.cqlengine.models.</code><code class="descname">Model</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/cassandra/cqlengine/models.html#Model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.models.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>The initializer creates an instance of the model. Pass in keyword arguments for columns you&#8217;ve defined on the model.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">first_name</span>  <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
+
+<span class="n">person</span> <span class="o">=</span> <span class="n">Person</span><span class="p">(</span><span class="n">first_name</span><span class="o">=</span><span class="s1">&#39;Blake&#39;</span><span class="p">,</span> <span class="n">last_name</span><span class="o">=</span><span class="s1">&#39;Eggleston&#39;</span><span class="p">)</span>
+<span class="n">person</span><span class="o">.</span><span class="n">first_name</span>  <span class="c1">#returns &#39;Blake&#39;</span>
+<span class="n">person</span><span class="o">.</span><span class="n">last_name</span>  <span class="c1">#returns &#39;Eggleston&#39;</span>
+</pre></div>
+</div>
+<p>Model attributes define how the model maps to tables in the database. These are class variables that should be set
+when defining Model deriviatives.</p>
+<dl class="attribute">
+<dt id="cassandra.cqlengine.models.Model.__abstract__">
+<code class="descname">__abstract__</code><em class="property"> = False</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__abstract__" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Optional.</em> Indicates that this model is only intended to be used as a base class for other models.
+You can&#8217;t create tables for abstract models, but checks around schema validity are skipped during class construction.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.models.Model.__table_name__">
+<code class="descname">__table_name__</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__table_name__" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Optional.</em> Sets the name of the CQL table for this model. If left blank, the table name will be the name of the model, with it&#8217;s module name as it&#8217;s prefix. Manually defined table names are not inherited.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.models.Model.__table_name_case_sensitive__">
+<code class="descname">__table_name_case_sensitive__</code><em class="property"> = False</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__table_name_case_sensitive__" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Optional.</em> By default, __table_name__ is case insensitive. Set this to True if you want to preserve the case sensitivity.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.models.Model.__keyspace__">
+<code class="descname">__keyspace__</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__keyspace__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the name of the keyspace used by this model.</p>
+</dd></dl>
+
+<span class="target" id="ttl-change"></span><dl class="attribute">
+<dt id="cassandra.cqlengine.models.Model.__default_ttl__">
+<code class="descname">__default_ttl__</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__default_ttl__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cqlengine.models.Model.__discriminator_value__">
+<code class="descname">__discriminator_value__</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cqlengine.models.Model.__discriminator_value__" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Optional</em> Specifies a value for the discriminator column when using model inheritance.</p>
+<p>See <a class="reference internal" href="../../../cqlengine/models.html#model-inheritance"><span>Model Inheritance</span></a> for usage examples.</p>
+</dd></dl>
+
+<p>Each table can have its own set of configuration options, including compaction. Unspecified, these default to sensible values in
+the server. To override defaults, set options using the model <code class="docutils literal"><span class="pre">__options__</span></code> attribute, which allows options specified a dict.</p>
+<p>When a table is synced, it will be altered to match the options set on your table.
+This means that if you are changing settings manually they will be changed back on resync.</p>
+<p>Do not use the options settings of cqlengine if you want to manage your compaction settings manually.</p>
+<p>See the <a class="reference external" href="http://www.datastax.com/documentation/cql/3.1/cql/cql_reference/tabProp.html">list of supported table properties for more information</a>.</p>
+<dl class="attribute">
+<dt id="cassandra.cqlengine.models.Model.__options__">
+<code class="descname">__options__</code><a class="headerlink" href="#cassandra.cqlengine.models.Model.__options__" title="Permalink to this definition">¶</a></dt>
+<dd><p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">__options__</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;compaction&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;LeveledCompactionStrategy&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;sstable_size_in_mb&#39;</span><span class="p">:</span> <span class="s1">&#39;64&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;tombstone_threshold&#39;</span><span class="p">:</span> <span class="s1">&#39;.2&#39;</span><span class="p">},</span>
+                   <span class="s1">&#39;read_repair_chance&#39;</span><span class="p">:</span> <span class="s1">&#39;0.5&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;comment&#39;</span><span class="p">:</span> <span class="s1">&#39;User data stored here&#39;</span><span class="p">}</span>
+
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>or :</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TimeData</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">__options__</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;compaction&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;SizeTieredCompactionStrategy&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;bucket_low&#39;</span><span class="p">:</span> <span class="s1">&#39;.3&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;bucket_high&#39;</span><span class="p">:</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;min_threshold&#39;</span><span class="p">:</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;max_threshold&#39;</span><span class="p">:</span> <span class="s1">&#39;64&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;tombstone_compaction_interval&#39;</span><span class="p">:</span> <span class="s1">&#39;86400&#39;</span><span class="p">},</span>
+                   <span class="s1">&#39;gc_grace_seconds&#39;</span><span class="p">:</span> <span class="s1">&#39;0&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<p>The base methods allow creating, storing, and querying modeled objects.</p>
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.create">
+<code class="descname">create</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an instance of this model in the database.</p>
+<p>Takes the model column values as keyword arguments.</p>
+<p>Returns the instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.if_not_exists">
+<code class="descname">if_not_exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.if_not_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the existence of an object before insertion. The existence of an
+object is determined by its primary key(s). And please note using this flag
+would incur performance cost.</p>
+<p>If the insertion isn&#8217;t applied, a <a class="reference internal" href="query.html#cassandra.cqlengine.query.LWTException" title="cassandra.cqlengine.query.LWTException"><code class="xref py py-class docutils literal"><span class="pre">LWTException</span></code></a> is raised.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">TestIfNotExistsModel</span><span class="o">.</span><span class="n">if_not_exists</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">&#39;111111111111&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">LWTException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="c1"># handle failure case</span>
+    <span class="k">print</span> <span class="n">e</span><span class="o">.</span><span class="n">existing</span>  <span class="c1"># dict containing LWT result fields</span>
+</pre></div>
+</div>
+<p>This method is supported on Cassandra 2.0 or later.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.if_exists">
+<code class="descname">if_exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.if_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the existence of an object before an update or delete. The existence of an
+object is determined by its primary key(s). And please note using this flag
+would incur performance cost.</p>
+<p>If the update or delete isn&#8217;t applied, a <a class="reference internal" href="query.html#cassandra.cqlengine.query.LWTException" title="cassandra.cqlengine.query.LWTException"><code class="xref py py-class docutils literal"><span class="pre">LWTException</span></code></a> is raised.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">TestIfExistsModel</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">)</span><span class="o">.</span><span class="n">if_exists</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">&#39;111111111111&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">LWTException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="c1"># handle failure case</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p>This method is supported on Cassandra 2.0 or later.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.save">
+<code class="descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves an object to the database.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1">#create a person instance</span>
+<span class="n">person</span> <span class="o">=</span> <span class="n">Person</span><span class="p">(</span><span class="n">first_name</span><span class="o">=</span><span class="s1">&#39;Kimberly&#39;</span><span class="p">,</span> <span class="n">last_name</span><span class="o">=</span><span class="s1">&#39;Eggleston&#39;</span><span class="p">)</span>
+<span class="c1">#saves it to Cassandra</span>
+<span class="n">person</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>**values</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs an update on the model instance. You can pass in values to set on the model
+for updating, or you can call without values to execute an update against any modified
+fields. If no fields on the model have been modified since loading, no query will be
+performed. Model validation is performed normally.</p>
+<p>It is possible to do a blind update, that is, to update a field without having first selected the object out of the database.
+See <a class="reference internal" href="query.html#blind-updates"><span>Blind Updates</span></a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.iff">
+<code class="descname">iff</code><span class="sig-paren">(</span><em>**values</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.iff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks to ensure that the values specified are correct on the Cassandra cluster.
+Simply specify the column(s) and the expected value(s).  As with if_not_exists,
+this incurs a performance cost.</p>
+<p>If the insertion isn&#8217;t applied, a <a class="reference internal" href="query.html#cassandra.cqlengine.query.LWTException" title="cassandra.cqlengine.query.LWTException"><code class="xref py py-class docutils literal"><span class="pre">LWTException</span></code></a> is raised.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">t</span> <span class="o">=</span> <span class="n">TestTransactionModel</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s1">&#39;some text&#39;</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+     <span class="n">t</span><span class="o">.</span><span class="n">iff</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s1">&#39;other text&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">LWTException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="c1"># handle failure case</span>
+    <span class="k">print</span> <span class="n">e</span><span class="o">.</span><span class="n">existing</span> <span class="c1"># existing object</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a single object based on the passed filter constraints.</p>
+<p>This is a pass-through to the model objects().:method:<cite>~cqlengine.queries.get</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.filter">
+<code class="descname">filter</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a queryset based on filter parameters.</p>
+<p>This is a pass-through to the model objects().:method:<cite>~cqlengine.queries.filter</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.all">
+<code class="descname">all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a queryset representing all stored objects</p>
+<p>This is a pass-through to the model objects().all()</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the object from the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.batch">
+<code class="descname">batch</code><span class="sig-paren">(</span><em>batch_object</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.batch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the batch object to run instance updates and inserts queries with.</p>
+<p>See <a class="reference internal" href="../../../cqlengine/batches.html"><em>Batch Queries</em></a> for usage examples</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.timeout">
+<code class="descname">timeout</code><span class="sig-paren">(</span><em>timeout</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a timeout for use in <a class="reference internal" href="#cassandra.cqlengine.models.Model.save" title="cassandra.cqlengine.models.Model.save"><code class="xref py py-meth docutils literal"><span class="pre">save()</span></code></a>, <a class="reference internal" href="#cassandra.cqlengine.models.Model.update" title="cassandra.cqlengine.models.Model.update"><code class="xref py py-meth docutils literal"><span class="pre">update()</span></code></a>, and <a class="reference internal" href="#cassandra.cqlengine.models.Model.delete" title="cassandra.cqlengine.models.Model.delete"><code class="xref py py-meth docutils literal"><span class="pre">delete()</span></code></a>
+operations</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.timestamp">
+<code class="descname">timestamp</code><span class="sig-paren">(</span><em>timedelta_or_datetime</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the timestamp for the query</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.ttl">
+<code class="descname">ttl</code><span class="sig-paren">(</span><em>ttl_in_sec</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.ttl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ttl values to run instance updates and inserts queries with.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.column_family_name">
+<code class="descname">column_family_name</code><span class="sig-paren">(</span><em>include_keyspace=True</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.column_family_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the column family name if it&#8217;s been defined
+otherwise, it creates it from the module and class name</p>
+</dd></dl>
+
+<p>Models also support dict-like access:</p>
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.len">
+<code class="descname">len</code><span class="sig-paren">(</span><em>m</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.len" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of columns defined in the model</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">m[col_name]</code></dt>
+<dd><p>Returns the value of column <code class="docutils literal"><span class="pre">col_name</span></code></p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">m[col_name] = value</code></dt>
+<dd><p>Set <code class="docutils literal"><span class="pre">m[col_name]</span></code> to value</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.keys">
+<code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of column IDs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.values">
+<code class="descname">values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns list of column values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.models.Model.items">
+<code class="descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cqlengine.models.Model.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of column ID/value tuples.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 

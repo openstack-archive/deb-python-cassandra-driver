@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.io.eventletreactor &mdash; Cassandra Driver 3.0.0 documentation</title>
+    <title>cassandra.io.eventletreactor &mdash; Cassandra Driver 3.1.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.0.0',
+        VERSION:     '3.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.0.0 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.1.0 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -65,29 +65,29 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.io.eventletreactor</h1><div class="highlight"><pre>
-<span class="c"># Copyright 2014 Symantec Corporation</span>
-<span class="c"># Copyright 2013-2015 DataStax, Inc.</span>
-<span class="c">#</span>
-<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="c"># you may not use this file except in compliance with the License.</span>
-<span class="c"># You may obtain a copy of the License at</span>
-<span class="c">#</span>
-<span class="c"># http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="c">#</span>
-<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="c"># See the License for the specific language governing permissions and</span>
-<span class="c"># limitations under the License.</span>
+<span></span><span class="c1"># Copyright 2014 Symantec Corporation</span>
+<span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
 
-<span class="c"># Originally derived from MagnetoDB source:</span>
-<span class="c">#   https://github.com/stackforge/magnetodb/blob/2015.1.0b1/magnetodb/common/cassandra/io/eventletreactor.py</span>
+<span class="c1"># Originally derived from MagnetoDB source:</span>
+<span class="c1">#   https://github.com/stackforge/magnetodb/blob/2015.1.0b1/magnetodb/common/cassandra/io/eventletreactor.py</span>
 
 <span class="kn">from</span> <span class="nn">errno</span> <span class="kn">import</span> <span class="n">EALREADY</span><span class="p">,</span> <span class="n">EINPROGRESS</span><span class="p">,</span> <span class="n">EWOULDBLOCK</span><span class="p">,</span> <span class="n">EINVAL</span>
 <span class="kn">import</span> <span class="nn">eventlet</span>
-<span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">select</span><span class="p">,</span> <span class="n">socket</span>
+<span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">socket</span>
+<span class="kn">import</span> <span class="nn">ssl</span>
 <span class="kn">from</span> <span class="nn">eventlet.queue</span> <span class="kn">import</span> <span class="n">Queue</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Event</span>
@@ -104,7 +104,9 @@
 <span class="k">def</span> <span class="nf">is_timeout</span><span class="p">(</span><span class="n">err</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">err</span> <span class="ow">in</span> <span class="p">(</span><span class="n">EINPROGRESS</span><span class="p">,</span> <span class="n">EALREADY</span><span class="p">,</span> <span class="n">EWOULDBLOCK</span><span class="p">)</span> <span class="ow">or</span>
-        <span class="p">(</span><span class="n">err</span> <span class="o">==</span> <span class="n">EINVAL</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;nt&#39;</span><span class="p">,</span> <span class="s">&#39;ce&#39;</span><span class="p">))</span>
+        <span class="p">(</span><span class="n">err</span> <span class="o">==</span> <span class="n">EINVAL</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;nt&#39;</span><span class="p">,</span> <span class="s1">&#39;ce&#39;</span><span class="p">))</span> <span class="ow">or</span>
+        <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLError</span><span class="p">)</span> <span class="ow">and</span> <span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;timed out&#39;</span><span class="p">)</span> <span class="ow">or</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
     <span class="p">)</span>
 
 
@@ -153,8 +155,8 @@
             <span class="n">next_end</span> <span class="o">=</span> <span class="n">timer_manager</span><span class="o">.</span><span class="n">service_timeouts</span><span class="p">()</span>
             <span class="n">sleep_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">next_end</span> <span class="o">-</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">next_end</span> <span class="k">else</span> <span class="mi">10000</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">_new_timer</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">sleep_time</span><span class="p">)</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">_new_timer</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-</div>
+            <span class="n">cls</span><span class="o">.</span><span class="n">_new_timer</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">Connection</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -172,7 +174,7 @@
                 <span class="k">return</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span> <span class="o">=</span> <span class="bp">True</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Closing connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">))</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Closing connection (</span><span class="si">%s</span><span class="s2">) to </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">))</span>
 
         <span class="n">cur_gthread</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">getcurrent</span><span class="p">()</span>
 
@@ -182,16 +184,16 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_write_watcher</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Closed socket to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,))</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Closed socket to </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,))</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_defunct</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error_all_requests</span><span class="p">(</span>
-                <span class="n">ConnectionShutdown</span><span class="p">(</span><span class="s">&quot;Connection to </span><span class="si">%s</span><span class="s"> was closed&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">))</span>
-            <span class="c"># don&#39;t leave in-progress operations hanging</span>
+                <span class="n">ConnectionShutdown</span><span class="p">(</span><span class="s2">&quot;Connection to </span><span class="si">%s</span><span class="s2"> was closed&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">))</span>
+            <span class="c1"># don&#39;t leave in-progress operations hanging</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">connected_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">handle_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;connection closed by server&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;connection closed by server&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">handle_write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -200,36 +202,27 @@
                 <span class="n">next_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">next_msg</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Exception during socket send for </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Exception during socket send for </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
-                <span class="k">return</span>  <span class="c"># Leave the write loop</span>
+                <span class="k">return</span>  <span class="c1"># Leave the write loop</span>
 
     <span class="k">def</span> <span class="nf">handle_read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">run_select</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">select</span><span class="o">.</span><span class="n">select</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="p">,),</span> <span class="p">(),</span> <span class="p">())</span>
         <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">run_select</span><span class="p">()</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Exception during read select() for </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
-                              <span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-                <span class="k">return</span>
-
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">buf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_buffer_size</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_timeout</span><span class="p">(</span><span class="n">err</span><span class="p">):</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Exception during socket recv for </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
-                              <span class="bp">self</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
-                    <span class="k">return</span>  <span class="c"># leave the read loop</span>
+                <span class="k">if</span> <span class="n">is_timeout</span><span class="p">(</span><span class="n">err</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Exception during socket recv for </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+                <span class="k">return</span>  <span class="c1"># leave the read loop</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">tell</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">process_io_buffer</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Connection </span><span class="si">%s</span><span class="s"> closed by server&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Connection </span><span class="si">%s</span><span class="s2"> closed by server&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                 <span class="k">return</span>
 
@@ -253,14 +246,14 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.0.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2014, DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+        &copy; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
     </div>
   </body>
 </html>
