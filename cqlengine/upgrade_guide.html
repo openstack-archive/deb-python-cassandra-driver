@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Upgrade Guide &mdash; Cassandra Driver 3.1.0 documentation</title>
+    <title>Upgrade Guide &mdash; Cassandra Driver 3.1.1.post0 documentation</title>
     
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.1.0',
+        VERSION:     '3.1.1.post0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.1.0 documentation" href="../index.html" />
+    <link rel="top" title="Cassandra Driver 3.1.1.post0 documentation" href="../index.html" />
     <link rel="up" title="Object Mapper" href="../object_mapper.html" />
     <link rel="next" title="Models" href="models.html" />
     <link rel="prev" title="Object Mapper" href="../object_mapper.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../object_mapper.html" title="Object Mapper"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.1.1.post0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" accesskey="U">Object Mapper</a> &raquo;</li> 
       </ul>
     </div>
@@ -148,11 +148,11 @@ but it will not prevent side-by-side installation.</p>
 <h3>Imports<a class="headerlink" href="#imports" title="Permalink to this headline">¶</a></h3>
 <p>cqlengine is now integrated as a sub-package of the driver base package &#8216;cassandra&#8217;.
 Upgrading will require adjusting imports to cqlengine. For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cqlengine</span> <span class="kn">import</span> <span class="n">columns</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cqlengine</span> <span class="kn">import</span> <span class="n">columns</span>
 </pre></div>
 </div>
 <p>is now:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">columns</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">columns</span>
 </pre></div>
 </div>
 </div>
@@ -228,10 +228,10 @@ for CQL <code class="docutils literal"><span class="pre">float</span></code>.</p
 <p><code class="docutils literal"><span class="pre">cassandra.cqlengine.management.create_keyspace</span></code> is deprecated. Instead, use the new replication-strategy-specific
 functions that accept explicit options for known strategies:</p>
 <ul class="simple">
-<li><code class="xref py py-func docutils literal"><span class="pre">create_keyspace_simple()</span></code></li>
-<li><code class="xref py py-func docutils literal"><span class="pre">create_keyspace_network_topology()</span></code></li>
+<li><a class="reference internal" href="../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.create_keyspace_simple" title="cassandra.cqlengine.management.create_keyspace_simple"><code class="xref py py-func docutils literal"><span class="pre">create_keyspace_simple()</span></code></a></li>
+<li><a class="reference internal" href="../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.create_keyspace_network_topology" title="cassandra.cqlengine.management.create_keyspace_network_topology"><code class="xref py py-func docutils literal"><span class="pre">create_keyspace_network_topology()</span></code></a></li>
 </ul>
-<p><code class="docutils literal"><span class="pre">cassandra.cqlengine.management.delete_keyspace</span></code> is deprecated in favor of a new function, <code class="xref py py-func docutils literal"><span class="pre">drop_keyspace()</span></code>. The
+<p><code class="docutils literal"><span class="pre">cassandra.cqlengine.management.delete_keyspace</span></code> is deprecated in favor of a new function, <a class="reference internal" href="../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.drop_keyspace" title="cassandra.cqlengine.management.drop_keyspace"><code class="xref py py-func docutils literal"><span class="pre">drop_keyspace()</span></code></a>. The
 intent is simply to make the function match the CQL verb it invokes.</p>
 </div>
 <div class="section" id="model-inheritance">
@@ -239,14 +239,14 @@ intent is simply to make the function match the CQL verb it invokes.</p>
 <p>The names for class attributes controlling model inheritance are changing. Changes are as follows:</p>
 <ul class="simple">
 <li>Replace &#8216;polymorphic_key&#8217; in the base class Column definition with <a class="reference internal" href="../api/cassandra/cqlengine/columns.html#cassandra.cqlengine.columns.Column.discriminator_column" title="cassandra.cqlengine.columns.Column.discriminator_column"><code class="xref py py-attr docutils literal"><span class="pre">discriminator_column</span></code></a></li>
-<li>Replace the &#8216;__polymorphic_key__&#8217; class attribute the derived classes with <code class="xref py py-attr docutils literal"><span class="pre">__discriminator_value__</span></code></li>
+<li>Replace the &#8216;__polymorphic_key__&#8217; class attribute the derived classes with <a class="reference internal" href="../api/cassandra/cqlengine/models.html#cassandra.cqlengine.models.Model.__discriminator_value__" title="cassandra.cqlengine.models.Model.__discriminator_value__"><code class="xref py py-attr docutils literal"><span class="pre">__discriminator_value__</span></code></a></li>
 </ul>
 <p>The functionality is unchanged &#8211; the intent here is to make the names and language around these attributes more precise.
 For now, the old names are just deprecated, and the mapper will emit warnings if they are used. The old names
 will be removed in a future version.</p>
 <p>The example below shows a simple translation:</p>
 <p>Before:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Pet</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Pet</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">__table_name__</span> <span class="o">=</span> <span class="s1">&#39;pet&#39;</span>
     <span class="n">owner_id</span> <span class="o">=</span> <span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">pet_id</span> <span class="o">=</span> <span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
@@ -261,7 +261,7 @@ will be removed in a future version.</p>
 </pre></div>
 </div>
 <p>After:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Pet</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Pet</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">__table_name__</span> <span class="o">=</span> <span class="s1">&#39;pet&#39;</span>
     <span class="n">owner_id</span> <span class="o">=</span> <span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">pet_id</span> <span class="o">=</span> <span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
@@ -304,7 +304,7 @@ will be removed in a future version.</p>
         <li class="right" >
           <a href="../object_mapper.html" title="Object Mapper"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.1.1.post0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" >Object Mapper</a> &raquo;</li> 
       </ul>
     </div>

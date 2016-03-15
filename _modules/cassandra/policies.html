@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies &mdash; Cassandra Driver 3.1.0 documentation</title>
+    <title>cassandra.policies &mdash; Cassandra Driver 3.1.1.post0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.1.0',
+        VERSION:     '3.1.1.post0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.1.1.post0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.1.1.post0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -92,7 +92,7 @@
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="HostDistance"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.HostDistance">[docs]</a><span class="k">class</span> <span class="nc">HostDistance</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="HostDistance"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.HostDistance">[docs]</a><span class="k">class</span> <span class="nc">HostDistance</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A measure of how &quot;distant&quot; a node is from the client, which</span>
 <span class="sd">    may influence how the load balancer distributes requests</span>
@@ -150,7 +150,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="LoadBalancingPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.LoadBalancingPolicy">[docs]</a><span class="k">class</span> <span class="nc">LoadBalancingPolicy</span><span class="p">(</span><span class="n">HostStateListener</span><span class="p">):</span>
+<div class="viewcode-block" id="LoadBalancingPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.LoadBalancingPolicy">[docs]</a><span class="k">class</span> <span class="nc">LoadBalancingPolicy</span><span class="p">(</span><span class="n">HostStateListener</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load balancing policies are used to decide how to distribute</span>
 <span class="sd">    requests among all possible coordinator nodes in the cluster.</span>
@@ -168,14 +168,14 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
 
-<div class="viewcode-block" id="LoadBalancingPolicy.distance"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.LoadBalancingPolicy.distance">[docs]</a>    <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
+<div class="viewcode-block" id="LoadBalancingPolicy.distance"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.LoadBalancingPolicy.distance">[docs]</a>    <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a measure of how remote a :class:`~.pool.Host` is in</span>
 <span class="sd">        terms of the :class:`.HostDistance` enums.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="LoadBalancingPolicy.populate"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.LoadBalancingPolicy.populate">[docs]</a>    <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">hosts</span><span class="p">):</span>
+<div class="viewcode-block" id="LoadBalancingPolicy.populate"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.LoadBalancingPolicy.populate">[docs]</a>    <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">hosts</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This method is called to initialize the load balancing</span>
 <span class="sd">        policy with a set of :class:`.Host` instances before its</span>
@@ -184,7 +184,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="LoadBalancingPolicy.make_query_plan"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.LoadBalancingPolicy.make_query_plan">[docs]</a>    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">working_keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="LoadBalancingPolicy.make_query_plan"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.LoadBalancingPolicy.make_query_plan">[docs]</a>    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">working_keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a :class:`~.query.Statement` instance, return a iterable</span>
 <span class="sd">        of :class:`.Host` instances which should be queried in that</span>
@@ -200,7 +200,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="LoadBalancingPolicy.check_supported"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.LoadBalancingPolicy.check_supported">[docs]</a>    <span class="k">def</span> <span class="nf">check_supported</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="LoadBalancingPolicy.check_supported"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.LoadBalancingPolicy.check_supported">[docs]</a>    <span class="k">def</span> <span class="nf">check_supported</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This will be called after the cluster Metadata has been initialized.</span>
 <span class="sd">        If the load balancing policy implementation cannot be supported for</span>
@@ -210,7 +210,7 @@
         <span class="k">pass</span></div></div>
 
 
-<div class="viewcode-block" id="RoundRobinPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.RoundRobinPolicy">[docs]</a><span class="k">class</span> <span class="nc">RoundRobinPolicy</span><span class="p">(</span><span class="n">LoadBalancingPolicy</span><span class="p">):</span>
+<div class="viewcode-block" id="RoundRobinPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.RoundRobinPolicy">[docs]</a><span class="k">class</span> <span class="nc">RoundRobinPolicy</span><span class="p">(</span><span class="n">LoadBalancingPolicy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A subclass of :class:`.LoadBalancingPolicy` which evenly</span>
 <span class="sd">    distributes queries across all nodes in the cluster,</span>
@@ -261,7 +261,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_live_hosts</span><span class="o">.</span><span class="n">difference</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="DCAwareRoundRobinPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.DCAwareRoundRobinPolicy">[docs]</a><span class="k">class</span> <span class="nc">DCAwareRoundRobinPolicy</span><span class="p">(</span><span class="n">LoadBalancingPolicy</span><span class="p">):</span>
+<div class="viewcode-block" id="DCAwareRoundRobinPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.DCAwareRoundRobinPolicy">[docs]</a><span class="k">class</span> <span class="nc">DCAwareRoundRobinPolicy</span><span class="p">(</span><span class="n">LoadBalancingPolicy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Similar to :class:`.RoundRobinPolicy`, but prefers hosts</span>
 <span class="sd">    in the local datacenter and only uses nodes in remote</span>
@@ -377,7 +377,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">on_down</span><span class="p">(</span><span class="n">host</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="TokenAwarePolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.TokenAwarePolicy">[docs]</a><span class="k">class</span> <span class="nc">TokenAwarePolicy</span><span class="p">(</span><span class="n">LoadBalancingPolicy</span><span class="p">):</span>
+<div class="viewcode-block" id="TokenAwarePolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.TokenAwarePolicy">[docs]</a><span class="k">class</span> <span class="nc">TokenAwarePolicy</span><span class="p">(</span><span class="n">LoadBalancingPolicy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A :class:`.LoadBalancingPolicy` wrapper that adds token awareness to</span>
 <span class="sd">    a child policy.</span>
@@ -455,7 +455,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_policy</span><span class="o">.</span><span class="n">on_remove</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="WhiteListRoundRobinPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.WhiteListRoundRobinPolicy">[docs]</a><span class="k">class</span> <span class="nc">WhiteListRoundRobinPolicy</span><span class="p">(</span><span class="n">RoundRobinPolicy</span><span class="p">):</span>
+<div class="viewcode-block" id="WhiteListRoundRobinPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.WhiteListRoundRobinPolicy">[docs]</a><span class="k">class</span> <span class="nc">WhiteListRoundRobinPolicy</span><span class="p">(</span><span class="n">RoundRobinPolicy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A subclass of :class:`.RoundRobinPolicy` which evenly</span>
 <span class="sd">    distributes queries across all nodes in the cluster,</span>
@@ -498,7 +498,7 @@
             <span class="n">RoundRobinPolicy</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ConvictionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ConvictionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ConvictionPolicy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ConvictionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.ConvictionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ConvictionPolicy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A policy which decides when hosts should be considered down</span>
 <span class="sd">    based on the types of failures and the number of failures.</span>
@@ -512,14 +512,14 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
 
-<div class="viewcode-block" id="ConvictionPolicy.add_failure"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ConvictionPolicy.add_failure">[docs]</a>    <span class="k">def</span> <span class="nf">add_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection_exc</span><span class="p">):</span>
+<div class="viewcode-block" id="ConvictionPolicy.add_failure"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.ConvictionPolicy.add_failure">[docs]</a>    <span class="k">def</span> <span class="nf">add_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection_exc</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Implementations should return :const:`True` if the host should be</span>
 <span class="sd">        convicted, :const:`False` otherwise.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="ConvictionPolicy.reset"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ConvictionPolicy.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ConvictionPolicy.reset"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.ConvictionPolicy.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Implementations should clear out any convictions or state regarding</span>
 <span class="sd">        the host.</span>
@@ -527,7 +527,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div></div>
 
 
-<div class="viewcode-block" id="SimpleConvictionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.SimpleConvictionPolicy">[docs]</a><span class="k">class</span> <span class="nc">SimpleConvictionPolicy</span><span class="p">(</span><span class="n">ConvictionPolicy</span><span class="p">):</span>
+<div class="viewcode-block" id="SimpleConvictionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.SimpleConvictionPolicy">[docs]</a><span class="k">class</span> <span class="nc">SimpleConvictionPolicy</span><span class="p">(</span><span class="n">ConvictionPolicy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The default implementation of :class:`ConvictionPolicy`,</span>
 <span class="sd">    which simply marks a host as down after the first failure</span>
@@ -541,7 +541,7 @@
         <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="ReconnectionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ReconnectionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ReconnectionPolicy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ReconnectionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.ReconnectionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ReconnectionPolicy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This class and its subclasses govern how frequently an attempt is made</span>
 <span class="sd">    to reconnect to nodes that are marked as dead.</span>
@@ -549,7 +549,7 @@
 <span class="sd">    If custom behavior is needed, this class may be subclassed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ReconnectionPolicy.new_schedule"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ReconnectionPolicy.new_schedule">[docs]</a>    <span class="k">def</span> <span class="nf">new_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ReconnectionPolicy.new_schedule"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.ReconnectionPolicy.new_schedule">[docs]</a>    <span class="k">def</span> <span class="nf">new_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This should return a finite or infinite iterable of delays (each as a</span>
 <span class="sd">        floating point number of seconds) inbetween each failed reconnection</span>
@@ -559,7 +559,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div></div>
 
 
-<div class="viewcode-block" id="ConstantReconnectionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ConstantReconnectionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ConstantReconnectionPolicy</span><span class="p">(</span><span class="n">ReconnectionPolicy</span><span class="p">):</span>
+<div class="viewcode-block" id="ConstantReconnectionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.ConstantReconnectionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ConstantReconnectionPolicy</span><span class="p">(</span><span class="n">ReconnectionPolicy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A :class:`.ReconnectionPolicy` subclass which sleeps for a fixed delay</span>
 <span class="sd">    inbetween each reconnection attempt.</span>
@@ -588,7 +588,7 @@
         <span class="k">return</span> <span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ExponentialReconnectionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.ExponentialReconnectionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ExponentialReconnectionPolicy</span><span class="p">(</span><span class="n">ReconnectionPolicy</span><span class="p">):</span>
+<div class="viewcode-block" id="ExponentialReconnectionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.ExponentialReconnectionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ExponentialReconnectionPolicy</span><span class="p">(</span><span class="n">ReconnectionPolicy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A :class:`.ReconnectionPolicy` subclass which exponentially increases</span>
 <span class="sd">    the length of the delay inbetween each reconnection attempt up to</span>
@@ -627,7 +627,7 @@
             <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span></div>
 
 
-<div class="viewcode-block" id="WriteType"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.WriteType">[docs]</a><span class="k">class</span> <span class="nc">WriteType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="WriteType"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.WriteType">[docs]</a><span class="k">class</span> <span class="nc">WriteType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    For usage with :class:`.RetryPolicy`, this describe a type</span>
 <span class="sd">    of write operation.</span>
@@ -678,7 +678,7 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="RetryPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.RetryPolicy">[docs]</a><span class="k">class</span> <span class="nc">RetryPolicy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="RetryPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.RetryPolicy">[docs]</a><span class="k">class</span> <span class="nc">RetryPolicy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A policy that describes whether to retry, rethrow, or ignore coordinator</span>
 <span class="sd">    timeout and unavailable failures. These are failures reported from the</span>
@@ -717,7 +717,7 @@
 <span class="sd">    should be ignored but no more retries should be attempted.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="RetryPolicy.on_read_timeout"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.RetryPolicy.on_read_timeout">[docs]</a>    <span class="k">def</span> <span class="nf">on_read_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">required_responses</span><span class="p">,</span>
+<div class="viewcode-block" id="RetryPolicy.on_read_timeout"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.RetryPolicy.on_read_timeout">[docs]</a>    <span class="k">def</span> <span class="nf">on_read_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">required_responses</span><span class="p">,</span>
                         <span class="n">received_responses</span><span class="p">,</span> <span class="n">data_retrieved</span><span class="p">,</span> <span class="n">retry_num</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This is called when a read operation times out from the coordinator&#39;s</span>
@@ -750,7 +750,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="RetryPolicy.on_write_timeout"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.RetryPolicy.on_write_timeout">[docs]</a>    <span class="k">def</span> <span class="nf">on_write_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">write_type</span><span class="p">,</span>
+<div class="viewcode-block" id="RetryPolicy.on_write_timeout"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.RetryPolicy.on_write_timeout">[docs]</a>    <span class="k">def</span> <span class="nf">on_write_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">write_type</span><span class="p">,</span>
                          <span class="n">required_responses</span><span class="p">,</span> <span class="n">received_responses</span><span class="p">,</span> <span class="n">retry_num</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This is called when a write operation times out from the coordinator&#39;s</span>
@@ -783,7 +783,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="RetryPolicy.on_unavailable"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.RetryPolicy.on_unavailable">[docs]</a>    <span class="k">def</span> <span class="nf">on_unavailable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">required_replicas</span><span class="p">,</span> <span class="n">alive_replicas</span><span class="p">,</span> <span class="n">retry_num</span><span class="p">):</span>
+<div class="viewcode-block" id="RetryPolicy.on_unavailable"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.RetryPolicy.on_unavailable">[docs]</a>    <span class="k">def</span> <span class="nf">on_unavailable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">required_replicas</span><span class="p">,</span> <span class="n">alive_replicas</span><span class="p">,</span> <span class="n">retry_num</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This is called when the coordinator node determines that a read or</span>
 <span class="sd">        write operation cannot be successful because the number of live</span>
@@ -809,7 +809,7 @@
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="FallthroughRetryPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.FallthroughRetryPolicy">[docs]</a><span class="k">class</span> <span class="nc">FallthroughRetryPolicy</span><span class="p">(</span><span class="n">RetryPolicy</span><span class="p">):</span>
+<div class="viewcode-block" id="FallthroughRetryPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.FallthroughRetryPolicy">[docs]</a><span class="k">class</span> <span class="nc">FallthroughRetryPolicy</span><span class="p">(</span><span class="n">RetryPolicy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A retry policy that never retries and always propagates failures to</span>
 <span class="sd">    the application.</span>
@@ -825,7 +825,7 @@
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="DowngradingConsistencyRetryPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.policies.DowngradingConsistencyRetryPolicy">[docs]</a><span class="k">class</span> <span class="nc">DowngradingConsistencyRetryPolicy</span><span class="p">(</span><span class="n">RetryPolicy</span><span class="p">):</span>
+<div class="viewcode-block" id="DowngradingConsistencyRetryPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.DowngradingConsistencyRetryPolicy">[docs]</a><span class="k">class</span> <span class="nc">DowngradingConsistencyRetryPolicy</span><span class="p">(</span><span class="n">RetryPolicy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A retry policy that sometimes retries with a lower consistency level than</span>
 <span class="sd">    the one initially requested.</span>
@@ -932,7 +932,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.1.1.post0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

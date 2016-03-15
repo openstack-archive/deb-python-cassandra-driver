@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Security &mdash; Cassandra Driver 3.1.0 documentation</title>
+    <title>Security &mdash; Cassandra Driver 3.1.1.post0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.1.0',
+        VERSION:     '3.1.1.post0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.1.0 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 3.1.1.post0 documentation" href="index.html" />
     <link rel="next" title="User Defined Types" href="user_defined_types.html" />
     <link rel="prev" title="Lightweight Transactions (Compare-and-set)" href="lwt.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="lwt.html" title="Lightweight Transactions (Compare-and-set)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.1.post0 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -102,15 +102,15 @@ Python driver are Authentication and SSL.</p>
 <div class="section" id="authentication">
 <h2>Authentication<a class="headerlink" href="#authentication" title="Permalink to this headline">¶</a></h2>
 <p>Versions 2.0 and higher of the driver support a SASL-based
-authentication mechanism when <code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code>
+authentication mechanism when <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code></a>
 is set to 2 or higher.  To use this authentication, set
-<code class="xref py py-attr docutils literal"><span class="pre">auth_provider</span></code> to an instance of a subclass
+<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.auth_provider" title="cassandra.cluster.Cluster.auth_provider"><code class="xref py py-attr docutils literal"><span class="pre">auth_provider</span></code></a> to an instance of a subclass
 of <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.AuthProvider" title="cassandra.auth.AuthProvider"><code class="xref py py-class docutils literal"><span class="pre">AuthProvider</span></code></a>.  When working
 with Cassandra&#8217;s <code class="docutils literal"><span class="pre">PasswordAuthenticator</span></code>, you can use
 the <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.PlainTextAuthProvider" title="cassandra.auth.PlainTextAuthProvider"><code class="xref py py-class docutils literal"><span class="pre">PlainTextAuthProvider</span></code></a> class.</p>
 <p>For example, suppose Cassandra is setup with its default
 &#8216;cassandra&#8217; user with a password of &#8216;cassandra&#8217;:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 <span class="kn">from</span> <span class="nn">cassandra.auth</span> <span class="kn">import</span> <span class="n">PlainTextAuthProvider</span>
 
 <span class="n">auth_provider</span> <span class="o">=</span> <span class="n">PlainTextAuthProvider</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s1">&#39;cassandra&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s1">&#39;cassandra&#39;</span><span class="p">)</span>
@@ -132,11 +132,11 @@ as example implementations.</p>
 <div class="section" id="protocol-v1-authentication">
 <h3>Protocol v1 Authentication<a class="headerlink" href="#protocol-v1-authentication" title="Permalink to this headline">¶</a></h3>
 <p>When working with Cassandra 1.2 (or a higher version with
-<code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code> set to <code class="docutils literal"><span class="pre">1</span></code>), you will not pass in
+<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code></a> set to <code class="docutils literal"><span class="pre">1</span></code>), you will not pass in
 an <a class="reference internal" href="api/cassandra/auth.html#cassandra.auth.AuthProvider" title="cassandra.auth.AuthProvider"><code class="xref py py-class docutils literal"><span class="pre">AuthProvider</span></code></a> instance.  Instead, you should pass in a
 function that takes one argument, the IP address of a host, and returns
 a dict of credentials with a <code class="docutils literal"><span class="pre">username</span></code> and <code class="docutils literal"><span class="pre">password</span></code> key:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 
 <span class="k">def</span> <span class="nf">get_credentials</span><span class="p">(</span><span class="n">host_address</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;joe&#39;</span><span class="p">,</span> <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;1234&#39;</span><span class="p">}</span>
@@ -148,7 +148,7 @@ a dict of credentials with a <code class="docutils literal"><span class="pre">us
 </div>
 <div class="section" id="ssl">
 <h2>SSL<a class="headerlink" href="#ssl" title="Permalink to this headline">¶</a></h2>
-<p>To enable SSL you will need to set <code class="xref py py-attr docutils literal"><span class="pre">Cluster.ssl_options</span></code> to a
+<p>To enable SSL you will need to set <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.ssl_options" title="cassandra.cluster.Cluster.ssl_options"><code class="xref py py-attr docutils literal"><span class="pre">Cluster.ssl_options</span></code></a> to a
 dict of options.  These will be passed as kwargs to <code class="docutils literal"><span class="pre">ssl.wrap_socket()</span></code>
 when new sockets are created.  This should be used when client encryption
 is enabled in Cassandra.</p>
@@ -157,7 +157,7 @@ a string pointing to the location of the CA certs file), and you probably
 want to specify <code class="docutils literal"><span class="pre">ssl_version</span></code> as <code class="docutils literal"><span class="pre">ssl.PROTOCOL_TLSv1</span></code> to match
 Cassandra&#8217;s default protocol.</p>
 <p>For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 <span class="kn">from</span> <span class="nn">ssl</span> <span class="kn">import</span> <span class="n">PROTOCOL_TLSv1</span>
 
 <span class="n">ssl_opts</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ca_certs&#39;</span><span class="p">:</span> <span class="s1">&#39;/path/to/my/ca.certs&#39;</span><span class="p">,</span>
@@ -191,7 +191,7 @@ Cassandra&#8217;s default protocol.</p>
         <li class="right" >
           <a href="lwt.html" title="Lightweight Transactions (Compare-and-set)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.1.post0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

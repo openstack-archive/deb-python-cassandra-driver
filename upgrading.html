@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Upgrading &mdash; Cassandra Driver 3.1.0 documentation</title>
+    <title>Upgrading &mdash; Cassandra Driver 3.1.1.post0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.1.0',
+        VERSION:     '3.1.1.post0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.1.0 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 3.1.1.post0 documentation" href="index.html" />
     <link rel="next" title="Performance Notes" href="performance.html" />
     <link rel="prev" title="Getting Started" href="getting_started.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="getting_started.html" title="Getting Started"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.1.post0 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -146,21 +146,21 @@ DC-aware load balancing policy and to match other drivers.</p>
 <p>Previously results would be returned as a <code class="docutils literal"><span class="pre">list</span></code> of rows for result rows
 up to <code class="docutils literal"><span class="pre">fetch_size</span></code>, and <code class="docutils literal"><span class="pre">PagedResult</span></code> afterward. This could break
 application code that assumed one type and got another.</p>
-<p>Now, all results are returned as an iterable <code class="xref py py-class docutils literal"><span class="pre">ResultSet</span></code>.</p>
+<p>Now, all results are returned as an iterable <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResultSet" title="cassandra.cluster.ResultSet"><code class="xref py py-class docutils literal"><span class="pre">ResultSet</span></code></a>.</p>
 <p>The preferred way to consume results of unknown size is to iterate through
 them, letting automatic paging occur as they are consumed.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM system.local&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM system.local&quot;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
     <span class="n">process</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>If the expected size of the results is known, it is still possible to
 materialize a list using the iterator:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM system.local&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM system.local&quot;</span><span class="p">)</span>
 <span class="n">row_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>For backward compatability, <code class="xref py py-class docutils literal"><span class="pre">ResultSet</span></code> supports indexing. If
+<p>For backward compatability, <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResultSet" title="cassandra.cluster.ResultSet"><code class="xref py py-class docutils literal"><span class="pre">ResultSet</span></code></a> supports indexing. If
 the result is paged, all pages will be materialized. A warning will
 be logged if a paged query is implicitly materialized.</p>
 </div>
@@ -171,10 +171,10 @@ be logged if a paged query is implicitly materialized.</p>
 could lead to confusion if the same statement was used for multiple executions.</p>
 <p>Now, trace data is associated with the <code class="docutils literal"><span class="pre">ResponseFuture</span></code> and <code class="docutils literal"><span class="pre">ResultSet</span></code>
 returned for each query:</p>
-<p><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></code></p>
-<p><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_all_query_traces()</span></code></p>
-<p><code class="xref py py-meth docutils literal"><span class="pre">ResultSet.get_query_trace()</span></code></p>
-<p><code class="xref py py-meth docutils literal"><span class="pre">ResultSet.get_all_query_traces()</span></code></p>
+<p><a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></code></a></p>
+<p><a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.get_all_query_traces" title="cassandra.cluster.ResponseFuture.get_all_query_traces"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_all_query_traces()</span></code></a></p>
+<p><a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResultSet.get_query_trace" title="cassandra.cluster.ResultSet.get_query_trace"><code class="xref py py-meth docutils literal"><span class="pre">ResultSet.get_query_trace()</span></code></a></p>
+<p><a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResultSet.get_all_query_traces" title="cassandra.cluster.ResultSet.get_all_query_traces"><code class="xref py py-meth docutils literal"><span class="pre">ResultSet.get_all_query_traces()</span></code></a></p>
 </div>
 <div class="section" id="binding-named-parameters-now-ignores-extra-names">
 <h4>Binding named parameters now ignores extra names<a class="headerlink" href="#binding-named-parameters-now-ignores-extra-names" title="Permalink to this headline">¶</a></h4>
@@ -240,8 +240,8 @@ supports protocol version 1, and 2.0 only supports versions 1 and
 <h3>Using the v3 Native Protocol<a class="headerlink" href="#using-the-v3-native-protocol" title="Permalink to this headline">¶</a></h3>
 <p>By default, the driver will attempt to use version 2 of the
 native protocol.  To use version 3, you must explicitly
-set the <code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+set the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 
 <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 </pre></div>
@@ -253,15 +253,15 @@ set the <code class="xref py py-attr docutils literal"><span class="pre">protoco
 <div class="section" id="working-with-user-defined-types">
 <h3>Working with User-Defined Types<a class="headerlink" href="#working-with-user-defined-types" title="Permalink to this headline">¶</a></h3>
 <p>Cassandra 2.1 introduced the ability to define new types:</p>
-<div class="highlight-python"><div class="highlight"><pre>USE KEYSPACE mykeyspace;
+<div class="highlight-python"><div class="highlight"><pre><span></span>USE KEYSPACE mykeyspace;
 
 CREATE TYPE address (street text, city text, zip int);
 </pre></div>
 </div>
 <p>The driver generally expects you to use instances of a specific
 class to represent column values of this type.  You can let the
-driver know what class to use with <code class="xref py py-meth docutils literal"><span class="pre">Cluster.register_user_type()</span></code>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
+driver know what class to use with <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.register_user_type" title="cassandra.cluster.Cluster.register_user_type"><code class="xref py py-meth docutils literal"><span class="pre">Cluster.register_user_type()</span></code></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
 
 <span class="k">class</span> <span class="nc">Address</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
@@ -285,9 +285,9 @@ though prepared statements.</p>
 <h3>Customizing Encoders for Non-prepared Statements<a class="headerlink" href="#customizing-encoders-for-non-prepared-statements" title="Permalink to this headline">¶</a></h3>
 <p>Starting with version 2.1 of the driver, it is possible to customize
 how Python types are converted to CQL literals when working with
-non-prepared statements.  This is done on a per-<code class="xref py py-class docutils literal"><span class="pre">Session</span></code>
-basis through <code class="xref py py-attr docutils literal"><span class="pre">Session.encoder</span></code>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
+non-prepared statements.  This is done on a per-<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session" title="cassandra.cluster.Session"><code class="xref py py-class docutils literal"><span class="pre">Session</span></code></a>
+basis through <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.encoder" title="cassandra.cluster.Session.encoder"><code class="xref py py-attr docutils literal"><span class="pre">Session.encoder</span></code></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="n">session</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">mapping</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">cql_encode_tuple</span>
 </pre></div>
@@ -299,9 +299,9 @@ basis through <code class="xref py py-attr docutils literal"><span class="pre">S
 <p>With version 3 of the native protocol, timestamps may be supplied by the
 client at the protocol level.  (Normally, if they are not specified within
 the CQL query itself, a timestamp is generated server-side.)</p>
-<p>When <code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code> is set to 3 or higher, the driver
+<p>When <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code></a> is set to 3 or higher, the driver
 will automatically use client-side timestamps with microsecond precision
-unless <code class="xref py py-attr docutils literal"><span class="pre">Session.use_client_timestamp</span></code> is changed to <code class="xref py py-const docutils literal"><span class="pre">False</span></code>.
+unless <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.use_client_timestamp" title="cassandra.cluster.Session.use_client_timestamp"><code class="xref py py-attr docutils literal"><span class="pre">Session.use_client_timestamp</span></code></a> is changed to <code class="xref py py-const docutils literal"><span class="pre">False</span></code>.
 If a timestamp is specified within the CQL query, it will override the
 timestamp generated by the driver.</p>
 </div>
@@ -318,14 +318,14 @@ in 2.1 are not yet supported.</p>
 <p>By default, the driver will attempt to use version 2 of Cassandra&#8217;s
 native protocol. You can explicitly set the protocol version to
 2, though:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 
 <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>When working with Cassandra 1.2, you will need to
-explicitly set the <code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code> to 1:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+explicitly set the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code></a> to 1:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 
 <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
@@ -360,8 +360,8 @@ on your statements.</p>
 <div class="section" id="calling-cluster-shutdown">
 <h3>Calling Cluster.shutdown()<a class="headerlink" href="#calling-cluster-shutdown" title="Permalink to this headline">¶</a></h3>
 <p>In order to fix some issues around garbage collection and unclean interpreter
-shutdowns, version 2.0 of the driver requires you to call <code class="xref py py-meth docutils literal"><span class="pre">Cluster.shutdown()</span></code>
-on your <code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code> objects when you are through with them.
+shutdowns, version 2.0 of the driver requires you to call <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.shutdown" title="cassandra.cluster.Cluster.shutdown"><code class="xref py py-meth docutils literal"><span class="pre">Cluster.shutdown()</span></code></a>
+on your <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code></a> objects when you are through with them.
 This helps to guarantee a clean shutdown.</p>
 </div>
 <div class="section" id="deprecations">
@@ -416,7 +416,7 @@ now:</p>
         <li class="right" >
           <a href="getting_started.html" title="Getting Started"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.1.post0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Frequently Asked Questions &mdash; Cassandra Driver 3.1.0 documentation</title>
+    <title>Frequently Asked Questions &mdash; Cassandra Driver 3.1.1.post0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.1.0',
+        VERSION:     '3.1.1.post0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.1.0 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 3.1.1.post0 documentation" href="index.html" />
     <link rel="prev" title="Frequently Asked Questions" href="cqlengine/faq.html" /> 
   </head>
   <body role="document">
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="cqlengine/faq.html" title="Frequently Asked Questions"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.1.post0 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -93,7 +93,7 @@
 <h2>Why do connections or IO operations timeout in my WSGI application?<a class="headerlink" href="#why-do-connections-or-io-operations-timeout-in-my-wsgi-application" title="Permalink to this headline">¶</a></h2>
 <p>Depending on your application process model, it may be forking after driver Session is created. Most IO reactors do not handle this, and problems will manifest as timeouts.</p>
 <p>To avoid this, make sure to create sessions per process, after the fork. Using uWSGI and Flask for example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span>
 <span class="kn">from</span> <span class="nn">uwsgidecorators</span> <span class="kn">import</span> <span class="n">postfork</span>
 <span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 
@@ -118,9 +118,9 @@
 </div>
 <div class="section" id="how-do-i-trace-a-request">
 <h2>How do I trace a request?<a class="headerlink" href="#how-do-i-trace-a-request" title="Permalink to this headline">¶</a></h2>
-<p>Request tracing can be turned on for any request by setting <code class="docutils literal"><span class="pre">trace=True</span></code> in <code class="xref py py-meth docutils literal"><span class="pre">Session.execute_async()</span></code>. View the results by waiting on the future, then <code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></code>.
+<p>Request tracing can be turned on for any request by setting <code class="docutils literal"><span class="pre">trace=True</span></code> in <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute_async()</span></code></a>. View the results by waiting on the future, then <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></code></a>.
 Since tracing is done asynchronously to the request, this method polls until the trace is complete before querying data.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM system.local&quot;</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM system.local&quot;</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">trace</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">get_query_trace</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">trace</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
@@ -141,7 +141,7 @@ Since tracing is done asynchronously to the request, this method polls until the
 <div class="section" id="how-do-i-determine-the-replicas-for-a-query">
 <h2>How do I determine the replicas for a query?<a class="headerlink" href="#how-do-i-determine-the-replicas-for-a-query" title="Permalink to this headline">¶</a></h2>
 <p>With prepared statements, the replicas are obtained by <code class="docutils literal"><span class="pre">routing_key</span></code>, based on current cluster token metadata:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">prepared</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM example.t WHERE key=?&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prepared</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM example.t WHERE key=?&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bound</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="mi">1</span><span class="p">,))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">replicas</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_replicas</span><span class="p">(</span><span class="n">bound</span><span class="o">.</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">bound</span><span class="o">.</span><span class="n">routing_key</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">replicas</span><span class="p">:</span>
@@ -154,7 +154,7 @@ Since tracing is done asynchronously to the request, this method polls until the
 </div>
 <div class="section" id="how-does-the-driver-manage-request-retries">
 <h2>How does the driver manage request retries?<a class="headerlink" href="#how-does-the-driver-manage-request-retries" title="Permalink to this headline">¶</a></h2>
-<p>By default, retries are managed by the <code class="xref py py-attr docutils literal"><span class="pre">Cluster.default_retry_policy</span></code> set on the session Cluster. It can also
+<p>By default, retries are managed by the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.default_retry_policy" title="cassandra.cluster.Cluster.default_retry_policy"><code class="xref py py-attr docutils literal"><span class="pre">Cluster.default_retry_policy</span></code></a> set on the session Cluster. It can also
 be specialized per statement by setting <a class="reference internal" href="api/cassandra/query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><code class="xref py py-attr docutils literal"><span class="pre">Statement.retry_policy</span></code></a>.</p>
 <p>Retries are presently attempted on the same coordinator, but this may change in the future.</p>
 <p>Please see <a class="reference internal" href="api/cassandra/policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><code class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></code></a> for further details.</p>
@@ -179,7 +179,7 @@ be specialized per statement by setting <a class="reference internal" href="api/
         <li class="right" >
           <a href="cqlengine/faq.html" title="Frequently Asked Questions"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.1.1.post0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
