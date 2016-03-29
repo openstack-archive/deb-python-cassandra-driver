@@ -167,7 +167,7 @@ def execute(query, params=None, consistency_level=None, timeout=NOT_SET):
     elif isinstance(query, six.string_types):
         query = SimpleStatement(query, consistency_level=consistency_level)
 
-    log.debug(query.query_string)
+    #log.debug(query.query_string)
 
     params = params or {}
     result = session.execute(query, params, timeout=timeout)

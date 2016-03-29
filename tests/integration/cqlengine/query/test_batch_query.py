@@ -30,11 +30,13 @@ class TestMultiKeyModel(Model):
     count = columns.Integer(required=False)
     text = columns.Text(required=False)
 
+
 class BatchQueryLogModel(Model):
 
     # simple k/v table
     k = columns.Integer(primary_key=True)
     v = columns.Integer()
+
 
 class BatchQueryTests(BaseCassEngTestCase):
 

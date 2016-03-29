@@ -30,6 +30,7 @@ from cassandra.cqlengine.statements import (WhereClause, SelectStatement, Delete
                                             BaseCQLStatement, MapUpdateClause, MapDeleteClause,
                                             ListUpdateClause, SetUpdateClause, CounterUpdateClause,
                                             ConditionalClause)
+from cassandra.query import BatchStatement, BatchType as CoreBatchType
 
 
 class QueryException(CQLEngineException):
@@ -130,6 +131,8 @@ class BatchType(object):
     Unlogged = 'UNLOGGED'
     Counter = 'COUNTER'
 
+_batch_types = {BatchType.Unlogged: CoreBatchType.UNLOGGED,
+                BatchType.Counter: CoreBatchType.COUNTER}
 
 class BatchQuery(object):
     """
@@ -160,12 +163,12 @@ class BatchQuery(object):
             to default session timeout
         :type timeout: float or None
         """
-        self.queries = []
-        self.batch_type = batch_type
+
+        self._batch_statement = BatchStatement(batch_type=_batch_types.get(batch_type, CoreBatchType.LOGGED),
+                                               consistency_level=consistency)
         if timestamp is not None and not isinstance(timestamp, (datetime, timedelta)):
             raise CQLEngineException('timestamp object must be an instance of datetime')
         self.timestamp = timestamp
-        self._consistency = consistency
         self._execute_on_exception = execute_on_exception
         self._timeout = timeout
         self._callbacks = []
@@ -175,10 +178,10 @@ class BatchQuery(object):
     def add_query(self, query):
         if not isinstance(query, BaseCQLStatement):
             raise CQLEngineException('only BaseCQLStatements can be added to a batch query')
-        self.queries.append(query)
+        self._batch_statement.add(str(query), query.get_context())
 
     def consistency(self, consistency):
-        self._consistency = consistency
+        self._batch_statement.consistency_level = consistency
 
     def _execute_callbacks(self):
         for callback, args, kwargs in self._callbacks:
@@ -209,15 +212,14 @@ class BatchQuery(object):
             warn(msg)
         self._executed = True
 
-        if len(self.queries) == 0:
+        if not self._batch_statement._statements_and_parameters:
             # Empty batch is a no-op
             # except for callbacks
             self._execute_callbacks()
             return
 
-        opener = 'BEGIN ' + (self.batch_type + ' ' if self.batch_type else '') + ' BATCH'
+        #TODO: make a way to inject this
         if self.timestamp:
-
             if isinstance(self.timestamp, six.integer_types):
                 ts = self.timestamp
             elif isinstance(self.timestamp, (datetime, timedelta)):
@@ -228,24 +230,10 @@ class BatchQuery(object):
             else:
                 raise ValueError("Batch expects a long, a timedelta, or a datetime")
 
-            opener += ' USING TIMESTAMP {0}'.format(ts)
-
-        query_list = [opener]
-        parameters = {}
-        ctx_counter = 0
-        for query in self.queries:
-            query.update_context_id(ctx_counter)
-            ctx = query.get_context()
-            ctx_counter += len(ctx)
-            query_list.append('  ' + str(query))
-            parameters.update(ctx)
-
-        query_list.append('APPLY BATCH;')
-
-        tmp = connection.execute('\n'.join(query_list), parameters, self._consistency, self._timeout)
+        tmp = connection.execute(self._batch_statement, self._consistency, self._timeout)
         check_applied(tmp)
 
-        self.queries = []
+        del self._batch_statement._statements_and_parameters[:]
         self._execute_callbacks()
 
     def __enter__(self):
