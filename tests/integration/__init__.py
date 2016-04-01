@@ -169,9 +169,6 @@ def wait_for_node_socket(node, timeout):
 def check_socket_listening(itf, timeout=60):
 
     end = time.time() + timeout
-    print("waiting for itf"+str(itf))
-    print type(itf)
-
     while time.time() <= end:
         try:
             if ":" in itf[0]:
