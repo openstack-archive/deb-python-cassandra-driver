@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.management &mdash; Cassandra Driver 3.1.1 documentation</title>
+    <title>cassandra.cqlengine.management &mdash; Cassandra Driver 3.2.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.1.1',
+        VERSION:     '3.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.1.1 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.2.0 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.1.1 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -178,12 +178,12 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Find the index name for a given table and column.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">index_metadata</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">indexes</span><span class="p">):</span>
+    <span class="n">protected_name</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">protect_name</span><span class="p">(</span><span class="n">column_name</span><span class="p">)</span>
+    <span class="n">possible_index_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">protected_name</span><span class="p">,</span> <span class="s2">&quot;values(</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="n">protected_name</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">index_metadata</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">indexes</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
         <span class="n">options</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">index_metadata</span><span class="o">.</span><span class="n">index_options</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s1">&#39;target&#39;</span> <span class="ow">in</span> <span class="n">options</span> <span class="ow">and</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">column_name</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;target&#39;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">possible_index_values</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">index_metadata</span><span class="o">.</span><span class="n">name</span>
-
-    <span class="k">return</span> <span class="bp">None</span>
 
 
 <div class="viewcode-block" id="sync_table"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.sync_table">[docs]</a><span class="k">def</span> <span class="nf">sync_table</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
@@ -218,7 +218,11 @@
 
     <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">()</span>
 
-    <span class="n">keyspace</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks_name</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">keyspace</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks_name</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s2">&quot;Keyspace &#39;{0}&#39; for model {1} does not exist.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">model</span><span class="p">))</span>
+
     <span class="n">tables</span> <span class="o">=</span> <span class="n">keyspace</span><span class="o">.</span><span class="n">tables</span>
 
     <span class="n">syncd_types</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -228,7 +232,6 @@
         <span class="k">for</span> <span class="n">udt</span> <span class="ow">in</span> <span class="p">[</span><span class="n">u</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">udts</span> <span class="k">if</span> <span class="n">u</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">syncd_types</span><span class="p">]:</span>
             <span class="n">_sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">udt</span><span class="p">,</span> <span class="n">syncd_types</span><span class="p">)</span>
 
-    <span class="c1"># check for an existing column family</span>
     <span class="k">if</span> <span class="n">raw_cf_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;sync_table creating new table </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cf_name</span><span class="p">)</span>
         <span class="n">qs</span> <span class="o">=</span> <span class="n">_get_create_table</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
@@ -242,24 +245,35 @@
                 <span class="k">raise</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;sync_table checking existing table </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cf_name</span><span class="p">)</span>
-        <span class="c1"># see if we&#39;re missing any columns</span>
-        <span class="n">field_names</span> <span class="o">=</span> <span class="n">_get_non_pk_field_names</span><span class="p">(</span><span class="n">tables</span><span class="p">[</span><span class="n">raw_cf_name</span><span class="p">])</span>
-        <span class="n">model_fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="c1"># # TODO: does this work with db_name??</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">primary_key</span> <span class="ow">or</span> <span class="n">col</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span>
-                <span class="k">continue</span>  <span class="c1"># we can&#39;t mess with the PK</span>
-            <span class="n">model_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">db_field_name</span> <span class="ow">in</span> <span class="n">field_names</span><span class="p">:</span>
-                <span class="k">continue</span>  <span class="c1"># skip columns already defined</span>
+        <span class="n">table_meta</span> <span class="o">=</span> <span class="n">tables</span><span class="p">[</span><span class="n">raw_cf_name</span><span class="p">]</span>
 
-            <span class="c1"># add missing column using the column def</span>
+        <span class="n">_validate_pk</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">)</span>
+
+        <span class="n">table_columns</span> <span class="o">=</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span>
+        <span class="n">model_fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">db_name</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">db_field_name</span>
+            <span class="n">model_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">db_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">db_name</span> <span class="ow">in</span> <span class="n">table_columns</span><span class="p">:</span>
+                <span class="n">col_meta</span> <span class="o">=</span> <span class="n">table_columns</span><span class="p">[</span><span class="n">db_name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">col_meta</span><span class="o">.</span><span class="n">cql_type</span> <span class="o">!=</span> <span class="n">col</span><span class="o">.</span><span class="n">db_type</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Existing table {0} has column &quot;{1}&quot; with a type ({2}) differing from the model type ({3}).&#39;</span> \
+                          <span class="s1">&#39; Model should be updated.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">db_name</span><span class="p">,</span> <span class="n">col_meta</span><span class="o">.</span><span class="n">cql_type</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">db_type</span><span class="p">)</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">primary_key</span> <span class="ow">or</span> <span class="n">col</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s2">&quot;Cannot add primary key &#39;{0}&#39; (with db_field &#39;{1}&#39;) to existing table {2}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">db_name</span><span class="p">,</span> <span class="n">cf_name</span><span class="p">))</span>
+
             <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;ALTER TABLE {0} add {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">())</span>
             <span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 
-        <span class="n">db_fields_not_in_model</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">field_names</span><span class="p">)</span>
+        <span class="n">db_fields_not_in_model</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">table_columns</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">db_fields_not_in_model</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Table </span><span class="si">%s</span><span class="s2"> has fields not referenced by model: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cf_name</span><span class="p">,</span> <span class="n">db_fields_not_in_model</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Table {0} has fields not referenced by model: {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">db_fields_not_in_model</span><span class="p">))</span>
 
         <span class="n">_update_options</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
@@ -278,6 +292,22 @@
         <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;(&quot;{0}&quot;)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)]</span>
         <span class="n">qs</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>
         <span class="n">execute</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_validate_pk</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">):</span>
+    <span class="n">model_partition</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">db_field_name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_partition_keys</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+    <span class="n">meta_partition</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">partition_key</span><span class="p">]</span>
+    <span class="n">model_clustering</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">db_field_name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_clustering_keys</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+    <span class="n">meta_clustering</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">clustering_key</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">model_partition</span> <span class="o">!=</span> <span class="n">meta_partition</span> <span class="ow">or</span> <span class="n">model_clustering</span> <span class="o">!=</span> <span class="n">meta_clustering</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">_pk_string</span><span class="p">(</span><span class="n">partition</span><span class="p">,</span> <span class="n">clustering</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;PRIMARY KEY (({0}){1})&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">partition</span><span class="p">),</span> <span class="s1">&#39;, &#39;</span> <span class="o">+</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clustering</span><span class="p">)</span> <span class="k">if</span> <span class="n">clustering</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s2">&quot;Model {0} PRIMARY KEY composition does not match existing table {1}. &quot;</span>
+                                 <span class="s2">&quot;Model: {2}; Table: {3}. &quot;</span>
+                                 <span class="s2">&quot;Update model or drop the table.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(),</span>
+                                                                          <span class="n">_pk_string</span><span class="p">(</span><span class="n">model_partition</span><span class="p">,</span> <span class="n">model_clustering</span><span class="p">),</span>
+                                                                          <span class="n">_pk_string</span><span class="p">(</span><span class="n">meta_partition</span><span class="p">,</span> <span class="n">meta_clustering</span><span class="p">)))</span>
 
 
 <div class="viewcode-block" id="sync_type"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.sync_type">[docs]</a><span class="k">def</span> <span class="nf">sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_model</span><span class="p">):</span>
@@ -326,12 +356,20 @@
         <span class="n">cluster</span><span class="o">.</span><span class="n">refresh_user_type_metadata</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_name</span><span class="p">)</span>
         <span class="n">type_model</span><span class="o">.</span><span class="n">register_for_keyspace</span><span class="p">(</span><span class="n">ks_name</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">defined_fields</span> <span class="o">=</span> <span class="n">defined_types</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span><span class="o">.</span><span class="n">field_names</span>
+        <span class="n">type_meta</span> <span class="o">=</span> <span class="n">defined_types</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span>
+        <span class="n">defined_fields</span> <span class="o">=</span> <span class="n">type_meta</span><span class="o">.</span><span class="n">field_names</span>
         <span class="n">model_fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">type_model</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">model_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">defined_fields</span><span class="p">:</span>
                 <span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ALTER TYPE {0} ADD {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_name_qualified</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">()))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">field_type</span> <span class="o">=</span> <span class="n">type_meta</span><span class="o">.</span><span class="n">field_types</span><span class="p">[</span><span class="n">defined_fields</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="n">field_type</span> <span class="o">!=</span> <span class="n">field</span><span class="o">.</span><span class="n">db_type</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Existing user type {0} has field &quot;{1}&quot; with a type ({2}) differing from the model user type ({3}).&#39;</span> \
+                          <span class="s1">&#39; UserType should be updated.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_name_qualified</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">,</span> <span class="n">field_type</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">db_type</span><span class="p">)</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">type_model</span><span class="o">.</span><span class="n">register_for_keyspace</span><span class="p">(</span><span class="n">ks_name</span><span class="p">)</span>
 
@@ -388,13 +426,6 @@
         <span class="n">query_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;WITH {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">property_strings</span><span class="p">))]</span>
 
     <span class="k">return</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">query_strings</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">_get_non_pk_field_names</span><span class="p">(</span><span class="n">table_meta</span><span class="p">):</span>
-    <span class="c1"># returns all fields that aren&#39;t part of the PK</span>
-    <span class="n">pk_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">primary_key</span><span class="p">)</span>
-    <span class="n">field_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pk_names</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">field_names</span>
 
 
 <span class="k">def</span> <span class="nf">_get_table_metadata</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
@@ -515,7 +546,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.1.1 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
