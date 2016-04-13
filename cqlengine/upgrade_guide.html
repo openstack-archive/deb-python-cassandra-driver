@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Upgrade Guide &mdash; Cassandra Driver 3.2.0 documentation</title>
+    <title>Upgrade Guide &mdash; Cassandra Driver 3.2.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.2.0',
+        VERSION:     '3.2.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.0 documentation" href="../index.html" />
+    <link rel="top" title="Cassandra Driver 3.2.1 documentation" href="../index.html" />
     <link rel="up" title="Object Mapper" href="../object_mapper.html" />
     <link rel="next" title="Models" href="models.html" />
     <link rel="prev" title="Object Mapper" href="../object_mapper.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../object_mapper.html" title="Object Mapper"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.1 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" accesskey="U">Object Mapper</a> &raquo;</li> 
       </ul>
     </div>
@@ -148,11 +148,11 @@ but it will not prevent side-by-side installation.</p>
 <h3>Imports<a class="headerlink" href="#imports" title="Permalink to this headline">¶</a></h3>
 <p>cqlengine is now integrated as a sub-package of the driver base package &#8216;cassandra&#8217;.
 Upgrading will require adjusting imports to cqlengine. For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cqlengine</span> <span class="kn">import</span> <span class="n">columns</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cqlengine</span> <span class="kn">import</span> <span class="n">columns</span>
 </pre></div>
 </div>
 <p>is now:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">columns</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">columns</span>
 </pre></div>
 </div>
 </div>
@@ -246,33 +246,33 @@ For now, the old names are just deprecated, and the mapper will emit warnings if
 will be removed in a future version.</p>
 <p>The example below shows a simple translation:</p>
 <p>Before:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Pet</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
-    <span class="n">__table_name__</span> <span class="o">=</span> <span class="s1">&#39;pet&#39;</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Pet</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">__table_name__</span> <span class="o">=</span> <span class="s">&#39;pet&#39;</span>
     <span class="n">owner_id</span> <span class="o">=</span> <span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">pet_id</span> <span class="o">=</span> <span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">pet_type</span> <span class="o">=</span> <span class="n">Text</span><span class="p">(</span><span class="n">polymorphic_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">Text</span><span class="p">()</span>
 
 <span class="k">class</span> <span class="nc">Cat</span><span class="p">(</span><span class="n">Pet</span><span class="p">):</span>
-    <span class="n">__polymorphic_key__</span> <span class="o">=</span> <span class="s1">&#39;cat&#39;</span>
+    <span class="n">__polymorphic_key__</span> <span class="o">=</span> <span class="s">&#39;cat&#39;</span>
 
 <span class="k">class</span> <span class="nc">Dog</span><span class="p">(</span><span class="n">Pet</span><span class="p">):</span>
-    <span class="n">__polymorphic_key__</span> <span class="o">=</span> <span class="s1">&#39;dog&#39;</span>
+    <span class="n">__polymorphic_key__</span> <span class="o">=</span> <span class="s">&#39;dog&#39;</span>
 </pre></div>
 </div>
 <p>After:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Pet</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-    <span class="n">__table_name__</span> <span class="o">=</span> <span class="s1">&#39;pet&#39;</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Pet</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">__table_name__</span> <span class="o">=</span> <span class="s">&#39;pet&#39;</span>
     <span class="n">owner_id</span> <span class="o">=</span> <span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">pet_id</span> <span class="o">=</span> <span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">pet_type</span> <span class="o">=</span> <span class="n">Text</span><span class="p">(</span><span class="n">discriminator_column</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">Text</span><span class="p">()</span>
 
 <span class="k">class</span> <span class="nc">Cat</span><span class="p">(</span><span class="n">Pet</span><span class="p">):</span>
-    <span class="n">__discriminator_value__</span> <span class="o">=</span> <span class="s1">&#39;cat&#39;</span>
+    <span class="n">__discriminator_value__</span> <span class="o">=</span> <span class="s">&#39;cat&#39;</span>
 
 <span class="k">class</span> <span class="nc">Dog</span><span class="p">(</span><span class="n">Pet</span><span class="p">):</span>
-    <span class="n">__discriminator_value__</span> <span class="o">=</span> <span class="s1">&#39;dog&#39;</span>
+    <span class="n">__discriminator_value__</span> <span class="o">=</span> <span class="s">&#39;dog&#39;</span>
 </pre></div>
 </div>
 </div>
@@ -304,13 +304,13 @@ will be removed in a future version.</p>
         <li class="right" >
           <a href="../object_mapper.html" title="Object Mapper"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.1 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" >Object Mapper</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

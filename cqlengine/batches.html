@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Batch Queries &mdash; Cassandra Driver 3.2.0 documentation</title>
+    <title>Batch Queries &mdash; Cassandra Driver 3.2.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.2.0',
+        VERSION:     '3.2.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.0 documentation" href="../index.html" />
+    <link rel="top" title="Cassandra Driver 3.2.1 documentation" href="../index.html" />
     <link rel="up" title="Object Mapper" href="../object_mapper.html" />
     <link rel="next" title="Third party integrations" href="third_party.html" />
     <link rel="prev" title="Making Queries" href="queryset.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="queryset.html" title="Making Queries"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.1 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" accesskey="U">Object Mapper</a> &raquo;</li> 
       </ul>
     </div>
@@ -103,35 +103,35 @@
 <h2>Batch Query General Use Pattern<a class="headerlink" href="#batch-query-general-use-pattern" title="Permalink to this headline">¶</a></h2>
 <blockquote>
 <div><p>You can only create, update, and delete rows with a batch query, attempting to read rows out of the database with a batch query will fail.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cqlengine</span> <span class="kn">import</span> <span class="n">BatchQuery</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cqlengine</span> <span class="kn">import</span> <span class="n">BatchQuery</span>
 
-<span class="c1">#using a context manager</span>
+<span class="c">#using a context manager</span>
 <span class="k">with</span> <span class="n">BatchQuery</span><span class="p">()</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
     <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-    <span class="n">em1</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
-    <span class="n">em2</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
-    <span class="n">em3</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
+    <span class="n">em1</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s">&quot;1&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
+    <span class="n">em2</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s">&quot;2&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
+    <span class="n">em3</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s">&quot;3&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
 
-<span class="c1"># -- or --</span>
+<span class="c"># -- or --</span>
 
-<span class="c1">#manually</span>
+<span class="c">#manually</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">BatchQuery</span><span class="p">()</span>
 <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-<span class="n">em1</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
-<span class="n">em2</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
-<span class="n">em3</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
+<span class="n">em1</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s">&quot;1&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
+<span class="n">em2</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s">&quot;2&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
+<span class="n">em3</span> <span class="o">=</span> <span class="n">ExampleModel</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">example_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s">&quot;3&quot;</span><span class="p">,</span> <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">)</span>
 <span class="n">b</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
 
-<span class="c1"># updating in a batch</span>
+<span class="c"># updating in a batch</span>
 
 <span class="n">b</span> <span class="o">=</span> <span class="n">BatchQuery</span><span class="p">()</span>
-<span class="n">em1</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;new description&quot;</span>
+<span class="n">em1</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="s">&quot;new description&quot;</span>
 <span class="n">em1</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
-<span class="n">em2</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;another new description&quot;</span>
+<span class="n">em2</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="s">&quot;another new description&quot;</span>
 <span class="n">em2</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 <span class="n">b</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
 
-<span class="c1"># deleting in a batch</span>
+<span class="c"># deleting in a batch</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">BatchQuery</span><span class="p">()</span>
 <span class="n">ExampleModel</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">some_id</span><span class="p">)</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
 <span class="n">ExampleModel</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">some_id2</span><span class="p">)</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
@@ -139,10 +139,10 @@
 </pre></div>
 </div>
 <p>Typically you will not want the block to execute if an exception occurs inside the <cite>with</cite> block.  However, in the case that this is desirable, it&#8217;s achievable by using the following syntax:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">BatchQuery</span><span class="p">(</span><span class="n">execute_on_exception</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">BatchQuery</span><span class="p">(</span><span class="n">execute_on_exception</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
     <span class="n">LogEntry</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">mystery_function</span><span class="p">()</span> <span class="c1"># exception thrown in here</span>
-    <span class="n">LogEntry</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># this code is never reached due to the exception, but anything leading up to here will execute in the batch.</span>
+    <span class="n">mystery_function</span><span class="p">()</span> <span class="c"># exception thrown in here</span>
+    <span class="n">LogEntry</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="c"># this code is never reached due to the exception, but anything leading up to here will execute in the batch.</span>
 </pre></div>
 </div>
 <p>If an exception is thrown somewhere in the block, any statements that have been added to the batch will still be executed.  This is useful for some logging situations.</p>
@@ -157,24 +157,24 @@ registered with the batch, to be executed immediately after the batch executes.<
 are added to the batch.</p>
 <p>The callbacks attached to a given batch instance are executed only if the batch executes. If the batch is used as a
 context manager and an exception is raised, the queued up callbacks will not be run.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_callback</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_callback</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">pass</span>
 
 <span class="n">batch</span> <span class="o">=</span> <span class="n">BatchQuery</span><span class="p">()</span>
 
 <span class="n">batch</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="n">my_callback</span><span class="p">)</span>
-<span class="n">batch</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="n">my_callback</span><span class="p">,</span> <span class="s1">&#39;positional arg&#39;</span><span class="p">,</span> <span class="n">named_arg</span><span class="o">=</span><span class="s1">&#39;named arg value&#39;</span><span class="p">)</span>
+<span class="n">batch</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="n">my_callback</span><span class="p">,</span> <span class="s">&#39;positional arg&#39;</span><span class="p">,</span> <span class="n">named_arg</span><span class="o">=</span><span class="s">&#39;named arg value&#39;</span><span class="p">)</span>
 
-<span class="c1"># if you need reference to the batch within the callback,</span>
-<span class="c1"># just trap it in the arguments to be passed to the callback:</span>
+<span class="c"># if you need reference to the batch within the callback,</span>
+<span class="c"># just trap it in the arguments to be passed to the callback:</span>
 <span class="n">batch</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="n">my_callback</span><span class="p">,</span> <span class="n">cqlengine_batch</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
 
-<span class="c1"># once the batch executes...</span>
+<span class="c"># once the batch executes...</span>
 <span class="n">batch</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
 
-<span class="c1"># the effect of the above scheduled callbacks will be similar to</span>
+<span class="c"># the effect of the above scheduled callbacks will be similar to</span>
 <span class="n">my_callback</span><span class="p">()</span>
-<span class="n">my_callback</span><span class="p">(</span><span class="s1">&#39;positional arg&#39;</span><span class="p">,</span> <span class="n">named_arg</span><span class="o">=</span><span class="s1">&#39;named arg value&#39;</span><span class="p">)</span>
+<span class="n">my_callback</span><span class="p">(</span><span class="s">&#39;positional arg&#39;</span><span class="p">,</span> <span class="n">named_arg</span><span class="o">=</span><span class="s">&#39;named arg value&#39;</span><span class="p">)</span>
 <span class="n">my_callback</span><span class="p">(</span><span class="n">cqlengine_batch</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -185,7 +185,7 @@ of the batch is complete.</p>
 <h3>Logged vs Unlogged Batches<a class="headerlink" href="#logged-vs-unlogged-batches" title="Permalink to this headline">¶</a></h3>
 <blockquote>
 <div><p>By default, queries in cqlengine are LOGGED, which carries additional overhead from UNLOGGED.  To explicitly state which batch type to use, simply:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cqlengine.query</span> <span class="kn">import</span> <span class="n">BatchType</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cqlengine.query</span> <span class="kn">import</span> <span class="n">BatchType</span>
 <span class="k">with</span> <span class="n">BatchQuery</span><span class="p">(</span><span class="n">batch_type</span><span class="o">=</span><span class="n">BatchType</span><span class="o">.</span><span class="n">Unlogged</span><span class="p">)</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
     <span class="n">LogEntry</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">LogEntry</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -217,13 +217,13 @@ of the batch is complete.</p>
         <li class="right" >
           <a href="queryset.html" title="Making Queries"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.1 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" >Object Mapper</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

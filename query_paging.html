@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Paging Large Queries &mdash; Cassandra Driver 3.2.0 documentation</title>
+    <title>Paging Large Queries &mdash; Cassandra Driver 3.2.1 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.2.0',
+        VERSION:     '3.2.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.0 documentation" href="index.html" />
+    <link rel="top" title="Cassandra Driver 3.2.1 documentation" href="index.html" />
     <link rel="next" title="Lightweight Transactions (Compare-and-set)" href="lwt.html" />
     <link rel="prev" title="Performance Notes" href="performance.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="performance.html" title="Performance Notes"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.2.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -111,8 +111,8 @@ will contain at most 5000 rows.</p>
 instance of <code class="xref py py-class docutils literal"><span class="pre">PagedResult</span></code> will be returned instead of a normal
 list.  This class implements the iterator interface, so you can treat
 it like a normal iterator over rows:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="n">SimpleStatement</span>
-<span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT * FROM users&quot;</span>  <span class="c1"># users contains 100 rows</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="n">SimpleStatement</span>
+<span class="n">query</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM users&quot;</span>  <span class="c"># users contains 100 rows</span>
 <span class="n">statement</span> <span class="o">=</span> <span class="n">SimpleStatement</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">user_row</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">statement</span><span class="p">):</span>
     <span class="n">process_user</span><span class="p">(</span><span class="n">user_row</span><span class="p">)</span>
@@ -134,7 +134,7 @@ the callback will be called once per page with a normal list of rows.</p>
 <p>Use <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.has_more_pages" title="cassandra.cluster.ResponseFuture.has_more_pages"><code class="xref py py-attr docutils literal"><span class="pre">ResponseFuture.has_more_pages</span></code></a> and
 <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResponseFuture.start_fetching_next_page" title="cassandra.cluster.ResponseFuture.start_fetching_next_page"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.start_fetching_next_page()</span></code></a> to continue fetching
 pages.  For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">PagedResultHandler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PagedResultHandler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">future</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="bp">None</span>
@@ -157,7 +157,7 @@ pages.  For example:</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">exc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">finished_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 
-<span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+<span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
 <span class="n">handler</span> <span class="o">=</span> <span class="n">PagedResultHandler</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
 <span class="n">handler</span><span class="o">.</span><span class="n">finished_event</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 <span class="k">if</span> <span class="n">handler</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
@@ -188,12 +188,12 @@ pages.  For example:</p>
         <li class="right" >
           <a href="performance.html" title="Performance Notes"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.2.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

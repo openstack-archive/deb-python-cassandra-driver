@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.pool &mdash; Cassandra Driver 3.2.0 documentation</title>
+    <title>cassandra.pool &mdash; Cassandra Driver 3.2.1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.2.0',
+        VERSION:     '3.2.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.2.1 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.1 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -65,19 +65,19 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.pool</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
-<span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="c1"># you may not use this file except in compliance with the License.</span>
-<span class="c1"># You may obtain a copy of the License at</span>
-<span class="c1">#</span>
-<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="c1">#</span>
-<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="c1"># See the License for the specific language governing permissions and</span>
-<span class="c1"># limitations under the License.</span>
+<span class="c"># Copyright 2013-2016 DataStax, Inc.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#</span>
+<span class="c"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Connection pooling and host management.</span>
@@ -91,7 +91,7 @@
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">weakref</span> <span class="kn">import</span> <span class="n">WeakSet</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">WeakSet</span>  <span class="c1"># NOQA</span>
+    <span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">WeakSet</span>  <span class="c"># NOQA</span>
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">AuthenticationFailed</span>
 <span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="n">ConnectionException</span>
@@ -105,9 +105,9 @@
 <span class="sd">    All existing connections to a given host are busy, or there are</span>
 <span class="sd">    no open connections.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">pass</span></div>
+    <span class="k">pass</span>
 
-
+</div>
 <div class="viewcode-block" id="Host"><a class="viewcode-back" href="../../api/cassandra/pool.html#cassandra.pool.Host">[docs]</a><span class="k">class</span> <span class="nc">Host</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents a single Cassandra node.</span>
@@ -140,9 +140,9 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inet_address</span><span class="p">,</span> <span class="n">conviction_policy_factory</span><span class="p">,</span> <span class="n">datacenter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rack</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">inet_address</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;inet_address may not be None&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;inet_address may not be None&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">conviction_policy_factory</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;conviction_policy_factory may not be None&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;conviction_policy_factory may not be None&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">inet_address</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">conviction_policy</span> <span class="o">=</span> <span class="n">conviction_policy_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -170,7 +170,7 @@
 
     <span class="k">def</span> <span class="nf">set_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_up</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Host </span><span class="si">%s</span><span class="s2"> is now marked up&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Host </span><span class="si">%s</span><span class="s"> is now marked up&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">conviction_policy</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_up</span> <span class="o">=</span> <span class="bp">True</span>
 
@@ -206,10 +206,10 @@
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">dc</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot; </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datacenter</span><span class="p">,))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datacenter</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;&lt;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s%s</span><span class="s2">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="n">dc</span><span class="p">)</span></div>
+        <span class="n">dc</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot; </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datacenter</span><span class="p">,))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datacenter</span> <span class="k">else</span> <span class="s">&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&quot;&lt;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s%s</span><span class="s">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="n">dc</span><span class="p">)</span>
 
-
+</div>
 <span class="k">class</span> <span class="nc">_ReconnectionHandler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Abstract class for attempting reconnections with a given</span>
@@ -227,7 +227,7 @@
 
     <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cancelled</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Reconnection handler was cancelled before starting&quot;</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Reconnection handler was cancelled before starting&quot;</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="n">first_delay</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="p">)</span>
@@ -244,15 +244,15 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">next_delay</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
-                <span class="c1"># the schedule has been exhausted</span>
+                <span class="c"># the schedule has been exhausted</span>
                 <span class="n">next_delay</span> <span class="o">=</span> <span class="bp">None</span>
 
-            <span class="c1"># call on_exception for logging purposes even if next_delay is None</span>
+            <span class="c"># call on_exception for logging purposes even if next_delay is None</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">next_delay</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">next_delay</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                        <span class="s2">&quot;Will not continue to retry reconnection attempts &quot;</span>
-                        <span class="s2">&quot;due to an exhausted retry schedule&quot;</span><span class="p">)</span>
+                        <span class="s">&quot;Will not continue to retry reconnection attempts &quot;</span>
+                        <span class="s">&quot;due to an exhausted retry schedule&quot;</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">next_delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -313,7 +313,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">on_reconnection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successful reconnection to </span><span class="si">%s</span><span class="s2">, marking node up if it isn&#39;t already&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Successful reconnection to </span><span class="si">%s</span><span class="s">, marking node up if it isn&#39;t already&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_host_addition</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -323,9 +323,9 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">AuthenticationFailed</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">False</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Error attempting to reconnect to </span><span class="si">%s</span><span class="s2">, scheduling retry in </span><span class="si">%s</span><span class="s2"> seconds: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Error attempting to reconnect to </span><span class="si">%s</span><span class="s">, scheduling retry in </span><span class="si">%s</span><span class="s"> seconds: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">next_delay</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Reconnection error details&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Reconnection error details&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">True</span>
 
 
@@ -352,22 +352,22 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_replacing</span> <span class="o">=</span> <span class="bp">False</span>
 
         <span class="k">if</span> <span class="n">host_distance</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">IGNORED</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Not opening connection to ignored host </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Not opening connection to ignored host </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
             <span class="k">return</span>
         <span class="k">elif</span> <span class="n">host_distance</span> <span class="o">==</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">REMOTE</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">connect_to_remote_hosts</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Not opening connection to remote host </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Not opening connection to remote host </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
             <span class="k">return</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Initializing connection for host </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Initializing connection for host </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">session</span><span class="o">.</span><span class="n">keyspace</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">set_keyspace_blocking</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">keyspace</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Finished initializing connection for host </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Finished initializing connection for host </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">borrow_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ConnectionException</span><span class="p">(</span>
-                <span class="s2">&quot;Pool for </span><span class="si">%s</span><span class="s2"> is shutdown&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+                <span class="s">&quot;Pool for </span><span class="si">%s</span><span class="s"> is shutdown&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
 
         <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">conn</span><span class="p">:</span>
@@ -378,15 +378,15 @@
                 <span class="n">conn</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">return</span> <span class="n">conn</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">get_request_id</span><span class="p">()</span>
 
-        <span class="k">raise</span> <span class="n">NoConnectionsAvailable</span><span class="p">(</span><span class="s2">&quot;All request IDs are currently in use&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">NoConnectionsAvailable</span><span class="p">(</span><span class="s">&quot;All request IDs are currently in use&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">-=</span> <span class="mi">1</span>
 
         <span class="k">if</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">connection</span><span class="o">.</span><span class="n">signaled_error</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Defunct or closed connection (</span><span class="si">%s</span><span class="s2">) returned to pool, potentially &quot;</span>
-                      <span class="s2">&quot;marking host </span><span class="si">%s</span><span class="s2"> as down&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Defunct or closed connection (</span><span class="si">%s</span><span class="s">) returned to pool, potentially &quot;</span>
+                      <span class="s">&quot;marking host </span><span class="si">%s</span><span class="s"> as down&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
             <span class="n">is_down</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">signal_connection_failure</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">connection</span><span class="o">.</span><span class="n">last_error</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">signaled_error</span> <span class="o">=</span> <span class="bp">True</span>
@@ -401,7 +401,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_replace</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Replacing connection (</span><span class="si">%s</span><span class="s2">) to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Replacing connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
         <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">keyspace</span><span class="p">:</span>
             <span class="n">conn</span><span class="o">.</span><span class="n">set_keyspace_blocking</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">keyspace</span><span class="p">)</span>
@@ -438,7 +438,7 @@
         <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
         <span class="n">open_count</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">connection</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
         <span class="n">in_flights</span> <span class="o">=</span> <span class="p">[</span><span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span><span class="p">]</span> <span class="k">if</span> <span class="n">connection</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;shutdown&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">,</span> <span class="s1">&#39;open_count&#39;</span><span class="p">:</span> <span class="n">open_count</span><span class="p">,</span> <span class="s1">&#39;in_flights&#39;</span><span class="p">:</span> <span class="n">in_flights</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s">&#39;shutdown&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">,</span> <span class="s">&#39;open_count&#39;</span><span class="p">:</span> <span class="n">open_count</span><span class="p">,</span> <span class="s">&#39;in_flights&#39;</span><span class="p">:</span> <span class="n">in_flights</span><span class="p">}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">open_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -470,7 +470,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_conn_available_condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">()</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Initializing new connection pool for host </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Initializing new connection pool for host </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
         <span class="n">core_conns</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_core_connections_per_host</span><span class="p">(</span><span class="n">host_distance</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span> <span class="o">=</span> <span class="p">[</span><span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
                              <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">core_conns</span><span class="p">)]</span>
@@ -482,59 +482,59 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_trash</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_next_trash_allowed_at</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">=</span> <span class="n">core_conns</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Finished initializing new connection pool for host </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Finished initializing new connection pool for host </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">borrow_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ConnectionException</span><span class="p">(</span>
-                <span class="s2">&quot;Pool for </span><span class="si">%s</span><span class="s2"> is shutdown&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+                <span class="s">&quot;Pool for </span><span class="si">%s</span><span class="s"> is shutdown&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
 
         <span class="n">conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">conns</span><span class="p">:</span>
-            <span class="c1"># handled specially just for simpler code</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Detected empty pool, opening core conns to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+            <span class="c"># handled specially just for simpler code</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Detected empty pool, opening core conns to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
             <span class="n">core_conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_core_connections_per_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
-                <span class="c1"># we check the length of self._connections again</span>
-                <span class="c1"># along with self._scheduled_for_creation while holding the lock</span>
-                <span class="c1"># in case multiple threads hit this condition at the same time</span>
+                <span class="c"># we check the length of self._connections again</span>
+                <span class="c"># along with self._scheduled_for_creation while holding the lock</span>
+                <span class="c"># in case multiple threads hit this condition at the same time</span>
                 <span class="n">to_create</span> <span class="o">=</span> <span class="n">core_conns</span> <span class="o">-</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_for_creation</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">to_create</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_for_creation</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_create_new_connection</span><span class="p">)</span>
 
-            <span class="c1"># in_flight is incremented by wait_for_conn</span>
+            <span class="c"># in_flight is incremented by wait_for_conn</span>
             <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_conn</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">conn</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># note: it would be nice to push changes to these config settings</span>
-            <span class="c1"># to pools instead of doing a new lookup on every</span>
-            <span class="c1"># borrow_connection() call</span>
+            <span class="c"># note: it would be nice to push changes to these config settings</span>
+            <span class="c"># to pools instead of doing a new lookup on every</span>
+            <span class="c"># borrow_connection() call</span>
             <span class="n">max_reqs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_max_requests_per_connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
             <span class="n">max_conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_max_connections_per_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
 
             <span class="n">least_busy</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">conns</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">in_flight</span><span class="p">)</span>
             <span class="n">request_id</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="c1"># to avoid another thread closing this connection while</span>
-            <span class="c1"># trashing it (through the return_connection process), hold</span>
-            <span class="c1"># the connection lock from this point until we&#39;ve incremented</span>
-            <span class="c1"># its in_flight count</span>
+            <span class="c"># to avoid another thread closing this connection while</span>
+            <span class="c"># trashing it (through the return_connection process), hold</span>
+            <span class="c"># the connection lock from this point until we&#39;ve incremented</span>
+            <span class="c"># its in_flight count</span>
             <span class="n">need_to_wait</span> <span class="o">=</span> <span class="bp">False</span>
             <span class="k">with</span> <span class="n">least_busy</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">least_busy</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">&lt;</span> <span class="n">least_busy</span><span class="o">.</span><span class="n">max_request_id</span><span class="p">:</span>
                     <span class="n">least_busy</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="n">request_id</span> <span class="o">=</span> <span class="n">least_busy</span><span class="o">.</span><span class="n">get_request_id</span><span class="p">()</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># once we release the lock, wait for another connection</span>
+                    <span class="c"># once we release the lock, wait for another connection</span>
                     <span class="n">need_to_wait</span> <span class="o">=</span> <span class="bp">True</span>
 
             <span class="k">if</span> <span class="n">need_to_wait</span><span class="p">:</span>
-                <span class="c1"># wait_for_conn will increment in_flight on the conn</span>
+                <span class="c"># wait_for_conn will increment in_flight on the conn</span>
                 <span class="n">least_busy</span><span class="p">,</span> <span class="n">request_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_conn</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
 
-            <span class="c1"># if we have too many requests on this connection but we still</span>
-            <span class="c1"># have space to open a new connection against this host, go ahead</span>
-            <span class="c1"># and schedule the creation of a new connection</span>
+            <span class="c"># if we have too many requests on this connection but we still</span>
+            <span class="c"># have space to open a new connection against this host, go ahead</span>
+            <span class="c"># and schedule the creation of a new connection</span>
             <span class="k">if</span> <span class="n">least_busy</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">&gt;=</span> <span class="n">max_reqs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">max_conns</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_spawn_new_connection</span><span class="p">()</span>
 
@@ -548,16 +548,16 @@
                 <span class="k">return</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_for_creation</span> <span class="o">+=</span> <span class="mi">1</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Submitting task for creation of new Connection to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Submitting task for creation of new Connection to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_create_new_connection</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_create_new_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_add_conn_if_under_max</span><span class="p">()</span>
         <span class="k">except</span> <span class="p">(</span><span class="n">ConnectionException</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Failed to create new connection to </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Failed to create new connection to </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Unexpectedly failed to create new connection&quot;</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Unexpectedly failed to create new connection&quot;</span><span class="p">)</span>
         <span class="k">finally</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_for_creation</span> <span class="o">-=</span> <span class="mi">1</span>
@@ -573,7 +573,7 @@
 
             <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">+=</span> <span class="mi">1</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Going to open new connection to host </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Going to open new connection to host </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">keyspace</span><span class="p">:</span>
@@ -582,12 +582,12 @@
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
                 <span class="n">new_connections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">[:]</span> <span class="o">+</span> <span class="p">[</span><span class="n">conn</span><span class="p">]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span> <span class="o">=</span> <span class="n">new_connections</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Added new connection (</span><span class="si">%s</span><span class="s2">) to pool for host </span><span class="si">%s</span><span class="s2">, signaling availablility&quot;</span><span class="p">,</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Added new connection (</span><span class="si">%s</span><span class="s">) to pool for host </span><span class="si">%s</span><span class="s">, signaling availablility&quot;</span><span class="p">,</span>
                       <span class="nb">id</span><span class="p">(</span><span class="n">conn</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_signal_available_conn</span><span class="p">()</span>
             <span class="k">return</span> <span class="bp">True</span>
         <span class="k">except</span> <span class="p">(</span><span class="n">ConnectionException</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Failed to add new connection to pool for host </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Failed to add new connection to pool for host </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">signal_connection_failure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
@@ -615,13 +615,13 @@
         <span class="n">remaining</span> <span class="o">=</span> <span class="n">timeout</span>
 
         <span class="k">while</span> <span class="n">remaining</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># wait on our condition for the possibility that a connection</span>
-            <span class="c1"># is useable</span>
+            <span class="c"># wait on our condition for the possibility that a connection</span>
+            <span class="c"># is useable</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_await_available_conn</span><span class="p">(</span><span class="n">remaining</span><span class="p">)</span>
 
-            <span class="c1"># self.shutdown() may trigger the above Condition</span>
+            <span class="c"># self.shutdown() may trigger the above Condition</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ConnectionException</span><span class="p">(</span><span class="s2">&quot;Pool is shutdown&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">ConnectionException</span><span class="p">(</span><span class="s">&quot;Pool is shutdown&quot;</span><span class="p">)</span>
 
             <span class="n">conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span>
             <span class="k">if</span> <span class="n">conns</span><span class="p">:</span>
@@ -642,8 +642,8 @@
 
         <span class="k">if</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">connection</span><span class="o">.</span><span class="n">signaled_error</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Defunct or closed connection (</span><span class="si">%s</span><span class="s2">) returned to pool, potentially &quot;</span>
-                          <span class="s2">&quot;marking host </span><span class="si">%s</span><span class="s2"> as down&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Defunct or closed connection (</span><span class="si">%s</span><span class="s">) returned to pool, potentially &quot;</span>
+                          <span class="s">&quot;marking host </span><span class="si">%s</span><span class="s"> as down&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
                 <span class="n">is_down</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">signal_connection_failure</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">connection</span><span class="o">.</span><span class="n">last_error</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
                 <span class="n">connection</span><span class="o">.</span><span class="n">signaled_error</span> <span class="o">=</span> <span class="bp">True</span>
@@ -658,15 +658,15 @@
                         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
                             <span class="k">if</span> <span class="n">connection</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trash</span><span class="p">:</span>
                                 <span class="bp">self</span><span class="o">.</span><span class="n">_trash</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
-                        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Closing trashed connection (</span><span class="si">%s</span><span class="s2">) to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Closing trashed connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
                         <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                 <span class="k">return</span>
 
             <span class="n">core_conns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_core_connections_per_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
             <span class="n">min_reqs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_min_requests_per_connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_distance</span><span class="p">)</span>
-            <span class="c1"># we can use in_flight here without holding the connection lock</span>
-            <span class="c1"># because the fact that in_flight dipped below the min at some</span>
-            <span class="c1"># point is enough to start the trashing procedure</span>
+            <span class="c"># we can use in_flight here without holding the connection lock</span>
+            <span class="c"># because the fact that in_flight dipped below the min at some</span>
+            <span class="c"># point is enough to start the trashing procedure</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">core_conns</span> <span class="ow">and</span> <span class="n">in_flight</span> <span class="o">&lt;=</span> <span class="n">min_reqs</span> <span class="ow">and</span> \
                     <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_trash_allowed_at</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_trash_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
@@ -689,17 +689,17 @@
 
                 <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping trash and closing unused connection (</span><span class="si">%s</span><span class="s2">) to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Skipping trash and closing unused connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
                         <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-                        <span class="c1"># skip adding it to the trash if we&#39;re already closing it</span>
+                        <span class="c"># skip adding it to the trash if we&#39;re already closing it</span>
                         <span class="k">return</span>
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">_trash</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">did_trash</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_next_trash_allowed_at</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">_MIN_TRASH_INTERVAL</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Trashed connection (</span><span class="si">%s</span><span class="s2">) to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Trashed connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
         <span class="n">should_replace</span> <span class="o">=</span> <span class="bp">False</span>
@@ -712,7 +712,7 @@
                 <span class="n">should_replace</span> <span class="o">=</span> <span class="bp">True</span>
 
         <span class="k">if</span> <span class="n">should_replace</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Replacing connection (</span><span class="si">%s</span><span class="s2">) to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Replacing connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
 
             <span class="k">def</span> <span class="nf">close_and_replace</span><span class="p">():</span>
                 <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -720,8 +720,8 @@
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">close_and_replace</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># just close it</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Closing connection (</span><span class="si">%s</span><span class="s2">) to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+            <span class="c"># just close it</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Closing connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -780,7 +780,7 @@
 
     <span class="k">def</span> <span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">in_flights</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">in_flight</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connections</span><span class="p">]</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;shutdown&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">,</span> <span class="s1">&#39;open_count&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span><span class="p">,</span> <span class="s1">&#39;in_flights&#39;</span><span class="p">:</span> <span class="n">in_flights</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s">&#39;shutdown&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">,</span> <span class="s">&#39;open_count&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_count</span><span class="p">,</span> <span class="s">&#39;in_flights&#39;</span><span class="p">:</span> <span class="n">in_flights</span><span class="p">}</span>
 </pre></div>
 
           </div>
@@ -797,14 +797,14 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.1 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

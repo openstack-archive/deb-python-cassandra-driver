@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.concurrent - Utilities for Concurrent Statement Execution &mdash; Cassandra Driver 3.2.0 documentation</title>
+    <title>cassandra.concurrent - Utilities for Concurrent Statement Execution &mdash; Cassandra Driver 3.2.1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.2.0',
+        VERSION:     '3.2.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.2.1 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.connection - Low Level Connection Info" href="connection.html" />
     <link rel="prev" title="cassandra.decoder - Data Return Formats" href="decoder.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="decoder.html" title="cassandra.decoder - Data Return Formats"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.1 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -117,7 +117,7 @@ there was an error executing the statement, and <code class="docutils literal"><
 an <code class="xref py py-class docutils literal"><span class="pre">Exception</span></code>.  If <code class="docutils literal"><span class="pre">success</span></code> is <code class="xref py py-const docutils literal"><span class="pre">True</span></code>, <code class="docutils literal"><span class="pre">result_or_exc</span></code>
 will be the query result.</p>
 <p>Example usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">select_statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users WHERE id=?&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">select_statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s">&quot;SELECT * FROM users WHERE id=?&quot;</span><span class="p">)</span>
 
 <span class="n">statements_and_params</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="n">user_ids</span><span class="p">:</span>
@@ -129,9 +129,9 @@ will be the query result.</p>
 
 <span class="k">for</span> <span class="p">(</span><span class="n">success</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
-        <span class="n">handle_error</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>  <span class="c1"># result will be an Exception</span>
+        <span class="n">handle_error</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>  <span class="c"># result will be an Exception</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">process_user</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># result will be a list of rows</span>
+        <span class="n">process_user</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c"># result will be a list of rows</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -143,7 +143,7 @@ will be the query result.</p>
 statement and a sequence of parameters.  Each item in <code class="docutils literal"><span class="pre">parameters</span></code>
 should be a sequence or <code class="xref py py-const docutils literal"><span class="pre">None</span></code>.</p>
 <p>Example usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s2">&quot;INSERT INTO mytable (a, b) VALUES (1, ?)&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s">&quot;INSERT INTO mytable (a, b) VALUES (1, ?)&quot;</span><span class="p">)</span>
 <span class="n">parameters</span> <span class="o">=</span> <span class="p">[(</span><span class="n">x</span><span class="p">,)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">)]</span>
 <span class="n">execute_concurrent_with_args</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">concurrency</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 </pre></div>
@@ -173,13 +173,13 @@ should be a sequence or <code class="xref py py-const docutils literal"><span cl
         <li class="right" >
           <a href="decoder.html" title="cassandra.decoder - Data Return Formats"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.1 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>
