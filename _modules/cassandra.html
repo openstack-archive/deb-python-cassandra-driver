@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra &mdash; Cassandra Driver 3.2.2 documentation</title>
+    <title>cassandra &mdash; Cassandra Driver 3.3.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.2.2',
+        VERSION:     '3.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.2 documentation" href="../index.html" />
+    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../index.html" />
     <link rel="up" title="Module code" href="index.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -88,7 +88,7 @@
 
 <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;cassandra&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">NullHandler</span><span class="p">())</span>
 
-<span class="n">__version_info__</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">__version_info__</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 <span class="n">__version__</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">__version_info__</span><span class="p">))</span>
 
 
@@ -260,7 +260,21 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 </div>
-<div class="viewcode-block" id="Unavailable"><a class="viewcode-back" href="../api/cassandra.html#cassandra.Unavailable">[docs]</a><span class="k">class</span> <span class="nc">Unavailable</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="DriverException"><a class="viewcode-back" href="../api/cassandra.html#cassandra.DriverException">[docs]</a><span class="k">class</span> <span class="nc">DriverException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base for all exceptions explicitly raised by the driver.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="RequestExecutionException"><a class="viewcode-back" href="../api/cassandra.html#cassandra.RequestExecutionException">[docs]</a><span class="k">class</span> <span class="nc">RequestExecutionException</span><span class="p">(</span><span class="n">DriverException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base for request execution exceptions returned from the server.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="Unavailable"><a class="viewcode-back" href="../api/cassandra.html#cassandra.Unavailable">[docs]</a><span class="k">class</span> <span class="nc">Unavailable</span><span class="p">(</span><span class="n">RequestExecutionException</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    There were not enough live replicas to satisfy the requested consistency</span>
 <span class="sd">    level, so the coordinator node immediately failed the request without</span>
@@ -286,7 +300,7 @@
                                  <span class="s">&#39;alive_replicas&#39;</span><span class="p">:</span> <span class="n">alive_replicas</span><span class="p">}))</span>
 
 </div>
-<div class="viewcode-block" id="Timeout"><a class="viewcode-back" href="../api/cassandra.html#cassandra.Timeout">[docs]</a><span class="k">class</span> <span class="nc">Timeout</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="Timeout"><a class="viewcode-back" href="../api/cassandra.html#cassandra.Timeout">[docs]</a><span class="k">class</span> <span class="nc">Timeout</span><span class="p">(</span><span class="n">RequestExecutionException</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Replicas failed to respond to the coordinator node before timing out.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -355,7 +369,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">write_type</span> <span class="o">=</span> <span class="n">write_type</span>
 
 </div>
-<span class="k">class</span> <span class="nc">CoordinationFailure</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="CoordinationFailure"><a class="viewcode-back" href="../api/cassandra.html#cassandra.CoordinationFailure">[docs]</a><span class="k">class</span> <span class="nc">CoordinationFailure</span><span class="p">(</span><span class="n">RequestExecutionException</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Replicas sent a failure to the coordinator.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -388,7 +402,7 @@
                                  <span class="s">&#39;received_responses&#39;</span><span class="p">:</span> <span class="n">received_responses</span><span class="p">,</span>
                                  <span class="s">&#39;failures&#39;</span><span class="p">:</span> <span class="n">failures</span><span class="p">}))</span>
 
-
+</div>
 <div class="viewcode-block" id="ReadFailure"><a class="viewcode-back" href="../api/cassandra.html#cassandra.ReadFailure">[docs]</a><span class="k">class</span> <span class="nc">ReadFailure</span><span class="p">(</span><span class="n">CoordinationFailure</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A subclass of :exc:`CoordinationFailure` for read operations.</span>
@@ -425,7 +439,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">write_type</span> <span class="o">=</span> <span class="n">write_type</span>
 
 </div>
-<div class="viewcode-block" id="FunctionFailure"><a class="viewcode-back" href="../api/cassandra.html#cassandra.FunctionFailure">[docs]</a><span class="k">class</span> <span class="nc">FunctionFailure</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="FunctionFailure"><a class="viewcode-back" href="../api/cassandra.html#cassandra.FunctionFailure">[docs]</a><span class="k">class</span> <span class="nc">FunctionFailure</span><span class="p">(</span><span class="n">RequestExecutionException</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    User Defined Function failed during execution</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -452,7 +466,21 @@
         <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">summary_message</span><span class="p">)</span>
 
 </div>
-<div class="viewcode-block" id="AlreadyExists"><a class="viewcode-back" href="../api/cassandra.html#cassandra.AlreadyExists">[docs]</a><span class="k">class</span> <span class="nc">AlreadyExists</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="RequestValidationException"><a class="viewcode-back" href="../api/cassandra.html#cassandra.RequestValidationException">[docs]</a><span class="k">class</span> <span class="nc">RequestValidationException</span><span class="p">(</span><span class="n">DriverException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Server request validation failed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="ConfigurationException"><a class="viewcode-back" href="../api/cassandra.html#cassandra.ConfigurationException">[docs]</a><span class="k">class</span> <span class="nc">ConfigurationException</span><span class="p">(</span><span class="n">RequestValidationException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Server indicated request errro due to current configuration</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="AlreadyExists"><a class="viewcode-back" href="../api/cassandra.html#cassandra.AlreadyExists">[docs]</a><span class="k">class</span> <span class="nc">AlreadyExists</span><span class="p">(</span><span class="n">ConfigurationException</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An attempt was made to create a keyspace or table that already exists.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -480,7 +508,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">table</span>
 
 </div>
-<div class="viewcode-block" id="InvalidRequest"><a class="viewcode-back" href="../api/cassandra.html#cassandra.InvalidRequest">[docs]</a><span class="k">class</span> <span class="nc">InvalidRequest</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="InvalidRequest"><a class="viewcode-back" href="../api/cassandra.html#cassandra.InvalidRequest">[docs]</a><span class="k">class</span> <span class="nc">InvalidRequest</span><span class="p">(</span><span class="n">RequestValidationException</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A query was made that was invalid for some reason, such as trying to set</span>
 <span class="sd">    the keyspace for a connection to a nonexistent keyspace.</span>
@@ -488,21 +516,21 @@
     <span class="k">pass</span>
 
 </div>
-<div class="viewcode-block" id="Unauthorized"><a class="viewcode-back" href="../api/cassandra.html#cassandra.Unauthorized">[docs]</a><span class="k">class</span> <span class="nc">Unauthorized</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="Unauthorized"><a class="viewcode-back" href="../api/cassandra.html#cassandra.Unauthorized">[docs]</a><span class="k">class</span> <span class="nc">Unauthorized</span><span class="p">(</span><span class="n">RequestValidationException</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The current user is not authorized to perfom the requested operation.</span>
+<span class="sd">    The current user is not authorized to perform the requested operation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 
 </div>
-<div class="viewcode-block" id="AuthenticationFailed"><a class="viewcode-back" href="../api/cassandra.html#cassandra.AuthenticationFailed">[docs]</a><span class="k">class</span> <span class="nc">AuthenticationFailed</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="AuthenticationFailed"><a class="viewcode-back" href="../api/cassandra.html#cassandra.AuthenticationFailed">[docs]</a><span class="k">class</span> <span class="nc">AuthenticationFailed</span><span class="p">(</span><span class="n">DriverException</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Failed to authenticate.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 
 </div>
-<div class="viewcode-block" id="OperationTimedOut"><a class="viewcode-back" href="../api/cassandra.html#cassandra.OperationTimedOut">[docs]</a><span class="k">class</span> <span class="nc">OperationTimedOut</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="OperationTimedOut"><a class="viewcode-back" href="../api/cassandra.html#cassandra.OperationTimedOut">[docs]</a><span class="k">class</span> <span class="nc">OperationTimedOut</span><span class="p">(</span><span class="n">DriverException</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The operation took longer than the specified (client-side) timeout</span>
 <span class="sd">    to complete.  This is not an error generated by Cassandra, only</span>
@@ -526,7 +554,7 @@
         <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
 
 </div>
-<span class="k">class</span> <span class="nc">UnsupportedOperation</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">UnsupportedOperation</span><span class="p">(</span><span class="n">DriverException</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An attempt was made to use a feature that is not supported by the</span>
 <span class="sd">    selected protocol version.  See :attr:`Cluster.protocol_version`</span>
@@ -549,7 +577,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>

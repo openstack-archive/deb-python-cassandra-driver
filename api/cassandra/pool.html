@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.pool - Hosts and Connection Pools &mdash; Cassandra Driver 3.2.2 documentation</title>
+    <title>cassandra.pool - Hosts and Connection Pools &mdash; Cassandra Driver 3.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.2.2',
+        VERSION:     '3.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.protocol - Protocol Features" href="protocol.html" />
     <link rel="prev" title="cassandra.query - Prepared Statements, Batch Statements, Tracing, and Row Factories" href="query.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="query.html" title="cassandra.query - Prepared Statements, Batch Statements, Tracing, and Row Factories"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -92,6 +92,22 @@
 <em class="property">class </em><code class="descclassname">cassandra.pool.</code><code class="descname">Host</code><a class="reference internal" href="../../_modules/cassandra/pool.html#Host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.pool.Host" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a single Cassandra node.</p>
 <dl class="attribute">
+<dt id="cassandra.pool.Host.broadcast_address">
+<code class="descname">broadcast_address</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.pool.Host.broadcast_address" title="Permalink to this definition">¶</a></dt>
+<dd><p>broadcast address configured for the node, <em>if available</em> (&#8216;peer&#8217; in system.peers table).
+This is not present in the <code class="docutils literal"><span class="pre">system.local</span></code> table for older versions of Cassandra. It is also not queried if
+<a class="reference internal" href="cluster.html#cassandra.cluster.Cluster.token_metadata_enabled" title="cassandra.cluster.Cluster.token_metadata_enabled"><code class="xref py py-attr docutils literal"><span class="pre">token_metadata_enabled</span></code></a> is <code class="docutils literal"><span class="pre">False</span></code>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.pool.Host.listen_address">
+<code class="descname">listen_address</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.pool.Host.listen_address" title="Permalink to this definition">¶</a></dt>
+<dd><p>listen address configured for the node, <em>if available</em>. This is only available in the <code class="docutils literal"><span class="pre">system.local</span></code> table for newer
+versions of Cassandra. It is also not queried if <a class="reference internal" href="cluster.html#cassandra.cluster.Cluster.token_metadata_enabled" title="cassandra.cluster.Cluster.token_metadata_enabled"><code class="xref py py-attr docutils literal"><span class="pre">token_metadata_enabled</span></code></a> is <code class="docutils literal"><span class="pre">False</span></code>.
+Usually the same as <code class="docutils literal"><span class="pre">broadcast_address</span></code> unless configured differently in cassandra.yaml.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="cassandra.pool.Host.is_up">
 <code class="descname">is_up</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.pool.Host.is_up" title="Permalink to this definition">¶</a></dt>
 <dd><p><code class="xref py py-const docutils literal"><span class="pre">True</span></code> if the node is considered up, <code class="xref py py-const docutils literal"><span class="pre">False</span></code> if it is
@@ -100,9 +116,15 @@ up or down.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="cassandra.pool.Host.release_version">
+<code class="descname">release_version</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.pool.Host.release_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>release_version as queried from the control connection system tables</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="cassandra.pool.Host.address">
 <code class="descname">address</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.pool.Host.address" title="Permalink to this definition">¶</a></dt>
-<dd><p>The IP address or hostname of the node.</p>
+<dd><p>The IP address of the node. This is the RPC address the driver uses when connecting to the node</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -156,7 +178,7 @@ no open connections.</p>
         <li class="right" >
           <a href="query.html" title="cassandra.query - Prepared Statements, Batch Statements, Tracing, and Row Factories"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

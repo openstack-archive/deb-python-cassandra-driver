@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies - Load balancing and Failure Handling Policies &mdash; Cassandra Driver 3.2.2 documentation</title>
+    <title>cassandra.policies - Load balancing and Failure Handling Policies &mdash; Cassandra Driver 3.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.2.2',
+        VERSION:     '3.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.auth - Authentication" href="auth.html" />
     <link rel="prev" title="cassandra.cluster - Clusters and Sessions" href="cluster.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -54,6 +54,7 @@
   <ul>
 <li><a class="reference internal" href="#"><code class="docutils literal"><span class="pre">cassandra.policies</span></code> - Load balancing and Failure Handling Policies</a><ul>
 <li><a class="reference internal" href="#load-balancing">Load Balancing</a></li>
+<li><a class="reference internal" href="#translating-server-node-addresses">Translating Server Node Addresses</a></li>
 <li><a class="reference internal" href="#marking-hosts-up-or-down">Marking Hosts Up or Down</a></li>
 <li><a class="reference internal" href="#reconnecting-to-dead-hosts">Reconnecting to Dead Hosts</a></li>
 <li><a class="reference internal" href="#retrying-failed-operations">Retrying Failed Operations</a></li>
@@ -246,6 +247,34 @@ policy&#8217;s query plan will be used as is.</p>
 </dd></dl>
 
 </div>
+<div class="section" id="translating-server-node-addresses">
+<h2>Translating Server Node Addresses<a class="headerlink" href="#translating-server-node-addresses" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="cassandra.policies.AddressTranslator">
+<em class="property">class </em><code class="descclassname">cassandra.policies.</code><code class="descname">AddressTranslator</code><a class="reference internal" href="../../_modules/cassandra/policies.html#AddressTranslator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.AddressTranslator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interface for translating cluster-defined endpoints.</p>
+<p>The driver discovers nodes using server metadata and topology change events. Normally,
+the endpoint defined by the server is the right way to connect to a node. In some environments,
+these addresses may not be reachable, or not preferred (public vs. private IPs in cloud environments,
+suboptimal routing, etc). This interface allows for translating from server defined endpoints to
+preferred addresses for driver connections.</p>
+<p><em>Note:</em> <code class="xref py py-attr docutils literal"><span class="pre">contact_points</span></code> provided while creating the <a class="reference internal" href="cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code></a> instance are not
+translated using this mechanism &#8211; only addresses received from Cassandra nodes are.</p>
+<dl class="method">
+<dt id="cassandra.policies.AddressTranslator.translate">
+<code class="descname">translate</code><span class="sig-paren">(</span><em>addr</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/policies.html#AddressTranslator.translate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.AddressTranslator.translate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accepts the node ip address, and returns a translated address to be used connecting to this node.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.IdentityTranslator">
+<em class="property">class </em><code class="descclassname">cassandra.policies.</code><code class="descname">IdentityTranslator</code><a class="reference internal" href="../../_modules/cassandra/policies.html#IdentityTranslator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.IdentityTranslator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the endpoint with no translation</p>
+</dd></dl>
+
+</div>
 <div class="section" id="marking-hosts-up-or-down">
 <h2>Marking Hosts Up or Down<a class="headerlink" href="#marking-hosts-up-or-down" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -414,6 +443,13 @@ should be propagated and no more retries attempted.</p>
 should be ignored but no more retries should be attempted.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="cassandra.policies.RetryPolicy.RETRY_NEXT_HOST">
+<code class="descname">RETRY_NEXT_HOST</code><em class="property"> = 3</em><a class="headerlink" href="#cassandra.policies.RetryPolicy.RETRY_NEXT_HOST" title="Permalink to this definition">¶</a></dt>
+<dd><p>This should be returned from the below methods if the operation
+should be retried on another connection.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="cassandra.policies.RetryPolicy.on_read_timeout">
 <code class="descname">on_read_timeout</code><span class="sig-paren">(</span><em>query</em>, <em>consistency</em>, <em>required_responses</em>, <em>received_responses</em>, <em>data_retrieved</em>, <em>retry_num</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/policies.html#RetryPolicy.on_read_timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.RetryPolicy.on_read_timeout" title="Permalink to this definition">¶</a></dt>
@@ -557,7 +593,7 @@ than reading nothing, even if there is a risk of reading stale data.</p>
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

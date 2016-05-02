@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 3.2.2 documentation</title>
+    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 3.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.2.2',
+        VERSION:     '3.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" />
     <link rel="prev" title="cassandra - Exceptions and Enums" href="../cassandra.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -229,6 +229,13 @@ explicitly set.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="cassandra.cluster.Cluster.address_translator">
+<code class="descname">address_translator</code><em class="property"> = &lt;cassandra.policies.IdentityTranslator object&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.address_translator" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="policies.html#cassandra.policies.AddressTranslator" title="cassandra.policies.AddressTranslator"><code class="xref py py-class docutils literal"><span class="pre">policies.AddressTranslator</span></code></a> instance to be used in translating server node addresses
+to driver connection addresses.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="cassandra.cluster.Cluster.connection_class">
 <code class="descname">connection_class</code><em class="property"> = &lt;class 'cassandra.io.libevreactor.LibevConnection'&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.connection_class" title="Permalink to this definition">¶</a></dt>
 <dd><p>This determines what event loop system will be used for managing
@@ -277,6 +284,14 @@ is enabled in Cassandra.</p>
 a string pointing to the location of the CA certs file), and you probably
 want to specify <code class="docutils literal"><span class="pre">ssl_version</span></code> as <code class="docutils literal"><span class="pre">ssl.PROTOCOL_TLSv1</span></code> to match
 Cassandra&#8217;s default protocol.</p>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 3.3.0.</span></p>
+</div>
+<p>In addition to <code class="docutils literal"><span class="pre">wrap_socket</span></code> kwargs, clients may also specify <code class="docutils literal"><span class="pre">'check_hostname':</span> <span class="pre">True</span></code> to verify the cert hostname
+as outlined in RFC 2818 and RFC 6125. Note that this requires the certificate to be transferred, so
+should almost always require the option <code class="docutils literal"><span class="pre">'cert_reqs':</span> <span class="pre">ssl.CERT_REQUIRED</span></code>. Note also that this functionality was not built into
+Python standard library until (2.7.9, 3.2). To enable this mechanism in earlier versions, patch <code class="docutils literal"><span class="pre">ssl.match_hostname</span></code>
+with a custom or <a class="reference external" href="https://pypi.python.org/pypi/backports.ssl_match_hostname">back-ported function</a>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -348,6 +363,25 @@ receiving a topology_change event.</p>
 <dd><p>Timeout, in seconds, for creating new connections.</p>
 <p>This timeout covers the entire connection negotiation, including TCP
 establishment, options passing, and authentication.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.schema_metadata_enabled">
+<code class="descname">schema_metadata_enabled</code><em class="property"> = True</em><a class="headerlink" href="#cassandra.cluster.Cluster.schema_metadata_enabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag indicating whether internal schema metadata is updated.</p>
+<p>When disabled, the driver does not populate Cluster.metadata.keyspaces on connect, or on schema change events. This
+can be used to speed initial connection, and reduce load on client and server during operation. Turning this off
+gives away token aware request routing, and programmatic inspection of the metadata model.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.token_metadata_enabled">
+<code class="descname">token_metadata_enabled</code><em class="property"> = True</em><a class="headerlink" href="#cassandra.cluster.Cluster.token_metadata_enabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag indicating whether internal token metadata is updated.</p>
+<p>When disabled, the driver does not query node token information on connect, or on topology change events. This
+can be used to speed initial connection, and reduce load on client and server during operation. It is most useful
+in large clusters using vnodes, where the token map can be expensive to compute. Turning this off
+gives away token aware request routing, and programmatic inspection of the token ring.</p>
 </dd></dl>
 
 <dl class="method">
@@ -565,7 +599,8 @@ to the table.</p>
 <dl class="method">
 <dt id="cassandra.cluster.Cluster.set_meta_refresh_enabled">
 <code class="descname">set_meta_refresh_enabled</code><span class="sig-paren">(</span><em>enabled</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.set_meta_refresh_enabled"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.set_meta_refresh_enabled" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets a flag to enable (True) or disable (False) all metadata refresh queries.
+<dd><p><em>Deprecated:</em> set <a class="reference internal" href="#cassandra.cluster.Cluster.schema_metadata_enabled" title="cassandra.cluster.Cluster.schema_metadata_enabled"><code class="xref py py-attr docutils literal"><span class="pre">schema_metadata_enabled</span></code></a> <a class="reference internal" href="#cassandra.cluster.Cluster.token_metadata_enabled" title="cassandra.cluster.Cluster.token_metadata_enabled"><code class="xref py py-attr docutils literal"><span class="pre">token_metadata_enabled</span></code></a> instead</p>
+<p>Sets a flag to enable (True) or disable (False) all metadata refresh queries.
 This applies to both schema and node topology.</p>
 <p>Disabling this is useful to minimize refreshes during multiple changes.</p>
 <p>Meta refresh must be enabled for the driver to become aware of any cluster
@@ -871,8 +906,9 @@ about server-side coordinator timeouts, see <a class="reference internal" href="
 <dd><p>Fetches and returns the query trace of the last response, or <cite>None</cite> if tracing was
 not enabled.</p>
 <p>Note that this may raise an exception if there are problems retrieving the trace
-details from Cassandra. If the trace is not available after <cite>max_wait_sec</cite>,
+details from Cassandra. If the trace is not available after <cite>max_wait</cite>,
 <a class="reference internal" href="query.html#cassandra.query.TraceUnavailable" title="cassandra.query.TraceUnavailable"><code class="xref py py-exc docutils literal"><span class="pre">cassandra.query.TraceUnavailable</span></code></a> will be raised.</p>
+<p><cite>query_cl</cite> is the consistency level used to poll the trace tables.</p>
 </dd></dl>
 
 <dl class="method">
@@ -1132,7 +1168,7 @@ against.</p>
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies &mdash; Cassandra Driver 3.2.2 documentation</title>
+    <title>cassandra.policies &mdash; Cassandra Driver 3.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.2.2',
+        VERSION:     '3.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -83,11 +83,8 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">randint</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Lock</span>
-<span class="kn">import</span> <span class="nn">six</span>
 
-<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span>
-
-<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">OperationTimedOut</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
@@ -302,7 +299,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_dc_live_hosts</span><span class="p">[</span><span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dc_hosts</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_dc</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_contact_points</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">contact_points</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_contact_points</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">contact_points_resolved</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">hosts</span> <span class="k">else</span> <span class="mi">0</span>
 
@@ -404,7 +401,7 @@
 
     <span class="k">def</span> <span class="nf">check_supported</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster_metadata</span><span class="o">.</span><span class="n">can_support_partitioner</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s">&#39;</span><span class="si">%s</span><span class="s"> cannot be used with the cluster partitioner (</span><span class="si">%s</span><span class="s">) because &#39;</span>
                 <span class="s">&#39;the relevant C extension for this driver was not compiled. &#39;</span>
                 <span class="s">&#39;See the installation instructions for details on building &#39;</span>
@@ -535,7 +532,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">add_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection_exc</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">connection_exc</span><span class="p">,</span> <span class="n">OperationTimedOut</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span>
@@ -621,8 +618,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span> <span class="o">=</span> <span class="n">max_attempts</span>
 
     <span class="k">def</span> <span class="nf">new_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
-        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span> <span class="o">==</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span><span class="p">:</span>
             <span class="k">yield</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_delay</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">i</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_delay</span><span class="p">)</span>
             <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
 
@@ -717,6 +714,12 @@
 <span class="sd">    should be ignored but no more retries should be attempted.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">RETRY_NEXT_HOST</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This should be returned from the below methods if the operation</span>
+<span class="sd">    should be retried on another connection.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="RetryPolicy.on_read_timeout"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.RetryPolicy.on_read_timeout">[docs]</a>    <span class="k">def</span> <span class="nf">on_read_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">required_responses</span><span class="p">,</span>
                         <span class="n">received_responses</span><span class="p">,</span> <span class="n">data_retrieved</span><span class="p">,</span> <span class="n">retry_num</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -744,11 +747,11 @@
 <span class="sd">        a sufficient number of replicas responded (with data digests).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">retry_num</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
         <span class="k">elif</span> <span class="n">received_responses</span> <span class="o">&gt;=</span> <span class="n">required_responses</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">data_retrieved</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">consistency</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">consistency</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
 </div>
 <div class="viewcode-block" id="RetryPolicy.on_write_timeout"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.RetryPolicy.on_write_timeout">[docs]</a>    <span class="k">def</span> <span class="nf">on_write_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">write_type</span><span class="p">,</span>
                          <span class="n">required_responses</span><span class="p">,</span> <span class="n">received_responses</span><span class="p">,</span> <span class="n">retry_num</span><span class="p">):</span>
@@ -777,11 +780,11 @@
 <span class="sd">        :attr:`~.WriteType.BATCH_LOG`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">retry_num</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
         <span class="k">elif</span> <span class="n">write_type</span> <span class="o">==</span> <span class="n">WriteType</span><span class="o">.</span><span class="n">BATCH_LOG</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">consistency</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">consistency</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
 </div>
 <div class="viewcode-block" id="RetryPolicy.on_unavailable"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.RetryPolicy.on_unavailable">[docs]</a>    <span class="k">def</span> <span class="nf">on_unavailable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">required_replicas</span><span class="p">,</span> <span class="n">alive_replicas</span><span class="p">,</span> <span class="n">retry_num</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -806,7 +809,7 @@
 
 <span class="sd">        By default, no retries will be attempted and the error will be re-raised.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETRY_NEXT_HOST</span><span class="p">,</span> <span class="n">consistency</span><span class="p">)</span> <span class="k">if</span> <span class="n">retry_num</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
 </div></div>
 <div class="viewcode-block" id="FallthroughRetryPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.FallthroughRetryPolicy">[docs]</a><span class="k">class</span> <span class="nc">FallthroughRetryPolicy</span><span class="p">(</span><span class="n">RetryPolicy</span><span class="p">):</span>
@@ -816,13 +819,13 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">on_read_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">on_write_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">on_unavailable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
 
 </div>
 <div class="viewcode-block" id="DowngradingConsistencyRetryPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.DowngradingConsistencyRetryPolicy">[docs]</a><span class="k">class</span> <span class="nc">DowngradingConsistencyRetryPolicy</span><span class="p">(</span><span class="n">RetryPolicy</span><span class="p">):</span>
@@ -874,48 +877,76 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">_pick_consistency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_responses</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">num_responses</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">THREE</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">THREE</span>
         <span class="k">elif</span> <span class="n">num_responses</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">TWO</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">TWO</span>
         <span class="k">elif</span> <span class="n">num_responses</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">ONE</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">on_read_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">required_responses</span><span class="p">,</span>
                         <span class="n">received_responses</span><span class="p">,</span> <span class="n">data_retrieved</span><span class="p">,</span> <span class="n">retry_num</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">retry_num</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
         <span class="k">elif</span> <span class="n">received_responses</span> <span class="o">&lt;</span> <span class="n">required_responses</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pick_consistency</span><span class="p">(</span><span class="n">received_responses</span><span class="p">)</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">data_retrieved</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">consistency</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">consistency</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">on_write_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">write_type</span><span class="p">,</span>
                          <span class="n">required_responses</span><span class="p">,</span> <span class="n">received_responses</span><span class="p">,</span> <span class="n">retry_num</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">retry_num</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
 
         <span class="k">if</span> <span class="n">write_type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">WriteType</span><span class="o">.</span><span class="n">SIMPLE</span><span class="p">,</span> <span class="n">WriteType</span><span class="o">.</span><span class="n">BATCH</span><span class="p">,</span> <span class="n">WriteType</span><span class="o">.</span><span class="n">COUNTER</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">received_responses</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="c"># persisted on at least one replica</span>
-                <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">IGNORE</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">IGNORE</span><span class="p">,</span> <span class="bp">None</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
         <span class="k">elif</span> <span class="n">write_type</span> <span class="o">==</span> <span class="n">WriteType</span><span class="o">.</span><span class="n">UNLOGGED_BATCH</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pick_consistency</span><span class="p">(</span><span class="n">received_responses</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">write_type</span> <span class="o">==</span> <span class="n">WriteType</span><span class="o">.</span><span class="n">BATCH_LOG</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">consistency</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span> <span class="n">consistency</span>
 
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">on_unavailable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">consistency</span><span class="p">,</span> <span class="n">required_replicas</span><span class="p">,</span> <span class="n">alive_replicas</span><span class="p">,</span> <span class="n">retry_num</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">retry_num</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RETHROW</span><span class="p">,</span> <span class="bp">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pick_consistency</span><span class="p">(</span><span class="n">alive_replicas</span><span class="p">)</span></div>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pick_consistency</span><span class="p">(</span><span class="n">alive_replicas</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="AddressTranslator"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.AddressTranslator">[docs]</a><span class="k">class</span> <span class="nc">AddressTranslator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interface for translating cluster-defined endpoints.</span>
+
+<span class="sd">    The driver discovers nodes using server metadata and topology change events. Normally,</span>
+<span class="sd">    the endpoint defined by the server is the right way to connect to a node. In some environments,</span>
+<span class="sd">    these addresses may not be reachable, or not preferred (public vs. private IPs in cloud environments,</span>
+<span class="sd">    suboptimal routing, etc). This interface allows for translating from server defined endpoints to</span>
+<span class="sd">    preferred addresses for driver connections.</span>
+
+<span class="sd">    *Note:* :attr:`~Cluster.contact_points` provided while creating the :class:`~.Cluster` instance are not</span>
+<span class="sd">    translated using this mechanism -- only addresses received from Cassandra nodes are.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="AddressTranslator.translate"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.AddressTranslator.translate">[docs]</a>    <span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Accepts the node ip address, and returns a translated address to be used connecting to this node.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+</div></div>
+<div class="viewcode-block" id="IdentityTranslator"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.IdentityTranslator">[docs]</a><span class="k">class</span> <span class="nc">IdentityTranslator</span><span class="p">(</span><span class="n">AddressTranslator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the endpoint with no translation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">addr</span></div>
 </pre></div>
 
           </div>
@@ -932,7 +963,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

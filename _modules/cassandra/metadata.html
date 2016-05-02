@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata &mdash; Cassandra Driver 3.2.2 documentation</title>
+    <title>cassandra.metadata &mdash; Cassandra Driver 3.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.2.2',
+        VERSION:     '3.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -184,13 +184,15 @@
 </div>
     <span class="k">def</span> <span class="nf">refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">target_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">change_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
+        <span class="n">server_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">)</span><span class="o">.</span><span class="n">release_version</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">get_schema_parser</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">server_version</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="n">target_type</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_all</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_all</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="n">tt_lower</span> <span class="o">=</span> <span class="n">target_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">parser</span> <span class="o">=</span> <span class="n">get_schema_parser</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
             <span class="n">parse_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="s">&#39;get_&#39;</span> <span class="o">+</span> <span class="n">tt_lower</span><span class="p">)</span>
             <span class="n">meta</span> <span class="o">=</span> <span class="n">parse_method</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">meta</span><span class="p">:</span>
@@ -202,12 +204,7 @@
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Unknown schema target_type: &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">target_type</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_rebuild_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        For internal use only.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">parser</span> <span class="o">=</span> <span class="n">get_schema_parser</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
-
+    <span class="k">def</span> <span class="nf">_rebuild_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">):</span>
         <span class="n">current_keyspaces</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">keyspace_meta</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_all_keyspaces</span><span class="p">():</span>
             <span class="n">current_keyspaces</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">keyspace_meta</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
@@ -1469,8 +1466,10 @@
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_lock</span><span class="p">:</span>
             <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">build_if_absent</span> <span class="ow">and</span> <span class="n">current</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">build_if_absent</span> <span class="ow">and</span> <span class="n">current</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
-                <span class="n">replica_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">replica_map_for_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">])</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span> <span class="o">=</span> <span class="n">replica_map</span>
+                <span class="n">ks_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ks_meta</span><span class="p">:</span>
+                    <span class="n">replica_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">replica_map_for_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span> <span class="o">=</span> <span class="n">replica_map</span>
 
     <span class="k">def</span> <span class="nf">replica_map_for_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ks_metadata</span><span class="p">):</span>
         <span class="n">strategy</span> <span class="o">=</span> <span class="n">ks_metadata</span><span class="o">.</span><span class="n">replication_strategy</span>
@@ -2520,8 +2519,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_cql_query</span><span class="p">(</span><span class="n">formatted</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;;&quot;</span>
 
 </div>
-<span class="k">def</span> <span class="nf">get_schema_parser</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
-    <span class="n">server_version</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">server_version</span>
+<span class="k">def</span> <span class="nf">get_schema_parser</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">server_version</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">server_version</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;3&#39;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">SchemaParserV3</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -2554,7 +2552,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

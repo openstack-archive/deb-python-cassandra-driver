@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra - Exceptions and Enums &mdash; Cassandra Driver 3.2.2 documentation</title>
+    <title>cassandra - Exceptions and Enums &mdash; Cassandra Driver 3.3.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.2.2',
+        VERSION:     '3.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.2 documentation" href="../index.html" />
+    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../index.html" />
     <link rel="up" title="API Documentation" href="index.html" />
     <link rel="next" title="cassandra.cluster - Clusters and Sessions" href="cassandra/cluster.html" />
     <link rel="prev" title="API Documentation" href="index.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="index.html" title="API Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -227,6 +227,18 @@ one response.</p>
 </dd></dl>
 
 <dl class="exception">
+<dt id="cassandra.DriverException">
+<em class="property">exception </em><code class="descclassname">cassandra.</code><code class="descname">DriverException</code><a class="reference internal" href="../_modules/cassandra.html#DriverException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.DriverException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base for all exceptions explicitly raised by the driver.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="cassandra.RequestExecutionException">
+<em class="property">exception </em><code class="descclassname">cassandra.</code><code class="descname">RequestExecutionException</code><a class="reference internal" href="../_modules/cassandra.html#RequestExecutionException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.RequestExecutionException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base for request execution exceptions returned from the server.</p>
+</dd></dl>
+
+<dl class="exception">
 <dt id="cassandra.Unavailable">
 <em class="property">exception </em><code class="descclassname">cassandra.</code><code class="descname">Unavailable</code><a class="reference internal" href="../_modules/cassandra.html#Unavailable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.Unavailable" title="Permalink to this definition">¶</a></dt>
 <dd><p>There were not enough live replicas to satisfy the requested consistency
@@ -312,9 +324,40 @@ option.</p>
 </dd></dl>
 
 <dl class="exception">
+<dt id="cassandra.CoordinationFailure">
+<em class="property">exception </em><code class="descclassname">cassandra.</code><code class="descname">CoordinationFailure</code><a class="reference internal" href="../_modules/cassandra.html#CoordinationFailure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.CoordinationFailure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replicas sent a failure to the coordinator.</p>
+<dl class="attribute">
+<dt id="cassandra.CoordinationFailure.consistency">
+<code class="descname">consistency</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.CoordinationFailure.consistency" title="Permalink to this definition">¶</a></dt>
+<dd><p>The requested <a class="reference internal" href="#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><code class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></code></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.CoordinationFailure.required_responses">
+<code class="descname">required_responses</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.CoordinationFailure.required_responses" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of required replica responses</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.CoordinationFailure.received_responses">
+<code class="descname">received_responses</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.CoordinationFailure.received_responses" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of replicas that responded before the coordinator timed out
+the operation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.CoordinationFailure.failures">
+<code class="descname">failures</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.CoordinationFailure.failures" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of replicas that sent a failure message</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
 <dt id="cassandra.ReadFailure">
 <em class="property">exception </em><code class="descclassname">cassandra.</code><code class="descname">ReadFailure</code><a class="reference internal" href="../_modules/cassandra.html#ReadFailure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.ReadFailure" title="Permalink to this definition">¶</a></dt>
-<dd><p>A subclass of <code class="xref py py-exc docutils literal"><span class="pre">CoordinationFailure</span></code> for read operations.</p>
+<dd><p>A subclass of <a class="reference internal" href="#cassandra.CoordinationFailure" title="cassandra.CoordinationFailure"><code class="xref py py-exc docutils literal"><span class="pre">CoordinationFailure</span></code></a> for read operations.</p>
 <p>This indicates that the replicas sent a failure message to the coordinator.</p>
 <dl class="attribute">
 <dt id="cassandra.ReadFailure.data_retrieved">
@@ -329,7 +372,7 @@ operation</p>
 <dl class="exception">
 <dt id="cassandra.WriteFailure">
 <em class="property">exception </em><code class="descclassname">cassandra.</code><code class="descname">WriteFailure</code><a class="reference internal" href="../_modules/cassandra.html#WriteFailure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.WriteFailure" title="Permalink to this definition">¶</a></dt>
-<dd><p>A subclass of <code class="xref py py-exc docutils literal"><span class="pre">CoordinationFailure</span></code> for write operations.</p>
+<dd><p>A subclass of <a class="reference internal" href="#cassandra.CoordinationFailure" title="cassandra.CoordinationFailure"><code class="xref py py-exc docutils literal"><span class="pre">CoordinationFailure</span></code></a> for write operations.</p>
 <p>This indicates that the replicas sent a failure message to the coordinator.</p>
 <dl class="attribute">
 <dt id="cassandra.WriteFailure.write_type">
@@ -364,6 +407,18 @@ operation</p>
 </dd></dl>
 
 <dl class="exception">
+<dt id="cassandra.RequestValidationException">
+<em class="property">exception </em><code class="descclassname">cassandra.</code><code class="descname">RequestValidationException</code><a class="reference internal" href="../_modules/cassandra.html#RequestValidationException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.RequestValidationException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Server request validation failed</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="cassandra.ConfigurationException">
+<em class="property">exception </em><code class="descclassname">cassandra.</code><code class="descname">ConfigurationException</code><a class="reference internal" href="../_modules/cassandra.html#ConfigurationException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.ConfigurationException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Server indicated request errro due to current configuration</p>
+</dd></dl>
+
+<dl class="exception">
 <dt id="cassandra.AlreadyExists">
 <em class="property">exception </em><code class="descclassname">cassandra.</code><code class="descname">AlreadyExists</code><a class="reference internal" href="../_modules/cassandra.html#AlreadyExists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.AlreadyExists" title="Permalink to this definition">¶</a></dt>
 <dd><p>An attempt was made to create a keyspace or table that already exists.</p>
@@ -393,7 +448,7 @@ the keyspace for a connection to a nonexistent keyspace.</p>
 <dl class="exception">
 <dt id="cassandra.Unauthorized">
 <em class="property">exception </em><code class="descclassname">cassandra.</code><code class="descname">Unauthorized</code><a class="reference internal" href="../_modules/cassandra.html#Unauthorized"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.Unauthorized" title="Permalink to this definition">¶</a></dt>
-<dd><p>The current user is not authorized to perfom the requested operation.</p>
+<dd><p>The current user is not authorized to perform the requested operation.</p>
 </dd></dl>
 
 <dl class="exception">
@@ -445,7 +500,7 @@ the driver.</p>
         <li class="right" >
           <a href="index.html" title="API Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

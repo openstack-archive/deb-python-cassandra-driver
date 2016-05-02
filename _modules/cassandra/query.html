@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query &mdash; Cassandra Driver 3.2.2 documentation</title>
+    <title>cassandra.query &mdash; Cassandra Driver 3.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.2.2',
+        VERSION:     '3.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.2.2 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -98,7 +98,7 @@
 <span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">Encoder</span>
 <span class="kn">import</span> <span class="nn">cassandra.encoder</span>
 <span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="kn">import</span> <span class="n">_UNSET_VALUE</span>
-<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">_positional_rename_invalid_identifiers</span>
+<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">_sanitize_identifiers</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
@@ -184,13 +184,14 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">Row</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Row&#39;</span><span class="p">,</span> <span class="n">clean_column_names</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">clean_column_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">_clean_column_name</span><span class="p">,</span> <span class="n">colnames</span><span class="p">))</span>  <span class="c"># create list because py3 map object will be consumed by first attempt</span>
         <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Failed creating named tuple for results with column names </span><span class="si">%s</span><span class="s"> (cleaned: </span><span class="si">%s</span><span class="s">) &quot;</span>
                     <span class="s">&quot;(see Python &#39;namedtuple&#39; documentation for details on name rules). &quot;</span>
                     <span class="s">&quot;Results will be returned with positional names. &quot;</span>
                     <span class="s">&quot;Avoid this by choosing different names, using SELECT </span><span class="se">\&quot;</span><span class="s">&lt;col name&gt;</span><span class="se">\&quot;</span><span class="s"> AS aliases, &quot;</span>
                     <span class="s">&quot;or specifying a different row_factory on your Session&quot;</span> <span class="o">%</span>
                     <span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="n">clean_column_names</span><span class="p">))</span>
-        <span class="n">Row</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Row&#39;</span><span class="p">,</span> <span class="n">_positional_rename_invalid_identifiers</span><span class="p">(</span><span class="n">clean_column_names</span><span class="p">))</span>
+        <span class="n">Row</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Row&#39;</span><span class="p">,</span> <span class="n">_sanitize_identifiers</span><span class="p">(</span><span class="n">clean_column_names</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="p">[</span><span class="n">Row</span><span class="p">(</span><span class="o">*</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
 
@@ -931,7 +932,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span> <span class="o">=</span> <span class="n">trace_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">session</span>
 
-<div class="viewcode-block" id="QueryTrace.populate"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.QueryTrace.populate">[docs]</a>    <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_wait</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">wait_for_complete</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="QueryTrace.populate"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.QueryTrace.populate">[docs]</a>    <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_wait</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">wait_for_complete</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">query_cl</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Retrieves the actual tracing details from Cassandra and populates the</span>
 <span class="sd">        attributes of this instance.  Because tracing details are stored</span>
@@ -942,6 +943,9 @@
 
 <span class="sd">        `wait_for_complete=False` bypasses the wait for duration to be populated.</span>
 <span class="sd">        This can be used to query events from partial sessions.</span>
+
+<span class="sd">        `query_cl` specifies a consistency level to use for polling the trace tables,</span>
+<span class="sd">        if it should be different than the session default.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">attempt</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -953,7 +957,7 @@
 
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Attempting to fetch trace info for trace ID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">)</span>
             <span class="n">session_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SESSIONS_FORMAT</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,),</span> <span class="n">time_spent</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">)</span>
+                <span class="n">SimpleStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SESSIONS_FORMAT</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">query_cl</span><span class="p">),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,),</span> <span class="n">time_spent</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">)</span>
 
             <span class="n">is_complete</span> <span class="o">=</span> <span class="n">session_results</span> <span class="ow">and</span> <span class="n">session_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">duration</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">session_results</span> <span class="ow">or</span> <span class="p">(</span><span class="n">wait_for_complete</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_complete</span><span class="p">):</span>
@@ -977,7 +981,7 @@
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Attempting to fetch trace events for trace ID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">)</span>
             <span class="n">time_spent</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
             <span class="n">event_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_EVENTS_FORMAT</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,),</span> <span class="n">time_spent</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">)</span>
+                <span class="n">SimpleStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_EVENTS_FORMAT</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">query_cl</span><span class="p">),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,),</span> <span class="n">time_spent</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">)</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Fetched trace events for trace ID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">TraceEvent</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">activity</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">event_id</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">source_elapsed</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">thread</span><span class="p">)</span>
                                 <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">event_results</span><span class="p">)</span>
@@ -1061,7 +1065,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.2.2 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
