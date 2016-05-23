@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query - Prepared Statements, Batch Statements, Tracing, and Row Factories &mdash; Cassandra Driver 3.3.0 documentation</title>
+    <title>cassandra.query - Prepared Statements, Batch Statements, Tracing, and Row Factories &mdash; Cassandra Driver 3.4.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.3.0',
+        VERSION:     '3.4.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.4.0 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.pool - Hosts and Connection Pools" href="pool.html" />
     <link rel="prev" title="cassandra.metrics - Performance Metrics" href="metrics.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="metrics.html" title="cassandra.metrics - Performance Metrics"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.4.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -164,8 +164,78 @@ so the order of the columns is preserved.</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="cassandra.query.SimpleStatement">
+<em class="property">class </em><code class="descclassname">cassandra.query.</code><code class="descname">SimpleStatement</code><span class="sig-paren">(</span><em>query_string</em>, <em>retry_policy=None</em>, <em>consistency_level=None</em>, <em>routing_key=None</em>, <em>serial_consistency_level=None</em>, <em>fetch_size=&lt;object object&gt;</em>, <em>keyspace=None</em>, <em>custom_payload=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#SimpleStatement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.SimpleStatement" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple, un-prepared query.</p>
+<p><cite>query_string</cite> should be a literal CQL statement with the exception
+of parameter placeholders that will be filled through the
+<cite>parameters</cite> argument of <a class="reference internal" href="cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></code></a>.</p>
+<p>See <a class="reference internal" href="#cassandra.query.Statement" title="cassandra.query.Statement"><code class="xref py py-class docutils literal"><span class="pre">Statement</span></code></a> attributes for a description of the other parameters.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.query.PreparedStatement">
+<em class="property">class </em><code class="descclassname">cassandra.query.</code><code class="descname">PreparedStatement</code><a class="reference internal" href="../../_modules/cassandra/query.html#PreparedStatement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.PreparedStatement" title="Permalink to this definition">¶</a></dt>
+<dd><p>A statement that has been prepared against at least one Cassandra node.
+Instances of this class should not be created directly, but through
+<a class="reference internal" href="cluster.html#cassandra.cluster.Session.prepare" title="cassandra.cluster.Session.prepare"><code class="xref py py-meth docutils literal"><span class="pre">Session.prepare()</span></code></a>.</p>
+<p>A <a class="reference internal" href="#cassandra.query.PreparedStatement" title="cassandra.query.PreparedStatement"><code class="xref py py-class docutils literal"><span class="pre">PreparedStatement</span></code></a> should be prepared only once. Re-preparing a statement
+may affect performance (as the operation requires a network roundtrip).</p>
+<dl class="method">
+<dt id="cassandra.query.PreparedStatement.bind">
+<code class="descname">bind</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#PreparedStatement.bind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.PreparedStatement.bind" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and returns a <a class="reference internal" href="#cassandra.query.BoundStatement" title="cassandra.query.BoundStatement"><code class="xref py py-class docutils literal"><span class="pre">BoundStatement</span></code></a> instance using <cite>values</cite>.</p>
+<p>See <a class="reference internal" href="#cassandra.query.BoundStatement.bind" title="cassandra.query.BoundStatement.bind"><code class="xref py py-meth docutils literal"><span class="pre">BoundStatement.bind()</span></code></a> for rules on input <code class="docutils literal"><span class="pre">values</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.query.BoundStatement">
+<em class="property">class </em><code class="descclassname">cassandra.query.</code><code class="descname">BoundStatement</code><span class="sig-paren">(</span><em>prepared_statement</em>, <em>retry_policy=None</em>, <em>consistency_level=None</em>, <em>routing_key=None</em>, <em>serial_consistency_level=None</em>, <em>fetch_size=&lt;object object&gt;</em>, <em>keyspace=None</em>, <em>custom_payload=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#BoundStatement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BoundStatement" title="Permalink to this definition">¶</a></dt>
+<dd><p>A prepared statement that has been bound to a particular set of values.
+These may be created directly or through <a class="reference internal" href="#cassandra.query.PreparedStatement.bind" title="cassandra.query.PreparedStatement.bind"><code class="xref py py-meth docutils literal"><span class="pre">PreparedStatement.bind()</span></code></a>.</p>
+<p><cite>prepared_statement</cite> should be an instance of <a class="reference internal" href="#cassandra.query.PreparedStatement" title="cassandra.query.PreparedStatement"><code class="xref py py-class docutils literal"><span class="pre">PreparedStatement</span></code></a>.</p>
+<p>See <a class="reference internal" href="#cassandra.query.Statement" title="cassandra.query.Statement"><code class="xref py py-class docutils literal"><span class="pre">Statement</span></code></a> attributes for a description of the other parameters.</p>
+<dl class="attribute">
+<dt id="cassandra.query.BoundStatement.prepared_statement">
+<code class="descname">prepared_statement</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.query.BoundStatement.prepared_statement" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#cassandra.query.PreparedStatement" title="cassandra.query.PreparedStatement"><code class="xref py py-class docutils literal"><span class="pre">PreparedStatement</span></code></a> instance that this was created from.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.query.BoundStatement.values">
+<code class="descname">values</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.query.BoundStatement.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>The sequence of values that were bound to the prepared statement.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.query.BoundStatement.bind">
+<code class="descname">bind</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#BoundStatement.bind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BoundStatement.bind" title="Permalink to this definition">¶</a></dt>
+<dd><p>Binds a sequence of values for the prepared statement parameters
+and returns this instance.  Note that <cite>values</cite> <em>must</em> be:</p>
+<ul class="simple">
+<li>a sequence, even if you are only binding one value, or</li>
+<li>a dict that relates 1-to-1 between dict keys and columns</li>
+</ul>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 2.6.0: </span><a class="reference internal" href="#cassandra.query.UNSET_VALUE" title="cassandra.query.UNSET_VALUE"><code class="xref py py-data docutils literal"><span class="pre">UNSET_VALUE</span></code></a> was introduced. These can be bound as positional parameters
+in a sequence, or by name in a dict. Additionally, when using protocol v4+:</p>
+<ul class="simple">
+<li>short sequences will be extended to match bind parameters with UNSET_VALUE</li>
+<li>names may be omitted from a dict with UNSET_VALUE implied.</li>
+</ul>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 3.0.0: </span>method will not throw if extra keys are present in bound dict (PYTHON-178)</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="cassandra.query.Statement">
-<em class="property">class </em><code class="descclassname">cassandra.query.</code><code class="descname">Statement</code><span class="sig-paren">(</span><em>retry_policy=None</em>, <em>consistency_level=None</em>, <em>routing_key=None</em>, <em>serial_consistency_level=None</em>, <em>fetch_size=&lt;object object&gt;</em>, <em>keyspace=None</em>, <em>custom_payload=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#Statement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.Statement" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">cassandra.query.</code><code class="descname">Statement</code><a class="reference internal" href="../../_modules/cassandra/query.html#Statement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.Statement" title="Permalink to this definition">¶</a></dt>
 <dd><p>An abstract class representing a single query. There are three subclasses:
 <a class="reference internal" href="#cassandra.query.SimpleStatement" title="cassandra.query.SimpleStatement"><code class="xref py py-class docutils literal"><span class="pre">SimpleStatement</span></code></a>, <a class="reference internal" href="#cassandra.query.BoundStatement" title="cassandra.query.BoundStatement"><code class="xref py py-class docutils literal"><span class="pre">BoundStatement</span></code></a>, and <a class="reference internal" href="#cassandra.query.BatchStatement" title="cassandra.query.BatchStatement"><code class="xref py py-class docutils literal"><span class="pre">BatchStatement</span></code></a>.
 These can be passed to <a class="reference internal" href="cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></code></a>.</p>
@@ -265,76 +335,6 @@ conditional statements.</p>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="cassandra.query.SimpleStatement">
-<em class="property">class </em><code class="descclassname">cassandra.query.</code><code class="descname">SimpleStatement</code><span class="sig-paren">(</span><em>query_string</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#SimpleStatement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.SimpleStatement" title="Permalink to this definition">¶</a></dt>
-<dd><p>A simple, un-prepared query.</p>
-<p><cite>query_string</cite> should be a literal CQL statement with the exception
-of parameter placeholders that will be filled through the
-<cite>parameters</cite> argument of <a class="reference internal" href="cluster.html#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></code></a>.</p>
-<p>All arguments to <a class="reference internal" href="#cassandra.query.Statement" title="cassandra.query.Statement"><code class="xref py py-class docutils literal"><span class="pre">Statement</span></code></a> apply to this class as well</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="cassandra.query.PreparedStatement">
-<em class="property">class </em><code class="descclassname">cassandra.query.</code><code class="descname">PreparedStatement</code><a class="reference internal" href="../../_modules/cassandra/query.html#PreparedStatement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.PreparedStatement" title="Permalink to this definition">¶</a></dt>
-<dd><p>A statement that has been prepared against at least one Cassandra node.
-Instances of this class should not be created directly, but through
-<a class="reference internal" href="cluster.html#cassandra.cluster.Session.prepare" title="cassandra.cluster.Session.prepare"><code class="xref py py-meth docutils literal"><span class="pre">Session.prepare()</span></code></a>.</p>
-<p>A <a class="reference internal" href="#cassandra.query.PreparedStatement" title="cassandra.query.PreparedStatement"><code class="xref py py-class docutils literal"><span class="pre">PreparedStatement</span></code></a> should be prepared only once. Re-preparing a statement
-may affect performance (as the operation requires a network roundtrip).</p>
-<dl class="method">
-<dt id="cassandra.query.PreparedStatement.bind">
-<code class="descname">bind</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#PreparedStatement.bind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.PreparedStatement.bind" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates and returns a <a class="reference internal" href="#cassandra.query.BoundStatement" title="cassandra.query.BoundStatement"><code class="xref py py-class docutils literal"><span class="pre">BoundStatement</span></code></a> instance using <cite>values</cite>.</p>
-<p>See <a class="reference internal" href="#cassandra.query.BoundStatement.bind" title="cassandra.query.BoundStatement.bind"><code class="xref py py-meth docutils literal"><span class="pre">BoundStatement.bind()</span></code></a> for rules on input <code class="docutils literal"><span class="pre">values</span></code>.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="cassandra.query.BoundStatement">
-<em class="property">class </em><code class="descclassname">cassandra.query.</code><code class="descname">BoundStatement</code><span class="sig-paren">(</span><em>prepared_statement</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#BoundStatement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BoundStatement" title="Permalink to this definition">¶</a></dt>
-<dd><p>A prepared statement that has been bound to a particular set of values.
-These may be created directly or through <a class="reference internal" href="#cassandra.query.PreparedStatement.bind" title="cassandra.query.PreparedStatement.bind"><code class="xref py py-meth docutils literal"><span class="pre">PreparedStatement.bind()</span></code></a>.</p>
-<p><cite>prepared_statement</cite> should be an instance of <a class="reference internal" href="#cassandra.query.PreparedStatement" title="cassandra.query.PreparedStatement"><code class="xref py py-class docutils literal"><span class="pre">PreparedStatement</span></code></a>.</p>
-<p>All arguments to <a class="reference internal" href="#cassandra.query.Statement" title="cassandra.query.Statement"><code class="xref py py-class docutils literal"><span class="pre">Statement</span></code></a> apply to this class as well</p>
-<dl class="attribute">
-<dt id="cassandra.query.BoundStatement.prepared_statement">
-<code class="descname">prepared_statement</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.query.BoundStatement.prepared_statement" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="#cassandra.query.PreparedStatement" title="cassandra.query.PreparedStatement"><code class="xref py py-class docutils literal"><span class="pre">PreparedStatement</span></code></a> instance that this was created from.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.query.BoundStatement.values">
-<code class="descname">values</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.query.BoundStatement.values" title="Permalink to this definition">¶</a></dt>
-<dd><p>The sequence of values that were bound to the prepared statement.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="cassandra.query.BoundStatement.bind">
-<code class="descname">bind</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#BoundStatement.bind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BoundStatement.bind" title="Permalink to this definition">¶</a></dt>
-<dd><p>Binds a sequence of values for the prepared statement parameters
-and returns this instance.  Note that <cite>values</cite> <em>must</em> be:</p>
-<ul class="simple">
-<li>a sequence, even if you are only binding one value, or</li>
-<li>a dict that relates 1-to-1 between dict keys and columns</li>
-</ul>
-<div class="versionchanged">
-<p><span class="versionmodified">Changed in version 2.6.0: </span><a class="reference internal" href="#cassandra.query.UNSET_VALUE" title="cassandra.query.UNSET_VALUE"><code class="xref py py-data docutils literal"><span class="pre">UNSET_VALUE</span></code></a> was introduced. These can be bound as positional parameters
-in a sequence, or by name in a dict. Additionally, when using protocol v4+:</p>
-<ul class="simple">
-<li>short sequences will be extended to match bind parameters with UNSET_VALUE</li>
-<li>names may be omitted from a dict with UNSET_VALUE implied.</li>
-</ul>
-</div>
-<div class="versionchanged">
-<p><span class="versionmodified">Changed in version 3.0.0: </span>method will not throw if extra keys are present in bound dict (PYTHON-178)</p>
-</div>
-</dd></dl>
-
-</dd></dl>
-
 <dl class="data">
 <dt id="cassandra.query.UNSET_VALUE">
 <code class="descclassname">cassandra.query.</code><code class="descname">UNSET_VALUE</code><a class="headerlink" href="#cassandra.query.UNSET_VALUE" title="Permalink to this definition">¶</a></dt>
@@ -406,6 +406,14 @@ supported when using protocol version 3 or higher.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="cassandra.query.BatchStatement.clear">
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#BatchStatement.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BatchStatement.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a convenience method to clear a batch statement for reuse.</p>
+<p><em>Note:</em> it should not be used concurrently with uncompleted execution futures executing the same
+<code class="docutils literal"><span class="pre">BatchStatement</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="cassandra.query.BatchStatement.add">
 <code class="descname">add</code><span class="sig-paren">(</span><em>statement</em>, <em>parameters=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#BatchStatement.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BatchStatement.add" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds a <a class="reference internal" href="#cassandra.query.Statement" title="cassandra.query.Statement"><code class="xref py py-class docutils literal"><span class="pre">Statement</span></code></a> and optional sequence of parameters
@@ -418,8 +426,8 @@ if there is only one item.</p>
 <dt id="cassandra.query.BatchStatement.add_all">
 <code class="descname">add_all</code><span class="sig-paren">(</span><em>statements</em>, <em>parameters</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#BatchStatement.add_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.BatchStatement.add_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds a sequence of <a class="reference internal" href="#cassandra.query.Statement" title="cassandra.query.Statement"><code class="xref py py-class docutils literal"><span class="pre">Statement</span></code></a> objects and a matching sequence
-of parameters to the batch.  <code class="xref py py-const docutils literal"><span class="pre">None</span></code> can be used in place of
-parameters when no parameters are needed.</p>
+of parameters to the batch. Statement and parameter sequences must be of equal length or
+one will be truncated. <code class="xref py py-const docutils literal"><span class="pre">None</span></code> can be used in the parameters position where are needed.</p>
 </dd></dl>
 
 </dd></dl>
@@ -612,7 +620,7 @@ received the query.</p>
         <li class="right" >
           <a href="metrics.html" title="cassandra.metrics - Performance Metrics"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.4.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

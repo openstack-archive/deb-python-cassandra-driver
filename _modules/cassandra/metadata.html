@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata &mdash; Cassandra Driver 3.3.0 documentation</title>
+    <title>cassandra.metadata &mdash; Cassandra Driver 3.4.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.3.0',
+        VERSION:     '3.4.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.4.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.4.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -79,6 +79,7 @@
 <span class="c"># See the License for the specific language governing permissions and</span>
 <span class="c"># limitations under the License.</span>
 
+<span class="kn">from</span> <span class="nn">binascii</span> <span class="kn">import</span> <span class="n">unhexlify</span>
 <span class="kn">from</span> <span class="nn">bisect</span> <span class="kn">import</span> <span class="n">bisect_right</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">Mapping</span>
 <span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">md5</span>
@@ -338,7 +339,7 @@
         <span class="n">ring</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">host</span><span class="p">,</span> <span class="n">token_strings</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">token_map</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">token_string</span> <span class="ow">in</span> <span class="n">token_strings</span><span class="p">:</span>
-                <span class="n">token</span> <span class="o">=</span> <span class="n">token_class</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span>
+                <span class="n">token</span> <span class="o">=</span> <span class="n">token_class</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">token_string</span><span class="p">)</span>
                 <span class="n">ring</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
                 <span class="n">token_to_host_owner</span><span class="p">[</span><span class="n">token</span><span class="p">]</span> <span class="o">=</span> <span class="n">host</span>
 
@@ -1285,14 +1286,8 @@
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">ret</span><span class="p">))</span>
 
 </div>
-<span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">maybe_escape_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>  <span class="c"># NOQA</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">):</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf8&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">maybe_escape_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">maybe_escape_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">protect_names</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
@@ -1464,12 +1459,18 @@
 
     <span class="k">def</span> <span class="nf">rebuild_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">build_if_absent</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_lock</span><span class="p">:</span>
-            <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">build_if_absent</span> <span class="ow">and</span> <span class="n">current</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">build_if_absent</span> <span class="ow">and</span> <span class="n">current</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
-                <span class="n">ks_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">ks_meta</span><span class="p">:</span>
-                    <span class="n">replica_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">replica_map_for_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">])</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span> <span class="o">=</span> <span class="n">replica_map</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">build_if_absent</span> <span class="ow">and</span> <span class="n">current</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">build_if_absent</span> <span class="ow">and</span> <span class="n">current</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
+                    <span class="n">ks_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyspace</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">ks_meta</span><span class="p">:</span>
+                        <span class="n">replica_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">replica_map_for_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">keyspace</span><span class="p">])</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span> <span class="o">=</span> <span class="n">replica_map</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c"># should not happen normally, but we don&#39;t want to blow up queries because of unexpected meta state</span>
+                <span class="c"># bypass until new map is generated</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tokens_to_hosts_by_ks</span><span class="p">[</span><span class="n">keyspace</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Failed creating a token map for keyspace &#39;</span><span class="si">%s</span><span class="s">&#39; with </span><span class="si">%s</span><span class="s">. PLEASE REPORT THIS: https://datastax-oss.atlassian.net/projects/PYTHON&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_to_host_owner</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">replica_map_for_keyspace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ks_metadata</span><span class="p">):</span>
         <span class="n">strategy</span> <span class="o">=</span> <span class="n">ks_metadata</span><span class="o">.</span><span class="n">replication_strategy</span>
@@ -1508,6 +1509,9 @@
 <span class="sd">    Abstract class representing a token.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">token</span>
+
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">hash_fn</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">key</span>
@@ -1515,6 +1519,10 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_key</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">hash_fn</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">token_string</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__cmp__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
@@ -1545,7 +1553,16 @@
     <span class="k">pass</span>
 
 
-<div class="viewcode-block" id="Murmur3Token"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Murmur3Token">[docs]</a><span class="k">class</span> <span class="nc">Murmur3Token</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">HashToken</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">token_string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; `token_string` should be the string representation from the server. &quot;&quot;&quot;</span>
+        <span class="c"># The hash partitioners just store the deciman value</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">token_string</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="Murmur3Token"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.Murmur3Token">[docs]</a><span class="k">class</span> <span class="nc">Murmur3Token</span><span class="p">(</span><span class="n">HashToken</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A token for ``Murmur3Partitioner``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1559,11 +1576,11 @@
             <span class="k">raise</span> <span class="n">NoMurmur3</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; `token` should be an int or string representing the token. &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot; `token` is an int or string representing the token. &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
 
 </div>
-<div class="viewcode-block" id="MD5Token"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.MD5Token">[docs]</a><span class="k">class</span> <span class="nc">MD5Token</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
+<div class="viewcode-block" id="MD5Token"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.MD5Token">[docs]</a><span class="k">class</span> <span class="nc">MD5Token</span><span class="p">(</span><span class="n">HashToken</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A token for ``RandomPartitioner``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1574,25 +1591,22 @@
             <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;UTF-8&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">varint_unpack</span><span class="p">(</span><span class="n">md5</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()))</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; `token` should be an int or string representing the token. &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
-
 </div>
 <div class="viewcode-block" id="BytesToken"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.BytesToken">[docs]</a><span class="k">class</span> <span class="nc">BytesToken</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A token for ``ByteOrderedPartitioner``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_string</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; `token_string` should be string representing the token. &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token_string</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="s">&quot;Tokens for ByteOrderedPartitioner should be strings (got </span><span class="si">%s</span><span class="s">)&quot;</span>
-                <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">token_string</span><span class="p">),))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">token_string</span>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="BytesToken.from_string"><a class="viewcode-back" href="../../api/cassandra/metadata.html#cassandra.metadata.BytesToken.from_string">[docs]</a>    <span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">token_string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; `token_string` should be the string representation from the server. &quot;&quot;&quot;</span>
+        <span class="c"># unhexlify works fine with unicode input in everythin but pypy3, where it Raises &quot;TypeError: &#39;str&#39; does not support the buffer interface&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token_string</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">):</span>
+            <span class="n">token_string</span> <span class="o">=</span> <span class="n">token_string</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">)</span>
+        <span class="c"># The BOP stores a hex string</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">token_string</span><span class="p">))</span>
 
-</div>
+</div></div>
 <span class="k">class</span> <span class="nc">TriggerMetadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A representation of a trigger for a table.</span>
@@ -2527,6 +2541,7 @@
         <span class="c"># multi-version parser we have as of C* 2.2.0rc1.</span>
         <span class="k">return</span> <span class="n">SchemaParserV22</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
 
+
 <span class="k">def</span> <span class="nf">_cql_from_cass_type</span><span class="p">(</span><span class="n">cass_type</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A string representation of the type for this column, such as &quot;varchar&quot;</span>
@@ -2552,7 +2567,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.4.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query &mdash; Cassandra Driver 3.3.0 documentation</title>
+    <title>cassandra.query &mdash; Cassandra Driver 3.4.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.3.0',
+        VERSION:     '3.4.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.4.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.4.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -288,6 +288,8 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="n">FETCH_SIZE_UNSET</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">custom_payload</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">retry_policy</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">retry_policy</span><span class="p">,</span> <span class="s">&#39;on_read_timeout&#39;</span><span class="p">):</span>  <span class="c"># just checking one method to detect positional parameter errors</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;retry_policy should implement cassandra.policies.RetryPolicy&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">retry_policy</span> <span class="o">=</span> <span class="n">retry_policy</span>
         <span class="k">if</span> <span class="n">consistency_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span> <span class="o">=</span> <span class="n">consistency_level</span>
@@ -392,15 +394,18 @@
 <span class="sd">    A simple, un-prepared query.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="n">FETCH_SIZE_UNSET</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">custom_payload</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        `query_string` should be a literal CQL statement with the exception</span>
 <span class="sd">        of parameter placeholders that will be filled through the</span>
 <span class="sd">        `parameters` argument of :meth:`.Session.execute()`.</span>
 
-<span class="sd">        All arguments to :class:`Statement` apply to this class as well</span>
+<span class="sd">        See :class:`Statement` attributes for a description of the other parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">Statement</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">Statement</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="p">,</span> <span class="n">consistency_level</span><span class="p">,</span> <span class="n">routing_key</span><span class="p">,</span>
+                           <span class="n">serial_consistency_level</span><span class="p">,</span> <span class="n">fetch_size</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">custom_payload</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_query_string</span> <span class="o">=</span> <span class="n">query_string</span>
 
     <span class="nd">@property</span>
@@ -516,11 +521,13 @@
 <span class="sd">    The sequence of values that were bound to the prepared statement.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prepared_statement</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prepared_statement</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="n">FETCH_SIZE_UNSET</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">custom_payload</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        `prepared_statement` should be an instance of :class:`PreparedStatement`.</span>
 
-<span class="sd">        All arguments to :class:`Statement` apply to this class as well</span>
+<span class="sd">        See :class:`Statement` attributes for a description of the other parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span> <span class="o">=</span> <span class="n">prepared_statement</span>
 
@@ -534,7 +541,8 @@
         <span class="k">if</span> <span class="n">meta</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keyspace_name</span>
 
-        <span class="n">Statement</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">Statement</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="p">,</span> <span class="n">consistency_level</span><span class="p">,</span> <span class="n">routing_key</span><span class="p">,</span>
+                           <span class="n">serial_consistency_level</span><span class="p">,</span> <span class="n">fetch_size</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">custom_payload</span><span class="p">)</span>
 
 <div class="viewcode-block" id="BoundStatement.bind"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.BoundStatement.bind">[docs]</a>    <span class="k">def</span> <span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -766,6 +774,19 @@
         <span class="n">Statement</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="n">retry_policy</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">consistency_level</span><span class="p">,</span>
                            <span class="n">serial_consistency_level</span><span class="o">=</span><span class="n">serial_consistency_level</span><span class="p">,</span> <span class="n">custom_payload</span><span class="o">=</span><span class="n">custom_payload</span><span class="p">)</span>
 
+<div class="viewcode-block" id="BatchStatement.clear"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.BatchStatement.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This is a convenience method to clear a batch statement for reuse.</span>
+
+<span class="sd">        *Note:* it should not be used concurrently with uncompleted execution futures executing the same</span>
+<span class="sd">        ``BatchStatement``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="p">[:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routing_key</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_payload</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">custom_payload</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</div>
 <div class="viewcode-block" id="BatchStatement.add"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.BatchStatement.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Adds a :class:`.Statement` and optional sequence of parameters</span>
@@ -778,21 +799,19 @@
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
                 <span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoder</span>
                 <span class="n">statement</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">encoder</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">False</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="p">()))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="p">())</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">PreparedStatement</span><span class="p">):</span>
             <span class="n">query_id</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">query_id</span>
             <span class="n">bound_statement</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">bind</span><span class="p">(()</span> <span class="k">if</span> <span class="n">parameters</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">parameters</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_state</span><span class="p">(</span><span class="n">bound_statement</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">bound_statement</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">bound_statement</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">BoundStatement</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s">&quot;Parameters cannot be passed with a BoundStatement &quot;</span>
                     <span class="s">&quot;to BatchStatement.add()&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_state</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">statement</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">query_id</span><span class="p">,</span> <span class="n">statement</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">statement</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">query_id</span><span class="p">,</span> <span class="n">statement</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c"># it must be a SimpleStatement</span>
             <span class="n">query_string</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">query_string</span>
@@ -800,18 +819,23 @@
                 <span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoder</span>
                 <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">encoder</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_state</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">False</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="p">()))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="p">())</span>
         <span class="k">return</span> <span class="bp">self</span>
 </div>
 <div class="viewcode-block" id="BatchStatement.add_all"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.BatchStatement.add_all">[docs]</a>    <span class="k">def</span> <span class="nf">add_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statements</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Adds a sequence of :class:`.Statement` objects and a matching sequence</span>
-<span class="sd">        of parameters to the batch.  :const:`None` can be used in place of</span>
-<span class="sd">        parameters when no parameters are needed.</span>
+<span class="sd">        of parameters to the batch. Statement and parameter sequences must be of equal length or</span>
+<span class="sd">        one will be truncated. :const:`None` can be used in the parameters position where are needed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">statement</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">statements</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 </div>
+    <span class="k">def</span> <span class="nf">_add_statement_and_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_prepared</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mh">0xFFFF</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Batch statement cannot contain more than </span><span class="si">%d</span><span class="s"> statements.&quot;</span> <span class="o">%</span> <span class="mh">0xFFFF</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">is_prepared</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">))</span>
+
     <span class="k">def</span> <span class="nf">_maybe_set_routing_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing_key</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">statement</span><span class="o">.</span><span class="n">keyspace</span> <span class="ow">and</span> <span class="n">statement</span><span class="o">.</span><span class="n">routing_key</span><span class="p">:</span>
@@ -1065,7 +1089,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.4.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

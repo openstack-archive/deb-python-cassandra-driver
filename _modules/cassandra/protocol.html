@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.protocol &mdash; Cassandra Driver 3.3.0 documentation</title>
+    <title>cassandra.protocol &mdash; Cassandra Driver 3.4.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.3.0',
+        VERSION:     '3.4.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.4.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.4.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -201,12 +201,14 @@
         <span class="k">return</span> <span class="n">subcls</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="n">code</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="n">extra_info</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">summary_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;code=</span><span class="si">%04x</span><span class="s"> [</span><span class="si">%s</span><span class="s">] message=&quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> \
+        <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Error from server: code=</span><span class="si">%04x</span><span class="s"> [</span><span class="si">%s</span><span class="s">] message=&quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> \
               <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">summary</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">msg</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;&lt;ErrorMessage </span><span class="si">%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">summary_msg</span><span class="p">()</span>
+        <span class="k">return</span> <span class="s">&#39;&lt;</span><span class="si">%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">summary_msg</span><span class="p">()</span>
     <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
 
     <span class="nd">@staticmethod</span>
@@ -611,6 +613,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">write_long</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span>
 
+
 <span class="n">CUSTOM_TYPE</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
 
 <span class="n">RESULT_KIND_VOID</span> <span class="o">=</span> <span class="mh">0x0001</span>
@@ -618,6 +621,7 @@
 <span class="n">RESULT_KIND_SET_KEYSPACE</span> <span class="o">=</span> <span class="mh">0x0003</span>
 <span class="n">RESULT_KIND_PREPARED</span> <span class="o">=</span> <span class="mh">0x0004</span>
 <span class="n">RESULT_KIND_SCHEMA_CHANGE</span> <span class="o">=</span> <span class="mh">0x0005</span>
+
 
 <span class="k">class</span> <span class="nc">ResultMessage</span><span class="p">(</span><span class="n">_MessageType</span><span class="p">):</span>
     <span class="n">opcode</span> <span class="o">=</span> <span class="mh">0x08</span>
@@ -1324,7 +1328,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.4.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

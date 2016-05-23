@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Making Queries &mdash; Cassandra Driver 3.3.0 documentation</title>
+    <title>Making Queries &mdash; Cassandra Driver 3.4.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.3.0',
+        VERSION:     '3.4.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.3.0 documentation" href="../index.html" />
+    <link rel="top" title="Cassandra Driver 3.4.0 documentation" href="../index.html" />
     <link rel="up" title="Object Mapper" href="../object_mapper.html" />
     <link rel="next" title="Batch Queries" href="batches.html" />
     <link rel="prev" title="Models" href="models.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="models.html" title="Models"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.4.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" accesskey="U">Object Mapper</a> &raquo;</li> 
       </ul>
     </div>
@@ -316,13 +316,14 @@
 
 <p><em>Example</em></p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">DataStream</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
-    <span class="n">time</span>    <span class="o">=</span> <span class="n">cqlengine</span><span class="o">.</span><span class="n">TimeUUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">data</span>    <span class="o">=</span> <span class="n">cqlengine</span><span class="o">.</span><span class="n">Bytes</span><span class="p">()</span>
+    <span class="nb">id</span>      <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="n">partition_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">time</span>    <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">TimeUUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">data</span>    <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Bytes</span><span class="p">()</span>
 
 <span class="n">min_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1982</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">max_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1982</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
 
-<span class="n">DataStream</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">time__gt</span><span class="o">=</span><span class="n">cqlengine</span><span class="o">.</span><span class="n">MinTimeUUID</span><span class="p">(</span><span class="n">min_time</span><span class="p">),</span> <span class="n">time__lt</span><span class="o">=</span><span class="n">cqlengine</span><span class="o">.</span><span class="n">MaxTimeUUID</span><span class="p">(</span><span class="n">max_time</span><span class="p">))</span>
+<span class="n">DataStream</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">time__gt</span><span class="o">=</span><span class="n">functions</span><span class="o">.</span><span class="n">MinTimeUUID</span><span class="p">(</span><span class="n">min_time</span><span class="p">),</span> <span class="n">time__lt</span><span class="o">=</span><span class="n">functions</span><span class="o">.</span><span class="n">MaxTimeUUID</span><span class="p">(</span><span class="n">max_time</span><span class="p">))</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -335,8 +336,8 @@ Cassandra orders returned items by value of partition key token, so using cqleng
 <p>See <a class="reference external" href="http://cassandra.apache.org/doc/cql3/CQL.html#tokenFun">http://cassandra.apache.org/doc/cql3/CQL.html#tokenFun</a></p>
 <p><em>Example</em></p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Items</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
-    <span class="nb">id</span>      <span class="o">=</span> <span class="n">cqlengine</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">data</span>    <span class="o">=</span> <span class="n">cqlengine</span><span class="o">.</span><span class="n">Bytes</span><span class="p">()</span>
+    <span class="nb">id</span>      <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">data</span>    <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Bytes</span><span class="p">()</span>
 
 <span class="n">query</span> <span class="o">=</span> <span class="n">Items</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 
@@ -470,7 +471,7 @@ Setting the timeout on the model is meaningless and will raise an AssertionError
         <li class="right" >
           <a href="models.html" title="Models"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.3.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.4.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" >Object Mapper</a> &raquo;</li> 
       </ul>
     </div>
