@@ -103,9 +103,26 @@ separate Cassandra cluster that your application interacts with.</p>
 </div>
 <p><code class="docutils literal"><span class="pre">Cluster</span></code> and <code class="docutils literal"><span class="pre">Session</span></code> also provide context management functions
 which implicitly handle shutdown when leaving scope.</p>
-<p>Any of the mutable Cluster attributes may be set as keyword arguments
-to the constructor.</p>
+<p><code class="docutils literal"><span class="pre">executor_threads</span></code> defines the number of threads in a pool for handling asynchronous tasks such as
+extablishing connection pools or refreshing metadata.</p>
 <p>Any of the mutable Cluster attributes may be set as keyword arguments to the constructor.</p>
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.contact_points">
+<code class="descname">contact_points</code><em class="property"> = ['127.0.0.1']</em><a class="headerlink" href="#cassandra.cluster.Cluster.contact_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>The list of contact points to try connecting for cluster discovery.</p>
+<p>Defaults to loopback interface.</p>
+<p>Note: When using <code class="xref py py-class docutils literal"><span class="pre">DCAwareLoadBalancingPolicy</span></code> with no explicit
+local_dc set (as is the default), the DC is chosen from an arbitrary
+host in contact_points. In this case, contact_points should contain
+only nodes from a single, local DC.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.port">
+<code class="descname">port</code><em class="property"> = 9042</em><a class="headerlink" href="#cassandra.cluster.Cluster.port" title="Permalink to this definition">¶</a></dt>
+<dd><p>The server-side port to open connections to. Defaults to 9042.</p>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.cql_version">
 <code class="descname">cql_version</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.cql_version" title="Permalink to this definition">¶</a></dt>
@@ -159,12 +176,6 @@ are supported by each version of Cassandra:</p>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cluster.Cluster.port">
-<code class="descname">port</code><em class="property"> = 9042</em><a class="headerlink" href="#cassandra.cluster.Cluster.port" title="Permalink to this definition">¶</a></dt>
-<dd><p>The server-side port to open connections to. Defaults to 9042.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -238,25 +249,6 @@ to driver connection addresses.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="cassandra.cluster.Cluster.connection_class">
-<code class="descname">connection_class</code><em class="property"> = &lt;class 'cassandra.io.libevreactor.LibevConnection'&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.connection_class" title="Permalink to this definition">¶</a></dt>
-<dd><p>This determines what event loop system will be used for managing
-I/O with Cassandra.  These are the current options:</p>
-<ul class="simple">
-<li><a class="reference internal" href="io/asyncorereactor.html#cassandra.io.asyncorereactor.AsyncoreConnection" title="cassandra.io.asyncorereactor.AsyncoreConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.asyncorereactor.AsyncoreConnection</span></code></a></li>
-<li><a class="reference internal" href="io/libevreactor.html#cassandra.io.libevreactor.LibevConnection" title="cassandra.io.libevreactor.LibevConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.LibevConnection</span></code></a></li>
-<li><a class="reference internal" href="io/eventletreactor.html#cassandra.io.eventletreactor.EventletConnection" title="cassandra.io.eventletreactor.EventletConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.eventletreactor.EventletConnection</span></code></a> (requires monkey-patching - see doc for details)</li>
-<li><a class="reference internal" href="io/geventreactor.html#cassandra.io.geventreactor.GeventConnection" title="cassandra.io.geventreactor.GeventConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.geventreactor.GeventConnection</span></code></a> (requires monkey-patching - see doc for details)</li>
-<li><a class="reference internal" href="io/twistedreactor.html#cassandra.io.twistedreactor.TwistedConnection" title="cassandra.io.twistedreactor.TwistedConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.twistedreactor.TwistedConnection</span></code></a></li>
-</ul>
-<p>By default, <code class="docutils literal"><span class="pre">AsyncoreConnection</span></code> will be used, which uses
-the <code class="docutils literal"><span class="pre">asyncore</span></code> module in the Python standard library.</p>
-<p>If <code class="docutils literal"><span class="pre">libev</span></code> is installed, <code class="docutils literal"><span class="pre">LibevConnection</span></code> will be used instead.</p>
-<p>If <code class="docutils literal"><span class="pre">gevent</span></code> or <code class="docutils literal"><span class="pre">eventlet</span></code> monkey-patching is detected, the corresponding
-connection class will be used automatically.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="cassandra.cluster.Cluster.metrics_enabled">
 <code class="descname">metrics_enabled</code><em class="property"> = False</em><a class="headerlink" href="#cassandra.cluster.Cluster.metrics_enabled" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether or not metric collection is enabled.  If enabled, <a class="reference internal" href="#cassandra.cluster.Cluster.metrics" title="cassandra.cluster.Cluster.metrics"><code class="xref py py-attr docutils literal"><span class="pre">metrics</span></code></a>
@@ -268,12 +260,6 @@ will be an instance of <a class="reference internal" href="metrics.html#cassandr
 <code class="descname">metrics</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.metrics" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="metrics.html#cassandra.metrics.Metrics" title="cassandra.metrics.Metrics"><code class="xref py py-class docutils literal"><span class="pre">cassandra.metrics.Metrics</span></code></a> if <a class="reference internal" href="#cassandra.cluster.Cluster.metrics_enabled" title="cassandra.cluster.Cluster.metrics_enabled"><code class="xref py py-attr docutils literal"><span class="pre">metrics_enabled</span></code></a> is
 <code class="xref py py-const docutils literal"><span class="pre">True</span></code>, else <code class="xref py py-const docutils literal"><span class="pre">None</span></code>.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="cassandra.cluster.Cluster.metadata">
-<code class="descname">metadata</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.metadata" title="Permalink to this definition">¶</a></dt>
-<dd><p>An instance of <a class="reference internal" href="metadata.html#cassandra.metadata.Metadata" title="cassandra.metadata.Metadata"><code class="xref py py-class docutils literal"><span class="pre">cassandra.metadata.Metadata</span></code></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -312,6 +298,31 @@ To try with your own workload, set <code class="docutils literal"><span class="p
 <dd><p>The maximum duration (in seconds) that the driver will wait for schema
 agreement across the cluster. Defaults to ten seconds.
 If set &lt;= 0, the driver will bypass schema agreement waits altogether.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.metadata">
+<code class="descname">metadata</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>An instance of <a class="reference internal" href="metadata.html#cassandra.metadata.Metadata" title="cassandra.metadata.Metadata"><code class="xref py py-class docutils literal"><span class="pre">cassandra.metadata.Metadata</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.connection_class">
+<code class="descname">connection_class</code><em class="property"> = &lt;class 'cassandra.io.libevreactor.LibevConnection'&gt;</em><a class="headerlink" href="#cassandra.cluster.Cluster.connection_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>This determines what event loop system will be used for managing
+I/O with Cassandra.  These are the current options:</p>
+<ul class="simple">
+<li><a class="reference internal" href="io/asyncorereactor.html#cassandra.io.asyncorereactor.AsyncoreConnection" title="cassandra.io.asyncorereactor.AsyncoreConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.asyncorereactor.AsyncoreConnection</span></code></a></li>
+<li><a class="reference internal" href="io/libevreactor.html#cassandra.io.libevreactor.LibevConnection" title="cassandra.io.libevreactor.LibevConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.LibevConnection</span></code></a></li>
+<li><a class="reference internal" href="io/eventletreactor.html#cassandra.io.eventletreactor.EventletConnection" title="cassandra.io.eventletreactor.EventletConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.eventletreactor.EventletConnection</span></code></a> (requires monkey-patching - see doc for details)</li>
+<li><a class="reference internal" href="io/geventreactor.html#cassandra.io.geventreactor.GeventConnection" title="cassandra.io.geventreactor.GeventConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.geventreactor.GeventConnection</span></code></a> (requires monkey-patching - see doc for details)</li>
+<li><a class="reference internal" href="io/twistedreactor.html#cassandra.io.twistedreactor.TwistedConnection" title="cassandra.io.twistedreactor.TwistedConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.twistedreactor.TwistedConnection</span></code></a></li>
+</ul>
+<p>By default, <code class="docutils literal"><span class="pre">AsyncoreConnection</span></code> will be used, which uses
+the <code class="docutils literal"><span class="pre">asyncore</span></code> module in the Python standard library.</p>
+<p>If <code class="docutils literal"><span class="pre">libev</span></code> is installed, <code class="docutils literal"><span class="pre">LibevConnection</span></code> will be used instead.</p>
+<p>If <code class="docutils literal"><span class="pre">gevent</span></code> or <code class="docutils literal"><span class="pre">eventlet</span></code> monkey-patching is detected, the corresponding
+connection class will be used automatically.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -356,6 +367,35 @@ receiving a topology_change event.</p>
 <p>Setting this to zero will execute refreshes immediately.</p>
 <p>Setting this negative will disable node refreshes in response to push events.</p>
 <p>See <a class="reference internal" href="#cassandra.cluster.Cluster.schema_event_refresh_window" title="cassandra.cluster.Cluster.schema_event_refresh_window"><code class="xref py py-attr docutils literal"><span class="pre">schema_event_refresh_window</span></code></a> for discussion of rationale</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.status_event_refresh_window">
+<code class="descname">status_event_refresh_window</code><em class="property"> = 2</em><a class="headerlink" href="#cassandra.cluster.Cluster.status_event_refresh_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Window, in seconds, within which the driver will start the reconnect after
+receiving a status_change event.</p>
+<p>Setting this to zero will connect immediately.</p>
+<p>This is primarily used to avoid &#8216;thundering herd&#8217; in deployments with large fanout from cluster to clients.
+When nodes come up, clients attempt to reprepare prepared statements (depending on <a class="reference internal" href="#cassandra.cluster.Cluster.reprepare_on_up" title="cassandra.cluster.Cluster.reprepare_on_up"><code class="xref py py-attr docutils literal"><span class="pre">reprepare_on_up</span></code></a>), and
+establish connection pools. This can cause a rush of connections and queries if not mitigated with this factor.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.prepare_on_all_hosts">
+<code class="descname">prepare_on_all_hosts</code><em class="property"> = True</em><a class="headerlink" href="#cassandra.cluster.Cluster.prepare_on_all_hosts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies whether statements should be prepared on all hosts, or just one.</p>
+<p>This can reasonably be disabled on long-running applications with numerous clients preparing statements on startup,
+where a randomized initial condition of the load balancing policy can be expected to distribute prepares from
+different clients across the cluster.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.reprepare_on_up">
+<code class="descname">reprepare_on_up</code><em class="property"> = True</em><a class="headerlink" href="#cassandra.cluster.Cluster.reprepare_on_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies whether all known prepared statements should be prepared on a node when it comes up.</p>
+<p>May be used to avoid overwhelming a node on return, or if it is supposed that the node was only marked down due to
+network. If statements are not reprepared, they are prepared on the first execution, causing
+an extra roundtrip for one or more client requests.</p>
 </dd></dl>
 
 <dl class="attribute">
