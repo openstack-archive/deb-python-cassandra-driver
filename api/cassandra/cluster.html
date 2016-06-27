@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 3.4.1 documentation</title>
+    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 3.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.4.1',
+        VERSION:     '3.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.4.1 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.5.0 documentation" href="../../index.html" />
     <link rel="up" title="API Documentation" href="../index.html" />
     <link rel="next" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" />
     <link rel="prev" title="cassandra - Exceptions and Enums" href="../cassandra.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.4.1 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -204,7 +204,7 @@ and returns a dict of credentials for that node.</p>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.load_balancing_policy">
-<code class="descname">load_balancing_policy</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.load_balancing_policy" title="Permalink to this definition">¶</a></dt>
+<code class="descname">load_balancing_policy</code><a class="headerlink" href="#cassandra.cluster.Cluster.load_balancing_policy" title="Permalink to this definition">¶</a></dt>
 <dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.LoadBalancingPolicy" title="cassandra.policies.LoadBalancingPolicy"><code class="xref py py-class docutils literal"><span class="pre">policies.LoadBalancingPolicy</span></code></a> or
 one of its subclasses.</p>
 <div class="versionchanged">
@@ -502,6 +502,20 @@ marked up, or marked down.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="cassandra.cluster.Cluster.add_execution_profile">
+<code class="descname">add_execution_profile</code><span class="sig-paren">(</span><em>name</em>, <em>profile</em>, <em>pool_wait_timeout=5</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.add_execution_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.add_execution_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an <a class="reference internal" href="#cassandra.cluster.ExecutionProfile" title="cassandra.cluster.ExecutionProfile"><code class="xref py py-class docutils literal"><span class="pre">ExecutionProfile</span></code></a> to the cluster. This makes it available for use by <code class="docutils literal"><span class="pre">name</span></code> in <a class="reference internal" href="#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></code></a>
+and <a class="reference internal" href="#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute_async()</span></code></a>. This method will raise if the profile already exists.</p>
+<p>Normally profiles will be injected at cluster initialization via <code class="docutils literal"><span class="pre">Cluster(execution_profiles)</span></code>. This method
+provides a way of adding them dynamically.</p>
+<p>Adding a new profile updates the connection pools according to the specified <code class="docutils literal"><span class="pre">load_balancing_policy</span></code>. By default,
+this method will wait up to five seconds for the pool creation to complete, so the profile can be used immediately
+upon return. This behavior can be controlled using <code class="docutils literal"><span class="pre">pool_wait_timeout</span></code> (see
+<a class="reference external" href="https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.wait">concurrent.futures.wait</a>
+for timeout semantics).</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="cassandra.cluster.Cluster.set_max_requests_per_connection">
 <code class="descname">set_max_requests_per_connection</code><span class="sig-paren">(</span><em>host_distance</em>, <em>max_requests</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.set_max_requests_per_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.set_max_requests_per_connection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets a threshold for concurrent requests per connection, above which new
@@ -581,6 +595,12 @@ and using this will result in an <code class="xref py py-exc docutils literal"><
 </dd></dl>
 
 <dl class="method">
+<dt id="cassandra.cluster.Cluster.get_control_connection_host">
+<code class="descname">get_control_connection_host</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.get_control_connection_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.get_control_connection_host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the control connection host metadata.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="cassandra.cluster.Cluster.refresh_schema_metadata">
 <code class="descname">refresh_schema_metadata</code><span class="sig-paren">(</span><em>max_schema_agreement_wait=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.refresh_schema_metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.refresh_schema_metadata" title="Permalink to this definition">¶</a></dt>
 <dd><p>Synchronously refresh all schema metadata.</p>
@@ -648,6 +668,69 @@ This applies to both schema and node topology.</p>
 topology changes or schema updates.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cluster.ExecutionProfile">
+<em class="property">class </em><code class="descclassname">cassandra.cluster.</code><code class="descname">ExecutionProfile</code><span class="sig-paren">(</span><em>load_balancing_policy=None</em>, <em>retry_policy=None</em>, <em>consistency_level=10</em>, <em>serial_consistency_level=None</em>, <em>request_timeout=10.0</em>, <em>row_factory=&lt;function named_tuple_factory&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#ExecutionProfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.ExecutionProfile" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="cassandra.cluster.ExecutionProfile.load_balancing_policy">
+<code class="descname">load_balancing_policy</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.ExecutionProfile.load_balancing_policy" title="Permalink to this definition">¶</a></dt>
+<dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.LoadBalancingPolicy" title="cassandra.policies.LoadBalancingPolicy"><code class="xref py py-class docutils literal"><span class="pre">policies.LoadBalancingPolicy</span></code></a> or one of its subclasses.</p>
+<p>Used in determining host distance for establishing connections, and routing requests.</p>
+<p>Defaults to <code class="docutils literal"><span class="pre">TokenAwarePolicy(DCAwareRoundRobinPolicy())</span></code> if not specified</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.ExecutionProfile.retry_policy">
+<code class="descname">retry_policy</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.ExecutionProfile.retry_policy" title="Permalink to this definition">¶</a></dt>
+<dd><p>An instance of <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><code class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></code></a> instance used when <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><code class="xref py py-class docutils literal"><span class="pre">Statement</span></code></a> objects do not have a
+<a class="reference internal" href="query.html#cassandra.query.Statement.retry_policy" title="cassandra.query.Statement.retry_policy"><code class="xref py py-attr docutils literal"><span class="pre">retry_policy</span></code></a> explicitly set.</p>
+<p>Defaults to <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><code class="xref py py-class docutils literal"><span class="pre">RetryPolicy</span></code></a> if not specified</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.ExecutionProfile.consistency_level">
+<code class="descname">consistency_level</code><em class="property"> = 10</em><a class="headerlink" href="#cassandra.cluster.ExecutionProfile.consistency_level" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><code class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></code></a> used when not specified on a <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><code class="xref py py-class docutils literal"><span class="pre">Statement</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.ExecutionProfile.serial_consistency_level">
+<code class="descname">serial_consistency_level</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.ExecutionProfile.serial_consistency_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serial <a class="reference internal" href="../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><code class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></code></a> used when not specified on a <a class="reference internal" href="query.html#cassandra.query.Statement" title="cassandra.query.Statement"><code class="xref py py-class docutils literal"><span class="pre">Statement</span></code></a> (for LWT conditional statements).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cassandra.cluster.ExecutionProfile.request_timeout">
+<code class="descname">request_timeout</code><em class="property"> = 10.0</em><a class="headerlink" href="#cassandra.cluster.ExecutionProfile.request_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request timeout used when not overridden in <a class="reference internal" href="#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></code></a></p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="cassandra.cluster.ExecutionProfile.row_factory">
+<em class="property">static </em><code class="descname">row_factory</code><span class="sig-paren">(</span><em>colnames</em>, <em>rows</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.cluster.ExecutionProfile.row_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>A callable to format results, accepting <code class="docutils literal"><span class="pre">(colnames,</span> <span class="pre">rows)</span></code> where <code class="docutils literal"><span class="pre">colnames</span></code> is a list of column names, and
+<code class="docutils literal"><span class="pre">rows</span></code> is a list of tuples, with each tuple representing a row of parsed values.</p>
+<p>Some example implementations:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="query.html#cassandra.query.tuple_factory" title="cassandra.query.tuple_factory"><code class="xref py py-func docutils literal"><span class="pre">cassandra.query.tuple_factory()</span></code></a> - return a result row as a tuple</li>
+<li><a class="reference internal" href="query.html#cassandra.query.named_tuple_factory" title="cassandra.query.named_tuple_factory"><code class="xref py py-func docutils literal"><span class="pre">cassandra.query.named_tuple_factory()</span></code></a> - return a result row as a named tuple</li>
+<li><a class="reference internal" href="query.html#cassandra.query.dict_factory" title="cassandra.query.dict_factory"><code class="xref py py-func docutils literal"><span class="pre">cassandra.query.dict_factory()</span></code></a> - return a result row as a dict</li>
+<li><a class="reference internal" href="query.html#cassandra.query.ordered_dict_factory" title="cassandra.query.ordered_dict_factory"><code class="xref py py-func docutils literal"><span class="pre">cassandra.query.ordered_dict_factory()</span></code></a> - return a result row as an OrderedDict</li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="data">
+<dt id="cassandra.cluster.EXEC_PROFILE_DEFAULT">
+<code class="descclassname">cassandra.cluster.</code><code class="descname">EXEC_PROFILE_DEFAULT</code><a class="headerlink" href="#cassandra.cluster.EXEC_PROFILE_DEFAULT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Key for the <code class="docutils literal"><span class="pre">Cluster</span></code> default execution profile, used when no other profile is selected in
+<code class="docutils literal"><span class="pre">Session.execute(execution_profile)</span></code>.</p>
+<p>Use this as the key in <code class="docutils literal"><span class="pre">Cluster(execution_profiles)</span></code> to override the default profile.</p>
 </dd></dl>
 
 <dl class="class">
@@ -811,7 +894,7 @@ will be a union of the two, with the values specified here taking precedence.</p
 <dd><p>Execute the given query and return a <a class="reference internal" href="#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><code class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></code></a> object
 which callbacks may be attached to for asynchronous response
 delivery.  You may also call <a class="reference internal" href="#cassandra.cluster.ResponseFuture.result" title="cassandra.cluster.ResponseFuture.result"><code class="xref py py-meth docutils literal"><span class="pre">result()</span></code></a>
-on the <a class="reference internal" href="#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><code class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></code></a> to syncronously block for results at
+on the <a class="reference internal" href="#cassandra.cluster.ResponseFuture" title="cassandra.cluster.ResponseFuture"><code class="xref py py-class docutils literal"><span class="pre">ResponseFuture</span></code></a> to synchronously block for results at
 any time.</p>
 <p>If <cite>trace</cite> is set to <code class="xref py py-const docutils literal"><span class="pre">True</span></code>, you may get the query trace descriptors using
 <a class="reference internal" href="#cassandra.cluster.ResponseFuture.get_query_trace" title="cassandra.cluster.ResponseFuture.get_query_trace"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_query_trace()</span></code></a> or <a class="reference internal" href="#cassandra.cluster.ResponseFuture.get_all_query_traces" title="cassandra.cluster.ResponseFuture.get_all_query_traces"><code class="xref py py-meth docutils literal"><span class="pre">ResponseFuture.get_all_query_traces()</span></code></a>
@@ -890,6 +973,17 @@ for any purpose after being shutdown.</p>
 <code class="descname">set_keyspace</code><span class="sig-paren">(</span><em>keyspace</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.set_keyspace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.set_keyspace" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the default keyspace for all queries made through this Session.
 This operation blocks until complete.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cluster.Session.execution_profile_clone_update">
+<code class="descname">execution_profile_clone_update</code><span class="sig-paren">(</span><em>ep</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.execution_profile_clone_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.execution_profile_clone_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a clone of the <code class="docutils literal"><span class="pre">ep</span></code> profile.  <code class="docutils literal"><span class="pre">kwargs</span></code> can be specified to update attributes
+of the returned profile.</p>
+<p>This is a shollow clone, so any objects referenced by the profile are shared. This means Load Balancing Policy
+is maintained by inclusion in the active profiles. It also means updating any other rich objects will be seen
+by the active profile. In cases where this is not desirable, be sure to replace the instance instead of manipulating
+the shared object.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1209,7 +1303,7 @@ against.</p>
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.4.1 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>
