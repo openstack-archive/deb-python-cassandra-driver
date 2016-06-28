@@ -1,16 +1,15 @@
 3.5.0
 =====
-June X, 2016
+June 27, 2016
 
 Features
 --------
-
-* Optional Configuration Profiles for the core driver (PYTHON-569)
+* Optional Execution Profiles for the core driver (PYTHON-569)
 * API to get the host metadata associated with the control connection node (PYTHON-583)
+* Expose CDC option in table metadata CQL (PYTHON-593)
 
 Bug Fixes
 ---------
-
 * Clean up Asyncore socket map when fork is detected (PYTHON-577)
 * cqlengine: QuerySet only() is not respected when there are deferred fields (PYTHON-560)
 
