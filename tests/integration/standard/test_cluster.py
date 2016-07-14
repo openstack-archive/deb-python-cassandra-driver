@@ -42,7 +42,41 @@ def setup_module():
     use_singledc()
 
 
+class IgnoredHostPolicy(RoundRobinPolicy):
+
+    def __init__(self, ignored_hosts):
+        self.ignored_hosts = ignored_hosts
+        RoundRobinPolicy.__init__(self)
+
+    def distance(self, host):
+        if(str(host) in self.ignored_hosts):
+            print("returning ignored {0}".format(host))
+            return HostDistance.IGNORED
+        else:
+            print("returning local {0}".format(host))
+            return HostDistance.LOCAL
+
+    def set_ignored_hosts(self, ignored_hosts):
+        self.ignored_hosts = ignored_hosts
+
+
 class ClusterTests(unittest.TestCase):
+
+    def test_ignored_host_up(self):
+        ingored_host_policy = IgnoredHostPolicy(["127.0.0.2", "127.0.0.3"])
+        cluster = Cluster(protocol_version=PROTOCOL_VERSION, load_balancing_policy=ingored_host_policy)
+        session = cluster.connect()
+        for host in cluster.metadata.all_hosts():
+            if str(host) == "127.0.0.1":
+                self.assertTrue(host.is_up)
+            else:
+                self.assertIsNone(host.is_up)
+
+        ingored_host_policy.set_ignored_hosts(["127.0.0.3"])
+        session.update_created_pools()
+        cluster.refresh_nodes()
+        import pdb; pdb.set_trace()
+        print("in debug")
 
     def test_host_resolution(self):
         """
