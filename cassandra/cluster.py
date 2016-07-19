@@ -525,6 +525,8 @@ class Cluster(object):
     will be an instance of :class:`~cassandra.metrics.Metrics`.
     """
 
+    _metrics_collector = None
+
     metrics = None
     """
     An instance of :class:`cassandra.metrics.Metrics` if :attr:`.metrics_enabled` is
@@ -889,8 +891,10 @@ class Cluster(object):
         self._lock = RLock()
 
         if self.metrics_enabled:
-            from cassandra.metrics import Metrics
+            from cassandra.metrics import Metrics, MetricsCollector
             self.metrics = Metrics(weakref.proxy(self))
+            self._metrics_collector = MetricsCollector(self.metrics)
+            self._metrics_collector.start()
 
         self.control_connection = ControlConnection(
             self, self.control_connection_timeout,
@@ -1217,6 +1221,9 @@ class Cluster(object):
         self.scheduler.shutdown()
 
         self.control_connection.shutdown()
+
+        if self.metrics_enabled:
+            self._metrics_collector.shutdown()
 
         for session in self.sessions:
             session.shutdown()
@@ -1916,7 +1923,7 @@ class Session(object):
         self._lock = RLock()
         self._pools = {}
         self._profile_manager = cluster.profile_manager
-        self._metrics = cluster.metrics
+        self._metrics = cluster._metrics_collector
         self._protocol_version = self.cluster.protocol_version
 
         self.encoder = Encoder()
@@ -3567,7 +3574,7 @@ class ResponseFuture(object):
     def _set_final_result(self, response):
         self._cancel_timer()
         if self._metrics is not None:
-            self._metrics.request_timer.addValue(time.time() - self._start_time)
+            self._metrics.add_request_value(time.time() - self._start_time)
 
         with self._callback_lock:
             self._final_result = response
@@ -3582,7 +3589,7 @@ class ResponseFuture(object):
     def _set_final_exception(self, response):
         self._cancel_timer()
         if self._metrics is not None:
-            self._metrics.request_timer.addValue(time.time() - self._start_time)
+            self._metrics.add_request_value(time.time() - self._start_time)
 
         with self._callback_lock:
             self._final_exception = response

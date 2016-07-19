@@ -13,7 +13,10 @@
 # limitations under the License.
 
 from itertools import chain
+import time
 import logging
+from collections import deque
+from threading import Thread, Lock
 
 try:
     from greplin import scales
@@ -164,3 +167,91 @@ class Metrics(object):
 
     def on_retry(self):
         self.stats.retries += 1
+
+
+class MetricsCollector(Thread):
+    """
+    MetricsCollector manages metrics outside of the main application thread.
+    """
+
+    metrics = None
+    """
+    An instance of :class:`cassandra.metrics.Metrics`
+    """
+
+    values = None
+    """
+    Pending metrics values to be collected. A value is a tuple: (metrics_type, value)
+    """
+
+    REQUEST_TIMER, CONNECTION_ERROR, WRITE_TIMEOUT, READ_TIMEOUT, UNAVAILABLE, OTHER_ERROR, IGNORE, RETRY = range(8)
+
+    def __init__(self, metrics):
+        super(MetricsCollector, self).__init__()
+        log.debug("Initializing MetricsCollector")
+
+        self.metrics = metrics
+        self.values = deque()
+        self._shutdown = False
+        self._shutdown_lock = Lock()
+
+    def run(self):
+        c = 0
+        while True:
+            try:
+                value = self.values.popleft()
+            except IndexError:
+                time.sleep(1)
+                continue
+            c += 1
+
+            if value is None:
+                break
+
+            metrics_type, value = value  # unpack the metrics tuple
+            if metrics_type == self.REQUEST_TIMER:
+                self.metrics.request_timer.addValue(value)
+            # TODO implement other metrics types...
+
+            # example of a simple metrics regulation,
+            # other ideas... adding a threshold limit to by-pass this regulation to avoid filling the queue
+            if c > 1000 and not self._shutdown:
+                time.sleep(1)
+                c = 0
+
+
+    def shutdown(self, wait=True):
+        with self._shutdown_lock:
+             self._shutdown = True
+             self.values.append(None)
+        if wait:
+            self.join()
+
+    def _add_value(self, value):
+        if self._shutdown:
+            raise RuntimeError('cannot add metrics after shutdown')
+        self.values.append(value)
+
+    def add_request_value(self, value):
+        self.values.append((self.REQUEST_TIMER, value))
+
+    def on_connection_error(self):
+        self._add_value((self.CONNECTION_ERROR, None))
+
+    def on_write_timeout(self):
+        self._add_value((self.WRITE_TIMEOUT, None))
+
+    def on_read_timeout(self):
+        self._add_value((self.READ_TIMEOUT, None))
+
+    def on_unavailable(self):
+        self._add_value((self.UNAVAILABLE, None))
+
+    def on_other_error(self):
+        self._add_value((self.OTHER_ERROR, None))
+
+    def on_ignore(self):
+        self._add_value((self.IGNORE, None))
+
+    def on_retry(self):
+        self._add_value((self.RETRY, None))
