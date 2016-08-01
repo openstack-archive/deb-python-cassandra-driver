@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Making Queries &mdash; Cassandra Driver 3.5.0 documentation</title>
+    <title>Making Queries &mdash; Cassandra Driver 3.6.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.5.0',
+        VERSION:     '3.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.5.0 documentation" href="../index.html" />
+    <link rel="top" title="Cassandra Driver 3.6.0 documentation" href="../index.html" />
     <link rel="up" title="Object Mapper" href="../object_mapper.html" />
     <link rel="next" title="Batch Queries" href="batches.html" />
     <link rel="prev" title="Models" href="models.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="models.html" title="Models"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" accesskey="U">Object Mapper</a> &raquo;</li> 
       </ul>
     </div>
@@ -66,6 +66,7 @@
 <li><a class="reference internal" href="#ordering-querysets">Ordering QuerySets</a></li>
 <li><a class="reference internal" href="#values-lists">Values Lists</a></li>
 <li><a class="reference internal" href="#per-query-timeouts">Per Query Timeouts</a></li>
+<li><a class="reference internal" href="#default-ttl-and-per-query-ttl">Default TTL and Per Query TTL</a></li>
 <li><a class="reference internal" href="#named-tables">Named Tables</a></li>
 </ul>
 </li>
@@ -431,6 +432,37 @@ None means no timeout.</p>
 Setting the timeout on the model is meaningless and will raise an AssertionError.</p>
 </div></blockquote>
 </div>
+<div class="section" id="default-ttl-and-per-query-ttl">
+<span id="ttl-change"></span><h2>Default TTL and Per Query TTL<a class="headerlink" href="#default-ttl-and-per-query-ttl" title="Permalink to this headline">¶</a></h2>
+<p>Model default TTL now relies on the <em>default_time_to_live</em> feature, introduced in Cassandra 2.0. It is not handled anymore in the CQLEngine Model (cassandra-driver &gt;=3.6). You can set the default TTL of a table like this:</p>
+<blockquote>
+<div><p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">__options__</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;default_time_to_live&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">}</span>
+
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>You can set TTL per-query if needed. Here are a some examples:</p>
+<blockquote>
+<div><p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">__options__</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;default_time_to_live&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">}</span>
+
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="o">...</span>
+
+<span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c"># Default TTL 20 will be set automatically on the server</span>
+
+<span class="n">user</span><span class="o">.</span><span class="n">ttl</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">age</span><span class="o">=</span><span class="mi">21</span><span class="p">)</span>            <span class="c"># Update the TTL to 30</span>
+<span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">ttl</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c"># TTL 10</span>
+<span class="n">User</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">21</span><span class="p">)</span><span class="o">.</span><span class="n">ttl</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>  <span class="c"># TTL 10</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
 <div class="section" id="named-tables">
 <h2>Named Tables<a class="headerlink" href="#named-tables" title="Permalink to this headline">¶</a></h2>
 <p>Named tables are a way of querying a table without creating an class.  They&#8217;re useful for querying system tables or exploring an unfamiliar database.</p>
@@ -471,7 +503,7 @@ Setting the timeout on the model is meaningless and will raise an AssertionError
         <li class="right" >
           <a href="models.html" title="Models"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../object_mapper.html" >Object Mapper</a> &raquo;</li> 
       </ul>
     </div>

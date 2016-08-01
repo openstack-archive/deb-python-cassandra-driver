@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.query &mdash; Cassandra Driver 3.5.0 documentation</title>
+    <title>cassandra.cqlengine.query &mdash; Cassandra Driver 3.6.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.5.0',
+        VERSION:     '3.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.5.0 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.6.0 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -198,11 +198,13 @@
     <span class="n">Counter</span> <span class="o">=</span> <span class="s">&#39;COUNTER&#39;</span>
 
 
-<span class="k">class</span> <span class="nc">BatchQuery</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="BatchQuery"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/query.html#cassandra.cqlengine.query.BatchQuery">[docs]</a><span class="k">class</span> <span class="nc">BatchQuery</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Handles the batching of queries</span>
 
 <span class="sd">    http://www.datastax.com/docs/1.2/cql_cli/cql/BATCH</span>
+
+<span class="sd">    See :doc:`/cqlengine/batches` for more details.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">warn_multiple_exec</span> <span class="o">=</span> <span class="bp">True</span>
 
@@ -239,11 +241,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_context_entered</span> <span class="o">=</span> <span class="bp">False</span>
 
-    <span class="k">def</span> <span class="nf">add_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+<div class="viewcode-block" id="BatchQuery.add_query"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/query.html#cassandra.cqlengine.query.BatchQuery.add_query">[docs]</a>    <span class="k">def</span> <span class="nf">add_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">BaseCQLStatement</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&#39;only BaseCQLStatements can be added to a batch query&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">queries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-
+</div>
     <span class="k">def</span> <span class="nf">consistency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consistency</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_consistency</span> <span class="o">=</span> <span class="n">consistency</span>
 
@@ -251,7 +253,7 @@
         <span class="k">for</span> <span class="n">callback</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">:</span>
             <span class="n">callback</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">add_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="BatchQuery.add_callback"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/query.html#cassandra.cqlengine.query.BatchQuery.add_callback">[docs]</a>    <span class="k">def</span> <span class="nf">add_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a function and arguments to be passed to it to be executed after the batch executes.</span>
 
 <span class="sd">        A batch can support multiple callbacks.</span>
@@ -261,14 +263,14 @@
 
 <span class="sd">        :param fn: Callable object</span>
 <span class="sd">        :type fn: callable</span>
-<span class="sd">        :param *args: Positional arguments to be passed to the callback at the time of execution</span>
-<span class="sd">        :param **kwargs: Named arguments to be passed to the callback at the time of execution</span>
+<span class="sd">        :param \*args: Positional arguments to be passed to the callback at the time of execution</span>
+<span class="sd">        :param \*\*kwargs: Named arguments to be passed to the callback at the time of execution</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Value for argument &#39;fn&#39; is {0} and is not a callable object.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">fn</span><span class="p">)))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
-
-    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="BatchQuery.execute"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/query.html#cassandra.cqlengine.query.BatchQuery.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">warn_multiple_exec</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Batch executed multiple times.&quot;</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_entered</span><span class="p">:</span>
@@ -314,7 +316,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">queries</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_execute_callbacks</span><span class="p">()</span>
-
+</div>
     <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_context_entered</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="k">return</span> <span class="bp">self</span>
@@ -325,7 +327,47 @@
             <span class="k">return</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
 
+</div>
+<div class="viewcode-block" id="ContextQuery"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/query.html#cassandra.cqlengine.query.ContextQuery">[docs]</a><span class="k">class</span> <span class="nc">ContextQuery</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Context manager to allow a Model to switch context easily. Presently, the context only</span>
+<span class="sd">    specifies a keyspace for model IO.</span>
 
+<span class="sd">    For example:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">            with ContextQuery(Automobile, keyspace=&#39;test2&#39;) as A:</span>
+<span class="sd">                A.objects.create(manufacturer=&#39;honda&#39;, year=2008, model=&#39;civic&#39;)</span>
+<span class="sd">                print len(A.objects.all())  # 1 result</span>
+
+<span class="sd">            with ContextQuery(Automobile, keyspace=&#39;test4&#39;) as A:</span>
+<span class="sd">                print len(A.objects.all())  # 0 result</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param model: A model. This should be a class type, not an instance.</span>
+<span class="sd">        :param keyspace: (optional) A keyspace name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">models</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s">&quot;Models must be derived from base Model.&quot;</span><span class="p">)</span>
+
+        <span class="n">ks</span> <span class="o">=</span> <span class="n">keyspace</span> <span class="k">if</span> <span class="n">keyspace</span> <span class="k">else</span> <span class="n">model</span><span class="o">.</span><span class="n">__keyspace__</span>
+        <span class="n">new_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="p">(</span><span class="n">model</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;__keyspace__&#39;</span><span class="p">:</span> <span class="n">ks</span><span class="p">})</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">new_type</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+        <span class="k">return</span>
+
+</div>
 <span class="k">class</span> <span class="nc">AbstractQuerySet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
@@ -366,7 +408,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">=</span> <span class="bp">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ttl</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s">&#39;__default_ttl__&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ttl</span> <span class="o">=</span>  <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_consistency</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_if_not_exists</span> <span class="o">=</span> <span class="bp">False</span>
@@ -399,7 +441,7 @@
     <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">):</span>
         <span class="n">clone</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;_con&#39;</span><span class="p">,</span> <span class="s">&#39;_cur&#39;</span><span class="p">,</span> <span class="s">&#39;_result_cache&#39;</span><span class="p">,</span> <span class="s">&#39;_result_idx&#39;</span><span class="p">,</span> <span class="s">&#39;_result_generator&#39;</span><span class="p">]:</span>  <span class="c"># don&#39;t clone these</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;_con&#39;</span><span class="p">,</span> <span class="s">&#39;_cur&#39;</span><span class="p">,</span> <span class="s">&#39;_result_cache&#39;</span><span class="p">,</span> <span class="s">&#39;_result_idx&#39;</span><span class="p">,</span> <span class="s">&#39;_result_generator&#39;</span><span class="p">,</span> <span class="s">&#39;_construct_result&#39;</span><span class="p">]:</span>  <span class="c"># don&#39;t clone these, which are per-request-execution</span>
                 <span class="n">clone</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s">&#39;_batch&#39;</span><span class="p">:</span>
                 <span class="c"># we need to keep the same batch instance across</span>
@@ -612,7 +654,7 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">arg</span><span class="p">,</span> <span class="bp">None</span>
         <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">statement</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">statement</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">statement</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">statement</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">arg</span> <span class="o">!=</span> <span class="s">&#39;pk__token&#39;</span> <span class="k">else</span> <span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">QueryException</span><span class="p">(</span><span class="s">&quot;Can&#39;t parse &#39;{0}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">arg</span><span class="p">))</span>
 
@@ -1021,7 +1063,8 @@
     <span class="k">def</span> <span class="nf">_validate_select_where</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Checks that a filterset will not create invalid select statement &quot;&quot;&quot;</span>
         <span class="c"># check that there&#39;s either a =, a IN or a CONTAINS (collection) relationship with a primary key or indexed field</span>
-        <span class="n">equal_ops</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_get_column_by_db_name</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">field</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_where</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">operator</span><span class="p">,</span> <span class="n">EqualsOperator</span><span class="p">)]</span>
+        <span class="n">equal_ops</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_get_column_by_db_name</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">field</span><span class="p">)</span> \
+                     <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_where</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">operator</span><span class="p">,</span> <span class="n">EqualsOperator</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">Token</span><span class="p">)]</span>
         <span class="n">token_comparison</span> <span class="o">=</span> <span class="nb">any</span><span class="p">([</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_where</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">Token</span><span class="p">)])</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">primary_key</span> <span class="ow">or</span> <span class="n">w</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">equal_ops</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">token_comparison</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_filtering</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">QueryException</span><span class="p">((</span><span class="s">&#39;Where clauses require either  =, a IN or a CONTAINS (collection) &#39;</span>
@@ -1038,6 +1081,9 @@
             <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_defer_fields</span><span class="p">:</span>
                 <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_defer_fields</span><span class="p">]</span>
+                <span class="c"># select the partition keys if all model fields are set defer</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">fields</span><span class="p">:</span>
+                    <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_partition_keys</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_only_fields</span><span class="p">:</span>
                 <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_only_fields</span><span class="p">]</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">fields</span><span class="p">:</span>
@@ -1221,6 +1267,7 @@
             <span class="k">return</span>
 
         <span class="n">nulled_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">updated_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">us</span> <span class="o">=</span> <span class="n">UpdateStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_where</span><span class="p">,</span> <span class="n">ttl</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ttl</span><span class="p">,</span>
                              <span class="n">timestamp</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span><span class="p">,</span> <span class="n">conditionals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditional</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_if_exists</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -1241,13 +1288,16 @@
                 <span class="k">continue</span>
 
             <span class="n">us</span><span class="o">.</span><span class="n">add_update</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">operation</span><span class="o">=</span><span class="n">col_op</span><span class="p">)</span>
+            <span class="n">updated_columns</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">us</span><span class="o">.</span><span class="n">assignments</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">us</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">nulled_columns</span><span class="p">:</span>
+            <span class="n">delete_conditional</span> <span class="o">=</span> <span class="p">[</span><span class="n">condition</span> <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditional</span>
+                                  <span class="k">if</span> <span class="n">condition</span><span class="o">.</span><span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">updated_columns</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditional</span> <span class="k">else</span> <span class="bp">None</span>
             <span class="n">ds</span> <span class="o">=</span> <span class="n">DeleteStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="n">nulled_columns</span><span class="p">,</span>
-                                 <span class="n">where</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_where</span><span class="p">,</span> <span class="n">conditionals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditional</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_if_exists</span><span class="p">)</span>
+                                 <span class="n">where</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_where</span><span class="p">,</span> <span class="n">conditionals</span><span class="o">=</span><span class="n">delete_conditional</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_if_exists</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
 
 </div></div>
@@ -1294,11 +1344,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch</span> <span class="o">=</span> <span class="n">batch_obj</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span> <span class="nf">_delete_null_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_delete_null_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditionals</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        executes a delete query to remove columns that have changed to null</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">ds</span> <span class="o">=</span> <span class="n">DeleteStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">,</span> <span class="n">conditionals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditional</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_if_exists</span><span class="p">)</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">DeleteStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">,</span> <span class="n">conditionals</span><span class="o">=</span><span class="n">conditionals</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_if_exists</span><span class="p">)</span>
         <span class="n">deleted_fields</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">col</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">column</span>
@@ -1332,6 +1382,8 @@
                                     <span class="n">conditionals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditional</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_if_exists</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_clustering_keys</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">null_clustering_key</span> <span class="o">=</span> <span class="n">null_clustering_key</span> <span class="ow">and</span> <span class="n">col</span><span class="o">.</span><span class="n">_val_is_null</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
+
+        <span class="n">updated_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="c"># get defined fields and their column names</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="c"># if clustering key is null, don&#39;t include non static columns</span>
@@ -1349,6 +1401,7 @@
 
                 <span class="n">static_changed_only</span> <span class="o">=</span> <span class="n">static_changed_only</span> <span class="ow">and</span> <span class="n">col</span><span class="o">.</span><span class="n">static</span>
                 <span class="n">statement</span><span class="o">.</span><span class="n">add_update</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">previous</span><span class="o">=</span><span class="n">val_mgr</span><span class="o">.</span><span class="n">previous_value</span><span class="p">)</span>
+                <span class="n">updated_columns</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">statement</span><span class="o">.</span><span class="n">assignments</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_primary_keys</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -1359,7 +1412,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">null_clustering_key</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_delete_null_columns</span><span class="p">()</span>
+            <span class="c"># remove conditions on fields that have been updated</span>
+            <span class="n">delete_conditionals</span> <span class="o">=</span> <span class="p">[</span><span class="n">condition</span> <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditional</span>
+                                   <span class="k">if</span> <span class="n">condition</span><span class="o">.</span><span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">updated_columns</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditional</span> <span class="k">else</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_delete_null_columns</span><span class="p">(</span><span class="n">delete_conditionals</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1408,7 +1464,7 @@
         <span class="n">ds</span> <span class="o">=</span> <span class="n">DeleteStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span><span class="p">,</span> <span class="n">conditionals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditional</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_if_exists</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_primary_keys</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">col</span><span class="o">.</span><span class="n">parition_key</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">col</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">ds</span><span class="o">.</span><span class="n">add_where</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">EqualsOperator</span><span class="p">(),</span> <span class="n">val</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
@@ -1440,7 +1496,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

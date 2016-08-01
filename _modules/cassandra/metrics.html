@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metrics &mdash; Cassandra Driver 3.5.0 documentation</title>
+    <title>cassandra.metrics &mdash; Cassandra Driver 3.6.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.5.0',
+        VERSION:     '3.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.5.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.6.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -178,10 +178,14 @@
 <span class="sd">    the driver currently has open.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">_stats_counter</span> <span class="o">=</span> <span class="mi">0</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster_proxy</span><span class="p">):</span>
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Starting metric capture&quot;</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">scales</span><span class="o">.</span><span class="n">collection</span><span class="p">(</span><span class="s">&#39;/cassandra&#39;</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats_name</span> <span class="o">=</span> <span class="s">&#39;cassandra-{0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stats_counter</span><span class="p">))</span>
+        <span class="n">Metrics</span><span class="o">.</span><span class="n">_stats_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">scales</span><span class="o">.</span><span class="n">collection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats_name</span><span class="p">,</span>
             <span class="n">scales</span><span class="o">.</span><span class="n">PmfStat</span><span class="p">(</span><span class="s">&#39;request_timer&#39;</span><span class="p">),</span>
             <span class="n">scales</span><span class="o">.</span><span class="n">IntStat</span><span class="p">(</span><span class="s">&#39;connection_errors&#39;</span><span class="p">),</span>
             <span class="n">scales</span><span class="o">.</span><span class="n">IntStat</span><span class="p">(</span><span class="s">&#39;write_timeouts&#39;</span><span class="p">),</span>
@@ -198,6 +202,11 @@
                 <span class="k">lambda</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">cluster_proxy</span><span class="o">.</span><span class="n">sessions</span><span class="p">)))),</span>
             <span class="n">scales</span><span class="o">.</span><span class="n">Stat</span><span class="p">(</span><span class="s">&#39;open_connections&#39;</span><span class="p">,</span>
                 <span class="k">lambda</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">open_count</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">cluster_proxy</span><span class="o">.</span><span class="n">sessions</span><span class="p">)))</span>
+
+        <span class="c"># TODO, to be removed in 4.0</span>
+        <span class="c"># /cassandra contains the metrics of the first cluster registered</span>
+        <span class="k">if</span> <span class="s">&#39;cassandra&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">scales</span><span class="o">.</span><span class="n">_Stats</span><span class="o">.</span><span class="n">stats</span><span class="p">:</span>
+            <span class="n">scales</span><span class="o">.</span><span class="n">_Stats</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;cassandra&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scales</span><span class="o">.</span><span class="n">_Stats</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">stats_name</span><span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">request_timer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">request_timer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">connection_errors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">connection_errors</span>
@@ -230,7 +239,31 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">ignores</span> <span class="o">+=</span> <span class="mi">1</span>
 
     <span class="k">def</span> <span class="nf">on_retry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">retries</span> <span class="o">+=</span> <span class="mi">1</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">retries</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="Metrics.get_stats"><a class="viewcode-back" href="../../api/cassandra/metrics.html#cassandra.metrics.Metrics.get_stats">[docs]</a>    <span class="k">def</span> <span class="nf">get_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the metrics for the registered cluster instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">scales</span><span class="o">.</span><span class="n">getStats</span><span class="p">()[</span><span class="bp">self</span><span class="o">.</span><span class="n">stats_name</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="Metrics.set_stats_name"><a class="viewcode-back" href="../../api/cassandra/metrics.html#cassandra.metrics.Metrics.set_stats_name">[docs]</a>    <span class="k">def</span> <span class="nf">set_stats_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stats_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the metrics stats name.</span>
+<span class="sd">        The stats_name is a string used to access the metris through scales: scales.getStats()[&lt;stats_name&gt;]</span>
+<span class="sd">        Default is &#39;cassandra-&lt;num&gt;&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats_name</span> <span class="o">==</span> <span class="n">stats_name</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">stats_name</span> <span class="ow">in</span> <span class="n">scales</span><span class="o">.</span><span class="n">_Stats</span><span class="o">.</span><span class="n">stats</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;&quot;{0}&quot; already exists in stats.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">stats_name</span><span class="p">))</span>
+
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">scales</span><span class="o">.</span><span class="n">_Stats</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">stats_name</span><span class="p">]</span>
+        <span class="k">del</span> <span class="n">scales</span><span class="o">.</span><span class="n">_Stats</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">stats_name</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats_name</span> <span class="o">=</span> <span class="n">stats_name</span>
+        <span class="n">scales</span><span class="o">.</span><span class="n">_Stats</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">stats_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span></div></div>
 </pre></div>
 
           </div>
@@ -247,7 +280,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.concurrent &mdash; Cassandra Driver 3.5.0 documentation</title>
+    <title>cassandra.concurrent &mdash; Cassandra Driver 3.6.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.5.0',
+        VERSION:     '3.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.5.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.6.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -161,6 +161,8 @@
 </div>
 <span class="k">class</span> <span class="nc">_ConcurrentExecutor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
+    <span class="n">max_error_recursion</span> <span class="o">=</span> <span class="mi">100</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">statements_and_params</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_enum_statements</span> <span class="o">=</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">statements_and_params</span><span class="p">))</span>
@@ -169,6 +171,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_exec_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exec_depth</span> <span class="o">=</span> <span class="mi">0</span>
 
     <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concurrency</span><span class="p">,</span> <span class="n">fail_fast</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fail_fast</span> <span class="o">=</span> <span class="n">fail_fast</span>
@@ -192,6 +195,7 @@
             <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exec_depth</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
             <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
@@ -202,7 +206,15 @@
             <span class="c"># exc_info with fail_fast to preserve stack trace info when raising on the client thread</span>
             <span class="c"># (matches previous behavior -- not sure why we wouldn&#39;t want stack trace in the other case)</span>
             <span class="n">e</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fail_fast</span> <span class="ow">and</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span> <span class="k">else</span> <span class="n">exc</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+            <span class="c"># If we&#39;re not failing fast and all executions are raising, there is a chance of recursing</span>
+            <span class="c"># here as subsequent requests are attempted. If we hit this threshold, schedule this result/retry</span>
+            <span class="c"># and let the event loop thread return.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec_depth</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_error_recursion</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exec_depth</span> <span class="o">-=</span> <span class="mi">1</span>
 
     <span class="k">def</span> <span class="nf">_on_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
         <span class="n">future</span><span class="o">.</span><span class="n">clear_callbacks</span><span class="p">()</span>
@@ -305,7 +317,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

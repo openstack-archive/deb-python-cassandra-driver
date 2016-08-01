@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.protocol &mdash; Cassandra Driver 3.5.0 documentation</title>
+    <title>cassandra.protocol &mdash; Cassandra Driver 3.6.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.5.0',
+        VERSION:     '3.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.5.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.6.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -193,7 +193,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">info</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="n">code</span> <span class="o">=</span> <span class="n">read_int</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="n">subcls</span> <span class="o">=</span> <span class="n">error_classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span>
@@ -445,7 +445,7 @@
     <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;READY&#39;</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">cls</span><span class="p">()</span>
 
 
@@ -457,7 +457,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">authenticator</span> <span class="o">=</span> <span class="n">authenticator</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="n">authname</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">authenticator</span><span class="o">=</span><span class="n">authname</span><span class="p">)</span>
 
@@ -489,7 +489,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span> <span class="o">=</span> <span class="n">challenge</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">read_binary_longstring</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
 
 
@@ -512,7 +512,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">token</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">read_longstring</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
 
 
@@ -533,7 +533,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">options</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="n">options</span> <span class="o">=</span> <span class="n">read_stringmultimap</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="n">cql_versions</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;CQL_VERSION&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">cql_versions</span><span class="o">=</span><span class="n">cql_versions</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span>
@@ -541,7 +541,7 @@
 
 <span class="c"># used for QueryMessage and ExecuteMessage</span>
 <span class="n">_VALUES_FLAG</span> <span class="o">=</span> <span class="mh">0x01</span>
-<span class="n">_SKIP_METADATA_FLAG</span> <span class="o">=</span> <span class="mh">0x01</span>
+<span class="n">_SKIP_METADATA_FLAG</span> <span class="o">=</span> <span class="mh">0x02</span>
 <span class="n">_PAGE_SIZE_FLAG</span> <span class="o">=</span> <span class="mh">0x04</span>
 <span class="n">_WITH_PAGING_STATE_FLAG</span> <span class="o">=</span> <span class="mh">0x08</span>
 <span class="n">_WITH_SERIAL_CONSISTENCY_FLAG</span> <span class="o">=</span> <span class="mh">0x10</span>
@@ -644,14 +644,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">paging_state</span> <span class="o">=</span> <span class="n">paging_state</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">,</span> <span class="n">result_metadata</span><span class="p">):</span>
         <span class="n">kind</span> <span class="o">=</span> <span class="n">read_int</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="n">paging_state</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">RESULT_KIND_VOID</span><span class="p">:</span>
             <span class="n">results</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">RESULT_KIND_ROWS</span><span class="p">:</span>
             <span class="n">paging_state</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">recv_results_rows</span><span class="p">(</span>
-                <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">)</span>
+                <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">,</span> <span class="n">result_metadata</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">RESULT_KIND_SET_KEYSPACE</span><span class="p">:</span>
             <span class="n">ksname</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">results</span> <span class="o">=</span> <span class="n">ksname</span>
@@ -664,8 +664,9 @@
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">paging_state</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">recv_results_rows</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">recv_results_rows</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">,</span> <span class="n">result_metadata</span><span class="p">):</span>
         <span class="n">paging_state</span><span class="p">,</span> <span class="n">column_metadata</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">recv_results_metadata</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">)</span>
+        <span class="n">column_metadata</span> <span class="o">=</span> <span class="n">column_metadata</span> <span class="ow">or</span> <span class="n">result_metadata</span>
         <span class="n">rowcount</span> <span class="o">=</span> <span class="n">read_int</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">recv_row</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">))</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rowcount</span><span class="p">)]</span>
         <span class="n">colnames</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">column_metadata</span><span class="p">]</span>
@@ -674,24 +675,29 @@
             <span class="nb">tuple</span><span class="p">(</span><span class="n">ctype</span><span class="o">.</span><span class="n">from_binary</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">)</span>
                   <span class="k">for</span> <span class="n">ctype</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">coltypes</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">paging_state</span><span class="p">,</span> <span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="n">parsed_rows</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">paging_state</span><span class="p">,</span> <span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="n">parsed_rows</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">recv_results_prepared</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
         <span class="n">query_id</span> <span class="o">=</span> <span class="n">read_binary_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="n">column_metadata</span><span class="p">,</span> <span class="n">pk_indexes</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">recv_prepared_metadata</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">query_id</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">pk_indexes</span><span class="p">)</span>
+        <span class="n">bind_metadata</span><span class="p">,</span> <span class="n">pk_indexes</span><span class="p">,</span> <span class="n">result_metadata</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">recv_prepared_metadata</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">bind_metadata</span><span class="p">,</span> <span class="n">pk_indexes</span><span class="p">,</span> <span class="n">result_metadata</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">recv_results_metadata</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
         <span class="n">flags</span> <span class="o">=</span> <span class="n">read_int</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="n">glob_tblspec</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">cls</span><span class="o">.</span><span class="n">_FLAGS_GLOBAL_TABLES_SPEC</span><span class="p">)</span>
         <span class="n">colcount</span> <span class="o">=</span> <span class="n">read_int</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">flags</span> <span class="o">&amp;</span> <span class="n">cls</span><span class="o">.</span><span class="n">_HAS_MORE_PAGES_FLAG</span><span class="p">:</span>
             <span class="n">paging_state</span> <span class="o">=</span> <span class="n">read_binary_longstring</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">paging_state</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">no_meta</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">cls</span><span class="o">.</span><span class="n">_NO_METADATA_FLAG</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">no_meta</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">paging_state</span><span class="p">,</span> <span class="p">[]</span>
+
+        <span class="n">glob_tblspec</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">cls</span><span class="o">.</span><span class="n">_FLAGS_GLOBAL_TABLES_SPEC</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">glob_tblspec</span><span class="p">:</span>
             <span class="n">ksname</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">cfname</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
@@ -711,17 +717,17 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">recv_prepared_metadata</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
         <span class="n">flags</span> <span class="o">=</span> <span class="n">read_int</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="n">glob_tblspec</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">cls</span><span class="o">.</span><span class="n">_FLAGS_GLOBAL_TABLES_SPEC</span><span class="p">)</span>
         <span class="n">colcount</span> <span class="o">=</span> <span class="n">read_int</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="n">pk_indexes</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">protocol_version</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">:</span>
             <span class="n">num_pk_indexes</span> <span class="o">=</span> <span class="n">read_int</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">pk_indexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">read_short</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pk_indexes</span><span class="p">)]</span>
 
+        <span class="n">glob_tblspec</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">cls</span><span class="o">.</span><span class="n">_FLAGS_GLOBAL_TABLES_SPEC</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">glob_tblspec</span><span class="p">:</span>
             <span class="n">ksname</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">cfname</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="n">column_metadata</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">bind_metadata</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">colcount</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">glob_tblspec</span><span class="p">:</span>
                 <span class="n">colksname</span> <span class="o">=</span> <span class="n">ksname</span>
@@ -731,8 +737,13 @@
                 <span class="n">colcfname</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">colname</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">coltype</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">read_type</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">)</span>
-            <span class="n">column_metadata</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">colksname</span><span class="p">,</span> <span class="n">colcfname</span><span class="p">,</span> <span class="n">colname</span><span class="p">,</span> <span class="n">coltype</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">pk_indexes</span>
+            <span class="n">bind_metadata</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ColumnMetadata</span><span class="p">(</span><span class="n">colksname</span><span class="p">,</span> <span class="n">colcfname</span><span class="p">,</span> <span class="n">colname</span><span class="p">,</span> <span class="n">coltype</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">protocol_version</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">result_metadata</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">recv_results_metadata</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">bind_metadata</span><span class="p">,</span> <span class="n">pk_indexes</span><span class="p">,</span> <span class="n">result_metadata</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">bind_metadata</span><span class="p">,</span> <span class="n">pk_indexes</span><span class="p">,</span> <span class="bp">None</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">recv_results_schema_change</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">):</span>
@@ -794,7 +805,7 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">query_params</span><span class="p">,</span> <span class="n">consistency_level</span><span class="p">,</span>
                  <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">paging_state</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">paging_state</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">skip_meta</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">query_id</span> <span class="o">=</span> <span class="n">query_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">query_params</span> <span class="o">=</span> <span class="n">query_params</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span> <span class="o">=</span> <span class="n">consistency_level</span>
@@ -802,6 +813,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">fetch_size</span> <span class="o">=</span> <span class="n">fetch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">paging_state</span> <span class="o">=</span> <span class="n">paging_state</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">skip_meta</span> <span class="o">=</span> <span class="n">skip_meta</span>
 
     <span class="k">def</span> <span class="nf">send_body</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">):</span>
         <span class="n">write_string</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_id</span><span class="p">)</span>
@@ -835,6 +847,8 @@
                     <span class="k">raise</span> <span class="n">UnsupportedOperation</span><span class="p">(</span>
                         <span class="s">&quot;Protocol-level timestamps may only be used with protocol version &quot;</span>
                         <span class="s">&quot;3 or higher. Consider setting Cluster.protocol_version to 3.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_meta</span><span class="p">:</span>
+                <span class="n">flags</span> <span class="o">|=</span> <span class="n">_SKIP_METADATA_FLAG</span>
             <span class="n">write_byte</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">flags</span><span class="p">)</span>
             <span class="n">write_short</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query_params</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_params</span><span class="p">:</span>
@@ -847,6 +861,7 @@
                 <span class="n">write_consistency_level</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">serial_consistency_level</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">write_long</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span>
+
 
 
 <span class="k">class</span> <span class="nc">BatchMessage</span><span class="p">(</span><span class="n">_MessageType</span><span class="p">):</span>
@@ -918,7 +933,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">event_args</span> <span class="o">=</span> <span class="n">event_args</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="n">event_type</span> <span class="o">=</span> <span class="n">read_string</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">event_type</span> <span class="ow">in</span> <span class="n">known_event_types</span><span class="p">:</span>
             <span class="n">read_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="s">&#39;recv_&#39;</span> <span class="o">+</span> <span class="n">event_type</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
@@ -1027,7 +1042,7 @@
 
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="_ProtocolHandler.decode_message"><a class="viewcode-back" href="../../api/cassandra/protocol.html#cassandra.cluster._ProtocolHandler.decode_message">[docs]</a>    <span class="k">def</span> <span class="nf">decode_message</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">,</span> <span class="n">stream_id</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">opcode</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span>
-                       <span class="n">decompressor</span><span class="p">):</span>
+                       <span class="n">decompressor</span><span class="p">,</span> <span class="n">result_metadata</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Decodes a native protocol message body</span>
 
@@ -1069,7 +1084,7 @@
             <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Unknown protocol flags set: </span><span class="si">%02x</span><span class="s">. May cause problems.&quot;</span><span class="p">,</span> <span class="n">flags</span><span class="p">)</span>
 
         <span class="n">msg_class</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">message_types_by_opcode</span><span class="p">[</span><span class="n">opcode</span><span class="p">]</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="n">msg_class</span><span class="o">.</span><span class="n">recv_body</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">msg_class</span><span class="o">.</span><span class="n">recv_body</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">user_type_map</span><span class="p">,</span> <span class="n">result_metadata</span><span class="p">)</span>
         <span class="n">msg</span><span class="o">.</span><span class="n">stream_id</span> <span class="o">=</span> <span class="n">stream_id</span>
         <span class="n">msg</span><span class="o">.</span><span class="n">trace_id</span> <span class="o">=</span> <span class="n">trace_id</span>
         <span class="n">msg</span><span class="o">.</span><span class="n">custom_payload</span> <span class="o">=</span> <span class="n">custom_payload</span>
@@ -1328,7 +1343,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

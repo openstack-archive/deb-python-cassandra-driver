@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.metadata &mdash; Cassandra Driver 3.5.0 documentation</title>
+    <title>cassandra.metadata &mdash; Cassandra Driver 3.6.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.5.0',
+        VERSION:     '3.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.5.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.6.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -1125,14 +1125,11 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">comparator</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;comparator&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">comparator</span><span class="p">:</span>
-            <span class="c"># no such thing as DCT in CQL</span>
-            <span class="n">incompatible</span> <span class="o">=</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comparator</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">DynamicCompositeType</span><span class="p">)</span>
-
             <span class="c"># no compact storage with more than one column beyond PK if there</span>
             <span class="c"># are clustering columns</span>
-            <span class="n">incompatible</span> <span class="o">|=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_compact_storage</span> <span class="ow">and</span>
-                             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="ow">and</span>
-                             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">incompatible</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_compact_storage</span> <span class="ow">and</span>
+                            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="ow">and</span>
+                            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clustering_key</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span>
 
             <span class="k">return</span> <span class="ow">not</span> <span class="n">incompatible</span>
         <span class="k">return</span> <span class="bp">True</span>
@@ -1844,12 +1841,9 @@
             <span class="n">comparator</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">lookup_casstype</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">&quot;comparator&quot;</span><span class="p">])</span>
             <span class="n">table_meta</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="n">comparator</span>
 
-            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">comparator</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">CompositeType</span><span class="p">):</span>
-                <span class="n">column_name_types</span> <span class="o">=</span> <span class="n">comparator</span><span class="o">.</span><span class="n">subtypes</span>
-                <span class="n">is_composite_comparator</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">column_name_types</span> <span class="o">=</span> <span class="p">(</span><span class="n">comparator</span><span class="p">,)</span>
-                <span class="n">is_composite_comparator</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">is_dct_comparator</span> <span class="o">=</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">comparator</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">DynamicCompositeType</span><span class="p">)</span>
+            <span class="n">is_composite_comparator</span> <span class="o">=</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">comparator</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">CompositeType</span><span class="p">)</span>
+            <span class="n">column_name_types</span> <span class="o">=</span> <span class="n">comparator</span><span class="o">.</span><span class="n">subtypes</span> <span class="k">if</span> <span class="n">is_composite_comparator</span> <span class="k">else</span> <span class="p">(</span><span class="n">comparator</span><span class="p">,)</span>
 
             <span class="n">num_column_name_components</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_name_types</span><span class="p">)</span>
             <span class="n">last_col</span> <span class="o">=</span> <span class="n">column_name_types</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -1863,7 +1857,8 @@
 
             <span class="k">if</span> <span class="n">column_aliases</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">column_aliases</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">column_aliases</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">column_aliases</span><span class="p">:</span>  <span class="c"># json load failed or column_aliases empty PYTHON-562</span>
                 <span class="n">column_aliases</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;column_name&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">clustering_rows</span><span class="p">]</span>
 
             <span class="k">if</span> <span class="n">is_composite_comparator</span><span class="p">:</span>
@@ -1886,10 +1881,10 @@
 
                     <span class="c"># Some thrift tables define names in composite types (see PYTHON-192)</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">column_aliases</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">comparator</span><span class="p">,</span> <span class="s">&#39;fieldnames&#39;</span><span class="p">):</span>
-                        <span class="n">column_aliases</span> <span class="o">=</span> <span class="n">comparator</span><span class="o">.</span><span class="n">fieldnames</span>
+                        <span class="n">column_aliases</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">comparator</span><span class="o">.</span><span class="n">fieldnames</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">is_compact</span> <span class="o">=</span> <span class="bp">True</span>
-                <span class="k">if</span> <span class="n">column_aliases</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">col_rows</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">column_aliases</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">col_rows</span> <span class="ow">or</span> <span class="n">is_dct_comparator</span><span class="p">:</span>
                     <span class="n">has_value</span> <span class="o">=</span> <span class="bp">True</span>
                     <span class="n">clustering_size</span> <span class="o">=</span> <span class="n">num_column_name_components</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -1934,7 +1929,7 @@
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">column_aliases</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">:</span>
                     <span class="n">column_name</span> <span class="o">=</span> <span class="n">column_aliases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">column_name</span> <span class="o">=</span> <span class="s">&quot;column</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">i</span>
+                    <span class="n">column_name</span> <span class="o">=</span> <span class="s">&quot;column</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 
                 <span class="n">data_type</span> <span class="o">=</span> <span class="n">column_name_types</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 <span class="n">cql_type</span> <span class="o">=</span> <span class="n">_cql_from_cass_type</span><span class="p">(</span><span class="n">data_type</span><span class="p">)</span>
@@ -2568,7 +2563,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

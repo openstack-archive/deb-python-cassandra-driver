@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.models &mdash; Cassandra Driver 3.5.0 documentation</title>
+    <title>cassandra.cqlengine.models &mdash; Cassandra Driver 3.6.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.5.0',
+        VERSION:     '3.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.5.0 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.6.0 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -419,7 +419,7 @@
     <span class="n">_table_name</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c"># used internally to cache a derived table name</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">values</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ttl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__default_ttl__</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ttl</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_conditional</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch</span> <span class="o">=</span> <span class="bp">None</span>
@@ -428,7 +428,11 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_values</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="c"># Set default values on instantiation. Thanks to this, we don&#39;t have</span>
+            <span class="c"># to wait anylonger for a call to validate() to have CQLengine set</span>
+            <span class="c"># default columns values.</span>
+            <span class="n">column_default</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span> <span class="k">if</span> <span class="n">column</span><span class="o">.</span><span class="n">has_default</span> <span class="k">else</span> <span class="bp">None</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">column_default</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">columns</span><span class="o">.</span><span class="n">BaseContainerColumn</span><span class="p">):</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="n">value_mngr</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">value_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
@@ -758,7 +762,6 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_persisted</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ttl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__default_ttl__</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span> <span class="o">=</span> <span class="bp">None</span>
 
         <span class="k">return</span> <span class="bp">self</span>
@@ -805,7 +808,6 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_persisted</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ttl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__default_ttl__</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span> <span class="o">=</span> <span class="bp">None</span>
 
         <span class="k">return</span> <span class="bp">self</span>
@@ -861,16 +863,9 @@
         <span class="c"># short circuit __discriminator_value__ inheritance</span>
         <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;__discriminator_value__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;__discriminator_value__&#39;</span><span class="p">)</span>
 
+        <span class="c"># TODO __default__ttl__ should be removed in the next major release</span>
         <span class="n">options</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;__options__&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;__default_ttl__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;default_time_to_live&#39;</span><span class="p">)</span>
-
-        <span class="k">def</span> <span class="nf">_transform_column</span><span class="p">(</span><span class="n">col_name</span><span class="p">,</span> <span class="n">col_obj</span><span class="p">):</span>
-            <span class="n">column_dict</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col_obj</span>
-            <span class="k">if</span> <span class="n">col_obj</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
-                <span class="n">primary_keys</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col_obj</span>
-            <span class="n">col_obj</span><span class="o">.</span><span class="n">set_column_name</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
-            <span class="c"># set properties</span>
-            <span class="n">attrs</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ColumnDescriptor</span><span class="p">(</span><span class="n">col_obj</span><span class="p">)</span>
 
         <span class="n">column_definitions</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">columns</span><span class="o">.</span><span class="n">Column</span><span class="p">)]</span>
         <span class="n">column_definitions</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">column_definitions</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
@@ -916,6 +911,14 @@
 
         <span class="n">has_partition_keys</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">partition_key</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">column_definitions</span><span class="p">)</span>
 
+        <span class="k">def</span> <span class="nf">_transform_column</span><span class="p">(</span><span class="n">col_name</span><span class="p">,</span> <span class="n">col_obj</span><span class="p">):</span>
+            <span class="n">column_dict</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col_obj</span>
+            <span class="k">if</span> <span class="n">col_obj</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
+                <span class="n">primary_keys</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col_obj</span>
+            <span class="n">col_obj</span><span class="o">.</span><span class="n">set_column_name</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
+            <span class="c"># set properties</span>
+            <span class="n">attrs</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ColumnDescriptor</span><span class="p">(</span><span class="n">col_obj</span><span class="p">)</span>
+
         <span class="n">partition_key_index</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="c"># transform column definitions</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">column_definitions</span><span class="p">:</span>
@@ -935,6 +938,12 @@
             <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span>
                 <span class="n">v</span><span class="o">.</span><span class="n">_partition_key_index</span> <span class="o">=</span> <span class="n">partition_key_index</span>
                 <span class="n">partition_key_index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="n">overriding</span> <span class="o">=</span> <span class="n">column_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">overriding</span><span class="p">:</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">overriding</span><span class="o">.</span><span class="n">position</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">partition_key</span> <span class="o">=</span> <span class="n">overriding</span><span class="o">.</span><span class="n">partition_key</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">_partition_key_index</span> <span class="o">=</span> <span class="n">overriding</span><span class="o">.</span><span class="n">_partition_key_index</span>
             <span class="n">_transform_column</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
 
         <span class="n">partition_keys</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">primary_keys</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span>
@@ -1092,7 +1101,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>

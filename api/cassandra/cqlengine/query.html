@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.query - Query and filter model objects &mdash; Cassandra Driver 3.5.0 documentation</title>
+    <title>cassandra.cqlengine.query - Query and filter model objects &mdash; Cassandra Driver 3.6.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.5.0',
+        VERSION:     '3.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.5.0 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.6.0 documentation" href="../../../index.html" />
     <link rel="up" title="API Documentation" href="../../index.html" />
     <link rel="next" title="cassandra.cqlengine.connection - Connection management for cqlengine" href="connection.html" />
     <link rel="prev" title="cassandra.cqlengine.columns - Column types for object mapping models" href="columns.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="columns.html" title="cassandra.cqlengine.columns - Column types for object mapping models"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
       </ul>
     </div>
@@ -367,6 +367,94 @@ or remove items from the collection, without overwriting then entire column.</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="cassandra.cqlengine.query.BatchQuery">
+<em class="property">class </em><code class="descclassname">cassandra.cqlengine.query.</code><code class="descname">BatchQuery</code><span class="sig-paren">(</span><em>batch_type=None</em>, <em>timestamp=None</em>, <em>consistency=None</em>, <em>execute_on_exception=False</em>, <em>timeout=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#BatchQuery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.BatchQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles the batching of queries</p>
+<p><a class="reference external" href="http://www.datastax.com/docs/1.2/cql_cli/cql/BATCH">http://www.datastax.com/docs/1.2/cql_cli/cql/BATCH</a></p>
+<p>See <a class="reference internal" href="../../../cqlengine/batches.html"><em>Batch Queries</em></a> for more details.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>batch_type</strong> (<em>str or None</em>) &#8211; (optional) One of batch type values available through BatchType enum</li>
+<li><strong>timestamp</strong> (<em>datetime or timedelta or None</em>) &#8211; (optional) A datetime or timedelta object with desired timestamp to be applied
+to the batch conditional.</li>
+<li><strong>consistency</strong> (The <a class="reference internal" href="../../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><code class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></code></a> to be used for the batch query, or None.) &#8211; (optional) One of consistency values (&#8220;ANY&#8221;, &#8220;ONE&#8221;, &#8220;QUORUM&#8221; etc)</li>
+<li><strong>execute_on_exception</strong> (<em>bool</em>) &#8211; (Defaults to False) Indicates that when the BatchQuery instance is used
+as a context manager the queries accumulated within the context must be executed despite
+encountering an error within the context. By default, any exception raised from within
+the context scope will cause the batched queries not to be executed.</li>
+<li><strong>timeout</strong> (<em>float or None</em>) &#8211; (optional) Timeout for the entire batch (in seconds), if not specified fallback
+to default session timeout</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="cassandra.cqlengine.query.BatchQuery.add_query">
+<code class="descname">add_query</code><span class="sig-paren">(</span><em>query</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#BatchQuery.add_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.BatchQuery.add_query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.BatchQuery.execute">
+<code class="descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#BatchQuery.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.BatchQuery.execute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cassandra.cqlengine.query.BatchQuery.add_callback">
+<code class="descname">add_callback</code><span class="sig-paren">(</span><em>fn</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#BatchQuery.add_callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.BatchQuery.add_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a function and arguments to be passed to it to be executed after the batch executes.</p>
+<p>A batch can support multiple callbacks.</p>
+<p>Note, that if the batch does not execute, the callbacks are not executed.
+A callback, thus, is an &#8220;on batch success&#8221; handler.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>fn</strong> (<em>callable</em>) &#8211; Callable object</li>
+<li><strong>*args</strong> &#8211; Positional arguments to be passed to the callback at the time of execution</li>
+<li><strong>**kwargs</strong> &#8211; Named arguments to be passed to the callback at the time of execution</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.cqlengine.query.ContextQuery">
+<em class="property">class </em><code class="descclassname">cassandra.cqlengine.query.</code><code class="descname">ContextQuery</code><span class="sig-paren">(</span><em>model</em>, <em>keyspace=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#ContextQuery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.ContextQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Context manager to allow a Model to switch context easily. Presently, the context only
+specifies a keyspace for model IO.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">ContextQuery</span><span class="p">(</span><span class="n">Automobile</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="s">&#39;test2&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">A</span><span class="p">:</span>
+    <span class="n">A</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s">&#39;honda&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2008</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s">&#39;civic&#39;</span><span class="p">)</span>
+    <span class="k">print</span> <span class="nb">len</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>  <span class="c"># 1 result</span>
+
+<span class="k">with</span> <span class="n">ContextQuery</span><span class="p">(</span><span class="n">Automobile</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="s">&#39;test4&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">A</span><span class="p">:</span>
+    <span class="k">print</span> <span class="nb">len</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>  <span class="c"># 0 result</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model</strong> &#8211; A model. This should be a class type, not an instance.</li>
+<li><strong>keyspace</strong> &#8211; (optional) A keyspace name</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
 <dt id="cassandra.cqlengine.query.DoesNotExist">
 <em class="property">class </em><code class="descclassname">cassandra.cqlengine.query.</code><code class="descname">DoesNotExist</code><a class="reference internal" href="../../../_modules/cassandra/cqlengine/query.html#DoesNotExist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.query.DoesNotExist" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -417,7 +505,7 @@ available through the <code class="docutils literal"><span class="pre">existing<
         <li class="right" >
           <a href="columns.html" title="cassandra.cqlengine.columns - Column types for object mapping models"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >API Documentation</a> &raquo;</li> 
       </ul>
     </div>

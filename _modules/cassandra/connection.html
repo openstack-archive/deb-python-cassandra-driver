@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.connection &mdash; Cassandra Driver 3.5.0 documentation</title>
+    <title>cassandra.connection &mdash; Cassandra Driver 3.6.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.5.0',
+        VERSION:     '3.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.5.0 documentation" href="../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.6.0 documentation" href="../../index.html" />
     <link rel="up" title="cassandra" href="../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -216,8 +216,8 @@
 <span class="sd">    Server rejected startup message due to unsupported protocol version</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">startup_version</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">ProtocolVersionUnsupported</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="s">&quot;Unsupported protocol version on </span><span class="si">%s</span><span class="s">: </span><span class="si">%d</span><span class="s">&quot;</span><span class="p">,</span>
-                                                         <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">startup_version</span><span class="p">))</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Unsupported protocol version on </span><span class="si">%s</span><span class="s">: </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">startup_version</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ProtocolVersionUnsupported</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">startup_version</span> <span class="o">=</span> <span class="n">startup_version</span>
 
 
@@ -412,6 +412,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ssl_impl</span><span class="o">.</span><span class="n">wrap_socket</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">ssl_options</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connect_timeout</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">sockaddr</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_hostname</span><span class="p">:</span>
                     <span class="n">ssl</span><span class="o">.</span><span class="n">match_hostname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">getpeercert</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
                 <span class="n">sockerr</span> <span class="o">=</span> <span class="bp">None</span>
@@ -471,7 +472,7 @@
                             <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
         <span class="c"># run first callback from this thread to ensure pool state before leaving</span>
-        <span class="n">cb</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">popitem</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">cb</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">popitem</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">try_callback</span><span class="p">(</span><span class="n">cb</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">requests</span><span class="p">:</span>
@@ -481,7 +482,7 @@
         <span class="c"># The default callback and retry logic is fairly expensive -- we don&#39;t</span>
         <span class="c"># want to tie up the event thread when there are many requests</span>
         <span class="k">def</span> <span class="nf">err_all_callbacks</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">cb</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">requests</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">cb</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">requests</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
                 <span class="n">try_callback</span><span class="p">(</span><span class="n">cb</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">requests</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">Connection</span><span class="o">.</span><span class="n">CALLBACK_ERR_THREAD_THRESHOLD</span><span class="p">:</span>
             <span class="n">err_all_callbacks</span><span class="p">()</span>
@@ -512,7 +513,7 @@
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Pushed event handler errored, ignoring:&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">send_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">request_id</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="n">ProtocolHandler</span><span class="o">.</span><span class="n">encode_message</span><span class="p">,</span> <span class="n">decoder</span><span class="o">=</span><span class="n">ProtocolHandler</span><span class="o">.</span><span class="n">decode_message</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">send_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">request_id</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="n">ProtocolHandler</span><span class="o">.</span><span class="n">encode_message</span><span class="p">,</span> <span class="n">decoder</span><span class="o">=</span><span class="n">ProtocolHandler</span><span class="o">.</span><span class="n">decode_message</span><span class="p">,</span> <span class="n">result_metadata</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_defunct</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ConnectionShutdown</span><span class="p">(</span><span class="s">&quot;Connection to </span><span class="si">%s</span><span class="s"> is defunct&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span><span class="p">:</span>
@@ -520,7 +521,7 @@
 
         <span class="c"># queue the decoder function with the request</span>
         <span class="c"># this allows us to inject custom functions per request to encode, decode messages</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_requests</span><span class="p">[</span><span class="n">request_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">cb</span><span class="p">,</span> <span class="n">decoder</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_requests</span><span class="p">[</span><span class="n">request_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">cb</span><span class="p">,</span> <span class="n">decoder</span><span class="p">,</span> <span class="n">result_metadata</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">encoder</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">request_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span><span class="p">,</span> <span class="n">compressor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">request_id</span>
 
@@ -645,8 +646,9 @@
         <span class="k">if</span> <span class="n">stream_id</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">callback</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="n">decoder</span> <span class="o">=</span> <span class="n">ProtocolHandler</span><span class="o">.</span><span class="n">decode_message</span>
+            <span class="n">result_metadata</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">callback</span><span class="p">,</span> <span class="n">decoder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_requests</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">stream_id</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">callback</span><span class="p">,</span> <span class="n">decoder</span><span class="p">,</span> <span class="n">result_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_requests</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">stream_id</span><span class="p">)</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">request_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stream_id</span><span class="p">)</span>
 
@@ -654,7 +656,7 @@
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">response</span> <span class="o">=</span> <span class="n">decoder</span><span class="p">(</span><span class="n">header</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_type_map</span><span class="p">,</span> <span class="n">stream_id</span><span class="p">,</span>
-                               <span class="n">header</span><span class="o">.</span><span class="n">flags</span><span class="p">,</span> <span class="n">header</span><span class="o">.</span><span class="n">opcode</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decompressor</span><span class="p">)</span>
+                               <span class="n">header</span><span class="o">.</span><span class="n">flags</span><span class="p">,</span> <span class="n">header</span><span class="o">.</span><span class="n">opcode</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decompressor</span><span class="p">,</span> <span class="n">result_metadata</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Error decoding response from Cassandra. &quot;</span>
                           <span class="s">&quot;</span><span class="si">%s</span><span class="s">; buffer: </span><span class="si">%r</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span>
@@ -1169,7 +1171,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.5.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
