@@ -2179,6 +2179,7 @@ class SchemaParserV3(SchemaParserV22):
         try:
             table_meta.options = self._build_table_options(row)
             flags = row.get('flags', set())
+            table_meta._flags = flags
             if flags:
                 compact_static = False
                 table_meta.is_compact_storage = 'dense' in flags or 'super' in flags or 'compound' not in flags
@@ -2222,9 +2223,10 @@ class SchemaParserV3(SchemaParserV22):
             meta.partition_key.append(meta.columns[r.get('column_name')])
 
         # clustering key
-        if not compact_static:
-            clustering_rows = [r for r in col_rows
-                               if r.get('kind', None) == "clustering"]
+        clustering_rows = [r for r in col_rows
+                           if r.get('kind', None) == "clustering"]
+        obscure_legacy_clustering = compact_static and clustering_rows and clustering_rows[0].get('type') == 'text'
+        if not obscure_legacy_clustering:
             if len(clustering_rows) > 1:
                 clustering_rows = sorted(clustering_rows, key=lambda row: row.get('position'))
             for r in clustering_rows:
@@ -2233,7 +2235,7 @@ class SchemaParserV3(SchemaParserV22):
                 meta.clustering_key.append(meta.columns[r.get('column_name')])
 
         for col_row in (r for r in col_rows
-                        if r.get('kind', None) not in ('partition_key', 'clustering_key')):
+                        if r.get('kind', None) not in ('partition_key', 'clustering')):
             column_meta = self._build_column_metadata(meta, col_row)
             if is_dense and column_meta.cql_type == types.cql_empty_type:
                 continue
@@ -2241,7 +2243,7 @@ class SchemaParserV3(SchemaParserV22):
                 # for compact static tables, we omit the clustering key and value, and only add the logical columns.
                 # They are marked not static so that it generates appropriate CQL
                 continue
-            if compact_static:
+            if obscure_legacy_clustering:
                 column_meta.is_static = False
             meta.columns[column_meta.name] = column_meta
 
@@ -2342,9 +2344,16 @@ class TableMetadataV3(TableMetadata):
 
     option_maps = ['compaction', 'compression', 'caching']
 
+    _flags = tuple()
+
     @property
     def is_cql_compatible(self):
-        return True
+        incompatible = 'super' in self._flags
+        incompatible |= ('dense' not in self._flags
+                         and 'compound' not in self._flags
+                         and bool(self.clustering_key)
+                         and self.clustering_key[0].cql_type != 'text')
+        return not incompatible
 
     @classmethod
     def _make_option_strings(cls, options_map):
