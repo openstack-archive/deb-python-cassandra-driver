@@ -132,7 +132,7 @@ class StrategiesTest(unittest.TestCase):
         ring = []
         dc1hostnum = 3
         current_token = 0
-        vnodes_per_host = 500
+        vnodes_per_host = 256
         for i in range(dc1hostnum):
 
             host = Host('dc1.{0}'.format(i), SimpleConvictionPolicy)
@@ -154,6 +154,7 @@ class StrategiesTest(unittest.TestCase):
         elapsed_bad = timeit.default_timer() - start_time
         difference = elapsed_bad - elapsed_base
         self.assertTrue(difference < .2 and difference > -.2)
+
 
     def test_nts_make_token_replica_map_multi_rack(self):
         token_to_host_owner = {}
@@ -379,6 +380,70 @@ class BytesTokensTest(unittest.TestCase):
         t1 = BytesToken.from_string('00')
         self.assertGreater(t0, t1)
         self.assertFalse(t0 < t1)
+
+
+class NTSPerformanceTests(unittest.TestCase):
+
+    def test_nts_token_performance_large_cluster(self):
+
+        token_to_host_owner = {}
+        ring = []
+        dc1hostnum = 100
+        current_token = 0
+        vnodes_per_host = 256
+        for i in range(dc1hostnum):
+
+            host = Host('dc1.{0}'.format(i), SimpleConvictionPolicy)
+            host.set_location_info('dc1', "rack1")
+            for vnode_num in range(vnodes_per_host):
+                md5_token = MD5Token(current_token+vnode_num)
+                token_to_host_owner[md5_token] = host
+                ring.append(md5_token)
+            current_token += 1000
+
+        nts = NetworkTopologyStrategy({'dc1': 3})
+        start_time = timeit.default_timer()
+        nts.make_token_replica_map(token_to_host_owner, ring)
+        elapsed_time = timeit.default_timer() - start_time
+        print "Time to generate 100 node with 256vnodes and an rf of 3 {0}".format(elapsed_time)
+
+    def test_nts_token_performance_large_with_small_backup(self):
+
+        token_to_host_owner = {}
+        ring = []
+        dc1hostnum = 100
+        dc2hostnum = 3
+        current_token = 0
+        vnodes_per_host = 256
+
+        for i in range(dc1hostnum):
+
+            host = Host('dc1.{0}'.format(i), SimpleConvictionPolicy)
+            host.set_location_info('dc1', "rack1")
+            for vnode_num in range(vnodes_per_host):
+                md5_token = MD5Token(current_token+vnode_num)
+                token_to_host_owner[md5_token] = host
+                ring.append(md5_token)
+            current_token += 1000
+
+        current_token = 500
+
+        for i in range(dc2hostnum):
+
+            host = Host('dc2.{0}'.format(i), SimpleConvictionPolicy)
+            host.set_location_info('dc2', "rack1")
+            for vnode_num in range(vnodes_per_host):
+                md5_token = MD5Token(current_token+vnode_num)
+                token_to_host_owner[md5_token] = host
+                ring.append(md5_token)
+            current_token += 1000
+
+        nts = NetworkTopologyStrategy({'dc1': 3, 'dc2': 3})
+        start_time = timeit.default_timer()
+        nts.make_token_replica_map(token_to_host_owner, ring)
+        elapsed = timeit.default_timer() - start_time
+        print "Time to generate 100 node dc and 3 node dc2 with 256 vnodes and an rf of 3 {0}".format(elapsed)
+
 
 
 class KeyspaceMetadataTest(unittest.TestCase):
