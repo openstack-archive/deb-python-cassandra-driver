@@ -508,7 +508,7 @@ _SKIP_METADATA_FLAG = 0x02
 _PAGE_SIZE_FLAG = 0x04
 _WITH_PAGING_STATE_FLAG = 0x08
 _WITH_SERIAL_CONSISTENCY_FLAG = 0x10
-_PROTOCOL_TIMESTAMP = 0x20
+_PROTOCOL_TIMESTAMP_FLAG = 0x20
 
 
 class QueryMessage(_MessageType):
@@ -558,7 +558,7 @@ class QueryMessage(_MessageType):
                     "2 or higher. Consider setting Cluster.protocol_version to 2.")
 
         if self.timestamp is not None:
-            flags |= _PROTOCOL_TIMESTAMP
+            flags |= _PROTOCOL_TIMESTAMP_FLAG
 
         write_byte(f, flags)
 
@@ -814,7 +814,7 @@ class ExecuteMessage(_MessageType):
                 flags |= _WITH_PAGING_STATE_FLAG
             if self.timestamp is not None:
                 if protocol_version >= 3:
-                    flags |= _PROTOCOL_TIMESTAMP
+                    flags |= _PROTOCOL_TIMESTAMP_FLAG
                 else:
                     raise UnsupportedOperation(
                         "Protocol-level timestamps may only be used with protocol version "
@@ -869,7 +869,7 @@ class BatchMessage(_MessageType):
             if self.serial_consistency_level:
                 flags |= _WITH_SERIAL_CONSISTENCY_FLAG
             if self.timestamp is not None:
-                flags |= _PROTOCOL_TIMESTAMP
+                flags |= _PROTOCOL_TIMESTAMP_FLAG
             write_byte(f, flags)
 
             if self.serial_consistency_level:
