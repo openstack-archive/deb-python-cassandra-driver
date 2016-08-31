@@ -194,6 +194,22 @@ else:
     def default_lbp_factory():
         return DCAwareRoundRobinPolicy()
 
+class AsyncPagingOptions(object):
+    class PagingUnit(object):
+        BYTES = 1
+        ROWS = 2
+
+    page_unit = None
+    page_size = None
+    max_pages = None
+    max_pages_per_second = None
+
+    def __init__(self, page_unit=AsyncPagingOptions.PagingUnit.ROWS, page_size=5000, max_pages=0, max_pages_per_second=0):
+        self.page_unit = page_unit
+        self.page_size = page_size
+        self.max_pages = max_pages
+        self.max_pages_per_second = max_pages_per_second
+
 
 class ExecutionProfile(object):
     load_balancing_policy = None
