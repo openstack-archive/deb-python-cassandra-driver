@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.io.asyncorereactor &mdash; Cassandra Driver 3.6.0 documentation</title>
+    <title>cassandra.io.asyncorereactor &mdash; Cassandra Driver 3.7.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.6.0',
+        VERSION:     '3.7.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.6.0 documentation" href="../../../index.html" />
+    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="../../../index.html" />
     <link rel="up" title="cassandra" href="../../cassandra.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
       </ul>
@@ -65,19 +65,19 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.io.asyncorereactor</h1><div class="highlight"><pre>
-<span class="c"># Copyright 2013-2016 DataStax, Inc.</span>
-<span class="c">#</span>
-<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="c"># you may not use this file except in compliance with the License.</span>
-<span class="c"># You may obtain a copy of the License at</span>
-<span class="c">#</span>
-<span class="c"># http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="c">#</span>
-<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="c"># See the License for the specific language governing permissions and</span>
-<span class="c"># limitations under the License.</span>
+<span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
 <span class="kn">import</span> <span class="nn">atexit</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
@@ -94,14 +94,14 @@
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">weakref</span> <span class="kn">import</span> <span class="n">WeakSet</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">WeakSet</span>  <span class="c"># noqa</span>
+    <span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">WeakSet</span>  <span class="c1"># noqa</span>
 
 <span class="kn">import</span> <span class="nn">asyncore</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">ssl</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="n">ssl</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c"># NOQA</span>
+    <span class="n">ssl</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c1"># NOQA</span>
 
 <span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">ConnectionShutdown</span><span class="p">,</span> <span class="n">NONBLOCKING</span><span class="p">,</span> <span class="n">Timer</span><span class="p">,</span> <span class="n">TimerManager</span>
 
@@ -130,7 +130,7 @@
         <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">getsockopt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">optname</span><span class="p">,</span> <span class="n">buflen</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="c"># act like an unerrored socket for the asyncore error handling</span>
+        <span class="c1"># act like an unerrored socket for the asyncore error handling</span>
         <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOL_SOCKET</span> <span class="ow">and</span> <span class="n">optname</span> <span class="o">==</span> <span class="n">socket</span><span class="o">.</span><span class="n">SO_ERROR</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">buflen</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
@@ -140,7 +140,7 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">socket</span><span class="p">):</span>
         <span class="n">asyncore</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">map</span><span class="o">=</span><span class="n">_dispatcher_map</span><span class="p">)</span>
-        <span class="c"># inject after to avoid base class validation</span>
+        <span class="c1"># inject after to avoid base class validation</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_socket</span><span class="p">(</span><span class="n">socket</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_notified</span> <span class="o">=</span> <span class="bp">False</span>
 
@@ -175,7 +175,7 @@
     <span class="k">def</span> <span class="nf">notify_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_notified</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_notified</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">write_fd</span><span class="p">,</span> <span class="n">b</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">write_fd</span><span class="p">,</span> <span class="n">b</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">_AsyncoreUDPDispatcher</span><span class="p">(</span><span class="n">_AsyncoreDispatcher</span><span class="p">):</span>
@@ -191,7 +191,7 @@
 <span class="sd">        AsyncoreLoop._loop_dispatch_class = _AsyncoreUDPDispatcher</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">bind_address</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
+    <span class="n">bind_address</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_DGRAM</span><span class="p">)</span>
@@ -211,7 +211,7 @@
     <span class="k">def</span> <span class="nf">notify_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_notified</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_notified</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">sendto</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bind_address</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">sendto</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bind_address</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
         <span class="n">asyncore</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">use_poll</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="nb">map</span><span class="o">=</span><span class="n">_dispatcher_map</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -243,9 +243,9 @@
 
 <span class="k">class</span> <span class="nc">AsyncoreLoop</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
-    <span class="n">timer_resolution</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c"># used as the max interval to be in the io loop before returning to service timeouts</span>
+    <span class="n">timer_resolution</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># used as the max interval to be in the io loop before returning to service timeouts</span>
 
-    <span class="n">_loop_dispatch_class</span> <span class="o">=</span> <span class="n">_AsyncorePipeDispatcher</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s">&#39;nt&#39;</span> <span class="k">else</span> <span class="n">_BusyWaitDispatcher</span>
+    <span class="n">_loop_dispatch_class</span> <span class="o">=</span> <span class="n">_AsyncorePipeDispatcher</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;nt&#39;</span> <span class="k">else</span> <span class="n">_BusyWaitDispatcher</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
@@ -260,9 +260,9 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">dispatcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop_dispatch_class</span><span class="p">()</span>
             <span class="n">dispatcher</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Validated loop dispatch with </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop_dispatch_class</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Validated loop dispatch with </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop_dispatch_class</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&quot;Failed validating loop dispatch with </span><span class="si">%s</span><span class="s">. Using busy wait execution instead.&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop_dispatch_class</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Failed validating loop dispatch with </span><span class="si">%s</span><span class="s2">. Using busy wait execution instead.&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop_dispatch_class</span><span class="p">)</span>
             <span class="n">dispatcher</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="n">dispatcher</span> <span class="o">=</span> <span class="n">_BusyWaitDispatcher</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop_dispatcher</span> <span class="o">=</span> <span class="n">dispatcher</span>
@@ -282,7 +282,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_loop_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">should_start</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_loop</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;cassandra_driver_event_loop&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_loop</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;cassandra_driver_event_loop&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
@@ -290,18 +290,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop_dispatcher</span><span class="o">.</span><span class="n">notify_loop</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_run_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Starting asyncore event loop&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Starting asyncore event loop&quot;</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop_lock</span><span class="p">:</span>
             <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_loop_dispatcher</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timer_resolution</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_timers</span><span class="o">.</span><span class="n">service_timeouts</span><span class="p">()</span>
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Asyncore event loop stopped unexepectedly&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Asyncore event loop stopped unexepectedly&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
                     <span class="k">break</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="bp">False</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Asyncore event loop ended&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Asyncore event loop ended&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">add_timer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timer</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_timers</span><span class="o">.</span><span class="n">add_timer</span><span class="p">(</span><span class="n">timer</span><span class="p">)</span>
@@ -311,14 +311,14 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Waiting for event loop thread to join...&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Waiting for event loop thread to join...&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
             <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s">&quot;Event loop thread could not be joined, so shutdown may not be clean. &quot;</span>
-                <span class="s">&quot;Please call Cluster.shutdown() to avoid this.&quot;</span><span class="p">)</span>
+                <span class="s2">&quot;Event loop thread could not be joined, so shutdown may not be clean. &quot;</span>
+                <span class="s2">&quot;Please call Cluster.shutdown() to avoid this.&quot;</span><span class="p">)</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Event loop thread was joined&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Event loop thread was joined&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="AsyncoreConnection"><a class="viewcode-back" href="../../../api/cassandra/io/asyncorereactor.html#cassandra.io.asyncorereactor.AsyncoreConnection">[docs]</a><span class="k">class</span> <span class="nc">AsyncoreConnection</span><span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="n">asyncore</span><span class="o">.</span><span class="n">dispatcher</span><span class="p">):</span>
@@ -339,7 +339,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">current_pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">_pid</span> <span class="o">!=</span> <span class="n">current_pid</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Detected fork, clearing and reinitializing reactor state&quot;</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Detected fork, clearing and reinitializing reactor state&quot;</span><span class="p">)</span>
                 <span class="n">cls</span><span class="o">.</span><span class="n">handle_fork</span><span class="p">()</span>
                 <span class="n">cls</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">AsyncoreLoop</span><span class="p">()</span>
 
@@ -371,7 +371,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_send_options_message</span><span class="p">()</span>
 
-        <span class="c"># start the event loop if needed</span>
+        <span class="c1"># start the event loop if needed</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">maybe_start</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -380,23 +380,23 @@
                 <span class="k">return</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span> <span class="o">=</span> <span class="bp">True</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Closing connection (</span><span class="si">%s</span><span class="s">) to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Closing connection (</span><span class="si">%s</span><span class="s2">) to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_writable</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_readable</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="n">asyncore</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Closed socket to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Closed socket to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_defunct</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error_all_requests</span><span class="p">(</span>
-                <span class="n">ConnectionShutdown</span><span class="p">(</span><span class="s">&quot;Connection to </span><span class="si">%s</span><span class="s"> was closed&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">))</span>
-            <span class="c"># don&#39;t leave in-progress operations hanging</span>
+                <span class="n">ConnectionShutdown</span><span class="p">(</span><span class="s2">&quot;Connection to </span><span class="si">%s</span><span class="s2"> was closed&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">))</span>
+            <span class="c1"># don&#39;t leave in-progress operations hanging</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">connected_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">handle_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">handle_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Connection </span><span class="si">%s</span><span class="s"> closed by server&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Connection </span><span class="si">%s</span><span class="s2"> closed by server&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">handle_write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -481,14 +481,14 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.6.0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
     </div>
   </body>
 </html>
