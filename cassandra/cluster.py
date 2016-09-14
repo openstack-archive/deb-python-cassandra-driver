@@ -31,7 +31,7 @@ from six.moves import filter, range, queue as Queue
 import socket
 import sys
 import time
-from threading import Lock, RLock, Thread, Event
+from threading import Lock, RLock, Thread, Event, Condition
 
 import weakref
 from weakref import WeakValueDictionary
@@ -57,8 +57,8 @@ from cassandra.protocol import (QueryMessage, ResultMessage,
                                 IsBootstrappingErrorMessage,
                                 BatchMessage, RESULT_KIND_PREPARED,
                                 RESULT_KIND_SET_KEYSPACE, RESULT_KIND_ROWS,
-                                RESULT_KIND_SCHEMA_CHANGE, MIN_SUPPORTED_VERSION,
-                                ProtocolHandler)
+                                RESULT_KIND_SCHEMA_CHANGE, RESULT_KIND_VOID,
+                                MIN_SUPPORTED_VERSION, ProtocolHandler)
 from cassandra.metadata import Metadata, protect_name, murmur3
 from cassandra.policies import (TokenAwarePolicy, DCAwareRoundRobinPolicy, SimpleConvictionPolicy,
                                 ExponentialReconnectionPolicy, HostDistance,
@@ -194,7 +194,10 @@ else:
     def default_lbp_factory():
         return DCAwareRoundRobinPolicy()
 
+
+# TODO: should this be in protocol?
 class AsyncPagingOptions(object):
+
     class PagingUnit(object):
         BYTES = 1
         ROWS = 2
@@ -204,7 +207,7 @@ class AsyncPagingOptions(object):
     max_pages = None
     max_pages_per_second = None
 
-    def __init__(self, page_unit=AsyncPagingOptions.PagingUnit.ROWS, page_size=5000, max_pages=0, max_pages_per_second=0):
+    def __init__(self, page_unit=PagingUnit.ROWS, page_size=5000, max_pages=0, max_pages_per_second=0):
         self.page_unit = page_unit
         self.page_size = page_size
         self.max_pages = max_pages
@@ -264,9 +267,12 @@ class ExecutionProfile(object):
     Defaults to :class:`.NoSpeculativeExecutionPolicy` if not specified
     """
 
+    async_paging_options = None
+
     def __init__(self, load_balancing_policy=None, retry_policy=None,
                  consistency_level=ConsistencyLevel.LOCAL_ONE, serial_consistency_level=None,
-                 request_timeout=10.0, row_factory=named_tuple_factory, speculative_execution_policy=None):
+                 request_timeout=10.0, row_factory=named_tuple_factory, speculative_execution_policy=None,
+                 async_paging_options=None):
         self.load_balancing_policy = load_balancing_policy or default_lbp_factory()
         self.retry_policy = retry_policy or RetryPolicy()
         self.consistency_level = consistency_level
@@ -274,6 +280,7 @@ class ExecutionProfile(object):
         self.request_timeout = request_timeout
         self.row_factory = row_factory
         self.speculative_execution_policy = speculative_execution_policy or NoSpeculativeExecutionPolicy()
+        self.async_paging_options = async_paging_options
 
 
 class ProfileManager(object):
@@ -2084,6 +2091,7 @@ class Session(object):
             row_factory = self.row_factory
             load_balancing_policy = self.cluster.load_balancing_policy
             spec_exec_policy = None
+            async_paging_options = None
         else:
             execution_profile = self._get_execution_profile(execution_profile)
 
@@ -2097,7 +2105,7 @@ class Session(object):
             row_factory = execution_profile.row_factory
             load_balancing_policy = execution_profile.load_balancing_policy
             spec_exec_policy = execution_profile.speculative_execution_policy
-
+            async_paging_options = execution_profile.async_paging_options
 
         fetch_size = query.fetch_size
         if fetch_size is FETCH_SIZE_UNSET and self._protocol_version >= 2:
@@ -2116,14 +2124,14 @@ class Session(object):
             if parameters:
                 query_string = bind_params(query_string, parameters, self.encoder)
             message = QueryMessage(
-                query_string, cl, serial_cl,
-                fetch_size, timestamp=timestamp)
+                query_string, cl, serial_cl, fetch_size, paging_state, timestamp, async_paging_options)
         elif isinstance(query, BoundStatement):
             prepared_statement = query.prepared_statement
             message = ExecuteMessage(
                 prepared_statement.query_id, query.values, cl,
-                serial_cl, fetch_size,
-                timestamp=timestamp, skip_meta=bool(prepared_statement.result_metadata))
+                serial_cl, fetch_size, paging_state, timestamp,
+                skip_meta=bool(prepared_statement.result_metadata),
+                async_paging_options=async_paging_options)
         elif isinstance(query, BatchStatement):
             if self._protocol_version < 2:
                 raise UnsupportedOperation(
@@ -2139,7 +2147,6 @@ class Session(object):
         message.update_custom_payload(query.custom_payload)
         message.update_custom_payload(custom_payload)
         message.allow_beta_protocol_version = self.cluster.allow_beta_protocol_version
-        message.paging_state = paging_state
 
         spec_exec_plan = spec_exec_policy.new_plan(query.keyspace or self.keyspace, query) if query.is_idempotent and spec_exec_policy else None
         return ResponseFuture(
@@ -2234,17 +2241,17 @@ class Session(object):
         future = ResponseFuture(self, message, query=None, timeout=self.default_timeout)
         try:
             future.send_request()
-            query_id, bind_metadata, pk_indexes, result_metadata = future.result()
+            response = future.result()[0]
         except Exception:
             log.exception("Error preparing query:")
             raise
 
         prepared_statement = PreparedStatement.from_message(
-            query_id, bind_metadata, pk_indexes, self.cluster.metadata, query, self.keyspace,
-            self._protocol_version, result_metadata)
+            response.query_id, response.bind_metadata, response.pk_indexes, self.cluster.metadata, query, self.keyspace,
+            self._protocol_version, response.column_metadata)
         prepared_statement.custom_payload = future.custom_payload
 
-        self.cluster.add_prepared(query_id, prepared_statement)
+        self.cluster.add_prepared(response.query_id, prepared_statement)
 
         if self.cluster.prepare_on_all_hosts:
             host = future._current_host
@@ -2816,15 +2823,15 @@ class ControlConnection(object):
             peers_result, local_result = connection.wait_for_responses(
                 peers_query, local_query, timeout=self._timeout)
 
-        peers_result = dict_factory(*peers_result.results)
+        peers_result = dict_factory(peers_result.column_names, peers_result.parsed_rows)
 
         partitioner = None
         token_map = {}
 
         found_hosts = set()
-        if local_result.results:
+        if local_result.parsed_rows:
             found_hosts.add(connection.host)
-            local_rows = dict_factory(*(local_result.results))
+            local_rows = dict_factory(local_result.column_names, local_result.parsed_rows)
             local_row = local_rows[0]
             cluster_name = local_row["cluster_name"]
             self._cluster.metadata.cluster_name = cluster_name
@@ -3030,11 +3037,11 @@ class ControlConnection(object):
             return False
 
     def _get_schema_mismatches(self, peers_result, local_result, local_address):
-        peers_result = dict_factory(*peers_result.results)
+        peers_result = dict_factory(peers_result.column_names, peers_result.parsed_rows)
 
         versions = defaultdict(set)
-        if local_result.results:
-            local_row = dict_factory(*local_result.results)[0]
+        if local_result.parsed_rows:
+            local_row = dict_factory(local_result.column_names, local_result.parsed_rows)[0]
             if local_row.get("schema_version"):
                 versions[local_row.get("schema_version")].add(local_address)
 
@@ -3281,6 +3288,7 @@ class ResponseFuture(object):
     _timer = None
     _protocol_handler = ProtocolHandler
     _spec_execution_plan = NoSpeculativeExecutionPlan()
+    _async_paging_session = None
 
     _warned_timeout = False
 
@@ -3528,14 +3536,17 @@ class ResponseFuture(object):
                     self.session.submit(
                         refresh_schema_and_set_result,
                         self.session.cluster.control_connection,
-                        self, connection, **response.results)
+                        self, connection, **response.schema_change_event)
+                elif response.kind == RESULT_KIND_ROWS:
+                    self._paging_state = response.paging_state
+                    self._col_names = response.column_names
+                    self._set_final_result(self.row_factory(response.column_names, response.parsed_rows))
                 else:
-                    results = getattr(response, 'results', None)
-                    if results is not None and response.kind == RESULT_KIND_ROWS:
-                        self._paging_state = response.paging_state
-                        self._col_names = results[0]
-                        results = self.row_factory(*results)
-                    self._set_final_result(results)
+                    if response.kind == RESULT_KIND_VOID and self.message.paging_id is not None:
+                        async_paging_session = connection.new_async_paging_session(self.message.paging_id, self.row_factory)
+                        self._set_final_result(async_paging_session.results())
+                    else:
+                        self._set_final_result(response)
             elif isinstance(response, ErrorMessage):
                 retry_policy = self._retry_policy
 
@@ -3668,8 +3679,7 @@ class ResponseFuture(object):
         if isinstance(response, ResultMessage):
             if response.kind == RESULT_KIND_PREPARED:
                 # result metadata is the only thing that could have changed from an alter
-                _, _, _, result_metadata = response.results
-                self.prepared_statement.result_metadata = result_metadata
+                self.prepared_statement.result_metadata = response.result_metadata
 
                 # use self._query to re-use the same host and
                 # at the same time properly borrow the connection

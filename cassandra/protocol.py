@@ -16,7 +16,7 @@ from __future__ import absolute_import  # to enable import io from stdlib
 from collections import namedtuple
 import logging
 import socket
-from uuid import UUID
+from uuid import UUID, uuid1
 
 import six
 from six.moves import range
@@ -29,7 +29,7 @@ from cassandra import (Unavailable, WriteTimeout, ReadTimeout,
                        UnsupportedOperation, UserFunctionDescriptor,
                        UserAggregateDescriptor, SchemaTargetType)
 from cassandra.marshal import (int32_pack, int32_unpack, uint16_pack, uint16_unpack,
-                               int8_pack, int8_unpack, uint64_pack, header_pack,
+                               uint8_pack, int8_unpack, uint64_pack, header_pack,
                                v3_header_pack)
 from cassandra.cqltypes import (AsciiType, BytesType, BooleanType,
                                 CounterColumnType, DateType, DecimalType,
@@ -93,6 +93,7 @@ class _MessageType(object):
     tracing = False
     custom_payload = None
     warnings = None
+    async_paging_options = None
 
     def update_custom_payload(self, other):
         if other:
@@ -509,14 +510,17 @@ _PAGE_SIZE_FLAG = 0x04
 _WITH_PAGING_STATE_FLAG = 0x08
 _WITH_SERIAL_CONSISTENCY_FLAG = 0x10
 _PROTOCOL_TIMESTAMP_FLAG = 0x20
+_NAMES_FOR_VALUES_FLAG = 0x40  # not used here
+_EXTENDED_FLAGS_FLAG = 0X80
 
+_PAGING_OPTIONS_FLAG = 0x01
 
 class QueryMessage(_MessageType):
     opcode = 0x07
     name = 'QUERY'
 
     def __init__(self, query, consistency_level, serial_consistency_level=None,
-                 fetch_size=None, paging_state=None, timestamp=None):
+                 fetch_size=None, paging_state=None, timestamp=None, async_paging_options=None):
         self.query = query
         self.consistency_level = consistency_level
         self.serial_consistency_level = serial_consistency_level
@@ -524,11 +528,14 @@ class QueryMessage(_MessageType):
         self.paging_state = paging_state
         self.timestamp = timestamp
         self._query_params = None  # only used internally. May be set to a list of native-encoded values to have them sent with the request.
+        self.async_paging_options = async_paging_options
+        self.paging_id = uuid1() if self.async_paging_options else None
 
     def send_body(self, f, protocol_version):
         write_longstring(f, self.query)
         write_consistency_level(f, self.consistency_level)
         flags = 0x00
+        extended_flags = 0x00
         if self._query_params is not None:
             flags |= _VALUES_FLAG  # also v2+, but we're only setting params internally right now
 
@@ -560,7 +567,18 @@ class QueryMessage(_MessageType):
         if self.timestamp is not None:
             flags |= _PROTOCOL_TIMESTAMP_FLAG
 
+        if self.async_paging_options:
+            if protocol_version >= 5:
+                flags |= _EXTENDED_FLAGS_FLAG
+                extended_flags |= _PAGING_OPTIONS_FLAG
+            else:
+                raise UnsupportedOperation(
+                    "Asynchronous paging may only be used with protocol version "
+                    "5 or higher. Consider setting Cluster.protocol_version to 5.")
+
         write_byte(f, flags)
+        if extended_flags:
+            write_byte(f, extended_flags)
 
         if self._query_params is not None:
             write_short(f, len(self._query_params))
@@ -575,6 +593,13 @@ class QueryMessage(_MessageType):
             write_consistency_level(f, self.serial_consistency_level)
         if self.timestamp is not None:
             write_long(f, self.timestamp)
+        if self.async_paging_options:
+            apo = self.async_paging_options
+            f.write(self.paging_id.bytes)
+            write_int(f, apo.page_size)
+            write_int(f, apo.page_unit)
+            write_int(f, apo.max_pages)
+            write_int(f, apo.max_pages_per_second)
 
 
 CUSTOM_TYPE = object()
@@ -590,86 +615,91 @@ class ResultMessage(_MessageType):
     opcode = 0x08
     name = 'RESULT'
 
-    kind = None
-    results = None
-    paging_state = None
-
     # Names match type name in module scope. Most are imported from cassandra.cqltypes (except CUSTOM_TYPE)
     type_codes = _cqltypes_by_code = dict((v, globals()[k]) for k, v in type_codes.__dict__.items() if not k.startswith('_'))
 
     _FLAGS_GLOBAL_TABLES_SPEC = 0x0001
     _HAS_MORE_PAGES_FLAG = 0x0002
     _NO_METADATA_FLAG = 0x0004
+    _ASYNC_PAGING_FLAG = 0x0008
 
-    def __init__(self, kind, results, paging_state=None):
+    kind = None
+
+    # These are all the things a result message might contain. They are populated according to 'kind'
+    column_names = None
+    parsed_rows = None
+    paging_state = None
+    async_paging_id = None
+    async_page_sequence = None
+    is_last_async_page = None
+    new_keyspace = None
+    column_metadata = None
+    query_id = None
+    bind_metadata = None
+    pk_indexes = None
+    schema_change_event = None
+
+    def __init__(self, kind):
         self.kind = kind
-        self.results = results
-        self.paging_state = paging_state
+
+    def recv(self, f, protocol_version, user_type_map, result_metadata):
+        if self.kind == RESULT_KIND_VOID:
+            return
+        elif self.kind == RESULT_KIND_ROWS:
+            self.recv_results_rows(f, protocol_version, user_type_map, result_metadata)
+        elif self.kind == RESULT_KIND_SET_KEYSPACE:
+            self.new_keyspace = read_string(f)
+        elif self.kind == RESULT_KIND_PREPARED:
+            self.recv_results_prepared(f, protocol_version, user_type_map)
+        elif self.kind == RESULT_KIND_SCHEMA_CHANGE:
+            self.recv_results_schema_change(f, protocol_version)
+        else:
+            raise DriverException("Unknown RESULT kind: %d" % kind)
 
     @classmethod
     def recv_body(cls, f, protocol_version, user_type_map, result_metadata):
         kind = read_int(f)
-        paging_state = None
-        if kind == RESULT_KIND_VOID:
-            results = None
-        elif kind == RESULT_KIND_ROWS:
-            paging_state, results = cls.recv_results_rows(
-                f, protocol_version, user_type_map, result_metadata)
-        elif kind == RESULT_KIND_SET_KEYSPACE:
-            ksname = read_string(f)
-            results = ksname
-        elif kind == RESULT_KIND_PREPARED:
-            results = cls.recv_results_prepared(f, protocol_version, user_type_map)
-        elif kind == RESULT_KIND_SCHEMA_CHANGE:
-            results = cls.recv_results_schema_change(f, protocol_version)
-        else:
-            raise DriverException("Unknown RESULT kind: %d" % kind)
-        return cls(kind, results, paging_state)
+        msg = cls(kind)
+        msg.recv(f, protocol_version, user_type_map, result_metadata)
+        return msg
 
-    @classmethod
-    def recv_results_rows(cls, f, protocol_version, user_type_map, result_metadata):
-        paging_state, column_metadata = cls.recv_results_metadata(f, user_type_map)
-        column_metadata = column_metadata or result_metadata
+    def recv_results_rows(self, f, protocol_version, user_type_map, result_metadata):
+        self.recv_results_metadata(f, user_type_map)
+        column_metadata = self.column_metadata or result_metadata
         rowcount = read_int(f)
-        rows = [cls.recv_row(f, len(column_metadata)) for _ in range(rowcount)]
-        colnames = [c[2] for c in column_metadata]
-        coltypes = [c[3] for c in column_metadata]
+        rows = [self.recv_row(f, len(column_metadata)) for _ in range(rowcount)]
+        self.column_names = [c[2] for c in column_metadata]
+        column_types = [c[3] for c in column_metadata]
         try:
-            parsed_rows = [
+            self.parsed_rows = [
                 tuple(ctype.from_binary(val, protocol_version)
-                      for ctype, val in zip(coltypes, row))
+                      for ctype, val in zip(column_types, row))
                 for row in rows]
         except Exception:
             for i in range(len(row)):
                 try:
                     coltypes[i].from_binary(row[i], protocol_version)
                 except Exception as e:
-                    raise DriverException('Failed decoding result column "%s" of type %s: %s' % (colnames[i],
-                                                                                                 coltypes[i].cql_parameterized_type(),
+                    raise DriverException('Failed decoding result column "%s" of type %s: %s' % (self.column_names[i],
+                                                                                                 column_types[i].cql_parameterized_type(),
                                                                                                  e.message))
-        return paging_state, (colnames, parsed_rows)
 
-    @classmethod
-    def recv_results_prepared(cls, f, protocol_version, user_type_map):
-        query_id = read_binary_string(f)
-        bind_metadata, pk_indexes, result_metadata = cls.recv_prepared_metadata(f, protocol_version, user_type_map)
-        return query_id, bind_metadata, pk_indexes, result_metadata
+    def recv_results_prepared(self, f, protocol_version, user_type_map):
+        self.query_id = read_binary_string(f)
+        self.recv_prepared_metadata(f, protocol_version, user_type_map)
 
-    @classmethod
-    def recv_results_metadata(cls, f, user_type_map):
+    def recv_results_metadata(self, f, user_type_map):
         flags = read_int(f)
         colcount = read_int(f)
 
-        if flags & cls._HAS_MORE_PAGES_FLAG:
-            paging_state = read_binary_longstring(f)
-        else:
-            paging_state = None
+        if flags & self._HAS_MORE_PAGES_FLAG:
+            self.paging_state = read_binary_longstring(f)
 
-        no_meta = bool(flags & cls._NO_METADATA_FLAG)
+        no_meta = bool(flags & self._NO_METADATA_FLAG)
         if no_meta:
-            return paging_state, []
+            return
 
-        glob_tblspec = bool(flags & cls._FLAGS_GLOBAL_TABLES_SPEC)
+        glob_tblspec = bool(flags & self._FLAGS_GLOBAL_TABLES_SPEC)
         if glob_tblspec:
             ksname = read_string(f)
             cfname = read_string(f)
@@ -682,12 +712,16 @@ class ResultMessage(_MessageType):
                 colksname = read_string(f)
                 colcfname = read_string(f)
             colname = read_string(f)
-            coltype = cls.read_type(f, user_type_map)
+            coltype = self.read_type(f, user_type_map)
             column_metadata.append((colksname, colcfname, colname, coltype))
-        return paging_state, column_metadata
 
-    @classmethod
-    def recv_prepared_metadata(cls, f, protocol_version, user_type_map):
+        self.column_metadata = column_metadata
+        if flags & self._ASYNC_PAGING_FLAG:
+            self.async_paging_id = UUID(bytes=f.read(16))
+            self.async_page_sequence = read_int(f)
+            self.is_last_async_page = bool(read_byte(f))
+
+    def recv_prepared_metadata(self, f, protocol_version, user_type_map):
         flags = read_int(f)
         colcount = read_int(f)
         pk_indexes = None
@@ -695,7 +729,7 @@ class ResultMessage(_MessageType):
             num_pk_indexes = read_int(f)
             pk_indexes = [read_short(f) for _ in range(num_pk_indexes)]
 
-        glob_tblspec = bool(flags & cls._FLAGS_GLOBAL_TABLES_SPEC)
+        glob_tblspec = bool(flags & self._FLAGS_GLOBAL_TABLES_SPEC)
         if glob_tblspec:
             ksname = read_string(f)
             cfname = read_string(f)
@@ -708,18 +742,17 @@ class ResultMessage(_MessageType):
                 colksname = read_string(f)
                 colcfname = read_string(f)
             colname = read_string(f)
-            coltype = cls.read_type(f, user_type_map)
+            coltype = self.read_type(f, user_type_map)
             bind_metadata.append(ColumnMetadata(colksname, colcfname, colname, coltype))
 
-        if protocol_version >= 2:
-            _, result_metadata = cls.recv_results_metadata(f, user_type_map)
-            return bind_metadata, pk_indexes, result_metadata
-        else:
-            return bind_metadata, pk_indexes, None
+        self.bind_metadata = bind_metadata
+        self.pk_indexes = pk_indexes
 
-    @classmethod
-    def recv_results_schema_change(cls, f, protocol_version):
-        return EventMessage.recv_schema_change(f, protocol_version)
+        if protocol_version >= 2:
+            self.recv_results_metadata(f, user_type_map)
+
+    def recv_results_schema_change(self, f, protocol_version):
+        self.schema_change_event = EventMessage.recv_schema_change(f, protocol_version)
 
     @classmethod
     def read_type(cls, f, user_type_map):
@@ -777,7 +810,8 @@ class ExecuteMessage(_MessageType):
 
     def __init__(self, query_id, query_params, consistency_level,
                  serial_consistency_level=None, fetch_size=None,
-                 paging_state=None, timestamp=None, skip_meta=False):
+                 paging_state=None, timestamp=None, skip_meta=False,
+                 async_paging_options=None):
         self.query_id = query_id
         self.query_params = query_params
         self.consistency_level = consistency_level
@@ -786,6 +820,8 @@ class ExecuteMessage(_MessageType):
         self.paging_state = paging_state
         self.timestamp = timestamp
         self.skip_meta = skip_meta
+        self.async_paging_options = async_paging_options
+        self.paging_id = uuid1() if self.async_paging_options else None
 
     def send_body(self, f, protocol_version):
         write_string(f, self.query_id)
@@ -1138,7 +1174,7 @@ def read_byte(f):
 
 
 def write_byte(f, b):
-    f.write(int8_pack(b))
+    f.write(uint8_pack(b))
 
 
 def read_int(f):

@@ -24,7 +24,7 @@ from six.moves import range
 import socket
 import struct
 import sys
-from threading import Thread, Event, RLock
+from threading import Thread, Event, RLock, Condition
 import time
 
 try:
@@ -169,6 +169,39 @@ class ProtocolError(Exception):
     pass
 
 
+class AsyncPagingSession(object):
+    def __init__(self, paging_id, row_factory, connection):
+        self.paging_id = paging_id
+        self.row_factory = row_factory
+        self.connection = connection
+        self._condition = Condition()
+        self._stop = False
+        self._page_queue = []
+
+    def on_page(self, result):
+        with self._condition:
+            heappush(self._page_queue, (result.column_names, result.parsed_rows))
+            self._stop |= result.is_last_async_page
+            self._condition.notify()
+        if result.is_last_async_page:
+            self.connection.remove_async_paging_session(self.paging_id)
+
+    def results(self):
+        with self._condition:
+            while not self._stop:
+                while not self._page_queue and not self._stop:
+                    self._condition.wait()
+                while self._page_queue:
+                    names, rows = heappop(self._page_queue)
+                    self._condition.release()
+                    for row in self.row_factory(names, rows):
+                        yield row
+                    self._condition.acquire()
+
+    def cancel(self):
+        pass
+
+
 def defunct_on_error(f):
 
     @wraps(f)
@@ -269,6 +302,7 @@ class Connection(object):
         self._push_watchers = defaultdict(set)
         self._requests = {}
         self._iobuf = io.BytesIO()
+        self._async_paging_sessions = {}
 
         if ssl_options:
             self._check_hostname = bool(self.ssl_options.pop('check_hostname', False))
@@ -442,12 +476,19 @@ class Connection(object):
             return self.highest_request_id
 
     def handle_pushed(self, response):
-        log.debug("Message pushed from server: %r", response)
-        for cb in self._push_watchers.get(response.event_type, []):
-            try:
-                cb(response.event_args)
-            except Exception:
-                log.exception("Pushed event handler errored, ignoring:")
+        if isinstance(response, ResultMessage):
+            paging_session = self._async_paging_sessions.get(response.async_paging_id)
+            if paging_session:
+                paging_session.on_page(response)
+            else:
+                log.warn("Received asynchronous paging message for unregistered id: %s", response.async_paging_id)
+        else:
+            log.debug("Message pushed from server: %r", response)
+            for cb in self._push_watchers.get(response.event_type, []):
+                try:
+                    cb(response.event_args)
+                except Exception:
+                    log.exception("Pushed event handler errored, ignoring:")
 
     def send_msg(self, msg, request_id, cb, encoder=ProtocolHandler.encode_message, decoder=ProtocolHandler.decode_message, result_metadata=None):
         if self.is_defunct:
@@ -616,6 +657,14 @@ class Connection(object):
                 self.handle_pushed(response)
         except Exception:
             log.exception("Callback handler errored, ignoring:")
+
+    def new_async_paging_session(self, paging_id, row_factory):
+        session = AsyncPagingSession(paging_id, row_factory, self)
+        self._async_paging_sessions[paging_id] = session
+        return session
+
+    def remove_async_paging_session(self, paging_id):
+        self._async_paging_sessions.pop(paging_id)
 
     @defunct_on_error
     def _send_options_message(self):
