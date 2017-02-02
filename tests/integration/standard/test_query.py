@@ -1036,6 +1036,8 @@ class MaterializedViewQueryTest(BasicSharedKeyspaceUnitTestCase):
 class UnicodeQueryTest(BasicSharedKeyspaceUnitTestCase):
 
     def setUp(self):
+        # Make the schem agreement is settled as otherwise self.session.execute could timeout
+        self.cluster.control_connection.wait_for_schema_agreement()
         ddl = '''
             CREATE TABLE {0}.{1} (
             k int PRIMARY KEY,

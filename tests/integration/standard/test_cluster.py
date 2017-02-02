@@ -470,7 +470,6 @@ class ClusterTests(unittest.TestCase):
             self.assertEqual(original_meta, c.metadata.keyspaces)
 
             c.shutdown()
-
             refresh_threshold = 0.5
             # cluster agreement bypass
             c = Cluster(protocol_version=PROTOCOL_VERSION, max_schema_agreement_wait=0)

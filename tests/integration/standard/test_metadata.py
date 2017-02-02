@@ -448,6 +448,9 @@ class SchemaMetadataTests(BasicSegregatedKeyspaceUnitTestCase):
             self.assertIn('(full(b))', tablemeta.export_as_string())
 
     def test_compression_disabled(self):
+        # Make the schem agreement is settled as otherwise self.session.execute could timeout
+        self.cluster.control_connection.wait_for_schema_agreement()
+
         create_statement = self.make_create_statement(["a"], ["b"], ["c"])
         create_statement += " WITH compression = {}"
         self.session.execute(create_statement)
@@ -608,6 +611,9 @@ class SchemaMetadataTests(BasicSegregatedKeyspaceUnitTestCase):
 
         @test_category metadata
         """
+
+        #Make the schem agreement is settled as otherwise self.session.execute could timeout
+        self.cluster.control_connection.wait_for_schema_agreement()
 
         table_name = "test"
         self.session.execute("CREATE TABLE {0}.{1} (a int PRIMARY KEY, b text)".format(self.keyspace_name, table_name))
@@ -2186,6 +2192,10 @@ class BadMetaTest(unittest.TestCase):
 
 
 class DynamicCompositeTypeTest(BasicSharedKeyspaceUnitTestCase):
+
+    def setUp(self):
+        # Make the schem agreement is settled as otherwise self.session.execute could timeout
+        self.cluster.control_connection.wait_for_schema_agreement()
 
     def test_dct_alias(self):
         """
