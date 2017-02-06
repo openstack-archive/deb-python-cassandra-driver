@@ -35,6 +35,7 @@ from cassandra.query import SimpleStatement, TraceUnavailable, tuple_factory
 from tests.integration import use_singledc, PROTOCOL_VERSION, get_server_versions, CASSANDRA_VERSION, execute_until_pass, execute_with_long_wait_retry, get_node,\
     MockLoggingHandler, get_unsupported_lower_protocol, get_unsupported_upper_protocol, protocolv5
 from tests.integration.util import assert_quiescent_pool_state
+import sys
 
 
 def setup_module():
@@ -879,7 +880,17 @@ class ClusterTests(unittest.TestCase):
             self.assertEqual(set(h.address for h in pools), set(('127.0.0.1',)))
 
             node2 = ExecutionProfile(load_balancing_policy=WhiteListRoundRobinPolicy(['127.0.0.2']))
-            self.assertRaises(cassandra.OperationTimedOut, cluster.add_execution_profile, 'node2', node2, pool_wait_timeout=0.000000001)
+
+            max_retry_count = 10
+            for i in range(max_retry_count):
+                start = time.time()
+                try:
+                    self.assertRaises(cassandra.OperationTimedOut, cluster.add_execution_profile, 'node2',
+                                      node2, pool_wait_timeout=sys.float_info.min)
+                except Exception:
+                    end = time.time()
+                    self.assertAlmostEqual(start, end, 1)
+                    break
 
 
 class LocalHostAdressTranslator(AddressTranslator):
