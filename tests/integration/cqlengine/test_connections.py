@@ -252,6 +252,7 @@ class ManagementConnectionTests(BaseCassEngTestCase):
             conn.register_connection("bad_coonection4", session=session, cluster_options="not_null")
         with self.assertRaises(CQLEngineException):
             conn.register_connection("bad_coonection5", hosts="not_null", session=session)
+        session.shutdown()
 
 
 class BatchQueryConnectionTests(BaseCassEngTestCase):
