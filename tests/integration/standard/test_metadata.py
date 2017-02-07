@@ -967,6 +967,7 @@ class TestCodeCoverage(unittest.TestCase):
         cluster.connect()
 
         self.assertIsInstance(cluster.metadata.export_schema_as_string(), six.string_types)
+        cluster.shutdown()
 
     def test_export_keyspace_schema(self):
         """

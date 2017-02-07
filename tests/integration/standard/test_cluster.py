@@ -75,6 +75,7 @@ class ClusterTests(unittest.TestCase):
                 self.assertTrue(host.is_up)
             else:
                 self.assertIsNone(host.is_up)
+        cluster.shutdown()
 
     def test_host_resolution(self):
         """
@@ -130,6 +131,7 @@ class ClusterTests(unittest.TestCase):
 
         with self.assertRaisesRegexp(NoHostAvailable, "OperationTimedOut\('errors=Timed out creating connection \(1 seconds\)"):
             cluster.connect()
+        cluster.shutdown()
 
         get_node(1).resume()
 
@@ -944,6 +946,7 @@ class TestAddressTranslation(unittest.TestCase):
         c.connect()
         for host in c.metadata.all_hosts():
             self.assertEqual(adder_map.get(str(host)), host.broadcast_address)
+        c.shutdown()
 
 
 class ContextManagementTest(unittest.TestCase):
@@ -1101,6 +1104,7 @@ class DontPrepareOnIgnoredHostsTest(unittest.TestCase):
         # address
         for c in cluster.connection_factory.mock_calls:
             self.assertEqual(call(unignored_address), c)
+        cluster.shutdown()
 
 
 class DuplicateRpcTest(unittest.TestCase):
@@ -1177,3 +1181,4 @@ class BetaProtocolTest(unittest.TestCase):
         session = cluster.connect()
         self.assertEqual(cluster.protocol_version, cassandra.ProtocolVersion.MAX_SUPPORTED)
         self.assertTrue(session.execute("select release_version from system.local")[0])
+        cluster.shutdown()
