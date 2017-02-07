@@ -434,7 +434,7 @@ class ClusterTests(unittest.TestCase):
         self.assertEqual(original_test1rf_meta.export_as_string(), current_test1rf_meta.export_as_string())
         self.assertIsNot(original_type_meta, current_type_meta)
         self.assertEqual(original_type_meta.as_cql_query(), current_type_meta.as_cql_query())
-        session.shutdown()
+        cluster.shutdown()
 
     def test_refresh_schema_no_wait(self):
 
@@ -1135,12 +1135,14 @@ class DuplicateRpcTest(unittest.TestCase):
         mock_handler = MockLoggingHandler()
         logger = logging.getLogger(cassandra.cluster.__name__)
         logger.addHandler(mock_handler)
-        test_cluster = self.cluster = Cluster(protocol_version=PROTOCOL_VERSION, load_balancing_policy=self.load_balancing_policy)
+        test_cluster = Cluster(protocol_version=PROTOCOL_VERSION, load_balancing_policy=self.load_balancing_policy)
         test_cluster.connect()
         warnings = mock_handler.messages.get("warning")
         self.assertEqual(len(warnings), 1)
         self.assertTrue('multiple' in warnings[0])
         logger.removeHandler(mock_handler)
+        test_cluster.shutdown()
+
 
 
 @protocolv5

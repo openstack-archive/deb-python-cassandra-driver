@@ -188,7 +188,7 @@ def get_data(protocol_handler):
     session.row_factory = tuple_factory
 
     results = session.execute("SELECT * FROM test_table")
-    session.shutdown()
+    cluster.shutdown()
     return results
 
 
