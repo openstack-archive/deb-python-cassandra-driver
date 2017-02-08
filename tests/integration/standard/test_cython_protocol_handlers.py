@@ -42,7 +42,7 @@ class CythonProtocolHandlerTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        drop_keyspace_shutdown_cluster("testspace", cls.session, cls.session)
+        drop_keyspace_shutdown_cluster("testspace", cls.session, cls.cluster)
 
     @cythontest
     def test_cython_parser(self):
