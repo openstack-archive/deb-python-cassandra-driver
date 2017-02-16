@@ -46,7 +46,7 @@ class SpecExecTest(BasicSharedKeyspaceUnitTestCase):
 
     def setUp(self):
         spec_ep_brr = ExecutionProfile(load_balancing_policy=BadRoundRobinPolicy(), speculative_execution_policy=ConstantSpeculativeExecutionPolicy(.01, 20))
-        spec_ep_rr = ExecutionProfile(speculative_execution_policy=ConstantSpeculativeExecutionPolicy(.01, 20))
+        spec_ep_rr = ExecutionProfile(speculative_execution_policy=ConstantSpeculativeExecutionPolicy(1, 20))
         spec_ep_rr_lim = ExecutionProfile(load_balancing_policy=BadRoundRobinPolicy(), speculative_execution_policy=ConstantSpeculativeExecutionPolicy(.01, 1))
         self.cluster.add_execution_profile("spec_ep_brr", spec_ep_brr)
         self.cluster.add_execution_profile("spec_ep_rr", spec_ep_rr)
