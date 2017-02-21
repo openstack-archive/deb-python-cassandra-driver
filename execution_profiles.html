@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Execution Profiles (experimental) &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>Execution Profiles (experimental) &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,16 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Performance Notes" href="performance.html" />
     <link rel="prev" title="Upgrading" href="upgrading.html" /> 
   </head>
@@ -43,7 +45,7 @@
         <li class="right" >
           <a href="upgrading.html" title="Upgrading"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -72,21 +74,18 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/execution_profiles.txt"
+      <li><a href="_sources/execution_profiles.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -125,15 +124,15 @@ previously input from the noted attributes:</p>
 <h2>Using Execution Profiles<a class="headerlink" href="#using-execution-profiles" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="default">
 <h3>Default<a class="headerlink" href="#default" title="Permalink to this headline">¶</a></h3>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="k">import</span> <span class="n">Cluster</span>
 <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="n">local_query</span> <span class="o">=</span> <span class="s1">&#39;SELECT rpc_address FROM system.local&#39;</span>
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">():</span>
-    <span class="k">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="nb">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.2&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.2&#39;</span><span class="p">)</span>
 <span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -142,8 +141,8 @@ parameters.</p>
 </div>
 <div class="section" id="initializing-cluster-with-profiles">
 <h3>Initializing cluster with profiles<a class="headerlink" href="#initializing-cluster-with-profiles" title="Permalink to this headline">¶</a></h3>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">ExecutionProfile</span>
-<span class="kn">from</span> <span class="nn">cassandra.policies</span> <span class="kn">import</span> <span class="n">WhiteListRoundRobinPolicy</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="k">import</span> <span class="n">ExecutionProfile</span>
+<span class="kn">from</span> <span class="nn">cassandra.policies</span> <span class="k">import</span> <span class="n">WhiteListRoundRobinPolicy</span>
 
 <span class="n">node1_profile</span> <span class="o">=</span> <span class="n">ExecutionProfile</span><span class="p">(</span><span class="n">load_balancing_policy</span><span class="o">=</span><span class="n">WhiteListRoundRobinPolicy</span><span class="p">([</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">]))</span>
 <span class="n">node2_profile</span> <span class="o">=</span> <span class="n">ExecutionProfile</span><span class="p">(</span><span class="n">load_balancing_policy</span><span class="o">=</span><span class="n">WhiteListRoundRobinPolicy</span><span class="p">([</span><span class="s1">&#39;127.0.0.2&#39;</span><span class="p">]))</span>
@@ -151,32 +150,32 @@ parameters.</p>
 <span class="n">profiles</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;node1&#39;</span><span class="p">:</span> <span class="n">node1_profile</span><span class="p">,</span> <span class="s1">&#39;node2&#39;</span><span class="p">:</span> <span class="n">node2_profile</span><span class="p">}</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">execution_profiles</span><span class="o">=</span><span class="n">profiles</span><span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">():</span>
-    <span class="k">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">,</span> <span class="n">execution_profile</span><span class="o">=</span><span class="s1">&#39;node1&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="nb">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">,</span> <span class="n">execution_profile</span><span class="o">=</span><span class="s1">&#39;node1&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">)</span>
 <span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">():</span>
-    <span class="k">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">,</span> <span class="n">execution_profile</span><span class="o">=</span><span class="s1">&#39;node2&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">():</span>
+    <span class="nb">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">,</span> <span class="n">execution_profile</span><span class="o">=</span><span class="s1">&#39;node2&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.2&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.2&#39;</span><span class="p">)</span>
 <span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.2&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">():</span>
-    <span class="k">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">():</span>
+    <span class="nb">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.2&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.2&#39;</span><span class="p">)</span>
 <span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Note that, even when custom profiles are injected, the default <code class="docutils literal"><span class="pre">TokenAwarePolicy(DCAwareRoundRobinPolicy())</span></code> is still
 present. To override the default, specify a policy with the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.EXEC_PROFILE_DEFAULT" title="cassandra.cluster.EXEC_PROFILE_DEFAULT"><code class="xref py py-data docutils literal"><span class="pre">EXEC_PROFILE_DEFAULT</span></code></a> key.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">EXEC_PROFILE_DEFAULT</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="k">import</span> <span class="n">EXEC_PROFILE_DEFAULT</span>
 <span class="n">profile</span> <span class="o">=</span> <span class="n">ExecutionProfile</span><span class="p">(</span><span class="n">request_timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
 <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">execution_profiles</span><span class="o">=</span><span class="p">{</span><span class="n">EXEC_PROFILE_DEFAULT</span><span class="p">:</span> <span class="n">profile</span><span class="p">})</span>
 </pre></div>
@@ -185,15 +184,15 @@ present. To override the default, specify a policy with the <a class="reference 
 <div class="section" id="adding-named-profiles">
 <h3>Adding named profiles<a class="headerlink" href="#adding-named-profiles" title="Permalink to this headline">¶</a></h3>
 <p>New profiles can be added constructing from scratch, or deriving from default:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">locked_execution</span> <span class="o">=</span> <span class="n">ExecutionProfile</span><span class="p">(</span><span class="n">load_balancing_policy</span><span class="o">=</span><span class="n">WhiteListRoundRobinPolicy</span><span class="p">([</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">]))</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">locked_execution</span> <span class="o">=</span> <span class="n">ExecutionProfile</span><span class="p">(</span><span class="n">load_balancing_policy</span><span class="o">=</span><span class="n">WhiteListRoundRobinPolicy</span><span class="p">([</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">]))</span>
 <span class="n">node1_profile</span> <span class="o">=</span> <span class="s1">&#39;node1_whitelist&#39;</span>
 <span class="n">cluster</span><span class="o">.</span><span class="n">add_execution_profile</span><span class="p">(</span><span class="n">node1_profile</span><span class="p">,</span> <span class="n">locked_execution</span><span class="p">)</span>
 
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">all_hosts</span><span class="p">():</span>
-    <span class="k">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">,</span> <span class="n">execution_profile</span><span class="o">=</span><span class="n">node1_profile</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="nb">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">,</span> <span class="n">execution_profile</span><span class="o">=</span><span class="n">node1_profile</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">)</span>
 <span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -202,15 +201,15 @@ present. To override the default, specify a policy with the <a class="reference 
 <div class="section" id="passing-a-profile-instance-without-mapping">
 <h3>Passing a profile instance without mapping<a class="headerlink" href="#passing-a-profile-instance-without-mapping" title="Permalink to this headline">¶</a></h3>
 <p>We also have the ability to pass profile instances to be used for execution, but not added to the mapping:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="n">tuple_factory</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="k">import</span> <span class="n">tuple_factory</span>
 
 <span class="n">tmp</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execution_profile_clone_update</span><span class="p">(</span><span class="s1">&#39;node1&#39;</span><span class="p">,</span> <span class="n">request_timeout</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">row_factory</span><span class="o">=</span><span class="n">tuple_factory</span><span class="p">)</span>
 
-<span class="k">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">,</span> <span class="n">execution_profile</span><span class="o">=</span><span class="n">tmp</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-<span class="k">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">,</span> <span class="n">execution_profile</span><span class="o">=</span><span class="s1">&#39;node1&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">,</span> <span class="n">execution_profile</span><span class="o">=</span><span class="n">tmp</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">local_query</span><span class="p">,</span> <span class="n">execution_profile</span><span class="o">=</span><span class="s1">&#39;node1&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,)</span>
 <span class="n">Row</span><span class="p">(</span><span class="n">rpc_address</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -241,12 +240,12 @@ If reference objects are to be updated in the clone, one would typically set tho
         <li class="right" >
           <a href="upgrading.html" title="Upgrading"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.concurrent &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>cassandra.concurrent &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="../../index.html" />
-    <link rel="up" title="cassandra" href="../cassandra.html" /> 
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -36,9 +37,9 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -46,14 +47,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -65,7 +63,7 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.concurrent</h1><div class="highlight"><pre>
-<span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
+<span></span><span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -80,23 +78,23 @@
 <span class="c1"># limitations under the License.</span>
 
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
-<span class="kn">from</span> <span class="nn">heapq</span> <span class="kn">import</span> <span class="n">heappush</span><span class="p">,</span> <span class="n">heappop</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">cycle</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">heapq</span> <span class="k">import</span> <span class="n">heappush</span><span class="p">,</span> <span class="n">heappop</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">cycle</span>
 <span class="kn">import</span> <span class="nn">six</span>
-<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">xrange</span><span class="p">,</span> <span class="nb">zip</span>
-<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Condition</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="n">xrange</span><span class="p">,</span> <span class="nb">zip</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Condition</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 
-<span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">ResultSet</span>
+<span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="k">import</span> <span class="n">ResultSet</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <span class="n">ExecutionResult</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;ExecutionResult&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">,</span> <span class="s1">&#39;result_or_exc&#39;</span><span class="p">])</span>
 
-<div class="viewcode-block" id="execute_concurrent"><a class="viewcode-back" href="../../api/cassandra/concurrent.html#cassandra.concurrent.execute_concurrent">[docs]</a><span class="k">def</span> <span class="nf">execute_concurrent</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">statements_and_parameters</span><span class="p">,</span> <span class="n">concurrency</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">raise_on_first_error</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">results_generator</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="execute_concurrent"><a class="viewcode-back" href="../../api/cassandra/concurrent.html#cassandra.concurrent.execute_concurrent">[docs]</a><span class="k">def</span> <span class="nf">execute_concurrent</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">statements_and_parameters</span><span class="p">,</span> <span class="n">concurrency</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">raise_on_first_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">results_generator</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Executes a sequence of (statement, parameters) tuples concurrently.  Each</span>
 <span class="sd">    ``parameters`` item must be a sequence or :const:`None`.</span>
@@ -167,7 +165,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_enum_statements</span> <span class="o">=</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">statements_and_params</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fail_fast</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fail_fast</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results_queue</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_exec_count</span> <span class="o">=</span> <span class="mi">0</span>
@@ -179,7 +177,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_exec_count</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">concurrency</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">concurrency</span><span class="p">):</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_next</span><span class="p">():</span>
                     <span class="k">break</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">()</span>
@@ -190,14 +188,14 @@
             <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">))</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_enum_statements</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_exec_count</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">True</span>
+            <span class="k">return</span> <span class="kc">True</span>
         <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
             <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_exec_depth</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+            <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
             <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
             <span class="n">future</span><span class="o">.</span><span class="n">add_callbacks</span><span class="p">(</span>
                 <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_success</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
@@ -211,17 +209,17 @@
             <span class="c1"># here as subsequent requests are attempted. If we hit this threshold, schedule this result/retry</span>
             <span class="c1"># and let the event loop thread return.</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec_depth</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_error_recursion</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_exec_depth</span> <span class="o">-=</span> <span class="mi">1</span>
 
     <span class="k">def</span> <span class="nf">_on_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
         <span class="n">future</span><span class="o">.</span><span class="n">clear_callbacks</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">(</span><span class="n">ResultSet</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">result</span><span class="p">),</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">(</span><span class="n">ResultSet</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">result</span><span class="p">),</span> <span class="n">idx</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_on_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_put_result</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_raise</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
@@ -259,10 +257,10 @@
 
 <span class="k">class</span> <span class="nc">ConcurrentExecutorListResults</span><span class="p">(</span><span class="n">_ConcurrentExecutor</span><span class="p">):</span>
 
-    <span class="n">_exception</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_exception</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concurrency</span><span class="p">,</span> <span class="n">fail_fast</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ConcurrentExecutorListResults</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">concurrency</span><span class="p">,</span> <span class="n">fail_fast</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_put_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">success</span><span class="p">):</span>
@@ -317,14 +315,14 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

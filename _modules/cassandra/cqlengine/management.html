@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.management &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>cassandra.cqlengine.management &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="../../../index.html" />
-    <link rel="up" title="cassandra" href="../../cassandra.html" /> 
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -36,9 +37,9 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -46,14 +47,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -65,7 +63,7 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.cqlengine.management</h1><div class="highlight"><pre>
-<span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
+<span></span><span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -79,27 +77,27 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">six</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">product</span>
 
-<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">metadata</span>
-<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">CQLEngineException</span>
-<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">columns</span><span class="p">,</span> <span class="n">query</span>
-<span class="kn">from</span> <span class="nn">cassandra.cqlengine.connection</span> <span class="kn">import</span> <span class="n">execute</span><span class="p">,</span> <span class="n">get_cluster</span><span class="p">,</span> <span class="n">format_log_context</span>
-<span class="kn">from</span> <span class="nn">cassandra.cqlengine.models</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">cassandra.cqlengine.named</span> <span class="kn">import</span> <span class="n">NamedTable</span>
-<span class="kn">from</span> <span class="nn">cassandra.cqlengine.usertype</span> <span class="kn">import</span> <span class="n">UserType</span>
+<span class="kn">from</span> <span class="nn">cassandra</span> <span class="k">import</span> <span class="n">metadata</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="k">import</span> <span class="n">CQLEngineException</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="k">import</span> <span class="n">columns</span><span class="p">,</span> <span class="n">query</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine.connection</span> <span class="k">import</span> <span class="n">execute</span><span class="p">,</span> <span class="n">get_cluster</span><span class="p">,</span> <span class="n">format_log_context</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine.models</span> <span class="k">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine.named</span> <span class="k">import</span> <span class="n">NamedTable</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine.usertype</span> <span class="k">import</span> <span class="n">UserType</span>
 
 <span class="n">CQLENG_ALLOW_SCHEMA_MANAGEMENT</span> <span class="o">=</span> <span class="s1">&#39;CQLENG_ALLOW_SCHEMA_MANAGEMENT&#39;</span>
 
 <span class="n">Field</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;Field&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">])</span>
 
-<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="c1"># system keyspaces</span>
 <span class="n">schema_columnfamilies</span> <span class="o">=</span> <span class="n">NamedTable</span><span class="p">(</span><span class="s1">&#39;system&#39;</span><span class="p">,</span> <span class="s1">&#39;schema_columnfamilies&#39;</span><span class="p">)</span>
@@ -116,13 +114,13 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">connections</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;connections must be a list or a tuple.&#39;</span><span class="p">)</span>
 
-    <span class="n">keyspaces</span> <span class="o">=</span> <span class="n">keyspaces</span> <span class="k">if</span> <span class="n">keyspaces</span> <span class="k">else</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span>
-    <span class="n">connections</span> <span class="o">=</span> <span class="n">connections</span> <span class="k">if</span> <span class="n">connections</span> <span class="k">else</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span>
+    <span class="n">keyspaces</span> <span class="o">=</span> <span class="n">keyspaces</span> <span class="k">if</span> <span class="n">keyspaces</span> <span class="k">else</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+    <span class="n">connections</span> <span class="o">=</span> <span class="n">connections</span> <span class="k">if</span> <span class="n">connections</span> <span class="k">else</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">product</span><span class="p">(</span><span class="n">connections</span><span class="p">,</span> <span class="n">keyspaces</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="create_keyspace_simple"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.create_keyspace_simple">[docs]</a><span class="k">def</span> <span class="nf">create_keyspace_simple</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">replication_factor</span><span class="p">,</span> <span class="n">durable_writes</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="create_keyspace_simple"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.create_keyspace_simple">[docs]</a><span class="k">def</span> <span class="nf">create_keyspace_simple</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">replication_factor</span><span class="p">,</span> <span class="n">durable_writes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates a keyspace with SimpleStrategy for replica placement</span>
 
@@ -142,7 +140,7 @@
                      <span class="p">{</span><span class="s1">&#39;replication_factor&#39;</span><span class="p">:</span> <span class="n">replication_factor</span><span class="p">},</span> <span class="n">connections</span><span class="o">=</span><span class="n">connections</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="create_keyspace_network_topology"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.create_keyspace_network_topology">[docs]</a><span class="k">def</span> <span class="nf">create_keyspace_network_topology</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dc_replication_map</span><span class="p">,</span> <span class="n">durable_writes</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="create_keyspace_network_topology"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.create_keyspace_network_topology">[docs]</a><span class="k">def</span> <span class="nf">create_keyspace_network_topology</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dc_replication_map</span><span class="p">,</span> <span class="n">durable_writes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates a keyspace with NetworkTopologyStrategy for replica placement</span>
 
@@ -161,7 +159,7 @@
     <span class="n">_create_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="s1">&#39;NetworkTopologyStrategy&#39;</span><span class="p">,</span> <span class="n">dc_replication_map</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="n">connections</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">_create_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_create_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">_allow_schema_modification</span><span class="p">():</span>
         <span class="k">return</span>
 
@@ -169,7 +167,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">connections</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Connections must be a list or a tuple.&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__create_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__create_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">:</span>
@@ -186,7 +184,7 @@
         <span class="n">__create_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">durable_writes</span><span class="p">,</span> <span class="n">strategy_class</span><span class="p">,</span> <span class="n">strategy_options</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="drop_keyspace"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.drop_keyspace">[docs]</a><span class="k">def</span> <span class="nf">drop_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="drop_keyspace"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.drop_keyspace">[docs]</a><span class="k">def</span> <span class="nf">drop_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Drops a keyspace, if it exists.</span>
 
@@ -205,10 +203,10 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">connections</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Connections must be a list or a tuple.&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_drop_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_drop_keyspace</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">:</span>
-            <span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DROP KEYSPACE {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">)),</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
+            <span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DROP KEYSPACE </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">protect_name</span><span class="p">(</span><span class="n">name</span><span class="p">)),</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">connections</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">connection</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">:</span>
@@ -228,7 +226,7 @@
             <span class="k">return</span> <span class="n">index_metadata</span><span class="o">.</span><span class="n">name</span>
 
 
-<div class="viewcode-block" id="sync_table"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.sync_table">[docs]</a><span class="k">def</span> <span class="nf">sync_table</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">keyspaces</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="sync_table"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.sync_table">[docs]</a><span class="k">def</span> <span class="nf">sync_table</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">keyspaces</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Inspects the model and creates / updates the corresponding table and columns.</span>
 
@@ -257,7 +255,7 @@
             <span class="n">_sync_table</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">_sync_table</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_sync_table</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">_allow_schema_modification</span><span class="p">():</span>
         <span class="k">return</span>
 
@@ -278,7 +276,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">keyspace</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks_name</span><span class="p">]</span>
     <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="n">format_log_context</span><span class="p">(</span><span class="s2">&quot;Keyspace &#39;{0}&#39; for model {1} does not exist.&quot;</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">format_log_context</span><span class="p">(</span><span class="s2">&quot;Keyspace &#39;</span><span class="si">{0}</span><span class="s2">&#39; for model </span><span class="si">{1}</span><span class="s2"> does not exist.&quot;</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">model</span><span class="p">))</span>
 
     <span class="n">tables</span> <span class="o">=</span> <span class="n">keyspace</span><span class="o">.</span><span class="n">tables</span>
@@ -299,7 +297,7 @@
         <span class="k">except</span> <span class="n">CQLEngineException</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
             <span class="c1"># 1.2 doesn&#39;t return cf names, so we have to examine the exception</span>
             <span class="c1"># and ignore if it says the column family already exists</span>
-            <span class="k">if</span> <span class="s2">&quot;Cannot add already existing column family&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">ex</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s2">&quot;Cannot add already existing column family&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">unicode</span><span class="p">(</span><span class="n">ex</span><span class="p">):</span>
                 <span class="k">raise</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">format_log_context</span><span class="p">(</span><span class="s2">&quot;sync_table checking existing table </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">),</span> <span class="n">cf_name</span><span class="p">)</span>
@@ -316,7 +314,7 @@
             <span class="k">if</span> <span class="n">db_name</span> <span class="ow">in</span> <span class="n">table_columns</span><span class="p">:</span>
                 <span class="n">col_meta</span> <span class="o">=</span> <span class="n">table_columns</span><span class="p">[</span><span class="n">db_name</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">col_meta</span><span class="o">.</span><span class="n">cql_type</span> <span class="o">!=</span> <span class="n">col</span><span class="o">.</span><span class="n">db_type</span><span class="p">:</span>
-                    <span class="n">msg</span> <span class="o">=</span> <span class="n">format_log_context</span><span class="p">(</span><span class="s1">&#39;Existing table {0} has column &quot;{1}&quot; with a type ({2}) differing from the model type ({3}).&#39;</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="n">format_log_context</span><span class="p">(</span><span class="s1">&#39;Existing table </span><span class="si">{0}</span><span class="s1"> has column &quot;</span><span class="si">{1}</span><span class="s1">&quot; with a type (</span><span class="si">{2}</span><span class="s1">) differing from the model type (</span><span class="si">{3}</span><span class="s1">).&#39;</span>
                                   <span class="s1">&#39; Model should be updated.&#39;</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
                     <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">db_name</span><span class="p">,</span> <span class="n">col_meta</span><span class="o">.</span><span class="n">cql_type</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">db_type</span><span class="p">)</span>
                     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
@@ -325,15 +323,15 @@
                 <span class="k">continue</span>
 
             <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">primary_key</span> <span class="ow">or</span> <span class="n">col</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="n">format_log_context</span><span class="p">(</span><span class="s2">&quot;Cannot add primary key &#39;{0}&#39; (with db_field &#39;{1}&#39;) to existing table {2}&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="n">format_log_context</span><span class="p">(</span><span class="s2">&quot;Cannot add primary key &#39;</span><span class="si">{0}</span><span class="s2">&#39; (with db_field &#39;</span><span class="si">{1}</span><span class="s2">&#39;) to existing table </span><span class="si">{2}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
                 <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">db_name</span><span class="p">,</span> <span class="n">cf_name</span><span class="p">))</span>
 
-            <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;ALTER TABLE {0} add {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">())</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;ALTER TABLE </span><span class="si">{0}</span><span class="s2"> add </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">())</span>
             <span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
 
         <span class="n">db_fields_not_in_model</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">table_columns</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">db_fields_not_in_model</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="n">format_log_context</span><span class="p">(</span><span class="s2">&quot;Table {0} has fields not referenced by model: {1}&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">format_log_context</span><span class="p">(</span><span class="s2">&quot;Table </span><span class="si">{0}</span><span class="s2"> has fields not referenced by model: </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
             <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">,</span> <span class="n">db_fields_not_in_model</span><span class="p">))</span>
 
         <span class="n">_update_options</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
@@ -349,8 +347,8 @@
             <span class="k">continue</span>
 
         <span class="n">qs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CREATE INDEX&#39;</span><span class="p">]</span>
-        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;ON {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">)]</span>
-        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;(&quot;{0}&quot;)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)]</span>
+        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;ON </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cf_name</span><span class="p">)]</span>
+        <span class="n">qs</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;(&quot;</span><span class="si">{0}</span><span class="s1">&quot;)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)]</span>
         <span class="n">qs</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>
         <span class="n">execute</span><span class="p">(</span><span class="n">qs</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
 
@@ -363,15 +361,15 @@
 
     <span class="k">if</span> <span class="n">model_partition</span> <span class="o">!=</span> <span class="n">meta_partition</span> <span class="ow">or</span> <span class="n">model_clustering</span> <span class="o">!=</span> <span class="n">meta_clustering</span><span class="p">:</span>
         <span class="k">def</span> <span class="nf">_pk_string</span><span class="p">(</span><span class="n">partition</span><span class="p">,</span> <span class="n">clustering</span><span class="p">):</span>
-            <span class="k">return</span> <span class="s2">&quot;PRIMARY KEY (({0}){1})&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">partition</span><span class="p">),</span> <span class="s1">&#39;, &#39;</span> <span class="o">+</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clustering</span><span class="p">)</span> <span class="k">if</span> <span class="n">clustering</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s2">&quot;Model {0} PRIMARY KEY composition does not match existing table {1}. &quot;</span>
-                                 <span class="s2">&quot;Model: {2}; Table: {3}. &quot;</span>
+            <span class="k">return</span> <span class="s2">&quot;PRIMARY KEY ((</span><span class="si">{0}</span><span class="s2">)</span><span class="si">{1}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">partition</span><span class="p">),</span> <span class="s1">&#39;, &#39;</span> <span class="o">+</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clustering</span><span class="p">)</span> <span class="k">if</span> <span class="n">clustering</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">CQLEngineException</span><span class="p">(</span><span class="s2">&quot;Model </span><span class="si">{0}</span><span class="s2"> PRIMARY KEY composition does not match existing table </span><span class="si">{1}</span><span class="s2">. &quot;</span>
+                                 <span class="s2">&quot;Model: </span><span class="si">{2}</span><span class="s2">; Table: </span><span class="si">{3}</span><span class="s2">. &quot;</span>
                                  <span class="s2">&quot;Update model or drop the table.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(),</span>
                                                                           <span class="n">_pk_string</span><span class="p">(</span><span class="n">model_partition</span><span class="p">,</span> <span class="n">model_clustering</span><span class="p">),</span>
                                                                           <span class="n">_pk_string</span><span class="p">(</span><span class="n">meta_partition</span><span class="p">,</span> <span class="n">meta_clustering</span><span class="p">)))</span>
 
 
-<div class="viewcode-block" id="sync_type"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.sync_type">[docs]</a><span class="k">def</span> <span class="nf">sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="sync_type"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.sync_type">[docs]</a><span class="k">def</span> <span class="nf">sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Inspects the type_model and creates / updates the corresponding type.</span>
 
@@ -392,7 +390,7 @@
     <span class="n">_sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">_sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_model</span><span class="p">,</span> <span class="n">omit_subtypes</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_sync_type</span><span class="p">(</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">type_model</span><span class="p">,</span> <span class="n">omit_subtypes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
     <span class="n">syncd_sub_types</span> <span class="o">=</span> <span class="n">omit_subtypes</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">type_model</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
@@ -423,11 +421,11 @@
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">type_model</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">model_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">defined_fields</span><span class="p">:</span>
-                <span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ALTER TYPE {0} ADD {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_name_qualified</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">()),</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
+                <span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ALTER TYPE </span><span class="si">{0}</span><span class="s2"> ADD </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_name_qualified</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">()),</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">field_type</span> <span class="o">=</span> <span class="n">type_meta</span><span class="o">.</span><span class="n">field_types</span><span class="p">[</span><span class="n">defined_fields</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)]</span>
                 <span class="k">if</span> <span class="n">field_type</span> <span class="o">!=</span> <span class="n">field</span><span class="o">.</span><span class="n">db_type</span><span class="p">:</span>
-                    <span class="n">msg</span> <span class="o">=</span> <span class="n">format_log_context</span><span class="p">(</span><span class="s1">&#39;Existing user type {0} has field &quot;{1}&quot; with a type ({2}) differing from the model user type ({3}).&#39;</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="n">format_log_context</span><span class="p">(</span><span class="s1">&#39;Existing user type </span><span class="si">{0}</span><span class="s1"> has field &quot;</span><span class="si">{1}</span><span class="s1">&quot; with a type (</span><span class="si">{2}</span><span class="s1">) differing from the model user type (</span><span class="si">{3}</span><span class="s1">).&#39;</span>
                                   <span class="s1">&#39; UserType should be updated.&#39;</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="n">ks_name</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
                     <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_name_qualified</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">,</span> <span class="n">field_type</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">db_type</span><span class="p">)</span>
                     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
@@ -455,7 +453,7 @@
 
 <span class="k">def</span> <span class="nf">_get_create_table</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
     <span class="n">ks_table_name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()</span>
-    <span class="n">query_strings</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CREATE TABLE {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ks_table_name</span><span class="p">)]</span>
+    <span class="n">query_strings</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CREATE TABLE </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ks_table_name</span><span class="p">)]</span>
 
     <span class="c1"># add column types</span>
     <span class="n">pkeys</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># primary keys</span>
@@ -466,32 +464,32 @@
         <span class="n">s</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">get_column_def</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
             <span class="n">keys</span> <span class="o">=</span> <span class="p">(</span><span class="n">pkeys</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">partition_key</span> <span class="k">else</span> <span class="n">ckeys</span><span class="p">)</span>
-            <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&quot;{0}&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">))</span>
+            <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&quot;</span><span class="si">{0}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">))</span>
         <span class="n">qtypes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">add_column</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
 
-    <span class="n">qtypes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;PRIMARY KEY (({0}){1})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pkeys</span><span class="p">),</span> <span class="n">ckeys</span> <span class="ow">and</span> <span class="s1">&#39;, &#39;</span> <span class="o">+</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ckeys</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
+    <span class="n">qtypes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;PRIMARY KEY ((</span><span class="si">{0}</span><span class="s1">)</span><span class="si">{1}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pkeys</span><span class="p">),</span> <span class="n">ckeys</span> <span class="ow">and</span> <span class="s1">&#39;, &#39;</span> <span class="o">+</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ckeys</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
 
-    <span class="n">query_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;({0})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qtypes</span><span class="p">))]</span>
+    <span class="n">query_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;(</span><span class="si">{0}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qtypes</span><span class="p">))]</span>
 
     <span class="n">property_strings</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="n">_order</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;&quot;{0}&quot; {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">clustering_order</span> <span class="ow">or</span> <span class="s1">&#39;ASC&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_clustering_keys</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+    <span class="n">_order</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;&quot;</span><span class="si">{0}</span><span class="s1">&quot; </span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">clustering_order</span> <span class="ow">or</span> <span class="s1">&#39;ASC&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_clustering_keys</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
     <span class="k">if</span> <span class="n">_order</span><span class="p">:</span>
-        <span class="n">property_strings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;CLUSTERING ORDER BY ({0})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_order</span><span class="p">)))</span>
+        <span class="n">property_strings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;CLUSTERING ORDER BY (</span><span class="si">{0}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_order</span><span class="p">)))</span>
 
     <span class="c1"># options strings use the V3 format, which matches CQL more closely and does not require mapping</span>
     <span class="n">property_strings</span> <span class="o">+=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">TableMetadataV3</span><span class="o">.</span><span class="n">_make_option_strings</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">__options__</span> <span class="ow">or</span> <span class="p">{})</span>
 
     <span class="k">if</span> <span class="n">property_strings</span><span class="p">:</span>
-        <span class="n">query_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;WITH {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">property_strings</span><span class="p">))]</span>
+        <span class="n">query_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;WITH </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">property_strings</span><span class="p">))]</span>
 
     <span class="k">return</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">query_strings</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_get_table_metadata</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_get_table_metadata</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="c1"># returns the table as provided by the native driver for a given model</span>
     <span class="n">cluster</span> <span class="o">=</span> <span class="n">get_cluster</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
     <span class="n">ks</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_get_keyspace</span><span class="p">()</span>
@@ -515,7 +513,7 @@
     <span class="k">return</span> <span class="n">options</span>
 
 
-<span class="k">def</span> <span class="nf">_update_options</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_update_options</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Updates the table options for the given model if necessary.</span>
 
 <span class="sd">    :param model: The model to update.</span>
@@ -558,14 +556,14 @@
 
     <span class="k">if</span> <span class="n">update_options</span><span class="p">:</span>
         <span class="n">options</span> <span class="o">=</span> <span class="s1">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">TableMetadataV3</span><span class="o">.</span><span class="n">_make_option_strings</span><span class="p">(</span><span class="n">update_options</span><span class="p">))</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;ALTER TABLE {0} WITH {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(),</span> <span class="n">options</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;ALTER TABLE </span><span class="si">{0}</span><span class="s2"> WITH </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">(),</span> <span class="n">options</span><span class="p">)</span>
         <span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
-    <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">return</span> <span class="kc">False</span>
 
 
-<div class="viewcode-block" id="drop_table"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.drop_table">[docs]</a><span class="k">def</span> <span class="nf">drop_table</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">keyspaces</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="drop_table"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/management.html#cassandra.cqlengine.management.drop_table">[docs]</a><span class="k">def</span> <span class="nf">drop_table</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">keyspaces</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">connections</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Drops the table indicated by the model, if it exists.</span>
 
@@ -587,7 +585,7 @@
             <span class="n">_drop_table</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">_drop_table</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_drop_table</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">_allow_schema_modification</span><span class="p">():</span>
         <span class="k">return</span>
 
@@ -601,7 +599,7 @@
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">meta</span><span class="o">.</span><span class="n">keyspaces</span><span class="p">[</span><span class="n">ks_name</span><span class="p">]</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">raw_cf_name</span><span class="p">]</span>
-        <span class="n">execute</span><span class="p">(</span><span class="s1">&#39;DROP TABLE {0};&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()),</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
+        <span class="n">execute</span><span class="p">(</span><span class="s1">&#39;DROP TABLE </span><span class="si">{0}</span><span class="s1">;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">column_family_name</span><span class="p">()),</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
         <span class="k">pass</span>
 
@@ -612,7 +610,7 @@
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="kc">True</span>
 </pre></div>
 
           </div>
@@ -629,14 +627,14 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

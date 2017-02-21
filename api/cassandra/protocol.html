@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.protocol - Protocol Features &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>cassandra.protocol - Protocol Features &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="../../index.html" />
-    <link rel="up" title="API Documentation" href="../index.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="cassandra.encoder - Encoders for non-prepared Statements" href="encoder.html" />
     <link rel="prev" title="cassandra.pool - Hosts and Connection Pools" href="pool.html" /> 
   </head>
@@ -44,8 +45,8 @@
         <li class="right" >
           <a href="pool.html" title="cassandra.pool - Hosts and Connection Pools"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -68,21 +69,18 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../_sources/api/cassandra/protocol.txt"
+      <li><a href="../../_sources/api/cassandra/protocol.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -175,8 +173,8 @@ to deserialize messages. By default, the driver will use a Cython-based parser t
 lists of rows similar to the pure-Python version. In addition, there are two additional
 ProtocolHandler classes that can be used to deserialize response messages: <code class="docutils literal"><span class="pre">LazyProtocolHandler</span></code>
 and <code class="docutils literal"><span class="pre">NumpyProtocolHandler</span></code>. They can be used as follows:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="kn">import</span> <span class="n">NumpyProtocolHandler</span><span class="p">,</span> <span class="n">LazyProtocolHandler</span>
-<span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="n">tuple_factory</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="k">import</span> <span class="n">NumpyProtocolHandler</span><span class="p">,</span> <span class="n">LazyProtocolHandler</span>
+<span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="k">import</span> <span class="n">tuple_factory</span>
 <span class="n">s</span><span class="o">.</span><span class="n">client_protocol_handler</span> <span class="o">=</span> <span class="n">LazyProtocolHandler</span>   <span class="c1"># for a result iterator</span>
 <span class="n">s</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">tuple_factory</span>  <span class="c1">#required for Numpy results</span>
 <span class="n">s</span><span class="o">.</span><span class="n">client_protocol_handler</span> <span class="o">=</span> <span class="n">NumpyProtocolHandler</span>  <span class="c1"># for a dict of NumPy arrays as result</span>
@@ -184,23 +182,20 @@ and <code class="docutils literal"><span class="pre">NumpyProtocolHandler</span>
 </div>
 <p>These protocol handlers comprise different parsers, and return results as described below:</p>
 <blockquote>
-<div><ul>
+<div><ul class="simple">
 <li><dl class="first docutils">
 <dt>ProtocolHandler: this default implementation is a drop-in replacement for the pure-Python version.</dt>
-<dd><p class="first last">The rows are all parsed upfront, before results are returned.</p>
-</dd>
+<dd>The rows are all parsed upfront, before results are returned.</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>LazyProtocolHandler: near drop-in replacement for the above, except that it returns an iterator over rows,</dt>
-<dd><p class="first last">lazily decoded into the default row format (this is more efficient since all decoded results are not materialized at once)</p>
-</dd>
+<dd>lazily decoded into the default row format (this is more efficient since all decoded results are not materialized at once)</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>NumpyProtocolHander: deserializes results directly into NumPy arrays. This facilitates efficient integration with</dt>
-<dd><p class="first last">analysis toolkits such as Pandas.</p>
-</dd>
+<dd>analysis toolkits such as Pandas.</dd>
 </dl>
 </li>
 </ul>
@@ -229,13 +224,13 @@ and <code class="docutils literal"><span class="pre">NumpyProtocolHandler</span>
         <li class="right" >
           <a href="pool.html" title="cassandra.pool - Hosts and Connection Pools"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

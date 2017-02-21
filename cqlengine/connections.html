@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Connections (experimental) &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>Connections (experimental) &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="../index.html" />
-    <link rel="up" title="Object Mapper" href="../object_mapper.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Third party integrations" href="third_party.html" />
     <link rel="prev" title="Batch Queries" href="batches.html" /> 
   </head>
@@ -44,8 +45,8 @@
         <li class="right" >
           <a href="batches.html" title="Batch Queries"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../object_mapper.html" accesskey="U">Object Mapper</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../object_mapper.html" accesskey="U">Object Mapper</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -77,21 +78,18 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/cqlengine/connections.txt"
+      <li><a href="../_sources/cqlengine/connections.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -107,12 +105,22 @@
 <p>Connections are experimental and aimed to ease the use of multiple sessions with cqlengine. Connections can be set on a model class, per query or using a context manager.</p>
 <div class="section" id="register-a-new-connection">
 <h2>Register a new connection<a class="headerlink" href="#register-a-new-connection" title="Permalink to this headline">¶</a></h2>
-<p>To use cqlengine, you need at least a default connection. This is currently done automatically under the hood with <a class="reference internal" href="../api/cassandra/cqlengine/connection.html#cassandra.cqlengine.connection.setup" title="cassandra.cqlengine.connection.setup"><code class="xref py py-func docutils literal"><span class="pre">connection.setup</span></code></a>. If you want to use another cluster/session, you need to register a new cqlengine connection. You register a connection with <a class="reference internal" href="../api/cassandra/cqlengine/connection.html#cassandra.cqlengine.connection.register_connection" title="cassandra.cqlengine.connection.register_connection"><code class="xref py py-func docutils literal"><span class="pre">register_connection()</span></code></a></p>
+<p>To use cqlengine, you need at least a default connection. If you initialize cqlengine&#8217;s connections with with <a class="reference internal" href="../api/cassandra/cqlengine/connection.html#cassandra.cqlengine.connection.setup" title="cassandra.cqlengine.connection.setup"><code class="xref py py-func docutils literal"><span class="pre">connection.setup</span></code></a>, a connection will be created automatically. If you want to use another cluster/session, you need to register a new cqlengine connection. You register a connection with <a class="reference internal" href="../api/cassandra/cqlengine/connection.html#cassandra.cqlengine.connection.register_connection" title="cassandra.cqlengine.connection.register_connection"><code class="xref py py-func docutils literal"><span class="pre">register_connection()</span></code></a>:</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">connection</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">connection</span>
 
 <span class="n">connection</span><span class="o">.</span><span class="n">setup</span><span class="p">([</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">)</span>
 <span class="n">connection</span><span class="o">.</span><span class="n">register_connection</span><span class="p">(</span><span class="s1">&#39;cluster2&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;127.0.0.2&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><a class="reference internal" href="../api/cassandra/cqlengine/connection.html#cassandra.cqlengine.connection.register_connection" title="cassandra.cqlengine.connection.register_connection"><code class="xref py py-func docutils literal"><span class="pre">register_connection()</span></code></a> can take a list of hosts, as shown above, in which case it will create a connection with a new session. It can also take a <cite>session</cite> argument if you&#8217;ve already created a session:</p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">connection</span>
+<span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+
+<span class="n">session</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">([</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="n">connection</span><span class="o">.</span><span class="n">register_connection</span><span class="p">(</span><span class="s1">&#39;cluster3&#39;</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="n">session</span><span class="p">)</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -121,7 +129,7 @@
 <h2>Change the default connection<a class="headerlink" href="#change-the-default-connection" title="Permalink to this headline">¶</a></h2>
 <p>You can change the default cqlengine connection on registration:</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">connection</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">connection</span>
 
 <span class="n">connection</span><span class="o">.</span><span class="n">register_connection</span><span class="p">(</span><span class="s1">&#39;cluster2&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;127.0.0.2&#39;</span><span class="p">]</span> <span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
@@ -129,7 +137,7 @@
 </div></blockquote>
 <p>or on the fly using <a class="reference internal" href="../api/cassandra/cqlengine/connection.html#cassandra.cqlengine.connection.set_default_connection" title="cassandra.cqlengine.connection.set_default_connection"><code class="xref py py-func docutils literal"><span class="pre">set_default_connection()</span></code></a></p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="n">connection</span><span class="o">.</span><span class="n">set_default_connection</span><span class="p">(</span><span class="s1">&#39;cluster2&#39;</span><span class="p">)</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">connection</span><span class="o">.</span><span class="n">set_default_connection</span><span class="p">(</span><span class="s1">&#39;cluster2&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -138,7 +146,7 @@
 <h2>Unregister a connection<a class="headerlink" href="#unregister-a-connection" title="Permalink to this headline">¶</a></h2>
 <p>You can unregister a connection using <a class="reference internal" href="../api/cassandra/cqlengine/connection.html#cassandra.cqlengine.connection.unregister_connection" title="cassandra.cqlengine.connection.unregister_connection"><code class="xref py py-func docutils literal"><span class="pre">unregister_connection()</span></code></a>:</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="n">connection</span><span class="o">.</span><span class="n">unregister_connection</span><span class="p">(</span><span class="s1">&#39;cluster2&#39;</span><span class="p">)</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">connection</span><span class="o">.</span><span class="n">unregister_connection</span><span class="p">(</span><span class="s1">&#39;cluster2&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -147,7 +155,7 @@
 <h2>Management<a class="headerlink" href="#management" title="Permalink to this headline">¶</a></h2>
 <p>When using multiples connections, you also need to sync your models on all connections (and keyspaces) that you need operate on. Management commands have been improved to ease this part. Here is an example:</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">management</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">management</span>
 
 <span class="n">keyspaces</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ks1&#39;</span><span class="p">,</span> <span class="s1">&#39;ks2&#39;</span><span class="p">]</span>
 <span class="n">conns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cluster1&#39;</span><span class="p">,</span> <span class="s1">&#39;cluster2&#39;</span><span class="p">]</span>
@@ -175,7 +183,7 @@
 <h3>Default Model Connection<a class="headerlink" href="#default-model-connection" title="Permalink to this headline">¶</a></h3>
 <p>You can specify a default connection per model:</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Automobile</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Automobile</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">__keyspace__</span> <span class="o">=</span> <span class="s1">&#39;test&#39;</span>
     <span class="n">__connection__</span> <span class="o">=</span> <span class="s1">&#39;cluster2&#39;</span>
     <span class="n">manufacturer</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
@@ -191,7 +199,7 @@
 <h3>QuerySet and model instance<a class="headerlink" href="#queryset-and-model-instance" title="Permalink to this headline">¶</a></h3>
 <p>You can use the <code class="xref py py-attr docutils literal"><span class="pre">using()</span></code> method to select a connection (or keyspace):</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">using</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="s1">&#39;cluster1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;honda&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2010</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s1">&#39;civic&#39;</span><span class="p">)</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">using</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="s1">&#39;cluster1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;honda&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2010</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s1">&#39;civic&#39;</span><span class="p">)</span>
 <span class="n">q</span> <span class="o">=</span> <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;Tesla&#39;</span><span class="p">)</span>
 <span class="n">autos</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">using</span><span class="p">(</span><span class="n">keyspace</span><span class="o">=</span><span class="s1">&#39;ks2, connection=&#39;</span><span class="n">cluster2</span><span class="s1">&#39;).all()</span>
 
@@ -205,7 +213,7 @@
 <h3>Context Manager<a class="headerlink" href="#context-manager" title="Permalink to this headline">¶</a></h3>
 <p>You can use the ContextQuery as well to select a connection:</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">ContextQuery</span><span class="p">(</span><span class="n">Automobile</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="s1">&#39;cluster1&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">A</span><span class="p">:</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">ContextQuery</span><span class="p">(</span><span class="n">Automobile</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="s1">&#39;cluster1&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">A</span><span class="p">:</span>
     <span class="n">A</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;honda&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>  <span class="c1"># executed on &#39;cluster1&#39;</span>
 </pre></div>
 </div>
@@ -215,7 +223,7 @@
 <h3>BatchQuery<a class="headerlink" href="#batchquery" title="Permalink to this headline">¶</a></h3>
 <p>With a BatchQuery, you can select the connection with the context manager. Note that all operations in the batch need to use the same connection.</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">BatchQuery</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="s1">&#39;cluster1&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">BatchQuery</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="s1">&#39;cluster1&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
     <span class="n">Automobile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">manufacturer</span><span class="o">=</span><span class="s1">&#39;honda&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2010</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s1">&#39;civic&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -245,13 +253,13 @@
         <li class="right" >
           <a href="batches.html" title="Batch Queries"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../object_mapper.html" >Object Mapper</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../object_mapper.html" >Object Mapper</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

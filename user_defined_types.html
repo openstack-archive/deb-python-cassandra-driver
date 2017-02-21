@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>User Defined Types &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>User Defined Types &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,16 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Object Mapper" href="object_mapper.html" />
     <link rel="prev" title="Security" href="security.html" /> 
   </head>
@@ -43,7 +45,7 @@
         <li class="right" >
           <a href="security.html" title="Security"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -66,21 +68,18 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/user_defined_types.txt"
+      <li><a href="_sources/user_defined_types.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -95,7 +94,7 @@
 <span id="udts"></span><h1>User Defined Types<a class="headerlink" href="#user-defined-types" title="Permalink to this headline">¶</a></h1>
 <p>Cassandra 2.1 introduced user-defined types (UDTs).  You can create a
 new type through <code class="docutils literal"><span class="pre">CREATE</span> <span class="pre">TYPE</span></code> statements in CQL:</p>
-<div class="highlight-python"><div class="highlight"><pre>CREATE TYPE address (street text, zip int);
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CREATE</span> <span class="n">TYPE</span> <span class="n">address</span> <span class="p">(</span><span class="n">street</span> <span class="n">text</span><span class="p">,</span> <span class="nb">zip</span> <span class="nb">int</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Version 2.1 of the Python driver adds support for user-defined types.</p>
@@ -104,7 +103,7 @@ new type through <code class="docutils literal"><span class="pre">CREATE</span> 
 <p>You can tell the Python driver to return columns of a specific UDT as
 instances of a class by registering them with your <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code></a>
 instance through <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.register_user_type" title="cassandra.cluster.Cluster.register_user_type"><code class="xref py py-meth docutils literal"><span class="pre">Cluster.register_user_type()</span></code></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s1">&#39;mykeyspace&#39;</span><span class="p">)</span>
 <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TYPE address (street text, zipcode int)&quot;</span><span class="p">)</span>
@@ -113,7 +112,7 @@ instance through <a class="reference internal" href="api/cassandra/cluster.html#
 <span class="c1"># create a class to map to the &quot;address&quot; UDT</span>
 <span class="k">class</span> <span class="nc">Address</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">street</span><span class="p">,</span> <span class="n">zipcode</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">street</span><span class="p">,</span> <span class="n">zipcode</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">street</span> <span class="o">=</span> <span class="n">street</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">zipcode</span> <span class="o">=</span> <span class="n">zipcode</span>
 
@@ -139,7 +138,7 @@ for working with unregistered UDTS.</p>
 expect for each placeholder.  This allows you to pass any object you
 want for a UDT, as long as it has attributes that match the field names
 for the UDT:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s1">&#39;mykeyspace&#39;</span><span class="p">)</span>
 <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TYPE address (street text, zipcode int)&quot;</span><span class="p">)</span>
@@ -147,7 +146,7 @@ for the UDT:</p>
 
 <span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">street</span><span class="p">,</span> <span class="n">zipcode</span><span class="p">,</span> <span class="n">otherstuff</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">street</span><span class="p">,</span> <span class="n">zipcode</span><span class="p">,</span> <span class="n">otherstuff</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">street</span> <span class="o">=</span> <span class="n">street</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">zipcode</span> <span class="o">=</span> <span class="n">zipcode</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">otherstuff</span> <span class="o">=</span> <span class="n">otherstuff</span>
@@ -199,12 +198,12 @@ simply return <code class="docutils literal"><span class="pre">namedtuple</span>
         <li class="right" >
           <a href="security.html" title="Security"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

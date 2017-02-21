@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.encoder &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>cassandra.encoder &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="../../index.html" />
-    <link rel="up" title="cassandra" href="../cassandra.html" /> 
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -36,9 +37,9 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -46,14 +47,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -65,7 +63,7 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.encoder</h1><div class="highlight"><pre>
-<span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
+<span></span><span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -85,22 +83,22 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">binascii</span> <span class="kn">import</span> <span class="n">hexlify</span>
+<span class="kn">from</span> <span class="nn">binascii</span> <span class="k">import</span> <span class="n">hexlify</span>
 <span class="kn">import</span> <span class="nn">calendar</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">types</span>
-<span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">UUID</span>
+<span class="kn">from</span> <span class="nn">uuid</span> <span class="k">import</span> <span class="n">UUID</span>
 <span class="kn">import</span> <span class="nn">six</span>
 
-<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="p">(</span><span class="n">OrderedDict</span><span class="p">,</span> <span class="n">OrderedMap</span><span class="p">,</span> <span class="n">OrderedMapSerializedKey</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="k">import</span> <span class="p">(</span><span class="n">OrderedDict</span><span class="p">,</span> <span class="n">OrderedMap</span><span class="p">,</span> <span class="n">OrderedMapSerializedKey</span><span class="p">,</span>
                             <span class="n">sortedset</span><span class="p">,</span> <span class="n">Time</span><span class="p">,</span> <span class="n">Date</span><span class="p">)</span>
 
 <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
-    <span class="nb">long</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">long</span> <span class="o">=</span> <span class="nb">int</span>
 
 
 <span class="k">def</span> <span class="nf">cql_quote</span><span class="p">(</span><span class="n">term</span><span class="p">):</span>
@@ -128,7 +126,7 @@
 <span class="sd">    directly customized by users.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">mapping</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">mapping</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A map of python types to encoder functions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -160,16 +158,16 @@
 
         <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
-                <span class="nb">unicode</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_unicode</span><span class="p">,</span>
-                <span class="nb">buffer</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_bytes</span><span class="p">,</span>
-                <span class="nb">long</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">,</span>
+                <span class="n">unicode</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_unicode</span><span class="p">,</span>
+                <span class="n">buffer</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_bytes</span><span class="p">,</span>
+                <span class="n">long</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_object</span><span class="p">,</span>
                 <span class="n">types</span><span class="o">.</span><span class="n">NoneType</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_none</span><span class="p">,</span>
             <span class="p">})</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
-                <span class="n">memoryview</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_bytes</span><span class="p">,</span>
+                <span class="nb">memoryview</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_bytes</span><span class="p">,</span>
                 <span class="nb">bytes</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_bytes</span><span class="p">,</span>
-                <span class="nb">type</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_none</span><span class="p">,</span>
+                <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">cql_encode_none</span><span class="p">,</span>
             <span class="p">})</span>
 
 <div class="viewcode-block" id="Encoder.cql_encode_none"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_none">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_none</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
@@ -192,14 +190,14 @@
 
     <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
         <span class="k">def</span> <span class="nf">cql_encode_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">(</span><span class="n">b</span><span class="s1">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">val</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="sa">b</span><span class="s1">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">val</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">cql_encode_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>  <span class="c1"># noqa</span>
-            <span class="k">return</span> <span class="n">b</span><span class="s1">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">b</span><span class="s1">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># python 2.6 requires string or read-only buffer for hexlify</span>
 <div class="viewcode-block" id="Encoder.cql_encode_bytes"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_bytes">[docs]</a>        <span class="k">def</span> <span class="nf">cql_encode_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>  <span class="c1"># noqa</span>
-            <span class="k">return</span> <span class="n">b</span><span class="s1">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="nb">buffer</span><span class="p">(</span><span class="n">val</span><span class="p">))</span></div>
+            <span class="k">return</span> <span class="sa">b</span><span class="s1">&#39;0x&#39;</span> <span class="o">+</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">buffer</span><span class="p">(</span><span class="n">val</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Encoder.cql_encode_object"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_object">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -225,7 +223,7 @@
 <span class="sd">        with millisecond precision.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">timestamp</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="n">timegm</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">utctimetuple</span><span class="p">())</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">long</span><span class="p">(</span><span class="n">timestamp</span> <span class="o">*</span> <span class="mf">1e3</span> <span class="o">+</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="s1">&#39;microsecond&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">long</span><span class="p">(</span><span class="n">timestamp</span> <span class="o">*</span> <span class="mf">1e3</span> <span class="o">+</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="s1">&#39;microsecond&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Encoder.cql_encode_date"><a class="viewcode-back" href="../../api/cassandra/encoder.html#cassandra.encoder.Encoder.cql_encode_date">[docs]</a>    <span class="k">def</span> <span class="nf">cql_encode_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -308,14 +306,14 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.usertype &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>cassandra.cqlengine.usertype &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="../../../index.html" />
-    <link rel="up" title="cassandra" href="../../cassandra.html" /> 
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -36,9 +37,9 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -46,14 +47,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -65,14 +63,14 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.cqlengine.usertype</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">re</span>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">six</span>
 
-<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">CQLEngineException</span>
-<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">columns</span>
-<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">connection</span> <span class="k">as</span> <span class="n">conn</span>
-<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="k">import</span> <span class="n">CQLEngineException</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="k">import</span> <span class="n">columns</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="k">import</span> <span class="n">connection</span> <span class="k">as</span> <span class="n">conn</span>
+<span class="kn">from</span> <span class="nn">cassandra.cqlengine</span> <span class="k">import</span> <span class="n">models</span>
 
 
 <span class="k">class</span> <span class="nc">UserTypeException</span><span class="p">(</span><span class="n">CQLEngineException</span><span class="p">):</span>
@@ -87,10 +85,10 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The base type class; don&#39;t inherit from this, inherit from UserType, defined below</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">__type_name__</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">__type_name__</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="n">_fields</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_db_map</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_fields</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_db_map</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">values</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_values</span> <span class="o">=</span> <span class="p">{}</span>
@@ -98,34 +96,34 @@
             <span class="n">values</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_db_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
 
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">field_default</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span> <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">has_default</span> <span class="k">else</span> <span class="bp">None</span>
+            <span class="n">field_default</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span> <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">has_default</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">field_default</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">columns</span><span class="o">.</span><span class="n">BaseContainerColumn</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">columns</span><span class="o">.</span><span class="n">BaseContainerColumn</span><span class="p">):</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="n">value_mngr</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">value_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
             <span class="n">value_mngr</span><span class="o">.</span><span class="n">explicit</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">values</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value_mngr</span>
 
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">__class__</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="vm">__class__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
 
         <span class="n">keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="n">other_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">keys</span> <span class="o">!=</span> <span class="n">other_keys</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
+            <span class="k">return</span> <span class="kc">False</span>
 
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">other_keys</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
-                <span class="k">return</span> <span class="bp">False</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
 
-        <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;{{{0}}}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;&#39;{0}&#39;: {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="s2">&quot;{{</span><span class="si">{0}</span><span class="s2">}}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">{0}</span><span class="s2">&#39;: </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">)))</span>
 
     <span class="k">def</span> <span class="nf">has_changed_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">changed</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
@@ -179,27 +177,27 @@
         <span class="k">return</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">]</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">register_for_keyspace</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">register_udt</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">type_name</span><span class="p">(),</span> <span class="n">cls</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">register_for_keyspace</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">register_udt</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">type_name</span><span class="p">(),</span> <span class="bp">cls</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">type_name</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">type_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the type name if it&#39;s been defined</span>
 <span class="sd">        otherwise, it creates it from the class name</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">__type_name__</span><span class="p">:</span>
-            <span class="n">type_name</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">__type_name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__type_name__</span><span class="p">:</span>
+            <span class="n">type_name</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__type_name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">camelcase</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;([a-z])([A-Z])&#39;</span><span class="p">)</span>
-            <span class="n">ccase</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">camelcase</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="s1">&#39;{0}_{1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="n">s</span><span class="p">)</span>
+            <span class="n">camelcase</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;([a-z])([A-Z])&#39;</span><span class="p">)</span>
+            <span class="n">ccase</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">camelcase</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="n">s</span><span class="p">)</span>
 
-            <span class="n">type_name</span> <span class="o">=</span> <span class="n">ccase</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+            <span class="n">type_name</span> <span class="o">=</span> <span class="n">ccase</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
             <span class="c1"># trim to less than 48 characters or cassandra will complain</span>
             <span class="n">type_name</span> <span class="o">=</span> <span class="n">type_name</span><span class="p">[</span><span class="o">-</span><span class="mi">48</span><span class="p">:]</span>
             <span class="n">type_name</span> <span class="o">=</span> <span class="n">type_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="n">type_name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">r&#39;^_+&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">type_name</span><span class="p">)</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">__type_name__</span> <span class="o">=</span> <span class="n">type_name</span>
+            <span class="n">type_name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^_+&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">type_name</span><span class="p">)</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__type_name__</span> <span class="o">=</span> <span class="n">type_name</span>
 
         <span class="k">return</span> <span class="n">type_name</span>
 
@@ -209,7 +207,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">v</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">explicit</span> <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">has_default</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">explicit</span> <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">has_default</span><span class="p">:</span>
                 <span class="n">v</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
             <span class="n">val</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
@@ -217,7 +215,7 @@
 
 <span class="k">class</span> <span class="nc">UserTypeMetaClass</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
         <span class="n">field_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
 
         <span class="n">field_defs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">columns</span><span class="o">.</span><span class="n">Column</span><span class="p">)]</span>
@@ -231,8 +229,8 @@
         <span class="c1"># transform field definitions</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">field_defs</span><span class="p">:</span>
             <span class="c1"># don&#39;t allow a field with the same name as a built-in attribute or method</span>
-            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">BaseUserType</span><span class="o">.</span><span class="n">__dict__</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">UserTypeDefinitionException</span><span class="p">(</span><span class="s2">&quot;field &#39;{0}&#39; conflicts with built-in attribute/method&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">BaseUserType</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">UserTypeDefinitionException</span><span class="p">(</span><span class="s2">&quot;field &#39;</span><span class="si">{0}</span><span class="s2">&#39; conflicts with built-in attribute/method&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
             <span class="n">_transform_column</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
 
         <span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;_fields&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_dict</span>
@@ -242,16 +240,16 @@
             <span class="n">db_field</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">db_field_name</span>
             <span class="k">if</span> <span class="n">db_field</span> <span class="o">!=</span> <span class="n">field_name</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">db_field</span> <span class="ow">in</span> <span class="n">field_dict</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">UserTypeDefinitionException</span><span class="p">(</span><span class="s2">&quot;db_field &#39;{0}&#39; for field &#39;{1}&#39; conflicts with another attribute name&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">db_field</span><span class="p">,</span> <span class="n">field_name</span><span class="p">))</span>
+                    <span class="k">raise</span> <span class="n">UserTypeDefinitionException</span><span class="p">(</span><span class="s2">&quot;db_field &#39;</span><span class="si">{0}</span><span class="s2">&#39; for field &#39;</span><span class="si">{1}</span><span class="s2">&#39; conflicts with another attribute name&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">db_field</span><span class="p">,</span> <span class="n">field_name</span><span class="p">))</span>
                 <span class="n">db_map</span><span class="p">[</span><span class="n">db_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_name</span>
         <span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;_db_map&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">db_map</span>
 
-        <span class="n">klass</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">UserTypeMetaClass</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+        <span class="n">klass</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">UserTypeMetaClass</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">klass</span>
 
 
-<span class="nd">@six.add_metaclass</span><span class="p">(</span><span class="n">UserTypeMetaClass</span><span class="p">)</span>
+<span class="nd">@six</span><span class="o">.</span><span class="n">add_metaclass</span><span class="p">(</span><span class="n">UserTypeMetaClass</span><span class="p">)</span>
 <div class="viewcode-block" id="UserType"><a class="viewcode-back" href="../../../api/cassandra/cqlengine/usertype.html#cassandra.cqlengine.usertype.UserType">[docs]</a><span class="k">class</span> <span class="nc">UserType</span><span class="p">(</span><span class="n">BaseUserType</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This class is used to model User Defined Types. To define a type, declare a class inheriting from this,</span>
@@ -274,7 +272,7 @@
 <span class="sd">    Please see :ref:`user_types` for a complete example and discussion.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">__type_name__</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">__type_name__</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    *Optional.* Sets the name of the CQL type for this type.</span>
 
@@ -296,14 +294,14 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

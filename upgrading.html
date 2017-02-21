@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Upgrading &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>Upgrading &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,16 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Execution Profiles (experimental)" href="execution_profiles.html" />
     <link rel="prev" title="Getting Started" href="getting_started.html" /> 
   </head>
@@ -43,7 +45,7 @@
         <li class="right" >
           <a href="getting_started.html" title="Getting Started"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -95,21 +97,18 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/upgrading.txt"
+      <li><a href="_sources/upgrading.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -123,8 +122,6 @@
   <div class="section" id="upgrading">
 <h1>Upgrading<a class="headerlink" href="#upgrading" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
-<ul class="simple">
-</ul>
 </div>
 <div class="section" id="upgrading-to-3-0">
 <h2>Upgrading to 3.0<a class="headerlink" href="#upgrading-to-3-0" title="Permalink to this headline">¶</a></h2>
@@ -149,14 +146,14 @@ application code that assumed one type and got another.</p>
 <p>Now, all results are returned as an iterable <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResultSet" title="cassandra.cluster.ResultSet"><code class="xref py py-class docutils literal"><span class="pre">ResultSet</span></code></a>.</p>
 <p>The preferred way to consume results of unknown size is to iterate through
 them, letting automatic paging occur as they are consumed.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM system.local&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM system.local&quot;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
     <span class="n">process</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>If the expected size of the results is known, it is still possible to
 materialize a list using the iterator:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM system.local&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM system.local&quot;</span><span class="p">)</span>
 <span class="n">row_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -241,7 +238,7 @@ supports protocol version 1, and 2.0 only supports versions 1 and
 <p>By default, the driver will attempt to use version 2 of the
 native protocol.  To use version 3, you must explicitly
 set the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 
 <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 </pre></div>
@@ -253,19 +250,19 @@ set the <a class="reference internal" href="api/cassandra/cluster.html#cassandra
 <div class="section" id="working-with-user-defined-types">
 <h3>Working with User-Defined Types<a class="headerlink" href="#working-with-user-defined-types" title="Permalink to this headline">¶</a></h3>
 <p>Cassandra 2.1 introduced the ability to define new types:</p>
-<div class="highlight-python"><div class="highlight"><pre>USE KEYSPACE mykeyspace;
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">USE</span> <span class="n">KEYSPACE</span> <span class="n">mykeyspace</span><span class="p">;</span>
 
-CREATE TYPE address (street text, city text, zip int);
+<span class="n">CREATE</span> <span class="n">TYPE</span> <span class="n">address</span> <span class="p">(</span><span class="n">street</span> <span class="n">text</span><span class="p">,</span> <span class="n">city</span> <span class="n">text</span><span class="p">,</span> <span class="nb">zip</span> <span class="nb">int</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The driver generally expects you to use instances of a specific
 class to represent column values of this type.  You can let the
 driver know what class to use with <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.register_user_type" title="cassandra.cluster.Cluster.register_user_type"><code class="xref py py-meth docutils literal"><span class="pre">Cluster.register_user_type()</span></code></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
 
 <span class="k">class</span> <span class="nc">Address</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">street</span><span class="p">,</span> <span class="n">city</span><span class="p">,</span> <span class="n">zipcode</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">street</span><span class="p">,</span> <span class="n">city</span><span class="p">,</span> <span class="n">zipcode</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">street</span> <span class="o">=</span> <span class="n">street</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">city</span> <span class="o">=</span> <span class="n">text</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">zipcode</span> <span class="o">=</span> <span class="n">zipcode</span>
@@ -279,7 +276,7 @@ values will be instances of <code class="docutils literal"><span class="pre">Add
 <p>If no class is registered for a user-defined type, query results
 will use a <code class="docutils literal"><span class="pre">namedtuple</span></code> class and data may only be inserted
 though prepared statements.</p>
-<p>See <a class="reference internal" href="user_defined_types.html#udts"><span>User Defined Types</span></a> for more details.</p>
+<p>See <a class="reference internal" href="user_defined_types.html#udts"><span class="std std-ref">User Defined Types</span></a> for more details.</p>
 </div>
 <div class="section" id="customizing-encoders-for-non-prepared-statements">
 <h3>Customizing Encoders for Non-prepared Statements<a class="headerlink" href="#customizing-encoders-for-non-prepared-statements" title="Permalink to this headline">¶</a></h3>
@@ -287,12 +284,12 @@ though prepared statements.</p>
 how Python types are converted to CQL literals when working with
 non-prepared statements.  This is done on a per-<a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session" title="cassandra.cluster.Session"><code class="xref py py-class docutils literal"><span class="pre">Session</span></code></a>
 basis through <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Session.encoder" title="cassandra.cluster.Session.encoder"><code class="xref py py-attr docutils literal"><span class="pre">Session.encoder</span></code></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="n">session</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">mapping</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">cql_encode_tuple</span>
 </pre></div>
 </div>
-<p>See <a class="reference internal" href="getting_started.html#type-conversions"><span>Type Conversions</span></a> for the table of default CQL literal conversions.</p>
+<p>See <a class="reference internal" href="getting_started.html#type-conversions"><span class="std std-ref">Type Conversions</span></a> for the table of default CQL literal conversions.</p>
 </div>
 <div class="section" id="using-client-side-protocol-level-timestamps">
 <h3>Using Client-Side Protocol-Level Timestamps<a class="headerlink" href="#using-client-side-protocol-level-timestamps" title="Permalink to this headline">¶</a></h3>
@@ -318,14 +315,14 @@ in 2.1 are not yet supported.</p>
 <p>By default, the driver will attempt to use version 2 of Cassandra&#8217;s
 native protocol. You can explicitly set the protocol version to
 2, though:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 
 <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>When working with Cassandra 1.2, you will need to
 explicitly set the <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version" title="cassandra.cluster.Cluster.protocol_version"><code class="xref py py-attr docutils literal"><span class="pre">protocol_version</span></code></a> to 1:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
 
 <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
@@ -335,7 +332,7 @@ explicitly set the <a class="reference internal" href="api/cassandra/cluster.htm
 <h3>Automatic Query Paging<a class="headerlink" href="#automatic-query-paging" title="Permalink to this headline">¶</a></h3>
 <p>Version 2 of the native protocol adds support for automatic query
 paging, which can make dealing with large result sets much simpler.</p>
-<p>See <a class="reference internal" href="query_paging.html#query-paging"><span>Paging Large Queries</span></a> for full details.</p>
+<p>See <a class="reference internal" href="query_paging.html#query-paging"><span class="std std-ref">Paging Large Queries</span></a> for full details.</p>
 </div>
 <div class="section" id="protocol-level-batch-statements">
 <h3>Protocol-Level Batch Statements<a class="headerlink" href="#protocol-level-batch-statements" title="Permalink to this headline">¶</a></h3>
@@ -349,7 +346,7 @@ statements within a single batch.</p>
 <div class="section" id="sasl-based-authentication">
 <h3>SASL-based Authentication<a class="headerlink" href="#sasl-based-authentication" title="Permalink to this headline">¶</a></h3>
 <p>Also new in version 2 of the native protocol is SASL-based authentication.
-See the section on <a class="reference internal" href="security.html#security"><span>Security</span></a> for details and examples.</p>
+See the section on <a class="reference internal" href="security.html#security"><span class="std std-ref">Security</span></a> for details and examples.</p>
 </div>
 <div class="section" id="lightweight-transactions">
 <h3>Lightweight Transactions<a class="headerlink" href="#lightweight-transactions" title="Permalink to this headline">¶</a></h3>
@@ -416,12 +413,12 @@ now:</p>
         <li class="right" >
           <a href="getting_started.html" title="Getting Started"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

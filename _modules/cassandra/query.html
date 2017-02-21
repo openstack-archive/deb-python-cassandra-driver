@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>cassandra.query &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="../../index.html" />
-    <link rel="up" title="cassandra" href="../cassandra.html" /> 
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -36,9 +37,9 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -46,14 +47,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -65,7 +63,7 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.query</h1><div class="highlight"><pre>
-<span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
+<span></span><span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -85,23 +83,23 @@
 <span class="sd">queries.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">struct</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">six</span>
-<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span><span class="p">,</span> <span class="nb">zip</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span><span class="p">,</span> <span class="nb">zip</span>
 
-<span class="kn">from</span> <span class="nn">cassandra</span> <span class="kn">import</span> <span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">OperationTimedOut</span>
-<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">unix_time_from_uuid1</span>
-<span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="kn">import</span> <span class="n">Encoder</span>
+<span class="kn">from</span> <span class="nn">cassandra</span> <span class="k">import</span> <span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">OperationTimedOut</span>
+<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="k">import</span> <span class="n">unix_time_from_uuid1</span>
+<span class="kn">from</span> <span class="nn">cassandra.encoder</span> <span class="k">import</span> <span class="n">Encoder</span>
 <span class="kn">import</span> <span class="nn">cassandra.encoder</span>
-<span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="kn">import</span> <span class="n">_UNSET_VALUE</span>
-<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">_sanitize_identifiers</span>
+<span class="kn">from</span> <span class="nn">cassandra.protocol</span> <span class="k">import</span> <span class="n">_UNSET_VALUE</span>
+<span class="kn">from</span> <span class="nn">cassandra.util</span> <span class="k">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">_sanitize_identifiers</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">UNSET_VALUE</span> <span class="o">=</span> <span class="n">_UNSET_VALUE</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -236,14 +234,14 @@
 <span class="sd">    These can be passed to :meth:`.Session.execute()`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">retry_policy</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">retry_policy</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An instance of a :class:`cassandra.policies.RetryPolicy` or one of its</span>
 <span class="sd">    subclasses.  This controls when a query will be retried and how it</span>
 <span class="sd">    will be retried.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">consistency_level</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The :class:`.ConsistencyLevel` to be used for this operation.  Defaults</span>
 <span class="sd">    to :const:`None`, which means that the default consistency level for</span>
@@ -261,7 +259,7 @@
 <span class="sd">    .. versionadded:: 2.0.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">keyspace</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The string name of the keyspace this query acts on. This is used when</span>
 <span class="sd">    :class:`~.TokenAwarePolicy` is configured for</span>
@@ -273,7 +271,7 @@
 <span class="sd">    .. versionadded:: 2.1.3</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">custom_payload</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">custom_payload</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :ref:`custom_payload` to be passed to the server.</span>
 
@@ -282,30 +280,30 @@
 <span class="sd">    .. versionadded:: 2.6.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">is_idempotent</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">is_idempotent</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Flag indicating whether this statement is safe to run multiple times in speculative execution.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_serial_consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_routing_key</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_serial_consistency_level</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_routing_key</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="n">FETCH_SIZE_UNSET</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">custom_payload</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">is_idempotent</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">serial_consistency_level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="n">FETCH_SIZE_UNSET</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">custom_payload</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">is_idempotent</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">retry_policy</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">retry_policy</span><span class="p">,</span> <span class="s1">&#39;on_read_timeout&#39;</span><span class="p">):</span>  <span class="c1"># just checking one method to detect positional parameter errors</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;retry_policy should implement cassandra.policies.RetryPolicy&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">retry_policy</span> <span class="o">=</span> <span class="n">retry_policy</span>
-        <span class="k">if</span> <span class="n">consistency_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">consistency_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span> <span class="o">=</span> <span class="n">consistency_level</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="n">routing_key</span>
-        <span class="k">if</span> <span class="n">serial_consistency_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">serial_consistency_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="n">serial_consistency_level</span>
         <span class="k">if</span> <span class="n">fetch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">FETCH_SIZE_UNSET</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fetch_size</span> <span class="o">=</span> <span class="n">fetch_size</span>
-        <span class="k">if</span> <span class="n">keyspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">keyspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
-        <span class="k">if</span> <span class="n">custom_payload</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">custom_payload</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">custom_payload</span> <span class="o">=</span> <span class="n">custom_payload</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_idempotent</span> <span class="o">=</span> <span class="n">is_idempotent</span>
 
@@ -322,12 +320,12 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="n">b</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_parts_packed</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_parts_packed</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="n">key</span>
 
     <span class="k">def</span> <span class="nf">_del_routing_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">routing_key</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span>
         <span class="n">_get_routing_key</span><span class="p">,</span>
@@ -346,7 +344,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serial_consistency_level</span>
 
     <span class="k">def</span> <span class="nf">_set_serial_consistency_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial_consistency_level</span><span class="p">):</span>
-        <span class="n">acceptable</span> <span class="o">=</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">SERIAL</span><span class="p">,</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">LOCAL_SERIAL</span><span class="p">)</span>
+        <span class="n">acceptable</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">SERIAL</span><span class="p">,</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">LOCAL_SERIAL</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">serial_consistency_level</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">acceptable</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;serial_consistency_level must be either ConsistencyLevel.SERIAL &quot;</span>
@@ -354,7 +352,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_serial_consistency_level</span> <span class="o">=</span> <span class="n">serial_consistency_level</span>
 
     <span class="k">def</span> <span class="nf">_del_serial_consistency_level</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_serial_consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_serial_consistency_level</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span>
         <span class="n">_get_serial_consistency_level</span><span class="p">,</span>
@@ -400,9 +398,9 @@
 <span class="sd">    A simple, un-prepared query.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="n">FETCH_SIZE_UNSET</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">custom_payload</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">is_idempotent</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">serial_consistency_level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="n">FETCH_SIZE_UNSET</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">custom_payload</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_idempotent</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        `query_string` should be a literal CQL statement with the exception</span>
 <span class="sd">        of parameter placeholders that will be filled through the</span>
@@ -410,7 +408,7 @@
 
 <span class="sd">        See :class:`Statement` attributes for a description of the other parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">Statement</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="p">,</span> <span class="n">consistency_level</span><span class="p">,</span> <span class="n">routing_key</span><span class="p">,</span>
+        <span class="n">Statement</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="p">,</span> <span class="n">consistency_level</span><span class="p">,</span> <span class="n">routing_key</span><span class="p">,</span>
                            <span class="n">serial_consistency_level</span><span class="p">,</span> <span class="n">fetch_size</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">custom_payload</span><span class="p">,</span> <span class="n">is_idempotent</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_query_string</span> <span class="o">=</span> <span class="n">query_string</span>
 
@@ -420,9 +418,9 @@
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">,</span> <span class="s1">&#39;Not Set&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="s1">u&#39;&lt;SimpleStatement query=&quot;</span><span class="si">%s</span><span class="s1">&quot;, consistency=</span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">u</span><span class="s1">&#39;&lt;SimpleStatement query=&quot;</span><span class="si">%s</span><span class="s1">&quot;, consistency=</span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span>
                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query_string</span><span class="p">,</span> <span class="n">consistency</span><span class="p">))</span>
-    <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span></div>
+    <span class="fm">__repr__</span> <span class="o">=</span> <span class="fm">__str__</span></div>
 
 
 <div class="viewcode-block" id="PreparedStatement"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.PreparedStatement">[docs]</a><span class="k">class</span> <span class="nc">PreparedStatement</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -435,18 +433,18 @@
 <span class="sd">    may affect performance (as the operation requires a network roundtrip).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">column_metadata</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c1">#TODO: make this bind_metadata in next major</span>
-    <span class="n">consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">custom_payload</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">column_metadata</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1">#TODO: make this bind_metadata in next major</span>
+    <span class="n">consistency_level</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">custom_payload</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">fetch_size</span> <span class="o">=</span> <span class="n">FETCH_SIZE_UNSET</span>
-    <span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c1"># change to prepared_keyspace in major release</span>
-    <span class="n">protocol_version</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">query_id</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">query_string</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">result_metadata</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_routing_key_index_set</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">keyspace</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># change to prepared_keyspace in major release</span>
+    <span class="n">protocol_version</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">query_id</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">query_string</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">result_metadata</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_routing_key_index_set</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">routing_key_indexes</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span>
                  <span class="n">keyspace</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">result_metadata</span><span class="p">):</span>
@@ -457,18 +455,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">keyspace</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">protocol_version</span> <span class="o">=</span> <span class="n">protocol_version</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">result_metadata</span> <span class="o">=</span> <span class="n">result_metadata</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_idempotent</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_idempotent</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_message</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">pk_indexes</span><span class="p">,</span> <span class="n">cluster_metadata</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">from_message</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">column_metadata</span><span class="p">,</span> <span class="n">pk_indexes</span><span class="p">,</span> <span class="n">cluster_metadata</span><span class="p">,</span>
                      <span class="n">query</span><span class="p">,</span> <span class="n">prepared_keyspace</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">result_metadata</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">column_metadata</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">PreparedStatement</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">prepared_keyspace</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">result_metadata</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">PreparedStatement</span><span class="p">(</span><span class="n">column_metadata</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">prepared_keyspace</span><span class="p">,</span> <span class="n">protocol_version</span><span class="p">,</span> <span class="n">result_metadata</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">pk_indexes</span><span class="p">:</span>
             <span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="n">pk_indexes</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="n">routing_key_indexes</span> <span class="o">=</span> <span class="kc">None</span>
 
             <span class="n">first_col</span> <span class="o">=</span> <span class="n">column_metadata</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">ks_meta</span> <span class="o">=</span> <span class="n">cluster_metadata</span><span class="o">.</span><span class="n">keyspaces</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">first_col</span><span class="o">.</span><span class="n">keyspace_name</span><span class="p">)</span>
@@ -499,15 +497,15 @@
         <span class="k">return</span> <span class="n">BoundStatement</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">is_routing_key_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key_index_set</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key_index_set</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key_index_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">routing_key_indexes</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing_key_indexes</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key_index_set</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">,</span> <span class="s1">&#39;Not Set&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="s1">u&#39;&lt;PreparedStatement query=&quot;</span><span class="si">%s</span><span class="s1">&quot;, consistency=</span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">u</span><span class="s1">&#39;&lt;PreparedStatement query=&quot;</span><span class="si">%s</span><span class="s1">&quot;, consistency=</span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span>
                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query_string</span><span class="p">,</span> <span class="n">consistency</span><span class="p">))</span>
-    <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span></div>
+    <span class="fm">__repr__</span> <span class="o">=</span> <span class="fm">__str__</span></div>
 
 
 <div class="viewcode-block" id="BoundStatement"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.BoundStatement">[docs]</a><span class="k">class</span> <span class="nc">BoundStatement</span><span class="p">(</span><span class="n">Statement</span><span class="p">):</span>
@@ -516,19 +514,19 @@
 <span class="sd">    These may be created directly or through :meth:`.PreparedStatement.bind()`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">prepared_statement</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">prepared_statement</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The :class:`PreparedStatement` instance that this was created from.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">values</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The sequence of values that were bound to the prepared statement.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prepared_statement</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="n">FETCH_SIZE_UNSET</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">custom_payload</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prepared_statement</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">serial_consistency_level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="n">FETCH_SIZE_UNSET</span><span class="p">,</span> <span class="n">keyspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">custom_payload</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        `prepared_statement` should be an instance of :class:`PreparedStatement`.</span>
 
@@ -547,7 +545,7 @@
         <span class="k">if</span> <span class="n">meta</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keyspace_name</span>
 
-        <span class="n">Statement</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="p">,</span> <span class="n">consistency_level</span><span class="p">,</span> <span class="n">routing_key</span><span class="p">,</span>
+        <span class="n">Statement</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="p">,</span> <span class="n">consistency_level</span><span class="p">,</span> <span class="n">routing_key</span><span class="p">,</span>
                            <span class="n">serial_consistency_level</span><span class="p">,</span> <span class="n">fetch_size</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">custom_payload</span><span class="p">)</span>
 
 <div class="viewcode-block" id="BoundStatement.bind"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.BoundStatement.bind">[docs]</a>    <span class="k">def</span> <span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
@@ -570,7 +568,7 @@
 
 <span class="sd">            method will not throw if extra keys are present in bound dict (PYTHON-178)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">()</span>
         <span class="n">proto_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">protocol_version</span>
         <span class="n">col_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">column_metadata</span>
@@ -611,8 +609,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">raw_values</span> <span class="o">=</span> <span class="n">values</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">col_spec</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">col_meta</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">UNSET_VALUE</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">proto_version</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_append_unset_value</span><span class="p">()</span>
@@ -645,24 +643,24 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">routing_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">routing_key_indexes</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span>
 
         <span class="n">routing_indexes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">routing_key_indexes</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">routing_indexes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">routing_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="n">b</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_parts_packed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">routing_indexes</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_parts_packed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">routing_indexes</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_routing_key</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">,</span> <span class="s1">&#39;Not Set&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="s1">u&#39;&lt;BoundStatement query=&quot;</span><span class="si">%s</span><span class="s1">&quot;, values=</span><span class="si">%s</span><span class="s1">, consistency=</span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">u</span><span class="s1">&#39;&lt;BoundStatement query=&quot;</span><span class="si">%s</span><span class="s1">&quot;, values=</span><span class="si">%s</span><span class="s1">, consistency=</span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span>
                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">query_string</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_values</span><span class="p">,</span> <span class="n">consistency</span><span class="p">))</span>
-    <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span></div>
+    <span class="fm">__repr__</span> <span class="o">=</span> <span class="fm">__str__</span></div>
 
 
 <div class="viewcode-block" id="BatchType"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.BatchType">[docs]</a><span class="k">class</span> <span class="nc">BatchType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -673,17 +671,17 @@
 <span class="sd">    .. versionadded:: 2.0.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">LOGGED</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">LOGGED</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Atomic batch operation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">UNLOGGED</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">UNLOGGED</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Non-atomic batch operation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">COUNTER</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">COUNTER</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Batches of counter operations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -712,24 +710,24 @@
 <span class="sd">    .. versionadded:: 2.0.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">batch_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">batch_type</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The :class:`.BatchType` for the batch operation.  Defaults to</span>
 <span class="sd">    :attr:`.BatchType.LOGGED`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">serial_consistency_level</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The same as :attr:`.Statement.serial_consistency_level`, but is only</span>
 <span class="sd">    supported when using protocol version 3 or higher.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_statements_and_parameters</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_session</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_statements_and_parameters</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_session</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_type</span><span class="o">=</span><span class="n">BatchType</span><span class="o">.</span><span class="n">LOGGED</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">serial_consistency_level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">session</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">custom_payload</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_type</span><span class="o">=</span><span class="n">BatchType</span><span class="o">.</span><span class="n">LOGGED</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">consistency_level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">serial_consistency_level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">custom_payload</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        `batch_type` specifies The :class:`.BatchType` for the batch operation.</span>
 <span class="sd">        Defaults to :attr:`.BatchType.LOGGED`.</span>
@@ -777,7 +775,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_type</span> <span class="o">=</span> <span class="n">batch_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">session</span>
-        <span class="n">Statement</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="n">retry_policy</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">consistency_level</span><span class="p">,</span>
+        <span class="n">Statement</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retry_policy</span><span class="o">=</span><span class="n">retry_policy</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">consistency_level</span><span class="p">,</span>
                            <span class="n">serial_consistency_level</span><span class="o">=</span><span class="n">serial_consistency_level</span><span class="p">,</span> <span class="n">custom_payload</span><span class="o">=</span><span class="n">custom_payload</span><span class="p">)</span>
 
 <div class="viewcode-block" id="BatchStatement.clear"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.BatchStatement.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -788,12 +786,12 @@
 <span class="sd">        ``BatchStatement``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="p">[:]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">routing_key</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routing_key</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_payload</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">custom_payload</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="BatchStatement.add"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.BatchStatement.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="BatchStatement.add"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.BatchStatement.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Adds a :class:`.Statement` and optional sequence of parameters</span>
 <span class="sd">        to be used with the statement to the batch.</span>
@@ -803,29 +801,29 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
-                <span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoder</span>
+                <span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoder</span>
                 <span class="n">statement</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">encoder</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="p">())</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">PreparedStatement</span><span class="p">):</span>
             <span class="n">query_id</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">query_id</span>
-            <span class="n">bound_statement</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">bind</span><span class="p">(()</span> <span class="k">if</span> <span class="n">parameters</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">parameters</span><span class="p">)</span>
+            <span class="n">bound_statement</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">bind</span><span class="p">(()</span> <span class="k">if</span> <span class="n">parameters</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">parameters</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_state</span><span class="p">(</span><span class="n">bound_statement</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">bound_statement</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">query_id</span><span class="p">,</span> <span class="n">bound_statement</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">BoundStatement</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">&quot;Parameters cannot be passed with a BoundStatement &quot;</span>
                     <span class="s2">&quot;to BatchStatement.add()&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_state</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">statement</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">query_id</span><span class="p">,</span> <span class="n">statement</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">statement</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">query_id</span><span class="p">,</span> <span class="n">statement</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># it must be a SimpleStatement</span>
             <span class="n">query_string</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">query_string</span>
             <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
-                <span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoder</span>
+                <span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">encoder</span>
                 <span class="n">query_string</span> <span class="o">=</span> <span class="n">bind_params</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">encoder</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_state</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_statement_and_params</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="p">())</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="BatchStatement.add_all"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.BatchStatement.add_all">[docs]</a>    <span class="k">def</span> <span class="nf">add_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statements</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
@@ -843,14 +841,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">is_prepared</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">parameters</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">_maybe_set_routing_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing_key</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">statement</span><span class="o">.</span><span class="n">keyspace</span> <span class="ow">and</span> <span class="n">statement</span><span class="o">.</span><span class="n">routing_key</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">routing_key</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">routing_key</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span> <span class="o">=</span> <span class="n">statement</span><span class="o">.</span><span class="n">keyspace</span>
 
     <span class="k">def</span> <span class="nf">_update_custom_payload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">statement</span><span class="o">.</span><span class="n">custom_payload</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_payload</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_payload</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">custom_payload</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">custom_payload</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">statement</span><span class="o">.</span><span class="n">custom_payload</span><span class="p">)</span>
 
@@ -858,11 +856,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_set_routing_attributes</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_custom_payload</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">consistency</span> <span class="o">=</span> <span class="n">ConsistencyLevel</span><span class="o">.</span><span class="n">value_to_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">consistency_level</span><span class="p">,</span> <span class="s1">&#39;Not Set&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="s1">u&#39;&lt;BatchStatement type=</span><span class="si">%s</span><span class="s1">, statements=</span><span class="si">%d</span><span class="s1">, consistency=</span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span>
-                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_type</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_statements_and_parameters</span><span class="p">),</span> <span class="n">consistency</span><span class="p">))</span>
-    <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span></div>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">u</span><span class="s1">&#39;&lt;BatchStatement type=</span><span class="si">%s</span><span class="s1">, statements=</span><span class="si">%d</span><span class="s1">, consistency=</span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_type</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">consistency</span><span class="p">))</span>
+    <span class="fm">__repr__</span> <span class="o">=</span> <span class="fm">__str__</span></div>
 
 
 <span class="n">ValueSequence</span> <span class="o">=</span> <span class="n">cassandra</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">ValueSequence</span>
@@ -903,48 +904,48 @@
 <span class="sd">    an operation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">trace_id</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">trace_id</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :class:`uuid.UUID` unique identifier for this tracing session.  Matches</span>
 <span class="sd">    the ``session_id`` column in ``system_traces.sessions`` and</span>
 <span class="sd">    ``system_traces.events``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">request_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">request_type</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A string that very generally describes the traced operation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">duration</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A :class:`datetime.timedelta` measure of the duration of the query.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">client</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The IP address of the client that issued this request</span>
 
 <span class="sd">    This is only available when using Cassandra 2.2+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">coordinator</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">coordinator</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The IP address of the host that acted as coordinator for this request.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">parameters</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">parameters</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A :class:`dict` of parameters for the traced operation, such as the</span>
 <span class="sd">    specific query string.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">started_at</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">started_at</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A UTC :class:`datetime.datetime` object describing when the operation</span>
 <span class="sd">    was started.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">events</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">events</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A chronologically sorted list of :class:`.TraceEvent` instances</span>
 <span class="sd">    representing the steps the traced operation went through.  This</span>
@@ -952,7 +953,7 @@
 <span class="sd">    session.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_session</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_session</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">_SELECT_SESSIONS_FORMAT</span> <span class="o">=</span> <span class="s2">&quot;SELECT * FROM system_traces.sessions WHERE session_id = </span><span class="si">%s</span><span class="s2">&quot;</span>
     <span class="n">_SELECT_EVENTS_FORMAT</span> <span class="o">=</span> <span class="s2">&quot;SELECT * FROM system_traces.events WHERE session_id = </span><span class="si">%s</span><span class="s2">&quot;</span>
@@ -962,7 +963,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span> <span class="o">=</span> <span class="n">trace_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">session</span>
 
-<div class="viewcode-block" id="QueryTrace.populate"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.QueryTrace.populate">[docs]</a>    <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_wait</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">wait_for_complete</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">query_cl</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="QueryTrace.populate"><a class="viewcode-back" href="../../api/cassandra/query.html#cassandra.cluster.QueryTrace.populate">[docs]</a>    <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_wait</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">wait_for_complete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">query_cl</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Retrieves the actual tracing details from Cassandra and populates the</span>
 <span class="sd">        attributes of this instance.  Because tracing details are stored</span>
@@ -979,9 +980,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">attempt</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">time_spent</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-            <span class="k">if</span> <span class="n">max_wait</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">time_spent</span> <span class="o">&gt;=</span> <span class="n">max_wait</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">max_wait</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">time_spent</span> <span class="o">&gt;=</span> <span class="n">max_wait</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">TraceUnavailable</span><span class="p">(</span>
                     <span class="s2">&quot;Trace information was not available within </span><span class="si">%f</span><span class="s2"> seconds. Consider raising Session.max_trace_wait.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">max_wait</span><span class="p">,))</span>
 
@@ -989,7 +990,7 @@
             <span class="n">session_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span>
                 <span class="n">SimpleStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SESSIONS_FORMAT</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">query_cl</span><span class="p">),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,),</span> <span class="n">time_spent</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">)</span>
 
-            <span class="n">is_complete</span> <span class="o">=</span> <span class="n">session_results</span> <span class="ow">and</span> <span class="n">session_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">duration</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+            <span class="n">is_complete</span> <span class="o">=</span> <span class="n">session_results</span> <span class="ow">and</span> <span class="n">session_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">duration</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">session_results</span> <span class="ow">or</span> <span class="p">(</span><span class="n">wait_for_complete</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_complete</span><span class="p">):</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_BASE_RETRY_SLEEP</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">attempt</span><span class="p">))</span>
                 <span class="n">attempt</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -1001,12 +1002,12 @@
 
             <span class="n">session_row</span> <span class="o">=</span> <span class="n">session_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">request_type</span> <span class="o">=</span> <span class="n">session_row</span><span class="o">.</span><span class="n">request</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="n">session_row</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_complete</span> <span class="k">else</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="n">session_row</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_complete</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="o">=</span> <span class="n">session_row</span><span class="o">.</span><span class="n">started_at</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span> <span class="o">=</span> <span class="n">session_row</span><span class="o">.</span><span class="n">coordinator</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">session_row</span><span class="o">.</span><span class="n">parameters</span>
             <span class="c1"># since C* 2.2</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">session_row</span><span class="p">,</span> <span class="s1">&#39;client&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">session_row</span><span class="p">,</span> <span class="s1">&#39;client&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Attempting to fetch trace events for trace ID: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">)</span>
             <span class="n">time_spent</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
@@ -1018,8 +1019,8 @@
             <span class="k">break</span></div>
 
     <span class="k">def</span> <span class="nf">_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">time_spent</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">):</span>
-        <span class="n">timeout</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_wait</span> <span class="o">-</span> <span class="n">time_spent</span><span class="p">)</span> <span class="k">if</span> <span class="n">max_wait</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">None</span>
-        <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">_create_response_future</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">custom_payload</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="n">timeout</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_wait</span> <span class="o">-</span> <span class="n">time_spent</span><span class="p">)</span> <span class="k">if</span> <span class="n">max_wait</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">_create_response_future</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">custom_payload</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
         <span class="c1"># in case the user switched the row factory, set it to namedtuple for this query</span>
         <span class="n">future</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">named_tuple_factory</span>
         <span class="n">future</span><span class="o">.</span><span class="n">send_request</span><span class="p">()</span>
@@ -1040,29 +1041,29 @@
 <span class="sd">    Representation of a single event within a query trace.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">description</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A brief description of the event.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">datetime</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A UTC :class:`datetime.datetime` marking when the event occurred.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">source</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The IP address of the node this event occurred on.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">source_elapsed</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">source_elapsed</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A :class:`datetime.timedelta` measuring the amount of time until</span>
 <span class="sd">    this event occurred starting from when :attr:`.source` first</span>
 <span class="sd">    received the query.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">thread_name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">thread_name</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The name of the thread that this event occurred on.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1071,10 +1072,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">description</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">unix_time_from_uuid1</span><span class="p">(</span><span class="n">timeuuid</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">source</span>
-        <span class="k">if</span> <span class="n">source_elapsed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">source_elapsed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">source_elapsed</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">microseconds</span><span class="o">=</span><span class="n">source_elapsed</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">source_elapsed</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source_elapsed</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">thread_name</span> <span class="o">=</span> <span class="n">thread_name</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1095,14 +1096,14 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

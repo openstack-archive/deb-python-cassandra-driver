@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.io.libevreactor &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>cassandra.io.libevreactor &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="../../../index.html" />
-    <link rel="up" title="cassandra" href="../../cassandra.html" /> 
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -36,9 +37,9 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -46,14 +47,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -65,7 +63,7 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.io.libevreactor</h1><div class="highlight"><pre>
-<span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
+<span></span><span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -79,22 +77,22 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="kn">import</span> <span class="nn">atexit</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">ssl</span>
-<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Lock</span><span class="p">,</span> <span class="n">Thread</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Lock</span><span class="p">,</span> <span class="n">Thread</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">weakref</span>
 
-<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
 
-<span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="n">ConnectionShutdown</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">cassandra.connection</span> <span class="k">import</span> <span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="n">ConnectionShutdown</span><span class="p">,</span>
                                   <span class="n">NONBLOCKING</span><span class="p">,</span> <span class="n">Timer</span><span class="p">,</span> <span class="n">TimerManager</span><span class="p">)</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">cassandra.io.libevwrapper</span> <span class="kn">as</span> <span class="nn">libev</span>
+    <span class="kn">import</span> <span class="nn">cassandra.io.libevwrapper</span> <span class="k">as</span> <span class="nn">libev</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
         <span class="s2">&quot;The C extension needed to use libev was not found.  This &quot;</span>
@@ -105,7 +103,7 @@
         <span class="s2">&quot;the C extension.&quot;</span><span class="p">)</span>
 
 
-<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_cleanup</span><span class="p">(</span><span class="n">loop_weakref</span><span class="p">):</span>
@@ -127,11 +125,11 @@
         <span class="c1"># prevent _notifier from keeping the loop from returning</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">unref</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="c1"># set of all connections; only replaced with a new copy</span>
         <span class="c1"># while holding _conn_set_lock, never modified in place</span>
@@ -153,22 +151,22 @@
         <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">_cleanup</span><span class="p">,</span> <span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
 
     <span class="k">def</span> <span class="nf">maybe_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">should_start</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">should_start</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_started</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Starting libev event loop&quot;</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="bp">True</span>
-                <span class="n">should_start</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">should_start</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">if</span> <span class="n">should_start</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_loop</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;event_loop&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_notifier</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_run_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
             <span class="c1"># there are still active watchers, no deadlock</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
@@ -178,11 +176,11 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="c1"># all Connections have been closed, no active watchers</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;All Connections currently closed, event loop ended&quot;</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="kc">False</span>
                     <span class="k">break</span>
 
     <span class="k">def</span> <span class="nf">_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="p">:</span>
             <span class="k">return</span>
 
@@ -241,17 +239,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_notifier</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_loop_will_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prepare</span><span class="p">):</span>
-        <span class="n">changed</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_live_conns</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">conn</span><span class="o">.</span><span class="n">deque</span> <span class="ow">and</span> <span class="n">conn</span><span class="o">.</span><span class="n">_write_watcher_is_active</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">conn</span><span class="o">.</span><span class="n">_write_watcher</span><span class="p">:</span>
                     <span class="n">conn</span><span class="o">.</span><span class="n">_write_watcher</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
-                <span class="n">conn</span><span class="o">.</span><span class="n">_write_watcher_is_active</span> <span class="o">=</span> <span class="bp">False</span>
-                <span class="n">changed</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">_write_watcher_is_active</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">elif</span> <span class="n">conn</span><span class="o">.</span><span class="n">deque</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">conn</span><span class="o">.</span><span class="n">_write_watcher_is_active</span><span class="p">:</span>
                 <span class="n">conn</span><span class="o">.</span><span class="n">_write_watcher</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-                <span class="n">conn</span><span class="o">.</span><span class="n">_write_watcher_is_active</span> <span class="o">=</span> <span class="bp">True</span>
-                <span class="n">changed</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">_write_watcher_is_active</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new_conns</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn_set_lock</span><span class="p">:</span>
@@ -261,7 +259,7 @@
             <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="n">to_start</span><span class="p">:</span>
                 <span class="n">conn</span><span class="o">.</span><span class="n">_read_watcher</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
-            <span class="n">changed</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closed_conns</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn_set_lock</span><span class="p">:</span>
@@ -278,7 +276,7 @@
                     <span class="c1"># clear reference cycles from IO callback</span>
                     <span class="k">del</span> <span class="n">conn</span><span class="o">.</span><span class="n">_read_watcher</span>
 
-            <span class="n">changed</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="c1"># TODO: update to do connection management, timer updates through dedicated async &#39;notifier&#39; callbacks</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_timer</span><span class="p">()</span>
@@ -291,36 +289,36 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An implementation of :class:`.Connection` that uses libev for its event loop.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_libevloop</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_write_watcher_is_active</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="n">_read_watcher</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_write_watcher</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_socket</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_libevloop</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_write_watcher_is_active</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">_read_watcher</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_write_watcher</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_socket</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">initialize_reactor</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">cls</span><span class="o">.</span><span class="n">_libevloop</span><span class="p">:</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">_libevloop</span> <span class="o">=</span> <span class="n">LibevLoop</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">initialize_reactor</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_libevloop</span><span class="p">:</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_libevloop</span> <span class="o">=</span> <span class="n">LibevLoop</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">_libevloop</span><span class="o">.</span><span class="n">_pid</span> <span class="o">!=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_libevloop</span><span class="o">.</span><span class="n">_pid</span> <span class="o">!=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">():</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Detected fork, clearing and reinitializing reactor state&quot;</span><span class="p">)</span>
-                <span class="n">cls</span><span class="o">.</span><span class="n">handle_fork</span><span class="p">()</span>
-                <span class="n">cls</span><span class="o">.</span><span class="n">_libevloop</span> <span class="o">=</span> <span class="n">LibevLoop</span><span class="p">()</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">handle_fork</span><span class="p">()</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">_libevloop</span> <span class="o">=</span> <span class="n">LibevLoop</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">handle_fork</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">_libevloop</span><span class="p">:</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">_libevloop</span><span class="o">.</span><span class="n">_cleanup</span><span class="p">()</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">_libevloop</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">def</span> <span class="nf">handle_fork</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_libevloop</span><span class="p">:</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_libevloop</span><span class="o">.</span><span class="n">_cleanup</span><span class="p">()</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_libevloop</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">create_timer</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">create_timer</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
         <span class="n">timer</span> <span class="o">=</span> <span class="n">Timer</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">_libevloop</span><span class="o">.</span><span class="n">add_timer</span><span class="p">(</span><span class="n">timer</span><span class="p">)</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_libevloop</span><span class="o">.</span><span class="n">add_timer</span><span class="p">(</span><span class="n">timer</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">timer</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">Connection</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">Connection</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">deque</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_deque_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
@@ -342,7 +340,7 @@
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span><span class="p">:</span>
                 <span class="k">return</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Closing connection (</span><span class="si">%s</span><span class="s2">) to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_libevloop</span><span class="o">.</span><span class="n">connection_destroyed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -354,7 +352,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">error_all_requests</span><span class="p">(</span>
                 <span class="n">ConnectionShutdown</span><span class="p">(</span><span class="s2">&quot;Connection to </span><span class="si">%s</span><span class="s2"> was closed&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">handle_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">watcher</span><span class="p">,</span> <span class="n">revents</span><span class="p">,</span> <span class="n">errno</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">watcher</span><span class="p">,</span> <span class="n">revents</span><span class="p">,</span> <span class="n">errno</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">revents</span> <span class="o">&amp;</span> <span class="n">libev</span><span class="o">.</span><span class="n">EV_ERROR</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">errno</span><span class="p">:</span>
                 <span class="n">exc</span> <span class="o">=</span> <span class="ne">IOError</span><span class="p">(</span><span class="n">errno</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">))</span>
@@ -364,7 +362,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
             <span class="k">return</span>
 
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deque_lock</span><span class="p">:</span>
                     <span class="n">next_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deque</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
@@ -385,7 +383,7 @@
                     <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deque_lock</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">deque</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span><span class="n">next_msg</span><span class="p">[</span><span class="n">sent</span><span class="p">:])</span>
 
-    <span class="k">def</span> <span class="nf">handle_read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">watcher</span><span class="p">,</span> <span class="n">revents</span><span class="p">,</span> <span class="n">errno</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle_read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">watcher</span><span class="p">,</span> <span class="n">revents</span><span class="p">,</span> <span class="n">errno</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">revents</span> <span class="o">&amp;</span> <span class="n">libev</span><span class="o">.</span><span class="n">EV_ERROR</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">errno</span><span class="p">:</span>
                 <span class="n">exc</span> <span class="o">=</span> <span class="ne">IOError</span><span class="p">(</span><span class="n">errno</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">))</span>
@@ -395,7 +393,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
             <span class="k">return</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
                 <span class="n">buf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_socket</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_buffer_size</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_buffer_size</span><span class="p">:</span>
@@ -443,14 +441,14 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

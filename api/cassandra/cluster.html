@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster - Clusters and Sessions &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>cassandra.cluster - Clusters and Sessions &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="../../index.html" />
-    <link rel="up" title="API Documentation" href="../index.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="cassandra.policies - Load balancing and Failure Handling Policies" href="policies.html" />
     <link rel="prev" title="cassandra - Exceptions and Enums" href="../cassandra.html" /> 
   </head>
@@ -44,8 +45,8 @@
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -59,21 +60,18 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../_sources/api/cassandra/cluster.txt"
+      <li><a href="../../_sources/api/cassandra/cluster.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -93,7 +91,7 @@
 Typically, one instance of this class will be created for each
 separate Cassandra cluster that your application interacts with.</p>
 <p>Example usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Cluster</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="k">import</span> <span class="n">Cluster</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">([</span><span class="s1">&#39;192.168.1.1&#39;</span><span class="p">,</span> <span class="s1">&#39;192.168.1.2&#39;</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE KEYSPACE ...&quot;</span><span class="p">)</span>
@@ -135,51 +133,12 @@ server will be automatically used.</p>
 <dt id="cassandra.cluster.Cluster.protocol_version">
 <code class="descname">protocol_version</code><em class="property"> = 4</em><a class="headerlink" href="#cassandra.cluster.Cluster.protocol_version" title="Permalink to this definition">¶</a></dt>
 <dd><p>The maximum version of the native protocol to use.</p>
+<p>See <a class="reference internal" href="../cassandra.html#cassandra.ProtocolVersion" title="cassandra.ProtocolVersion"><code class="xref py py-class docutils literal"><span class="pre">ProtocolVersion</span></code></a> for more information about versions.</p>
 <p>If not set in the constructor, the driver will automatically downgrade
 version based on a negotiation with the server, but it is most efficient
 to set this to the maximum supported by your version of Cassandra.
 Setting this will also prevent conflicting versions negotiated if your
 cluster is upgraded.</p>
-<p>Version 2 of the native protocol adds support for lightweight transactions,
-batch operations, and automatic query paging. The v2 protocol is
-supported by Cassandra 2.0+.</p>
-<p>Version 3 of the native protocol adds support for protocol-level
-client-side timestamps (see <a class="reference internal" href="#cassandra.cluster.Session.use_client_timestamp" title="cassandra.cluster.Session.use_client_timestamp"><code class="xref py py-attr docutils literal"><span class="pre">Session.use_client_timestamp</span></code></a>),
-serial consistency levels for <a class="reference internal" href="query.html#cassandra.query.BatchStatement" title="cassandra.query.BatchStatement"><code class="xref py py-class docutils literal"><span class="pre">BatchStatement</span></code></a>, and an
-improved connection pool.</p>
-<p>Version 4 of the native protocol adds a number of new types, server warnings,
-new failure messages, and custom payloads. Details in the
-<a class="reference external" href="https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v4.spec">project docs</a></p>
-<p>The following table describes the native protocol versions that
-are supported by each version of Cassandra:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="50%" />
-<col width="50%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Cassandra Version</th>
-<th class="head">Protocol Versions</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>1.2</td>
-<td>1</td>
-</tr>
-<tr class="row-odd"><td>2.0</td>
-<td>1, 2</td>
-</tr>
-<tr class="row-even"><td>2.1</td>
-<td>1, 2, 3</td>
-</tr>
-<tr class="row-odd"><td>2.2</td>
-<td>1, 2, 3, 4</td>
-</tr>
-<tr class="row-even"><td>3.x</td>
-<td>3, 4</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="attribute">
@@ -256,13 +215,13 @@ to driver connection addresses.</p>
 <dt id="cassandra.cluster.Cluster.metrics_enabled">
 <code class="descname">metrics_enabled</code><em class="property"> = False</em><a class="headerlink" href="#cassandra.cluster.Cluster.metrics_enabled" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether or not metric collection is enabled.  If enabled, <a class="reference internal" href="#cassandra.cluster.Cluster.metrics" title="cassandra.cluster.Cluster.metrics"><code class="xref py py-attr docutils literal"><span class="pre">metrics</span></code></a>
-will be an instance of <code class="xref py py-class docutils literal"><span class="pre">Metrics</span></code>.</p>
+will be an instance of <a class="reference internal" href="metrics.html#cassandra.metrics.Metrics" title="cassandra.metrics.Metrics"><code class="xref py py-class docutils literal"><span class="pre">Metrics</span></code></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="cassandra.cluster.Cluster.metrics">
 <code class="descname">metrics</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.metrics" title="Permalink to this definition">¶</a></dt>
-<dd><p>An instance of <code class="xref py py-class docutils literal"><span class="pre">cassandra.metrics.Metrics</span></code> if <a class="reference internal" href="#cassandra.cluster.Cluster.metrics_enabled" title="cassandra.cluster.Cluster.metrics_enabled"><code class="xref py py-attr docutils literal"><span class="pre">metrics_enabled</span></code></a> is
+<dd><p>An instance of <a class="reference internal" href="metrics.html#cassandra.metrics.Metrics" title="cassandra.metrics.Metrics"><code class="xref py py-class docutils literal"><span class="pre">cassandra.metrics.Metrics</span></code></a> if <a class="reference internal" href="#cassandra.cluster.Cluster.metrics_enabled" title="cassandra.cluster.Cluster.metrics_enabled"><code class="xref py py-attr docutils literal"><span class="pre">metrics_enabled</span></code></a> is
 <code class="xref py py-const docutils literal"><span class="pre">True</span></code>, else <code class="xref py py-const docutils literal"><span class="pre">None</span></code>.</p>
 </dd></dl>
 
@@ -318,8 +277,8 @@ I/O with Cassandra.  These are the current options:</p>
 <ul class="simple">
 <li><a class="reference internal" href="io/asyncorereactor.html#cassandra.io.asyncorereactor.AsyncoreConnection" title="cassandra.io.asyncorereactor.AsyncoreConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.asyncorereactor.AsyncoreConnection</span></code></a></li>
 <li><a class="reference internal" href="io/libevreactor.html#cassandra.io.libevreactor.LibevConnection" title="cassandra.io.libevreactor.LibevConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.libevreactor.LibevConnection</span></code></a></li>
-<li><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.eventletreactor.EventletConnection</span></code> (requires monkey-patching - see doc for details)</li>
-<li><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.geventreactor.GeventConnection</span></code> (requires monkey-patching - see doc for details)</li>
+<li><a class="reference internal" href="io/eventletreactor.html#cassandra.io.eventletreactor.EventletConnection" title="cassandra.io.eventletreactor.EventletConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.eventletreactor.EventletConnection</span></code></a> (requires monkey-patching - see doc for details)</li>
+<li><a class="reference internal" href="io/geventreactor.html#cassandra.io.geventreactor.GeventConnection" title="cassandra.io.geventreactor.GeventConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.geventreactor.GeventConnection</span></code></a> (requires monkey-patching - see doc for details)</li>
 <li><a class="reference internal" href="io/twistedreactor.html#cassandra.io.twistedreactor.TwistedConnection" title="cassandra.io.twistedreactor.TwistedConnection"><code class="xref py py-class docutils literal"><span class="pre">cassandra.io.twistedreactor.TwistedConnection</span></code></a></li>
 </ul>
 <p>By default, <code class="docutils literal"><span class="pre">AsyncoreConnection</span></code> will be used, which uses
@@ -429,6 +388,17 @@ in large clusters using vnodes, where the token map can be expensive to compute.
 gives away token aware request routing, and programmatic inspection of the token ring.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="cassandra.cluster.Cluster.timestamp_generator">
+<code class="descname">timestamp_generator</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Cluster.timestamp_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>An object, shared between all sessions created by this cluster instance,
+that generates timestamps when client-side timestamp generation is enabled.
+By default, each <a class="reference internal" href="#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code></a> uses a new
+<a class="reference internal" href="timestamps.html#cassandra.timestamps.MonotonicTimestampGenerator" title="cassandra.timestamps.MonotonicTimestampGenerator"><code class="xref py py-class docutils literal"><span class="pre">MonotonicTimestampGenerator</span></code></a>.</p>
+<p>Applications can set this value for custom timestamp behavior. See the
+documentation for <a class="reference internal" href="#cassandra.cluster.Session.timestamp_generator" title="cassandra.cluster.Session.timestamp_generator"><code class="xref py py-meth docutils literal"><span class="pre">Session.timestamp_generator()</span></code></a>.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="cassandra.cluster.Cluster.connect">
 <code class="descname">connect</code><span class="sig-paren">(</span><em>keyspace=None</em>, <em>wait_for_all_pools=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Cluster.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Cluster.connect" title="Permalink to this definition">¶</a></dt>
@@ -464,7 +434,7 @@ for each of the fields in the UDT.</p>
 <p>This method should only be called after the type has been created
 within Cassandra.</p>
 <p>Example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span><span class="n">protocol_version</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s1">&#39;mykeyspace&#39;</span><span class="p">)</span>
 <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE TYPE address (street text, zipcode int)&quot;</span><span class="p">)</span>
@@ -486,7 +456,7 @@ within Cassandra.</p>
 <span class="c1"># results will include Address instances</span>
 <span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
 <span class="n">row</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="k">print</span> <span class="n">row</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">street</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">zipcode</span>
+<span class="nb">print</span> <span class="n">row</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">street</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">zipcode</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -755,7 +725,7 @@ using <a class="reference internal" href="#cassandra.cluster.Cluster.connect" ti
 using the <a class="reference internal" href="#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">execute()</span></code></a> and <a class="reference internal" href="#cassandra.cluster.Session.execute_async" title="cassandra.cluster.Session.execute_async"><code class="xref py py-meth docutils literal"><span class="pre">execute_async()</span></code></a>
 methods.</p>
 <p>Example usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">session</span><span class="o">.</span><span class="n">set_keyspace</span><span class="p">(</span><span class="s2">&quot;mykeyspace&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
 </pre></div>
@@ -840,6 +810,27 @@ within a CQL query will override this timestamp.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="cassandra.cluster.Session.timestamp_generator">
+<code class="descname">timestamp_generator</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Session.timestamp_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>When <a class="reference internal" href="#cassandra.cluster.Session.use_client_timestamp" title="cassandra.cluster.Session.use_client_timestamp"><code class="xref py py-attr docutils literal"><span class="pre">use_client_timestamp</span></code></a> is set, sessions call this object and use
+the result as the timestamp.  (Note that timestamps specified within a CQL
+query will override this timestamp.)  By default, a new
+<a class="reference internal" href="timestamps.html#cassandra.timestamps.MonotonicTimestampGenerator" title="cassandra.timestamps.MonotonicTimestampGenerator"><code class="xref py py-class docutils literal"><span class="pre">MonotonicTimestampGenerator</span></code></a> is created for
+each <a class="reference internal" href="#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code></a> instance.</p>
+<p>Applications can set this value for custom timestamp behavior.  For
+example, an application could share a timestamp generator across
+<a class="reference internal" href="#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">Cluster</span></code></a> objects to guarantee that the application will use unique,
+increasing timestamps across clusters, or set it to to <code class="docutils literal"><span class="pre">lambda:</span>
+<span class="pre">int(time.time()</span> <span class="pre">*</span> <span class="pre">1e6)</span></code> if losing records over clock inconsistencies is
+acceptable for the application. Custom <a class="reference internal" href="#cassandra.cluster.Session.timestamp_generator" title="cassandra.cluster.Session.timestamp_generator"><code class="xref py py-attr docutils literal"><span class="pre">timestamp_generator</span></code></a> s should
+be callable, and calling them should return an integer representing seconds
+since some point in time, typically UNIX epoch.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 3.8.0.</span></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="cassandra.cluster.Session.encoder">
 <code class="descname">encoder</code><em class="property"> = None</em><a class="headerlink" href="#cassandra.cluster.Session.encoder" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="encoder.html#cassandra.encoder.Encoder" title="cassandra.encoder.Encoder"><code class="xref py py-class docutils literal"><span class="pre">Encoder</span></code></a> instance that will be used when
@@ -853,7 +844,7 @@ fit.  Methods of <a class="reference internal" href="encoder.html#cassandra.enco
 values if possible, because they take precautions to avoid injections and
 properly sanitize data.</p>
 <p>Example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">()</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;mykeyspace&quot;</span><span class="p">)</span>
 <span class="n">session</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">mapping</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">cql_encode_tuple</span>
 
@@ -873,7 +864,7 @@ properly sanitize data.</p>
 internal driver requests). This can be used to override or extend features such as
 message or type ser/des.</p>
 <p>The default pure python implementation is <code class="xref py py-class docutils literal"><span class="pre">cassandra.protocol.ProtocolHandler</span></code>.</p>
-<p>When compiled with Cython, there are also built-in faster alternatives. See <a class="reference internal" href="protocol.html#faster-deser"><span>Faster Deserialization</span></a></p>
+<p>When compiled with Cython, there are also built-in faster alternatives. See <a class="reference internal" href="protocol.html#faster-deser"><span class="std std-ref">Faster Deserialization</span></a></p>
 </dd></dl>
 
 <dl class="method">
@@ -895,7 +886,7 @@ no timeout. Please see <a class="reference internal" href="#cassandra.cluster.Re
 the scope and effect of this timeout.</p>
 <p>If <cite>trace</cite> is set to <code class="xref py py-const docutils literal"><span class="pre">True</span></code>, the query will be sent with tracing enabled.
 The trace details can be obtained using the returned <a class="reference internal" href="#cassandra.cluster.ResultSet" title="cassandra.cluster.ResultSet"><code class="xref py py-class docutils literal"><span class="pre">ResultSet</span></code></a> object.</p>
-<p><cite>custom_payload</cite> is a <a class="reference internal" href="protocol.html#custom-payload"><span>Custom Payloads</span></a> dict to be passed to the server.
+<p><cite>custom_payload</cite> is a <a class="reference internal" href="protocol.html#custom-payload"><span class="std std-ref">Custom Payloads</span></a> dict to be passed to the server.
 If <cite>query</cite> is a Statement with its own custom_payload. The message payload
 will be a union of the two, with the values specified here taking precedence.</p>
 <p><cite>execution_profile</cite> is the execution profile to use for this request. It can be a key to a profile configured
@@ -914,7 +905,7 @@ on the <a class="reference internal" href="#cassandra.cluster.ResponseFuture" ti
 any time.</p>
 <p>See <a class="reference internal" href="#cassandra.cluster.Session.execute" title="cassandra.cluster.Session.execute"><code class="xref py py-meth docutils literal"><span class="pre">Session.execute()</span></code></a> for parameter definitions.</p>
 <p>Example usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">log_results</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
@@ -928,7 +919,7 @@ any time.</p>
 </pre></div>
 </div>
 <p>Async execution with blocking wait for results:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># do other stuff...</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
@@ -944,20 +935,20 @@ any time.</p>
 <code class="descname">prepare</code><span class="sig-paren">(</span><em>statement</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.prepare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.prepare" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prepares a query string, returning a <a class="reference internal" href="query.html#cassandra.query.PreparedStatement" title="cassandra.query.PreparedStatement"><code class="xref py py-class docutils literal"><span class="pre">PreparedStatement</span></code></a>
 instance which can be used as follows:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;mykeyspace&quot;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;mykeyspace&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;INSERT INTO users (id, name, age) VALUES (?, ?, ?)&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">prepared</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">prepared</span><span class="p">,</span> <span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">age</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Or you may bind values to the prepared statement ahead of time:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">prepared</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prepared</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bound_stmt</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">age</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">bound_stmt</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Of course, prepared statements may (and should) be reused:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">prepared</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prepared</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="n">bound</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">age</span><span class="p">))</span>
 <span class="gp">... </span>    <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">bound</span><span class="p">)</span>
@@ -966,7 +957,7 @@ instance which can be used as follows:</p>
 <p><strong>Important</strong>: PreparedStatements should be prepared only once.
 Preparing the same query more than once will likely affect performance.</p>
 <p><cite>custom_payload</cite> is a key value map to be passed along with the prepare
-message. See <a class="reference internal" href="protocol.html#custom-payload"><span>Custom Payloads</span></a>.</p>
+message. See <a class="reference internal" href="protocol.html#custom-payload"><span class="std std-ref">Custom Payloads</span></a>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -988,7 +979,7 @@ This operation blocks until complete.</p>
 <code class="descname">execution_profile_clone_update</code><span class="sig-paren">(</span><em>ep</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/cluster.html#Session.execution_profile_clone_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cluster.Session.execution_profile_clone_update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a clone of the <code class="docutils literal"><span class="pre">ep</span></code> profile.  <code class="docutils literal"><span class="pre">kwargs</span></code> can be specified to update attributes
 of the returned profile.</p>
-<p>This is a shollow clone, so any objects referenced by the profile are shared. This means Load Balancing Policy
+<p>This is a shallow clone, so any objects referenced by the profile are shared. This means Load Balancing Policy
 is maintained by inclusion in the active profiles. It also means updating any other rich objects will be seen
 by the active profile. In cases where this is not desirable, be sure to replace the instance instead of manipulating
 the shared object.</p>
@@ -1053,7 +1044,7 @@ If the timeout is exceeded, an <a class="reference internal" href="../cassandra.
 This is a client-side timeout. For more information
 about server-side coordinator timeouts, see <a class="reference internal" href="policies.html#cassandra.policies.RetryPolicy" title="cassandra.policies.RetryPolicy"><code class="xref py py-class docutils literal"><span class="pre">policies.RetryPolicy</span></code></a>.</p>
 <p>Example usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mycf&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># do other stuff...</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
@@ -1097,7 +1088,7 @@ Otherwise it may throw if the response has not been received.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><a class="reference internal" href="protocol.html#custom-payload"><span>Custom Payloads</span></a>.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><a class="reference internal" href="protocol.html#custom-payload"><span class="std std-ref">Custom Payloads</span></a>.</td>
 </tr>
 </tbody>
 </table>
@@ -1165,15 +1156,15 @@ IO will be processed until the callback returns.</p>
 raised, <strong>the exception will be ignored</strong>, so please ensure your
 callback handles all error cases that you care about.</p>
 <p>Usage example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;mykeyspace&quot;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;mykeyspace&quot;</span><span class="p">)</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">handle_results</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">should_log</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">handle_results</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">should_log</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="k">if</span> <span class="n">should_log</span><span class="p">:</span>
 <span class="gp">... </span>        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Total time: </span><span class="si">%f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
 <span class="gp">... </span>    <span class="o">...</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">future</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="n">handle_results</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span> <span class="n">should_log</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">future</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="n">handle_results</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span> <span class="n">should_log</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -1192,7 +1183,7 @@ to <cite>fn</cite>.</p>
 <dd><p>A convenient combination of <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_callback" title="cassandra.cluster.ResponseFuture.add_callback"><code class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></code></a> and
 <a class="reference internal" href="#cassandra.cluster.ResponseFuture.add_errback" title="cassandra.cluster.ResponseFuture.add_errback"><code class="xref py py-meth docutils literal"><span class="pre">add_errback()</span></code></a>.</p>
 <p>Example usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT * FROM mycf&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 
@@ -1221,7 +1212,7 @@ the entire result set (loading all pages), and should only be used if the
 total result size is understood. Warnings are emitted when paged results
 are materialized in this fashion.</p>
 <p>You can treat this as a normal iterator over rows:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="kn">import</span> <span class="n">SimpleStatement</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="k">import</span> <span class="n">SimpleStatement</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">statement</span> <span class="o">=</span> <span class="n">SimpleStatement</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">,</span> <span class="n">fetch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">user_row</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">statement</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="n">process_user</span><span class="p">(</span><span class="n">user_row</span><span class="p">)</span>
@@ -1342,13 +1333,13 @@ against.</p>
         <li class="right" >
           <a href="../cassandra.html" title="cassandra - Exceptions and Enums"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.connection - Connection management for cqlengine &mdash; Cassandra Driver 3.7.0 documentation</title>
+    <title>cassandra.cqlengine.connection - Connection management for cqlengine &#8212; Cassandra Driver 3.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.7.0',
+        VERSION:     '3.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Cassandra Driver 3.7.0 documentation" href="../../../index.html" />
-    <link rel="up" title="API Documentation" href="../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
     <link rel="next" title="cassandra.cqlengine.management - Schema management for cqlengine" href="management.html" />
     <link rel="prev" title="cassandra.cqlengine.query - Query and filter model objects" href="query.html" /> 
   </head>
@@ -44,8 +45,8 @@
         <li class="right" >
           <a href="query.html" title="cassandra.cqlengine.query - Query and filter model objects"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">API Documentation</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -59,21 +60,18 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../../_sources/api/cassandra/cqlengine/connection.txt"
+      <li><a href="../../../_sources/api/cassandra/cqlengine/connection.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -125,8 +123,40 @@ This may be relaxed in the future</p>
 
 <dl class="function">
 <dt id="cassandra.cqlengine.connection.register_connection">
-<code class="descclassname">cassandra.cqlengine.connection.</code><code class="descname">register_connection</code><span class="sig-paren">(</span><em>name</em>, <em>hosts</em>, <em>consistency=None</em>, <em>lazy_connect=False</em>, <em>retry_connect=False</em>, <em>cluster_options=None</em>, <em>default=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/cassandra/cqlengine/connection.html#register_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.connection.register_connection" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="descclassname">cassandra.cqlengine.connection.</code><code class="descname">register_connection</code><span class="sig-paren">(</span><em>name</em>, <em>hosts=None</em>, <em>consistency=None</em>, <em>lazy_connect=False</em>, <em>retry_connect=False</em>, <em>cluster_options=None</em>, <em>default=False</em>, <em>session=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/cassandra/cqlengine/connection.html#register_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.cqlengine.connection.register_connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a connection to the connection registry. <code class="docutils literal"><span class="pre">hosts</span></code> and <code class="docutils literal"><span class="pre">session</span></code> are
+mutually exclusive, and <code class="docutils literal"><span class="pre">consistency</span></code>, <code class="docutils literal"><span class="pre">lazy_connect</span></code>,
+<code class="docutils literal"><span class="pre">retry_connect</span></code>, and <code class="docutils literal"><span class="pre">cluster_options</span></code> only work with <code class="docutils literal"><span class="pre">hosts</span></code>. Using
+<code class="docutils literal"><span class="pre">hosts</span></code> will create a new <a class="reference internal" href="../cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">cassandra.cluster.Cluster</span></code></a> and
+<a class="reference internal" href="../cluster.html#cassandra.cluster.Session" title="cassandra.cluster.Session"><code class="xref py py-class docutils literal"><span class="pre">cassandra.cluster.Session</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>hosts</strong> (<em>list</em>) &#8211; list of hosts, (<code class="docutils literal"><span class="pre">contact_points</span></code> for <a class="reference internal" href="../cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">cassandra.cluster.Cluster</span></code></a>).</li>
+<li><strong>consistency</strong> (<em>int</em>) &#8211; The default <a class="reference internal" href="../../cassandra.html#cassandra.ConsistencyLevel" title="cassandra.ConsistencyLevel"><code class="xref py py-class docutils literal"><span class="pre">ConsistencyLevel</span></code></a> for the
+registered connection&#8217;s new session. Default is the same as
+<a class="reference internal" href="../cluster.html#cassandra.cluster.Session.default_consistency_level" title="cassandra.cluster.Session.default_consistency_level"><code class="xref py py-attr docutils literal"><span class="pre">Session.default_consistency_level</span></code></a>. For use with <code class="docutils literal"><span class="pre">hosts</span></code> only;
+will fail when used with <code class="docutils literal"><span class="pre">session</span></code>.</li>
+<li><strong>lazy_connect</strong> (<em>bool</em>) &#8211; True if should not connect until first use. For
+use with <code class="docutils literal"><span class="pre">hosts</span></code> only; will fail when used with <code class="docutils literal"><span class="pre">session</span></code>.</li>
+<li><strong>retry_connect</strong> (<em>bool</em>) &#8211; True if we should retry to connect even if there
+was a connection failure initially. For use with <code class="docutils literal"><span class="pre">hosts</span></code> only; will
+fail when used with <code class="docutils literal"><span class="pre">session</span></code>.</li>
+<li><strong>cluster_options</strong> (<em>dict</em>) &#8211; A dict of options to be used as keyword
+arguments to <a class="reference internal" href="../cluster.html#cassandra.cluster.Cluster" title="cassandra.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">cassandra.cluster.Cluster</span></code></a>. For use with <code class="docutils literal"><span class="pre">hosts</span></code>
+only; will fail when used with <code class="docutils literal"><span class="pre">session</span></code>.</li>
+<li><strong>default</strong> (<em>bool</em>) &#8211; If True, set the new connection as the cqlengine
+default</li>
+<li><strong>session</strong> (<a class="reference internal" href="../cluster.html#cassandra.cluster.Session" title="cassandra.cluster.Session"><em>Session</em></a>) &#8211; A <a class="reference internal" href="../cluster.html#cassandra.cluster.Session" title="cassandra.cluster.Session"><code class="xref py py-class docutils literal"><span class="pre">cassandra.cluster.Session</span></code></a> to be used in
+the created connection.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="cassandra.cqlengine.connection.unregister_connection">
@@ -161,13 +191,13 @@ This may be relaxed in the future</p>
         <li class="right" >
           <a href="query.html" title="cassandra.cqlengine.query - Query and filter model objects"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.7.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" >API Documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013-2016 DataStax.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2013-2016 DataStax.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
     </div>
   </body>
 </html>
