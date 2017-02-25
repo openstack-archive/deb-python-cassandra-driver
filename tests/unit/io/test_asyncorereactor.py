@@ -36,7 +36,6 @@ from cassandra.marshal import uint8_pack, uint32_pack, int32_pack, uint16_pack
 from tests import is_monkey_patched
 from tests.unit.io.utils import submit_and_wait_for_completion, TimerCallback
 
-
 class AsyncoreConnectionTest(unittest.TestCase):
 
     @classmethod
@@ -332,6 +331,3 @@ class AsyncoreConnectionTest(unittest.TestCase):
         self.assertFalse(timer_manager._queue)
         self.assertFalse(timer_manager._new_timers)
         self.assertFalse(callback.was_invoked())
-
-
-
