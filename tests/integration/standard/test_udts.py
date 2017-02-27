@@ -28,8 +28,8 @@ from cassandra.util import OrderedMap
 
 from tests.integration import use_singledc, PROTOCOL_VERSION, execute_until_pass, BasicSegregatedKeyspaceUnitTestCase, \
     lessthancass30, greaterthanorequalcass36
-from tests.integration.datatype_utils import update_datatypes, PRIMITIVE_DATATYPES, PRIMITIVE_DATATYPES_KEYS, COLLECTION_TYPES, \
-    get_sample, get_collection_sample
+from tests.integration.datatype_utils import update_datatypes, PRIMITIVE_DATATYPES, PRIMITIVE_DATATYPES_KEYS, \
+    COLLECTION_TYPES, get_sample, get_collection_sample
 
 nested_collection_udt = namedtuple('nested_collection_udt', ['m', 't', 'l', 's'])
 nested_collection_udt_nested = namedtuple('nested_collection_udt_nested', ['m', 't', 'l', 's', 'u'])
