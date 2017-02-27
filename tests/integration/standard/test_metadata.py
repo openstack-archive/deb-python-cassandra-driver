@@ -822,7 +822,7 @@ class SchemaMetadataTests(BasicSegregatedKeyspaceUnitTestCase):
         self.assertEqual(index_2.index_options["target"], "keys(b)")
         self.assertEqual(index_2.keyspace_name, "schemametadatatests")
 
-    @greaterthanorequalcass30
+    @lessthancass30
     def test_table_extensions(self):
         s = self.session
         ks = self.keyspace_name
@@ -2424,7 +2424,7 @@ class MaterializedViewMetadataTestComplex(BasicSegregatedKeyspaceUnitTestCase):
         mv_alltime_fouls_comumn = self.cluster.metadata.keyspaces[self.keyspace_name].views["alltimehigh"].columns['fouls']
         self.assertEqual(mv_alltime_fouls_comumn.cql_type, 'int')
 
-    @greaterthanorequalcass30
+    @lessthancass30
     def test_base_table_type_alter_mv(self):
         """
         test to ensure that materialized view metadata is properly updated when a type in the base table
