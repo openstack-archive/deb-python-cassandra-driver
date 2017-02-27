@@ -37,9 +37,7 @@ from tests.integration import (get_cluster, use_singledc, PROTOCOL_VERSION, get_
                                BasicSegregatedKeyspaceUnitTestCase, BasicSharedKeyspaceUnitTestCase,
                                BasicExistingKeyspaceUnitTestCase, drop_keyspace_shutdown_cluster, CASSANDRA_VERSION,
                                BasicExistingSegregatedKeyspaceUnitTestCase, dseonly, DSE_VERSION,
-                               get_supported_protocol_versions, greaterthanorequalcass30, lessthancass30, local)
-
-from tests.integration import greaterthancass21
+                               get_supported_protocol_versions, lessthancass30, greaterthancass21)
 
 def setup_module():
     use_singledc()
@@ -862,7 +860,7 @@ class SchemaMetadataTests(BasicSegregatedKeyspaceUnitTestCase):
         self.assertEqual(index_2.index_options["target"], "keys(b)")
         self.assertEqual(index_2.keyspace_name, "schemametadatatests")
 
-    @greaterthanorequalcass30
+    @lessthancass30
     def test_table_extensions(self):
         s = self.session
         ks = self.keyspace_name
