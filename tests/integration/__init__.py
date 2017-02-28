@@ -127,7 +127,7 @@ default_cassandra_version = '2.2.0'
 
 def _get_cass_version_from_dse(dse_version):
     if dse_version.startswith('4.6') or dse_version.startswith('4.5'):
-        cass_ver = "2.0"
+        raise Exception("Cassandra Version 2.0 not supported anymore")
     elif dse_version.startswith('4.7') or dse_version.startswith('4.8'):
         cass_ver = "2.1"
     elif dse_version.startswith('5.0'):
