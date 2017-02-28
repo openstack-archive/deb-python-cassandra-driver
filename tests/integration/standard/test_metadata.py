@@ -822,7 +822,7 @@ class SchemaMetadataTests(BasicSegregatedKeyspaceUnitTestCase):
         self.assertEqual(index_2.index_options["target"], "keys(b)")
         self.assertEqual(index_2.keyspace_name, "schemametadatatests")
 
-    @lessthancass30
+    @greaterthanorequalcass30
     def test_table_extensions(self):
         s = self.session
         ks = self.keyspace_name
