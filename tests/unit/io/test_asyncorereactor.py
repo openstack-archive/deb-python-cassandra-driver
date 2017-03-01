@@ -120,7 +120,8 @@ class AsyncoreConnectionTest(unittest.TestCase):
         # get a connection that's already fully started
         c = self.test_successful_connection()
 
-        header = six.b('\x00') + uint16_pack(0) + six.b('\x00\x00') + int32_pack(20000)
+        #Testing with v3, minimum supported version
+        header = six.b('\x03') + uint16_pack(0) + six.b('\x00\x00') + int32_pack(20000)
         responses = [
             header + (six.b('a') * (4096 - len(header))),
             six.b('a') * 4096,
