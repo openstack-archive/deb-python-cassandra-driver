@@ -18,7 +18,6 @@ Connection pooling and host management.
 
 from functools import total_ordering
 import logging
-import socket
 import time
 from threading import Lock, RLock, Condition
 import weakref
@@ -296,11 +295,6 @@ class _HostReconnectionHandler(_ReconnectionHandler):
 
 
 class HostConnection(object):
-    """
-    When using v3 of the native protocol, this is used instead of a connection
-    pool per host (HostConnectionPool) due to the increased in-flight capacity
-    of individual connections.
-    """
 
     host = None
     host_distance = None

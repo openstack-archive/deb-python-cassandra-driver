@@ -212,10 +212,10 @@ cdef class _DesSingleParamType(_DesParameterizedType):
 
 cdef class DesListType(_DesSingleParamType):
     cdef deserialize(self, Buffer *buf, int protocol_version):
-        cdef int32_t v3_and_above = 3
+        cdef int32_t dummy_protocol_version = 3
 
         result = _deserialize_list_or_set[int32_t](
-            v3_and_above, buf, protocol_version, self.deserializer)
+            dummy_protocol_version, buf, protocol_version, self.deserializer)
 
         return result
 
@@ -292,11 +292,11 @@ cdef class DesMapType(_DesParameterizedType):
         self.val_deserializer = self.deserializers[1]
 
     cdef deserialize(self, Buffer *buf, int protocol_version):
-        cdef int32_t v3_and_above = 0
+        cdef int32_t dummy_protocol_version = 0
         key_type, val_type = self.cqltype.subtypes
 
         result = _deserialize_map[int32_t](
-            v3_and_above, buf, protocol_version,
+            dummy_protocol_version, buf, protocol_version,
             self.key_deserializer, self.val_deserializer,
             key_type, val_type)
 
