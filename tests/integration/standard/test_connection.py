@@ -99,7 +99,7 @@ class HeartbeatTest(unittest.TestCase):
 
     def setUp(self):
         self.cluster = Cluster(protocol_version=PROTOCOL_VERSION, idle_heartbeat_interval=1)
-        self.session = self.cluster.connect()
+        self.session = self.cluster.connect(wait_for_all_pools=True)
 
     def tearDown(self):
         self.cluster.shutdown()
@@ -113,11 +113,13 @@ class HeartbeatTest(unittest.TestCase):
         self.assertNotEqual(len(initial_connections), 0)
         self.cluster.register_listener(test_listener)
         # Pause the node
-        node.pause()
-        # Wait for connections associated with this host go away
-        self.wait_for_no_connections(host, self.cluster)
-        # Resume paused node
-        node.resume()
+        try:
+            node.pause()
+            # Wait for connections associated with this host go away
+            self.wait_for_no_connections(host, self.cluster)
+            # Resume paused node
+        finally:
+            node.resume()
         # Run a query to ensure connections are re-established
         current_host = ""
         count = 0

@@ -21,7 +21,7 @@ from warnings import warn
 
 from cassandra.query import SimpleStatement
 from cassandra.cqlengine import columns, CQLEngineException, ValidationError, UnicodeMixin
-from cassandra.cqlengine import connection
+from cassandra.cqlengine import connection as conn
 from cassandra.cqlengine.functions import Token, BaseQueryFunction, QueryValue
 from cassandra.cqlengine.operators import (InOperator, EqualsOperator, GreaterThanOperator,
                                            GreaterThanOrEqualOperator, LessThanOperator,
@@ -135,14 +135,20 @@ class BatchQuery(object):
     """
     Handles the batching of queries
 
-    http://www.datastax.com/docs/1.2/cql_cli/cql/BATCH
+    http://docs.datastax.com/en/cql/3.0/cql/cql_reference/batch_r.html
+
+    See :doc:`/cqlengine/batches` for more details.
     """
     warn_multiple_exec = True
 
     _consistency = None
 
+    _connection = None
+    _connection_explicit = False
+
+
     def __init__(self, batch_type=None, timestamp=None, consistency=None, execute_on_exception=False,
-                 timeout=connection.NOT_SET):
+                 timeout=conn.NOT_SET, connection=None):
         """
         :param batch_type: (optional) One of batch type values available through BatchType enum
         :type batch_type: str or None
@@ -159,6 +165,7 @@ class BatchQuery(object):
         :param timeout: (optional) Timeout for the entire batch (in seconds), if not specified fallback
             to default session timeout
         :type timeout: float or None
+        :param str connection: Connection name to use for the batch execution
         """
         self.queries = []
         self.batch_type = batch_type
@@ -171,6 +178,9 @@ class BatchQuery(object):
         self._callbacks = []
         self._executed = False
         self._context_entered = False
+        self._connection = connection
+        if connection:
+            self._connection_explicit = True
 
     def add_query(self, query):
         if not isinstance(query, BaseCQLStatement):
@@ -194,8 +204,8 @@ class BatchQuery(object):
 
         :param fn: Callable object
         :type fn: callable
-        :param *args: Positional arguments to be passed to the callback at the time of execution
-        :param **kwargs: Named arguments to be passed to the callback at the time of execution
+        :param \*args: Positional arguments to be passed to the callback at the time of execution
+        :param \*\*kwargs: Named arguments to be passed to the callback at the time of execution
         """
         if not callable(fn):
             raise ValueError("Value for argument 'fn' is {0} and is not a callable object.".format(type(fn)))
@@ -242,7 +252,7 @@ class BatchQuery(object):
 
         query_list.append('APPLY BATCH;')
 
-        tmp = connection.execute('\n'.join(query_list), parameters, self._consistency, self._timeout)
+        tmp = conn.execute('\n'.join(query_list), parameters, self._consistency, self._timeout, connection=self._connection)
         check_applied(tmp)
 
         self.queries = []
@@ -257,6 +267,71 @@ class BatchQuery(object):
         if exc_type is not None and not self._execute_on_exception:
             return
         self.execute()
+
+
+class ContextQuery(object):
+    """
+    A Context manager to allow a Model to switch context easily. Presently, the context only
+    specifies a keyspace for model IO.
+
+    :param *args: One or more models. A model should be a class type, not an instance.
+    :param **kwargs: (optional) Context parameters: can be *keyspace* or *connection*
+
+    For example:
+
+    .. code-block:: python
+
+            with ContextQuery(Automobile, keyspace='test2') as A:
+                A.objects.create(manufacturer='honda', year=2008, model='civic')
+                print len(A.objects.all())  # 1 result
+
+            with ContextQuery(Automobile, keyspace='test4') as A:
+                print len(A.objects.all())  # 0 result
+
+            # Multiple models
+            with ContextQuery(Automobile, Automobile2, connection='cluster2') as (A, A2):
+                print len(A.objects.all())
+                print len(A2.objects.all())
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        from cassandra.cqlengine import models
+
+        self.models = []
+
+        if len(args) < 1:
+            raise ValueError("No model provided.")
+
+        keyspace = kwargs.pop('keyspace', None)
+        connection = kwargs.pop('connection', None)
+
+        if kwargs:
+            raise ValueError("Unknown keyword argument(s): {0}".format(
+                ','.join(kwargs.keys())))
+
+        for model in args:
+            try:
+                issubclass(model, models.Model)
+            except TypeError:
+                raise ValueError("Models must be derived from base Model.")
+
+            m = models._clone_model_class(model, {})
+
+            if keyspace:
+                m.__keyspace__ = keyspace
+            if connection:
+                m.__connection__ = connection
+
+            self.models.append(m)
+
+    def __enter__(self):
+        if len(self.models) > 1:
+            return tuple(self.models)
+        return self.models[0]
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return
 
 
 class AbstractQuerySet(object):
@@ -299,13 +374,14 @@ class AbstractQuerySet(object):
         self._count = None
 
         self._batch = None
-        self._ttl = getattr(model, '__default_ttl__', None)
+        self._ttl =  None
         self._consistency = None
         self._timestamp = None
         self._if_not_exists = False
-        self._timeout = connection.NOT_SET
+        self._timeout = conn.NOT_SET
         self._if_exists = False
         self._fetch_size = None
+        self._connection = None
 
     @property
     def column_family_name(self):
@@ -315,7 +391,8 @@ class AbstractQuerySet(object):
         if self._batch:
             return self._batch.add_query(statement)
         else:
-            result = _execute_statement(self.model, statement, self._consistency, self._timeout)
+            connection = self._connection or self.model._get_connection()
+            result = _execute_statement(self.model, statement, self._consistency, self._timeout, connection=connection)
             if self._if_not_exists or self._if_exists or self._conditional:
                 check_applied(result)
             return result
@@ -332,7 +409,7 @@ class AbstractQuerySet(object):
     def __deepcopy__(self, memo):
         clone = self.__class__(self.model)
         for k, v in self.__dict__.items():
-            if k in ['_con', '_cur', '_result_cache', '_result_idx', '_result_generator']:  # don't clone these
+            if k in ['_con', '_cur', '_result_cache', '_result_idx', '_result_generator', '_construct_result']:  # don't clone these, which are per-request-execution
                 clone.__dict__[k] = None
             elif k == '_batch':
                 # we need to keep the same batch instance across
@@ -499,6 +576,9 @@ class AbstractQuerySet(object):
 
         Note: running a select query with a batch object will raise an exception
         """
+        if self._connection:
+            raise CQLEngineException("Cannot specify the connection on model in batch mode.")
+
         if batch_obj is not None and not isinstance(batch_obj, BatchQuery):
             raise CQLEngineException('batch_obj must be a BatchQuery instance or None')
         clone = copy.deepcopy(self)
@@ -545,7 +625,7 @@ class AbstractQuerySet(object):
         if len(statement) == 1:
             return arg, None
         elif len(statement) == 2:
-            return statement[0], statement[1]
+            return (statement[0], statement[1]) if arg != 'pk__token' else (arg, None)
         else:
             raise QueryException("Can't parse '{0}'".format(arg))
 
@@ -886,6 +966,7 @@ class AbstractQuerySet(object):
             .if_not_exists(self._if_not_exists) \
             .timestamp(self._timestamp) \
             .if_exists(self._if_exists) \
+            .using(connection=self._connection) \
             .save()
 
     def delete(self):
@@ -923,6 +1004,24 @@ class AbstractQuerySet(object):
         clone._timeout = timeout
         return clone
 
+    def using(self, keyspace=None, connection=None):
+        """
+        Change the context on-the-fly of the Model class (keyspace, connection)
+        """
+
+        if connection and self._batch:
+            raise CQLEngineException("Cannot specify a connection on model in batch mode.")
+
+        clone = copy.deepcopy(self)
+        if keyspace:
+            from cassandra.cqlengine.models import _clone_model_class
+            clone.model = _clone_model_class(self.model, {'__keyspace__': keyspace})
+
+        if connection:
+            clone._connection = connection
+
+        return clone
+
 
 class ResultObject(dict):
     """
@@ -954,7 +1053,8 @@ class ModelQuerySet(AbstractQuerySet):
     def _validate_select_where(self):
         """ Checks that a filterset will not create invalid select statement """
         # check that there's either a =, a IN or a CONTAINS (collection) relationship with a primary key or indexed field
-        equal_ops = [self.model._get_column_by_db_name(w.field) for w in self._where if isinstance(w.operator, EqualsOperator)]
+        equal_ops = [self.model._get_column_by_db_name(w.field) \
+                     for w in self._where if isinstance(w.operator, EqualsOperator) and not isinstance(w.value, Token)]
         token_comparison = any([w for w in self._where if isinstance(w.value, Token)])
         if not any(w.primary_key or w.index for w in equal_ops) and not token_comparison and not self._allow_filtering:
             raise QueryException(('Where clauses require either  =, a IN or a CONTAINS (collection) '
@@ -971,6 +1071,9 @@ class ModelQuerySet(AbstractQuerySet):
             fields = self.model._columns.keys()
             if self._defer_fields:
                 fields = [f for f in fields if f not in self._defer_fields]
+                # select the partition keys if all model fields are set defer
+                if not fields:
+                    fields = self.model._partition_keys
             if self._only_fields:
                 fields = [f for f in fields if f in self._only_fields]
             if not fields:
@@ -1154,6 +1257,7 @@ class ModelQuerySet(AbstractQuerySet):
             return
 
         nulled_columns = set()
+        updated_columns = set()
         us = UpdateStatement(self.column_family_name, where=self._where, ttl=self._ttl,
                              timestamp=self._timestamp, conditionals=self._conditional, if_exists=self._if_exists)
         for name, val in values.items():
@@ -1174,13 +1278,16 @@ class ModelQuerySet(AbstractQuerySet):
                 continue
 
             us.add_update(col, val, operation=col_op)
+            updated_columns.add(col_name)
 
         if us.assignments:
             self._execute(us)
 
         if nulled_columns:
+            delete_conditional = [condition for condition in self._conditional
+                                  if condition.field not in updated_columns] if self._conditional else None
             ds = DeleteStatement(self.column_family_name, fields=nulled_columns,
-                                 where=self._where, conditionals=self._conditional, if_exists=self._if_exists)
+                                 where=self._where, conditionals=delete_conditional, if_exists=self._if_exists)
             self._execute(ds)
 
 
@@ -1199,7 +1306,7 @@ class DMLQuery(object):
     _if_exists = False
 
     def __init__(self, model, instance=None, batch=None, ttl=None, consistency=None, timestamp=None,
-                 if_not_exists=False, conditional=None, timeout=connection.NOT_SET, if_exists=False):
+                 if_not_exists=False, conditional=None, timeout=conn.NOT_SET, if_exists=False):
         self.model = model
         self.column_family_name = self.model.column_family_name()
         self.instance = instance
@@ -1213,10 +1320,18 @@ class DMLQuery(object):
         self._timeout = timeout
 
     def _execute(self, statement):
+        connection = self.instance._get_connection() if self.instance else self.model._get_connection()
         if self._batch:
+            if self._batch._connection:
+                if not self._batch._connection_explicit and connection and \
+                        connection != self._batch._connection:
+                            raise CQLEngineException('BatchQuery queries must be executed on the same connection')
+            else:
+                # set the BatchQuery connection from the model
+                self._batch._connection = connection
             return self._batch.add_query(statement)
         else:
-            results = _execute_statement(self.model, statement, self._consistency, self._timeout)
+            results = _execute_statement(self.model, statement, self._consistency, self._timeout, connection=connection)
             if self._if_not_exists or self._if_exists or self._conditional:
                 check_applied(results)
             return results
@@ -1227,25 +1342,29 @@ class DMLQuery(object):
         self._batch = batch_obj
         return self
 
-    def _delete_null_columns(self):
+    def _delete_null_columns(self, conditionals=None):
         """
         executes a delete query to remove columns that have changed to null
         """
-        ds = DeleteStatement(self.column_family_name, conditionals=self._conditional, if_exists=self._if_exists)
+        ds = DeleteStatement(self.column_family_name, conditionals=conditionals, if_exists=self._if_exists)
         deleted_fields = False
+        static_only = True
         for _, v in self.instance._values.items():
             col = v.column
             if v.deleted:
                 ds.add_field(col.db_field_name)
                 deleted_fields = True
+                static_only &= col.static
             elif isinstance(col, columns.Map):
                 uc = MapDeleteClause(col.db_field_name, v.value, v.previous_value)
                 if uc.get_context_size() > 0:
                     ds.add_field(uc)
                     deleted_fields = True
+                    static_only |= col.static
 
         if deleted_fields:
-            for name, col in self.model._primary_keys.items():
+            keys = self.model._partition_keys if static_only else self.model._primary_keys
+            for name, col in keys.items():
                 ds.add_where(col, EqualsOperator(), getattr(self.instance, name))
             self._execute(ds)
 
@@ -1265,6 +1384,8 @@ class DMLQuery(object):
                                     conditionals=self._conditional, if_exists=self._if_exists)
         for name, col in self.instance._clustering_keys.items():
             null_clustering_key = null_clustering_key and col._val_is_null(getattr(self.instance, name, None))
+
+        updated_columns = set()
         # get defined fields and their column names
         for name, col in self.model._columns.items():
             # if clustering key is null, don't include non static columns
@@ -1282,6 +1403,7 @@ class DMLQuery(object):
 
                 static_changed_only = static_changed_only and col.static
                 statement.add_update(col, val, previous=val_mgr.previous_value)
+                updated_columns.add(col.db_field_name)
 
         if statement.assignments:
             for name, col in self.model._primary_keys.items():
@@ -1292,7 +1414,10 @@ class DMLQuery(object):
             self._execute(statement)
 
         if not null_clustering_key:
-            self._delete_null_columns()
+            # remove conditions on fields that have been updated
+            delete_conditionals = [condition for condition in self._conditional
+                                   if condition.field not in updated_columns] if self._conditional else None
+            self._delete_null_columns(delete_conditionals)
 
     def save(self):
         """
@@ -1341,19 +1466,20 @@ class DMLQuery(object):
         ds = DeleteStatement(self.column_family_name, timestamp=self._timestamp, conditionals=self._conditional, if_exists=self._if_exists)
         for name, col in self.model._primary_keys.items():
             val = getattr(self.instance, name)
-            if val is None and not col.parition_key:
+            if val is None and not col.partition_key:
                 continue
             ds.add_where(col, EqualsOperator(), val)
         self._execute(ds)
 
 
-def _execute_statement(model, statement, consistency_level, timeout):
+def _execute_statement(model, statement, consistency_level, timeout, connection=None):
     params = statement.get_context()
     s = SimpleStatement(str(statement), consistency_level=consistency_level, fetch_size=statement.fetch_size)
     if model._partition_key_index:
         key_values = statement.partition_key_values(model._partition_key_index)
         if not any(v is None for v in key_values):
-            parts = model._routing_key_from_values(key_values, connection.get_cluster().protocol_version)
+            parts = model._routing_key_from_values(key_values, conn.get_cluster(connection).protocol_version)
             s.routing_key = parts
             s.keyspace = model._get_keyspace()
-    return connection.execute(s, params, timeout=timeout)
+    connection = connection or model._get_connection()
+    return conn.execute(s, params, timeout=timeout, connection=connection)

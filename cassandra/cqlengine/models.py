@@ -29,6 +29,17 @@ from cassandra.util import OrderedDict
 log = logging.getLogger(__name__)
 
 
+def _clone_model_class(model, attrs):
+    new_type = type(model.__name__, (model,), attrs)
+    try:
+        new_type.__abstract__ = model.__abstract__
+        new_type.__discriminator_value__ = model.__discriminator_value__
+        new_type.__default_ttl__ = model.__default_ttl__
+    except AttributeError:
+        pass
+    return new_type
+
+
 class ModelException(CQLEngineException):
     pass
 
@@ -231,6 +242,25 @@ class ConsistencyDescriptor(object):
         raise NotImplementedError
 
 
+class UsingDescriptor(object):
+    """
+    return a query set descriptor with a connection context specified
+    """
+    def __get__(self, instance, model):
+        if instance:
+            # instance method
+            def using_setter(connection=None):
+                if connection:
+                    instance._connection = connection
+                return instance
+            return using_setter
+
+        return model.objects.using
+
+    def __call__(self, *args, **kwargs):
+        raise NotImplementedError
+
+
 class ColumnQueryEvaluator(query.AbstractQueryableColumn):
     """
     Wraps a column and allows it to be used in comparator
@@ -323,6 +353,8 @@ class BaseModel(object):
 
     if_exists = IfExistsDescriptor()
 
+    using = UsingDescriptor()
+
     # _len is lazily created by __len__
 
     __table_name__ = None
@@ -330,6 +362,8 @@ class BaseModel(object):
     __table_name_case_sensitive__ = False
 
     __keyspace__ = None
+
+    __connection__ = None
 
     __discriminator_value__ = None
 
@@ -351,17 +385,24 @@ class BaseModel(object):
 
     _table_name = None  # used internally to cache a derived table name
 
+    _connection = None
+
     def __init__(self, **values):
-        self._ttl = self.__default_ttl__
+        self._ttl = None
         self._timestamp = None
         self._conditional = None
         self._batch = None
         self._timeout = connection.NOT_SET
         self._is_persisted = False
+        self._connection = None
 
         self._values = {}
         for name, column in self._columns.items():
-            value = values.get(name)
+            # Set default values on instantiation. Thanks to this, we don't have
+            # to wait anylonger for a call to validate() to have CQLengine set
+            # default columns values.
+            column_default = column.get_default() if column.has_default else None
+            value = values.get(name, column_default)
             if value is not None or isinstance(column, columns.BaseContainerColumn):
                 value = column.to_python(value)
             value_mngr = column.value_manager(self, column, value)
@@ -691,7 +732,6 @@ class BaseModel(object):
 
         self._set_persisted()
 
-        self._ttl = self.__default_ttl__
         self._timestamp = None
 
         return self
@@ -738,7 +778,6 @@ class BaseModel(object):
 
         self._set_persisted()
 
-        self._ttl = self.__default_ttl__
         self._timestamp = None
 
         return self
@@ -767,10 +806,21 @@ class BaseModel(object):
 
     def _inst_batch(self, batch):
         assert self._timeout is connection.NOT_SET, 'Setting both timeout and batch is not supported'
+        if self._connection:
+            raise CQLEngineException("Cannot specify a connection on model in batch mode.")
         self._batch = batch
         return self
 
     batch = hybrid_classmethod(_class_batch, _inst_batch)
+
+    @classmethod
+    def _class_get_connection(cls):
+        return cls.__connection__
+
+    def _inst_get_connection(self):
+        return self._connection or self.__connection__
+
+    _get_connection = hybrid_classmethod(_class_get_connection, _inst_get_connection)
 
 
 class ModelMetaClass(type):
@@ -794,16 +844,9 @@ class ModelMetaClass(type):
         # short circuit __discriminator_value__ inheritance
         attrs['__discriminator_value__'] = attrs.get('__discriminator_value__')
 
+        # TODO __default__ttl__ should be removed in the next major release
         options = attrs.get('__options__') or {}
         attrs['__default_ttl__'] = options.get('default_time_to_live')
-
-        def _transform_column(col_name, col_obj):
-            column_dict[col_name] = col_obj
-            if col_obj.primary_key:
-                primary_keys[col_name] = col_obj
-            col_obj.set_column_name(col_name)
-            # set properties
-            attrs[col_name] = ColumnDescriptor(col_obj)
 
         column_definitions = [(k, v) for k, v in attrs.items() if isinstance(v, columns.Column)]
         column_definitions = sorted(column_definitions, key=lambda x: x[1].position)
@@ -849,6 +892,14 @@ class ModelMetaClass(type):
 
         has_partition_keys = any(v.partition_key for (k, v) in column_definitions)
 
+        def _transform_column(col_name, col_obj):
+            column_dict[col_name] = col_obj
+            if col_obj.primary_key:
+                primary_keys[col_name] = col_obj
+            col_obj.set_column_name(col_name)
+            # set properties
+            attrs[col_name] = ColumnDescriptor(col_obj)
+
         partition_key_index = 0
         # transform column definitions
         for k, v in column_definitions:
@@ -868,6 +919,12 @@ class ModelMetaClass(type):
             if v.partition_key:
                 v._partition_key_index = partition_key_index
                 partition_key_index += 1
+
+            overriding = column_dict.get(k)
+            if overriding:
+                v.position = overriding.position
+                v.partition_key = overriding.partition_key
+                v._partition_key_index = overriding._partition_key_index
             _transform_column(k, v)
 
         partition_keys = OrderedDict(k for k in primary_keys.items() if k[1].partition_key)
@@ -991,6 +1048,11 @@ class Model(BaseModel):
     __keyspace__ = None
     """
     Sets the name of the keyspace used by this model.
+    """
+
+    __connection__ = None
+    """
+    Sets the name of the default connection used by this model.
     """
 
     __options__ = None

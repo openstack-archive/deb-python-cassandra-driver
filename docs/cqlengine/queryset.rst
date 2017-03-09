@@ -224,7 +224,7 @@ Token Function
     Token functon may be used only on special, virtual column pk__token, representing token of partition key (it also works for composite partition keys).
     Cassandra orders returned items by value of partition key token, so using cqlengine.Token we can easy paginate through all table rows.
 
-    See http://cassandra.apache.org/doc/cql3/CQL.html#tokenFun
+    See http://cassandra.apache.org/doc/cql3/CQL-3.0.html#tokenFun
 
     *Example*
 
@@ -343,6 +343,42 @@ None means no timeout.
     Setting the timeout on the model is meaningless and will raise an AssertionError.
 
 
+.. _ttl-change:
+
+Default TTL and Per Query TTL
+=============================
+
+Model default TTL now relies on the *default_time_to_live* feature, introduced in Cassandra 2.0. It is not handled anymore in the CQLEngine Model (cassandra-driver >=3.6). You can set the default TTL of a table like this:
+
+    Example:
+
+    .. code-block:: python
+
+        class User(Model):
+            __options__ = {'default_time_to_live': 20}
+
+            user_id = columns.UUID(primary_key=True)
+            ...
+
+You can set TTL per-query if needed. Here are a some examples:
+
+    Example:
+
+    .. code-block:: python
+
+        class User(Model):
+            __options__ = {'default_time_to_live': 20}
+
+            user_id = columns.UUID(primary_key=True)
+            ...
+
+        user = User.objects.create(user_id=1)  # Default TTL 20 will be set automatically on the server
+
+        user.ttl(30).update(age=21)            # Update the TTL to 30
+        User.objects.ttl(10).create(user_id=1)  # TTL 10
+        User(user_id=1, age=21).ttl(10).save()  # TTL 10
+
+
 Named Tables
 ===================
 
@@ -351,10 +387,10 @@ Named tables are a way of querying a table without creating an class.  They're u
 
     .. code-block:: python
 
-        from cqlengine.connection import setup
+        from cassandra.cqlengine.connection import setup
         setup("127.0.0.1", "cqlengine_test")
 
-        from cqlengine.named import NamedTable
+        from cassandra.cqlengine.named import NamedTable
         user = NamedTable("cqlengine_test", "user")
         user.objects()
         user.objects()[0]

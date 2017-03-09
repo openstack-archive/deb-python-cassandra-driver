@@ -32,8 +32,12 @@ Model
 
     .. autoattribute:: __keyspace__
 
-    .. _ttl-change:
-    .. autoattribute:: __default_ttl__
+    .. autoattribute:: __connection__
+
+    .. attribute:: __default_ttl__
+        :annotation:  = None
+
+        Will be deprecated in release 4.0. You can set the default ttl by configuring the table ``__options__``. See :ref:`ttl-change` for more details.
 
     .. autoattribute:: __discriminator_value__
 
@@ -166,6 +170,10 @@ Model
     .. method:: ttl(ttl_in_sec)
 
        Sets the ttl values to run instance updates and inserts queries with.
+
+    .. method:: using(keyspace=None, connection=None)
+
+        Change the context on the fly of the model instance (keyspace, connection)
 
     .. automethod:: column_family_name
 

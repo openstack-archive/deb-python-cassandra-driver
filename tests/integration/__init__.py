@@ -16,13 +16,14 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest  # noqa
-
+from packaging.version import Version
 import logging
 import os
 import socket
 import sys
 import time
 import traceback
+import platform
 from threading import Event
 from subprocess import call
 from itertools import groupby
@@ -30,6 +31,7 @@ from itertools import groupby
 from cassandra import OperationTimedOut, ReadTimeout, ReadFailure, WriteTimeout, WriteFailure, AlreadyExists
 from cassandra.cluster import Cluster
 from cassandra.protocol import ConfigurationException
+from cassandra.policies import RoundRobinPolicy
 
 try:
     from ccmlib.cluster import Cluster as CCMCluster
@@ -137,26 +139,85 @@ if DSE_VERSION:
             CCM_KWARGS['dse_credentials_file'] = DSE_CRED
 
 
-if CASSANDRA_VERSION >= '2.2':
-    default_protocol_version = 4
-elif CASSANDRA_VERSION >= '2.1':
-    default_protocol_version = 3
-elif CASSANDRA_VERSION >= '2.0':
-    default_protocol_version = 2
-else:
-    default_protocol_version = 1
+def get_default_protocol():
+
+    if Version(CASSANDRA_VERSION) >= Version('2.2'):
+        return 4
+    elif Version(CASSANDRA_VERSION) >= Version('2.1'):
+        return 3
+    elif Version(CASSANDRA_VERSION) >= Version('2.0'):
+        return 2
+    else:
+        return 1
+
+
+def get_supported_protocol_versions():
+    """
+    1.2 -> 1
+    2.0 -> 2, 1
+    2.1 -> 3, 2, 1
+    2.2 -> 4, 3, 2, 1
+    3.X -> 4, 3
+    3.10 -> 5(beta),4,3
+`   """
+    if Version(CASSANDRA_VERSION) >= Version('3.10'):
+        return (3, 4, 5)
+    elif Version(CASSANDRA_VERSION) >= Version('3.0'):
+        return (3, 4)
+    elif Version(CASSANDRA_VERSION) >= Version('2.2'):
+        return (1, 2, 3, 4)
+    elif Version(CASSANDRA_VERSION) >= Version('2.1'):
+        return (1, 2, 3)
+    elif Version(CASSANDRA_VERSION) >= Version('2.0'):
+        return (1, 2)
+    else:
+        return (1)
+
+
+def get_unsupported_lower_protocol():
+    """
+    This is used to determine the lowest protocol version that is NOT
+    supported by the version of C* running
+    """
+
+    if Version(CASSANDRA_VERSION) >= Version('3.0'):
+        return 2
+    else:
+        return None
+
+
+def get_unsupported_upper_protocol():
+    """
+    This is used to determine the highest protocol version that is NOT
+    supported by the version of C* running
+    """
+
+    if Version(CASSANDRA_VERSION) >= Version('2.2'):
+        return None
+    if Version(CASSANDRA_VERSION) >= Version('2.1'):
+        return 4
+    elif Version(CASSANDRA_VERSION) >= Version('2.0'):
+        return 3
+    else:
+        return None
+
+default_protocol_version = get_default_protocol()
+
 
 PROTOCOL_VERSION = int(os.getenv('PROTOCOL_VERSION', default_protocol_version))
 
 notprotocolv1 = unittest.skipUnless(PROTOCOL_VERSION > 1, 'Protocol v1 not supported')
 lessthenprotocolv4 = unittest.skipUnless(PROTOCOL_VERSION < 4, 'Protocol versions 4 or greater not supported')
 greaterthanprotocolv3 = unittest.skipUnless(PROTOCOL_VERSION >= 4, 'Protocol versions less than 4 are not supported')
+protocolv5 = unittest.skipUnless(5 in get_supported_protocol_versions(), 'Protocol versions less than 5 are not supported')
 
 greaterthancass20 = unittest.skipUnless(CASSANDRA_VERSION >= '2.1', 'Cassandra version 2.1 or greater required')
 greaterthancass21 = unittest.skipUnless(CASSANDRA_VERSION >= '2.2', 'Cassandra version 2.2 or greater required')
 greaterthanorequalcass30 = unittest.skipUnless(CASSANDRA_VERSION >= '3.0', 'Cassandra version 3.0 or greater required')
+greaterthanorequalcass36 = unittest.skipUnless(CASSANDRA_VERSION >= '3.6', 'Cassandra version 3.6 or greater required')
 lessthancass30 = unittest.skipUnless(CASSANDRA_VERSION < '3.0', 'Cassandra version less then 3.0 required')
 dseonly = unittest.skipUnless(DSE_VERSION, "Test is only applicalbe to DSE clusters")
+pypy = unittest.skipUnless(platform.python_implementation() == "PyPy", "Test is skipped unless it's on PyPy")
 
 
 def wait_for_node_socket(node, timeout):
@@ -241,6 +302,7 @@ def use_cluster(cluster_name, nodes, ipformat=None, start=True, workloads=[]):
             log.debug("Using external CCM cluster {0}".format(CCM_CLUSTER.name))
         else:
             log.debug("Using unnamed external cluster")
+        setup_keyspace(ipformat=ipformat, wait=False)
         return
 
     if is_current_cluster(cluster_name, nodes):
@@ -387,9 +449,10 @@ def drop_keyspace_shutdown_cluster(keyspace_name, session, cluster):
     cluster.shutdown()
 
 
-def setup_keyspace(ipformat=None):
+def setup_keyspace(ipformat=None, wait=True):
     # wait for nodes to startup
-    time.sleep(10)
+    if wait:
+        time.sleep(10)
 
     if not ipformat:
         cluster = Cluster(protocol_version=PROTOCOL_VERSION)
@@ -481,8 +544,8 @@ class BasicKeyspaceUnitTestCase(unittest.TestCase):
         execute_with_long_wait_retry(cls.session, ddl)
 
     @classmethod
-    def common_setup(cls, rf, keyspace_creation=True, create_class_table=False):
-        cls.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
+    def common_setup(cls, rf, keyspace_creation=True, create_class_table=False, metrics=False):
+        cls.cluster = Cluster(protocol_version=PROTOCOL_VERSION, metrics_enabled=metrics)
         cls.session = cls.cluster.connect()
         cls.ks_name = cls.__name__.lower()
         if keyspace_creation:
@@ -534,6 +597,7 @@ class MockLoggingHandler(logging.Handler):
             if sub_string in msg:
                 count+=1
         return count
+
 
 class BasicExistingKeyspaceUnitTestCase(BasicKeyspaceUnitTestCase):
     """
@@ -589,7 +653,7 @@ class BasicSharedKeyspaceUnitTestCaseWTable(BasicSharedKeyspaceUnitTestCase):
     """
     @classmethod
     def setUpClass(self):
-        self.common_setup(2, True)
+        self.common_setup(3, True, True, True)
 
 
 class BasicSharedKeyspaceUnitTestCaseRF3(BasicSharedKeyspaceUnitTestCase):
