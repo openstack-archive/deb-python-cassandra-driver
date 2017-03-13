@@ -120,6 +120,8 @@ class GeventConnection(Connection):
             try:
                 buf = self._socket.recv(self.in_buffer_size)
                 self._iobuf.write(buf)
+                if len(buf) < self.in_buffer_size:
+                    break
             except socket.error as err:
                 log.debug("Exception in read for %s: %s", self, err)
                 self.defunct(err)

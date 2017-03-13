@@ -132,6 +132,8 @@ class EventletConnection(Connection):
             try:
                 buf = self._socket.recv(self.in_buffer_size)
                 self._iobuf.write(buf)
+                if len(buf) < self.in_buffer_size:
+                    break
             except socket.error as err:
                 log.debug("Exception during socket recv for %s: %s",
                           self, err)
