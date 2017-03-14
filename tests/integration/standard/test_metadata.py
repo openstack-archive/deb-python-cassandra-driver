@@ -31,7 +31,7 @@ from cassandra.metadata import (Metadata, KeyspaceMetadata, IndexMetadata,
                                 Token, MD5Token, TokenMap, murmur3, Function, Aggregate, protect_name, protect_names,
                                 get_schema_parser, RegisteredTableExtension, _RegisteredExtensionType)
 from cassandra.policies import SimpleConvictionPolicy
-from cassandra.pool import Host
+from cassandra.hosts import Host
 
 from tests.integration import (get_cluster, use_singledc, PROTOCOL_VERSION, get_server_versions, execute_until_pass,
                                BasicSegregatedKeyspaceUnitTestCase, BasicSharedKeyspaceUnitTestCase,
