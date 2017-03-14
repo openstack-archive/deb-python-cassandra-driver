@@ -63,8 +63,8 @@ from cassandra.policies import (TokenAwarePolicy, DCAwareRoundRobinPolicy, Simpl
                                 ExponentialReconnectionPolicy, HostDistance,
                                 RetryPolicy, IdentityTranslator, NoSpeculativeExecutionPlan,
                                 NoSpeculativeExecutionPolicy)
-from cassandra.pool import (Host, _ReconnectionHandler, _HostReconnectionHandler, HostConnection,
-                            NoConnectionsAvailable)
+from cassandra.hosts import (Host, _ReconnectionHandler, _HostReconnectionHandler, HostConnection,
+                             NoConnectionsAvailable)
 from cassandra.query import (SimpleStatement, PreparedStatement, BoundStatement,
                              BatchStatement, bind_params, QueryTrace, TraceUnavailable,
                              named_tuple_factory, dict_factory, tuple_factory, FETCH_SIZE_UNSET)
