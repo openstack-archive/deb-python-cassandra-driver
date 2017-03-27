@@ -22,6 +22,7 @@ from datetime import datetime, date, time
 from decimal import Decimal
 from operator import itemgetter
 
+import cassandra
 from cassandra.cqlengine import columns
 from cassandra.cqlengine import CQLEngineException
 from cassandra.cqlengine.management import sync_table
@@ -481,6 +482,32 @@ class TestUpdating(BaseCassEngTestCase):
         self.assertTrue(self.instance.get_changed_columns() == [])
         self.assertTrue(self.instance._values['count'].previous_value is None)
         self.assertTrue(self.instance.count is None)
+
+    def test_value_override_with_default(self):
+        class ModelWithDefault(Model):
+            id = columns.Integer(primary_key=True)
+            mf = columns.Map(columns.Integer, columns.Integer)
+            dummy = columns.Integer(default=42)
+        sync_table(ModelWithDefault)
+
+        initial = ModelWithDefault(id=1, mf={0: 0}, dummy=0)
+        initial.save()
+
+        # session = ModelWithDefault._get_connection().session
+        session = cassandra.cluster.Cluster().connect()
+        # print list(session.execute('SELECT * FROM system.schema_columnfamilies'))
+        session.execute('USE ' + DEFAULT_KEYSPACE)
+        self.assertEqual(
+            list(session.execute('SELECT * from model_with_default'))[0].dummy,
+            0
+        )
+
+        second = ModelWithDefault(id=1)
+        second.update(mf={0: 1})   # This will update the dummy column and override the DB value to 42.
+        self.assertEqual(
+            list(session.execute('SELECT * from model_with_default'))[0].dummy,
+            0
+        )
 
     def test_previous_value_tracking_on_instantiation_with_default(self):
 
