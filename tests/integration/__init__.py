@@ -11,6 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+
+from cassandra.io.geventreactor import GeventConnection
+
+EVENT_LOOP = os.getenv('EVENT_LOOP', "gevent")
+if EVENT_LOOP == "gevent":
+    import gevent.monkey
+    gevent.monkey.patch_all()
+    connection_class = GeventConnection
+
+from cassandra.cluster import Cluster
+Cluster.connection_class = connection_class
 
 try:
     import unittest2 as unittest
@@ -18,7 +30,6 @@ except ImportError:
     import unittest  # noqa
 from packaging.version import Version
 import logging
-import os
 import socket
 import sys
 import time
@@ -30,7 +41,7 @@ from itertools import groupby
 
 from cassandra import OperationTimedOut, ReadTimeout, ReadFailure, WriteTimeout, WriteFailure, AlreadyExists, \
     InvalidRequest
-from cassandra.cluster import Cluster
+
 from cassandra.protocol import ConfigurationException
 from cassandra.policies import RoundRobinPolicy
 
