@@ -14,15 +14,18 @@
 import os
 
 from cassandra.io.geventreactor import GeventConnection
+from cassandra.io.libevreactor import LibevConnection
 
 EVENT_LOOP_MANAGER = os.getenv('EVENT_LOOP_MANAGER', "gevent")
 if EVENT_LOOP_MANAGER == "gevent":
     import gevent.monkey
     gevent.monkey.patch_all()
     connection_class = GeventConnection
+elif EVENT_LOOP_MANAGER == "libev":
+    connection_class = GeventConnection
 
 from cassandra.cluster import Cluster
-Cluster.connection_class = connection_class
+Cluster.connection_class = LibevConnection
 
 try:
     import unittest2 as unittest
