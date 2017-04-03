@@ -3,6 +3,10 @@ schedules:
     schedule: per_commit
     branches:
       include: [master, /python.*/]
+    matrix:
+      exclude:
+        - python: 3.4
+          EVENT_LOOP_MANAGER: ['gevent']
 
 python:
   - 2.7
@@ -17,7 +21,8 @@ cassandra:
   - '3.11'
 env:
   EVENT_LOOP_MANAGER:
-    - libev
+    - 'libev'
+    - 'gevent'
   CYTHON:
     - CYTHON
     - NO_CYTHON
@@ -46,12 +51,12 @@ build:
       fi
 
       echo "==========RUNNING CQLENGINE TESTS=========="
-      CASSANDRA_VERSION=$CCM_CASSANDRA_VERSION VERIFY_CYTHON=$FORCE_CYTHON nosetests -s -v --logging-format="[%(levelname)s] %(asctime)s %(thread)d: %(message)s" --with-ignore-docstrings --with-xunit --xunit-file=cqle_results.xml tests/integration/cqlengine/ || true
+      EVENT_LOOP_MANAGER=$EVENT_LOOP_MANAGER CASSANDRA_VERSION=$CCM_CASSANDRA_VERSION VERIFY_CYTHON=$FORCE_CYTHON nosetests -s -v --logging-format="[%(levelname)s] %(asctime)s %(thread)d: %(message)s" --with-ignore-docstrings --with-xunit --xunit-file=cqle_results.xml tests/integration/cqlengine/ || true
 
       echo "==========RUNNING INTEGRATION TESTS=========="
-      CASSANDRA_VERSION=$CCM_CASSANDRA_VERSION VERIFY_CYTHON=$FORCE_CYTHON nosetests -s -v --logging-format="[%(levelname)s] %(asctime)s %(thread)d: %(message)s" --with-ignore-docstrings --with-xunit --xunit-file=standard_results.xml tests/integration/standard/ || true
+      EVENT_LOOP_MANAGER=$EVENT_LOOP_MANAGER CASSANDRA_VERSION=$CCM_CASSANDRA_VERSION VERIFY_CYTHON=$FORCE_CYTHON nosetests -s -v --logging-format="[%(levelname)s] %(asctime)s %(thread)d: %(message)s" --with-ignore-docstrings --with-xunit --xunit-file=standard_results.xml tests/integration/standard/ || true
 
       echo "==========RUNNING LONG INTEGRATION TESTS=========="
-      CASSANDRA_VERSION=$CCM_CASSANDRA_VERSION VERIFY_CYTHON=$FORCE_CYTHON nosetests -s -v --logging-format="[%(levelname)s] %(asctime)s %(thread)d: %(message)s" --with-ignore-docstrings --with-xunit --xunit-file=long_results.xml tests/integration/long/ || true
+      EVENT_LOOP_MANAGER=$EVENT_LOOP_MANAGER CASSANDRA_VERSION=$CCM_CASSANDRA_VERSION VERIFY_CYTHON=$FORCE_CYTHON nosetests -s -v --logging-format="[%(levelname)s] %(asctime)s %(thread)d: %(message)s" --with-ignore-docstrings --with-xunit --xunit-file=long_results.xml tests/integration/long/ || true
   - xunit:
     - "*_results.xml"
