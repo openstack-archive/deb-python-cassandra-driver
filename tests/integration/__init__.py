@@ -15,8 +15,8 @@ import os
 
 from cassandra.io.geventreactor import GeventConnection
 
-EVENT_LOOP = os.getenv('EVENT_LOOP', "gevent")
-if EVENT_LOOP == "gevent":
+EVENT_LOOP_MANAGER = os.getenv('EVENT_LOOP_MANAGER', "gevent")
+if EVENT_LOOP_MANAGER == "gevent":
     import gevent.monkey
     gevent.monkey.patch_all()
     connection_class = GeventConnection
@@ -43,7 +43,6 @@ from cassandra import OperationTimedOut, ReadTimeout, ReadFailure, WriteTimeout,
     InvalidRequest
 
 from cassandra.protocol import ConfigurationException
-from cassandra.policies import RoundRobinPolicy
 
 try:
     from ccmlib.cluster import Cluster as CCMCluster
