@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.io.eventletreactor &#8212; Cassandra Driver 3.8.1 documentation</title>
+    <title>cassandra.io.eventletreactor &#8212; Cassandra Driver 3.9.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.8.1',
+        VERSION:     '3.9.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
@@ -84,6 +84,7 @@
 <span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="k">import</span> <span class="n">socket</span>
 <span class="kn">from</span> <span class="nn">eventlet.queue</span> <span class="k">import</span> <span class="n">Queue</span>
+<span class="kn">from</span> <span class="nn">greenlet</span> <span class="k">import</span> <span class="n">GreenletExit</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Event</span>
 <span class="kn">import</span> <span class="nn">time</span>
@@ -145,7 +146,6 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">Connection</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">_write_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_connect_socket</span><span class="p">()</span>
@@ -191,6 +191,8 @@
                 <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Exception during socket send for </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
                 <span class="k">return</span>  <span class="c1"># Leave the write loop</span>
+            <span class="k">except</span> <span class="n">GreenletExit</span><span class="p">:</span>  <span class="c1"># graceful greenthread exit</span>
+                <span class="k">return</span>
 
     <span class="k">def</span> <span class="nf">handle_read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
@@ -202,6 +204,8 @@
                           <span class="bp">self</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
                 <span class="k">return</span>  <span class="c1"># leave the read loop</span>
+            <span class="k">except</span> <span class="n">GreenletExit</span><span class="p">:</span>  <span class="c1"># graceful greenthread exit</span>
+                <span class="k">return</span>
 
             <span class="k">if</span> <span class="n">buf</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iobuf</span><span class="o">.</span><span class="n">tell</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">process_io_buffer</span><span class="p">()</span>
@@ -230,7 +234,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>

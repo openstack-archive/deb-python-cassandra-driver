@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.query &#8212; Cassandra Driver 3.8.1 documentation</title>
+    <title>cassandra.cqlengine.query &#8212; Cassandra Driver 3.9.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.8.1',
+        VERSION:     '3.9.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
@@ -1317,6 +1317,9 @@
 
 <span class="sd">            # add items to a map</span>
 <span class="sd">            Row.objects(row_id=5).update(map_column__update={1: 2, 3: 4})</span>
+
+<span class="sd">            # remove items from a map</span>
+<span class="sd">            Row.objects(row_id=5).update(map_column__remove={1, 2})</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">values</span><span class="p">:</span>
             <span class="k">return</span>
@@ -1335,8 +1338,14 @@
             <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">is_primary_key</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Cannot apply update to primary key &#39;</span><span class="si">{0}</span><span class="s2">&#39; for </span><span class="si">{1}</span><span class="s2">.</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
 
-            <span class="c1"># we should not provide default values in this use case.</span>
-            <span class="n">val</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">col_op</span> <span class="o">==</span> <span class="s1">&#39;remove&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">columns</span><span class="o">.</span><span class="n">Map</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">set</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                        <span class="s2">&quot;Cannot apply update operation &#39;</span><span class="si">{0}</span><span class="s2">&#39; on column &#39;</span><span class="si">{1}</span><span class="s2">&#39; with value &#39;</span><span class="si">{2}</span><span class="s2">&#39;. A set is required.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col_op</span><span class="p">,</span> <span class="n">col_name</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># we should not provide default values in this use case.</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">nulled_columns</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
@@ -1513,6 +1522,9 @@
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">changed</span><span class="p">:</span>
                         <span class="n">nulled_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)</span>
                     <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">has_default</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">changed</span><span class="p">:</span>
+                    <span class="c1"># Ensure default columns included in a save() are marked as explicit, to get them *persisted* properly</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_values</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">explicit</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="n">insert</span><span class="o">.</span><span class="n">add_assignment</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
         <span class="c1"># skip query execution if it&#39;s empty</span>
@@ -1564,7 +1576,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>

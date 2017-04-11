@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &#8212; Cassandra Driver 3.8.1 documentation</title>
+    <title>cassandra.cluster &#8212; Cassandra Driver 3.9.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.8.1',
+        VERSION:     '3.9.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
@@ -2040,6 +2040,12 @@
         <span class="k">while</span> <span class="n">futures</span><span class="o">.</span><span class="n">not_done</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">result</span><span class="p">()</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">futures</span><span class="o">.</span><span class="n">done</span><span class="p">):</span>
             <span class="n">futures</span> <span class="o">=</span> <span class="n">wait_futures</span><span class="p">(</span><span class="n">futures</span><span class="o">.</span><span class="n">not_done</span><span class="p">,</span> <span class="n">return_when</span><span class="o">=</span><span class="n">FIRST_COMPLETED</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">result</span><span class="p">()</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_connect_futures</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Unable to connect to any servers&quot;</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="s2">&quot; using keyspace &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span>
+            <span class="k">raise</span> <span class="n">NoHostAvailable</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">address</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hosts</span><span class="p">])</span>
+
 <div class="viewcode-block" id="Session.execute"><a class="viewcode-back" href="../../api/cassandra/cluster.html#cassandra.cluster.Session.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">_NOT_SET</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">custom_payload</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">execution_profile</span><span class="o">=</span><span class="n">EXEC_PROFILE_DEFAULT</span><span class="p">,</span> <span class="n">paging_state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Execute the given query and synchronously wait for the response.</span>
@@ -3787,13 +3793,20 @@
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span> <span class="o">=</span> <span class="n">response</span>
+            <span class="c1"># save off current callbacks inside lock for execution outside it</span>
+            <span class="c1"># -- prevents case where _final_result is set, then a callback is</span>
+            <span class="c1"># added and executed on the spot, then executed again as a</span>
+            <span class="c1"># registered callback</span>
+            <span class="n">to_call</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="n">partial</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span>
+            <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 
         <span class="c1"># apply each callback</span>
-        <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">:</span>
-            <span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">callback</span>
-            <span class="n">fn</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">callback_partial</span> <span class="ow">in</span> <span class="n">to_call</span><span class="p">:</span>
+            <span class="n">callback_partial</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_set_final_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cancel_timer</span><span class="p">()</span>
@@ -3802,11 +3815,19 @@
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span> <span class="o">=</span> <span class="n">response</span>
+            <span class="c1"># save off current errbacks inside lock for execution outside it --</span>
+            <span class="c1"># prevents case where _final_exception is set, then an errback is</span>
+            <span class="c1"># added and executed on the spot, then executed again as a</span>
+            <span class="c1"># registered errback</span>
+            <span class="n">to_call</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="n">partial</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_errbacks</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 
-        <span class="k">for</span> <span class="n">errback</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_errbacks</span><span class="p">:</span>
-            <span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">errback</span>
-            <span class="n">fn</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># apply each callback</span>
+        <span class="k">for</span> <span class="n">callback_partial</span> <span class="ow">in</span> <span class="n">to_call</span><span class="p">:</span>
+            <span class="n">callback_partial</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_retry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reuse_connection</span><span class="p">,</span> <span class="n">consistency_level</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span><span class="p">:</span>
@@ -3940,10 +3961,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">run_now</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback_lock</span><span class="p">:</span>
+            <span class="c1"># Always add fn to self._callbacks, even when we&#39;re about to</span>
+            <span class="c1"># execute it, to prevent races with functions like</span>
+            <span class="c1"># start_fetching_next_page that reset _final_result</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_NOT_SET</span><span class="p">:</span>
                 <span class="n">run_now</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">run_now</span><span class="p">:</span>
             <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
@@ -3956,10 +3979,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">run_now</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback_lock</span><span class="p">:</span>
+            <span class="c1"># Always add fn to self._errbacks, even when we&#39;re about to execute</span>
+            <span class="c1"># it, to prevent races with functions like start_fetching_next_page</span>
+            <span class="c1"># that reset _final_exception</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_errbacks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span><span class="p">:</span>
                 <span class="n">run_now</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_errbacks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">fn</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">run_now</span><span class="p">:</span>
             <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
@@ -4190,7 +4215,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>
