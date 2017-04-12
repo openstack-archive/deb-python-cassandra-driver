@@ -41,7 +41,7 @@ from cassandra.cqlengine.models import Model, ValidationError
 from cassandra import util
 
 from tests.integration import PROTOCOL_VERSION
-from tests.integration.cqlengine.base import BaseCassEngTestCase
+from tests.integration.cqlengine.base import BaseCassEngTestCase, TestQueryUpdateModel
 
 
 class TestDatetime(BaseCassEngTestCase):
@@ -187,6 +187,7 @@ class TestVarInt(BaseCassEngTestCase):
         int2 = self.VarIntTest.objects(test_id=0).first()
         self.assertEqual(int1.bignum, int2.bignum)
 
+        self.assertRaises(ValidationError, self.VarIntTest.objects.create(test_id=0, bignum="not_a_number"))
 
 class TestDate(BaseCassEngTestCase):
     class DateTest(Model):
@@ -220,6 +221,12 @@ class TestDate(BaseCassEngTestCase):
         now = datetime.utcnow()
         self.DateTest.objects.create(test_id=0, created_at=now)
         result = self.DateTest.objects(test_id=0).first()
+        self.assertIsInstance(result.created_at, util.Date)
+        self.assertEqual(result.created_at, util.Date(now))
+
+        self.DateTest.objects.create(test_id=0, created_at=datetime.utcnow())
+
+        result = self.DateTest.objects.all().allow_filtering().filter(test_id=0, created_at=now).first()
         self.assertIsInstance(result.created_at, util.Date)
         self.assertEqual(result.created_at, util.Date(now))
 
@@ -644,4 +651,3 @@ class TestInet(BaseCassEngTestCase):
         # TODO: presently this only tests that the server blows it up. Is there supposed to be local validation?
         with self.assertRaises(InvalidRequest):
             self.InetTestModel.create(address="what is going on here?")
-

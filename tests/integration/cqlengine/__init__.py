@@ -43,7 +43,6 @@ def setup_package():
 
 
 def teardown_package():
-    drop_keyspace(DEFAULT_KEYSPACE)
     connection.unregister_connection("default")
 
 def is_prepend_reversed():
