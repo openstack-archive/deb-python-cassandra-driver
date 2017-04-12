@@ -25,6 +25,7 @@ from cassandra.cqlengine.models import Model
 from cassandra.cqlengine.usertype import UserType, UserTypeDefinitionException
 from cassandra.cqlengine import columns, connection
 from cassandra.cqlengine.management import sync_table, sync_type, create_keyspace_simple, drop_keyspace
+from cassandra.cqlengine import ValidationError
 from cassandra.util import Date, Time
 
 from tests.integration import PROTOCOL_VERSION
@@ -87,7 +88,9 @@ class UserDefinedTypeTests(BaseCassEngTestCase):
             gender = columns.Text()
 
         sync_type(DEFAULT_KEYSPACE, User)
-        user = User(age=42, name="John", gender="male")
+        user = User(age=42)
+        user["name"] = "John"
+        user["gender"] = "male"
         self.assertEqual(42, user.age)
         self.assertEqual("John", user.name)
         self.assertEqual("male", user.gender)
@@ -131,8 +134,8 @@ class UserDefinedTypeTests(BaseCassEngTestCase):
         created_user.update()
 
         mary_info = UserModel.objects().first().info
-        self.assertEqual(22, mary_info.age)
-        self.assertEqual("Mary", mary_info.name)
+        self.assertEqual(22, mary_info["age"])
+        self.assertEqual("Mary", mary_info["name"])
 
     def test_can_update_udts_with_nones(self):
         sync_table(UserModel)
@@ -516,3 +519,58 @@ class UserDefinedTypeTests(BaseCassEngTestCase):
         self.assertEqual(t.nested[0].default_text, "default text")
         self.assertIsNotNone(t.simple.test_id)
         self.assertEqual(t.simple.default_text, "default text")
+
+    def test_udt_validate(self):
+        """
+        Test to verify restrictions are honored and that validate is called
+        for each member of the UDT when an updated is attempted
+
+        @since 3.10
+        @jira_ticket PYTHON-505
+        @expected_result a validation error is arisen due to the name being
+        too long
+
+        @test_category data_types:object_mapper
+        """
+        class UserValidate(UserType):
+            age = columns.Integer()
+            name = columns.Text(max_length=2)
+
+        class UserModelValidate(Model):
+            id = columns.Integer(primary_key=True)
+            info = columns.UserDefinedType(UserValidate)
+
+        sync_table(UserModelValidate)
+
+        user = UserValidate(age=1, name="Robert")
+        item = UserModelValidate(id=1, info=user)
+        with self.assertRaises(ValidationError):
+            item.save()
+
+    def test_udt_validate_with_default(self):
+        """
+        Test to verify restrictions are honored and that validate is called
+        on the default value
+
+        @since 3.10
+        @jira_ticket PYTHON-505
+        @expected_result a validation error is arisen due to the name being
+        too long
+
+        @test_category data_types:object_mapper
+        """
+        class UserValidateDefault(UserType):
+            age = columns.Integer()
+            name = columns.Text(max_length=2, default="Robert")
+
+        class UserModelValidateDefault(Model):
+            id = columns.Integer(primary_key=True)
+            info = columns.UserDefinedType(UserValidateDefault)
+
+        sync_table(UserModelValidateDefault)
+
+        user = UserValidateDefault(age=1)
+        item = UserModelValidateDefault(id=1, info=user)
+        with self.assertRaises(ValidationError):
+            item.save()
+

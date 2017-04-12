@@ -67,6 +67,16 @@ class ExecuteStatementTest(BaseCassEngTestCase):
         self.assertEqual(len(response), 7)
 
     def test_insert_statement_execute(self):
+        """
+        Test to verify the execution of BaseCQLStatements using connection.execute
+
+        @since 3.10
+        @jira_ticket PYTHON-505
+        @expected_result inserts a row in C*, updates the rows and then deletes
+        all the rows using BaseCQLStatements
+
+        @test_category data_types:object_mapper
+        """
         partition = uuid4()
         cluster = 1
 
