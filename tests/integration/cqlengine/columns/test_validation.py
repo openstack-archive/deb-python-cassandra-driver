@@ -187,7 +187,9 @@ class TestVarInt(BaseCassEngTestCase):
         int2 = self.VarIntTest.objects(test_id=0).first()
         self.assertEqual(int1.bignum, int2.bignum)
 
-        self.assertRaises(ValidationError, self.VarIntTest.objects.create(test_id=0, bignum="not_a_number"))
+        with self.assertRaises(ValidationError):
+            self.VarIntTest.objects.create(test_id=0, bignum="not_a_number")
+
 
 class TestDate(BaseCassEngTestCase):
     class DateTest(Model):
@@ -226,9 +228,21 @@ class TestDate(BaseCassEngTestCase):
 
         self.DateTest.objects.create(test_id=0, created_at=datetime.utcnow())
 
+        result = self.DateTest.objects.all().allow_filtering().filter(test_id=0).first()
+        self.assertIsInstance(result.created_at, util.Date)
+        self.assertEqual(result.created_at, util.Date(now))
+
         result = self.DateTest.objects.all().allow_filtering().filter(test_id=0, created_at=now).first()
         self.assertIsInstance(result.created_at, util.Date)
         self.assertEqual(result.created_at, util.Date(now))
+
+        result.update(created_at=None).save()
+        result = self.DateTest.objects.all().allow_filtering().filter(test_id=0).first()
+        self.assertIsNone(result.created_at)
+
+        result = self.DateTest.all().filter(test_id=0).first()
+        self.assertIsNone(result.created_at)
+
 
     def test_date_none(self):
         self.DateTest.objects.create(test_id=1, created_at=None)

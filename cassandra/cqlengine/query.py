@@ -1494,4 +1494,7 @@ def _execute_statement(model, statement, consistency_level, timeout, connection=
             s.routing_key = parts
             s.keyspace = model._get_keyspace()
     connection = connection or model._get_connection()
-    return conn.execute(s, params, timeout=timeout, connection=connection)
+    print(s)
+    res = conn.execute(s, params, timeout=timeout, connection=connection)
+    print(res)
+    return res

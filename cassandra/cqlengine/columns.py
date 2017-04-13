@@ -579,6 +579,15 @@ class Date(Column):
         d = value if isinstance(value, util.Date) else util.Date(value)
         return d.days_from_epoch + SimpleDateType.EPOCH_OFFSET_DAYS
 
+    def to_python(self, value):
+        value = super(Date, self).to_database(value)
+        if value is None:
+            return
+        if isinstance(value, util.Date):
+            return value
+        if isinstance(value, datetime):
+            value = value.date()
+        return util.Date(value)
 
 class Time(Column):
     """
