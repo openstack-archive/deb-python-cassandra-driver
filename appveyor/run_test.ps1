@@ -28,13 +28,13 @@ if($env:ci_type -eq 'unit'){
 
 if($env:ci_type -eq 'standard'){
     echo "Running CQLEngine integration tests"
-    EVENT_LOOP_MANAGER='async' nosetests -s -v --with-ignore-docstrings --with-xunit --xunit-file=cqlengine_results.xml .\tests\integration\cqlengine
+    nosetests -s -v --with-ignore-docstrings --with-xunit --xunit-file=cqlengine_results.xml .\tests\integration\cqlengine
     $cqlengine_tests_result = $lastexitcode
     $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\cqlengine_results.xml))
     echo "uploading CQLEngine test results"
 
     echo "Running standard integration tests"
-    EVENT_LOOP_MANAGER='async' nosetests -s -v --with-ignore-docstrings --with-xunit --xunit-file=standard_results.xml .\tests\integration\standard
+    nosetests -s -v --with-ignore-docstrings --with-xunit --xunit-file=standard_results.xml .\tests\integration\standard
     $integration_tests_result = $lastexitcode
     $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\standard_results.xml))
     echo "uploading standard integration test results"
