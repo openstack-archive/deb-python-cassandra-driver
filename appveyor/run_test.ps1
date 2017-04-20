@@ -35,4 +35,5 @@ if($env:ci_type -eq 'long'){
     $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\cqlengine_results.xml))
     echo "uploading standard integration test results"
 }
+$exit_result = $unit_test_result + $cqlengine_tests_result + $integration_tests_result
 exit $unit_test_result -or $cqlengine_tests_result -or $integration_tests_result
