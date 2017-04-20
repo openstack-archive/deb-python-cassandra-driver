@@ -12,6 +12,7 @@ python -c "import platform; print(platform.architecture())"
 
 $wc = New-Object 'System.Net.WebClient'
 nosetests -s -v --with-ignore-docstrings --with-xunit --xunit-file=unit_results.xml .\tests\unit
+$unit_test_result = $lastexitcode
 echo "uploading unit results"
 $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\unit_results.xml))
 
@@ -32,4 +33,4 @@ if($env:ci_type -eq 'long'){
     $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\cqlengine_results.xml))
     echo "uploading standard integration test results"
 }
-exit 0
+exit $unit_test_result

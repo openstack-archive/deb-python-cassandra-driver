@@ -25,6 +25,8 @@ log.addHandler(handler)
 from cassandra import ConsistencyLevel
 from cassandra.cluster import Cluster
 from cassandra.query import SimpleStatement
+import uuid
+
 
 KEYSPACE = "testkeyspace"
 
