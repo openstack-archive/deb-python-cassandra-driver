@@ -12,18 +12,20 @@ python -c "import platform; print(platform.architecture())"
 
 $wc = New-Object 'System.Net.WebClient'
 nosetests -s -v --with-ignore-docstrings --with-xunit --xunit-file=unit_results.xml .\tests\unit
-$unit_test_result = $lastexitcode
+$unit_tests_result = $lastexitcode
 echo "uploading unit results"
 $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\unit_results.xml))
 
 if($env:ci_type -eq 'standard' -Or $env:ci_type -eq 'long'){
     echo "Running CQLEngine integration tests"
     nosetests -s -v --with-ignore-docstrings --with-xunit --xunit-file=cqlengine_results.xml .\tests\integration\cqlengine
+    $cqlengine_tests_result = $lastexitcode
     $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\cqlengine_results.xml))
     echo "uploading CQLEngine test results"
 
     echo "Running standard integration tests"
     nosetests -s -v --with-ignore-docstrings --with-xunit --xunit-file=standard_results.xml .\tests\integration\standard
+    $integration_tests_result = $lastexitcode
     $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\standard_results.xml))
     echo "uploading standard integration test results"
 }
@@ -33,4 +35,4 @@ if($env:ci_type -eq 'long'){
     $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\cqlengine_results.xml))
     echo "uploading standard integration test results"
 }
-exit $unit_test_result
+exit $unit_test_result -or $cqlengine_tests_result -or $integration_tests_result
