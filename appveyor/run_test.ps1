@@ -16,7 +16,16 @@ $unit_tests_result = $lastexitcode
 echo "uploading unit results"
 $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\unit_results.xml))
 
-if($env:ci_type -eq 'standard' -Or $env:ci_type -eq 'long'){
+
+if($env:ci_type -eq 'unit'){
+    echo "Running Unit tests"
+    nosetests -s -v --with-ignore-docstrings --with-xunit --xunit-file=unit_results.xml .\tests\unit
+    $unit_tests_result = $lastexitcode
+    echo "uploading unit results"
+    $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\unit_results.xml))
+
+}
+if($env:ci_type -eq 'standard'){
     echo "Running CQLEngine integration tests"
     nosetests -s -v --with-ignore-docstrings --with-xunit --xunit-file=cqlengine_results.xml .\tests\integration\cqlengine
     $cqlengine_tests_result = $lastexitcode
@@ -35,5 +44,7 @@ if($env:ci_type -eq 'long'){
     $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\cqlengine_results.xml))
     echo "uploading standard integration test results"
 }
+
 $exit_result = $unit_test_result + $cqlengine_tests_result + $integration_tests_result
-exit $unit_test_result -or $cqlengine_tests_result -or $integration_tests_result
+echo "Exit result: $exit_result"
+exit $exit_result
