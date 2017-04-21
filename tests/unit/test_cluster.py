@@ -91,13 +91,11 @@ class ExceptionTypeTest(unittest.TestCase):
 
 
 class ClusterTest(unittest.TestCase):
-    unittest.skipIf("2" in sys.version, "Not running tests for python2.7")
-
+    @unittest.skipIf("2" in sys.version, "Not running tests for python2.7")
     def test_python2(self):
         assert 1 + 1 == 2
 
-    unittest.skipIf("3" in sys.version, "Not running tests for python3.4")
-
+    @unittest.skipIf("3" in sys.version, "Not running tests for python3.4")
     def test_python3(self):
         assert 1 + 1 == 2
 
