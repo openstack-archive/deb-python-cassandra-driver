@@ -28,6 +28,8 @@ from cassandra.query import SimpleStatement, named_tuple_factory, tuple_factory
 from cassandra.pool import Host
 from tests.unit.utils import mock_session_pools
 
+import sys
+
 try:
     from cassandra.io.libevreactor import LibevConnection
 except ImportError:
@@ -89,6 +91,16 @@ class ExceptionTypeTest(unittest.TestCase):
 
 
 class ClusterTest(unittest.TestCase):
+    unittest.skipIf("2" in sys.version, "Not running tests for python2.7")
+
+    def test_python2(self):
+        assert 1 + 1 == 2
+
+    unittest.skipIf("3" in sys.version, "Not running tests for python3.4")
+
+    def test_python3(self):
+        assert 1 + 1 == 2
+
 
     def test_invalid_contact_point_types(self):
         with self.assertRaises(ValueError):
