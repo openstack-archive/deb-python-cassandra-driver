@@ -27,7 +27,7 @@ from cassandra.cluster import Cluster
 from cassandra.concurrent import execute_concurrent_with_args
 from cassandra.cqltypes import Int32Type, EMPTY
 from cassandra.query import dict_factory, ordered_dict_factory
-from cassandra.util import sortedset
+from cassandra.util import sortedset, Duration
 from tests.unit.cython.utils import cythontest
 
 from tests.integration import use_singledc, PROTOCOL_VERSION, execute_until_pass, notprotocolv1, \
@@ -792,6 +792,38 @@ class TypeTests(BasicSharedKeyspaceUnitTestCase):
             self.assertTrue(str(results[0].dc) == '-1.08430792318105707')
         finally:
             self.session.execute("DROP TABLE {0}".format(self.function_table_name))
+
+    def test_smoke_duration_values(self):
+        """
+        Test to write several Duration values to the database and verify
+        they can be read correctly
+
+        @since 3.10
+        @jira_ticket PYTHON-747
+        @expected_result the read value in C* matches the written one
+
+        @test_category data_types serialization
+        """
+        self.session.execute("""
+            CREATE TABLE duration_smoke (k int primary key, v duration)
+            """)
+        self.addCleanup(self.session.execute, "DROP TABLE duration_smoke")
+
+        prepared = self.session.prepare("""
+            INSERT INTO duration_smoke (k, v)
+            VALUES (?, ?)
+            """)
+
+        smoke_values = [0, -1, 1, 100, 1000, 1000000, 1000000000,
+                        10000000000000,-9223372036854775807, 9223372036854775807,
+                        int("7FFFFFFFFFFFFFFF", 16), int("-7FFFFFFFFFFFFFFF", 16)]
+        for smoke_value in smoke_values:
+            self.session.execute(prepared, (1, Duration(0, 0, smoke_value)))
+            results = self.session.execute("SELECT * FROM duration_smoke")
+
+            v = results[0][1]
+            self.assertEqual(Duration(0, 0, smoke_value), v,
+                             "Error encoding value {0}".format(smoke_value))
 
 
 class TypeTestsProtocol(BasicSharedKeyspaceUnitTestCase):
