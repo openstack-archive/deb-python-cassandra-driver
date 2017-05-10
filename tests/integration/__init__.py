@@ -52,10 +52,8 @@ import platform
 from threading import Event
 from subprocess import call
 from itertools import groupby
-
 from cassandra import OperationTimedOut, ReadTimeout, ReadFailure, WriteTimeout, WriteFailure, AlreadyExists, \
     InvalidRequest
-
 from cassandra.protocol import ConfigurationException
 
 try:
