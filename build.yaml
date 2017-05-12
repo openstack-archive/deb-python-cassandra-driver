@@ -20,7 +20,7 @@ schedules:
         - python: [3.4, 3.6]
         - cassandra: ['2.0', '2.1', '3.0']
 
-  nightly_libev:
+  weekly_libev:
     schedule: weekly
     branches:
       include: [master]
@@ -37,21 +37,21 @@ schedules:
       exclude:
         - python: [3.4, 3.6]
 
-  nightly_eventlet:
+  weekly_eventlet:
     schedule: weekly
     branches:
       include: [master]
     env_vars: |
       EVENT_LOOP_MANAGER='eventlet'
 
-  nightly_async:
+  weekly_async:
     schedule: weekly
     branches:
       include: [master]
     env_vars: |
       EVENT_LOOP_MANAGER='async'
 
-  nightly_twister:
+  weekly_twister:
     schedule: weekly
     branches:
       include: [master]
@@ -63,19 +63,22 @@ python:
   - 3.4
   - 3.5
   - 3.6
-  
+
 os:
   - ubuntu/trusty64
+
 cassandra:
   - '2.0'
   - '2.1'
   - '2.2'
   - '3.0'
   - '3.11'
+
 env:
   CYTHON:
     - CYTHON
     - NO_CYTHON
+
 build:
   - script: |
       export JAVA_HOME=$CCM_JAVA_HOME
@@ -84,7 +87,10 @@ build:
 
       pip install git+https://github.com/pcmanus/ccm.git
       # Install dependencies
-      sudo apt-get install -y libev4 libev-dev
+      if [[ $EVENT_LOOP_MANAGER == 'libev' ]]; then
+        sudo apt-get install -y libev4 libev-dev
+      fi
+
       pip install -r test-requirements.txt
       pip install nose-ignore-docstring
       FORCE_CYTHON=False
