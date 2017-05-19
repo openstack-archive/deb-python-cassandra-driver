@@ -133,7 +133,7 @@ class SpecExecTest(BasicSharedKeyspaceUnitTestCase):
             # that's why we can't call session.execute,which would raise it, but
             # we have to directly wait for the event
             response_future = self.session.execute_async(statement, execution_profile='spec_ep_brr_lim', timeout=2.2)
-            response_future._event.wait(4)
+            response_future._event.wait(20)
             self.assertIsInstance(response_future._final_exception, OperationTimedOut)
 
             # This is because 2.2 / 0.4 + 1 = 6
