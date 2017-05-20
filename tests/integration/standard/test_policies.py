@@ -102,3 +102,32 @@ class SpecExecTest(BasicSharedKeyspaceUnitTestCase):
         # Test timeout with spec_ex
         with self.assertRaises(OperationTimedOut):
             result = self.session.execute(statement, execution_profile='spec_ep_rr', timeout=.5)
+
+    def test_speculative_and_timeout(self):
+        """
+        Test to ensure the timeout is honored when using speculative execution
+        @since 3.10
+        @jira_ticket PYTHON-750
+        @expected_result speculative retries be schedule every fixed period, during the maximum
+        period of the timeout.
+
+        @test_category metadata
+        """
+        # We mock this so no messages are sent, otherwise a reponse might arrive
+        # and we would not know how many hosts we queried
+        from mock import patch
+        from cassandra.connection import Connection
+
+        with patch.object(Connection, "send_msg", return_value = 100) as mocked_send_msg:
+
+            statement = SimpleStatement("INSERT INTO test3rf.test (k, v) VALUES (0, 1);", is_idempotent=True)
+
+            # An OperationTimedOut is placed here in response_future,
+            # that's why we can't call session.execute,which would raise it, but
+            # we have to directly wait for the event
+            response_future = self.session.execute_async(statement, execution_profile='spec_ep_brr_lim', timeout=2.2)
+            response_future._event.wait(4)
+            self.assertIsInstance(response_future._final_exception, OperationTimedOut)
+
+            # This is because 2.2 / 0.4 + 1 = 6
+            self.assertEqual(len(response_future.attempted_hosts), 6)
