@@ -17,6 +17,7 @@ try:
 except ImportError:
     import unittest  # noqa
 
+from nose.tools import nottest
 from functools import partial
 from six.moves import range
 import sys
@@ -401,6 +402,7 @@ class LibevConnectionTests(ConnectionTests, unittest.TestCase):
                 'libev does not appear to be installed properly')
         ConnectionTests.setUp(self)
 
+    @nottest
     def test_watchers_are_finished(self):
         """
         Test for asserting that watchers are closed in LibevConnection
