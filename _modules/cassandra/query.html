@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query &#8212; Cassandra Driver 3.9.0 documentation</title>
+    <title>cassandra.query &#8212; Cassandra Driver 3.10 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.9.0',
+        VERSION:     '3.10',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
@@ -63,7 +63,7 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.query</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
+<span></span><span class="c1"># Copyright 2013-2017 DataStax, Inc.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -431,6 +431,21 @@
 
 <span class="sd">    A :class:`.PreparedStatement` should be prepared only once. Re-preparing a statement</span>
 <span class="sd">    may affect performance (as the operation requires a network roundtrip).</span>
+
+<span class="sd">    |prepared_stmt_head|: Do not use ``*`` in prepared statements if you might</span>
+<span class="sd">    change the schema of the table being queried. The driver and server each</span>
+<span class="sd">    maintain a map between metadata for a schema and statements that were</span>
+<span class="sd">    prepared against that schema. When a user changes a schema, e.g. by adding</span>
+<span class="sd">    or removing a column, the server invalidates its mappings involving that</span>
+<span class="sd">    schema. However, there is currently no way to propagate that invalidation</span>
+<span class="sd">    to drivers. Thus, after a schema change, the driver will incorrectly</span>
+<span class="sd">    interpret the results of ``SELECT *`` queries prepared before the schema</span>
+<span class="sd">    change. This is currently being addressed in `CASSANDRA-10786</span>
+<span class="sd">    &lt;https://issues.apache.org/jira/browse/CASSANDRA-10786&gt;`_.</span>
+
+<span class="sd">    .. |prepared_stmt_head| raw:: html</span>
+
+<span class="sd">       &lt;b&gt;A note about &lt;code&gt;*&lt;/code&gt; in prepared statements&lt;/b&gt;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">column_metadata</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1">#TODO: make this bind_metadata in next major</span>
@@ -990,7 +1005,8 @@
             <span class="n">session_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span>
                 <span class="n">SimpleStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_SELECT_SESSIONS_FORMAT</span><span class="p">,</span> <span class="n">consistency_level</span><span class="o">=</span><span class="n">query_cl</span><span class="p">),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,),</span> <span class="n">time_spent</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">)</span>
 
-            <span class="n">is_complete</span> <span class="o">=</span> <span class="n">session_results</span> <span class="ow">and</span> <span class="n">session_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">duration</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="c1"># PYTHON-730: There is race condition that the duration mutation is written before started_at the for fast queries</span>
+            <span class="n">is_complete</span> <span class="o">=</span> <span class="n">session_results</span> <span class="ow">and</span> <span class="n">session_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">duration</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">session_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">started_at</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">session_results</span> <span class="ow">or</span> <span class="p">(</span><span class="n">wait_for_complete</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_complete</span><span class="p">):</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_BASE_RETRY_SLEEP</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">attempt</span><span class="p">))</span>
                 <span class="n">attempt</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -1096,13 +1112,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2013-2016 DataStax.
+        &#169; Copyright 2013-2017 DataStax.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
     </div>
   </body>

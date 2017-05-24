@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &#8212; Cassandra Driver 3.9.0 documentation</title>
+    <title>cassandra.cluster &#8212; Cassandra Driver 3.10 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.9.0',
+        VERSION:     '3.10',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
@@ -63,7 +63,7 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.cluster</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
+<span></span><span class="c1"># Copyright 2013-2017 DataStax, Inc.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -132,7 +132,7 @@
                             <span class="n">HostConnectionPool</span><span class="p">,</span> <span class="n">HostConnection</span><span class="p">,</span>
                             <span class="n">NoConnectionsAvailable</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.query</span> <span class="k">import</span> <span class="p">(</span><span class="n">SimpleStatement</span><span class="p">,</span> <span class="n">PreparedStatement</span><span class="p">,</span> <span class="n">BoundStatement</span><span class="p">,</span>
-                             <span class="n">BatchStatement</span><span class="p">,</span> <span class="n">bind_params</span><span class="p">,</span> <span class="n">QueryTrace</span><span class="p">,</span>
+                             <span class="n">BatchStatement</span><span class="p">,</span> <span class="n">bind_params</span><span class="p">,</span> <span class="n">QueryTrace</span><span class="p">,</span> <span class="n">TraceUnavailable</span><span class="p">,</span>
                              <span class="n">named_tuple_factory</span><span class="p">,</span> <span class="n">dict_factory</span><span class="p">,</span> <span class="n">tuple_factory</span><span class="p">,</span> <span class="n">FETCH_SIZE_UNSET</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">cassandra.timestamps</span> <span class="k">import</span> <span class="n">MonotonicTimestampGenerator</span>
 
@@ -1460,10 +1460,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
             <span class="k">return</span>
-
         <span class="k">with</span> <span class="n">host</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
             <span class="n">was_up</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">is_up</span>
-
             <span class="c1"># ignore down signals if we have open pools to the host</span>
             <span class="c1"># this is to avoid closing pools when a control connection host became isolated</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_discount_down_events</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_manager</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">host</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">IGNORED</span><span class="p">:</span>
@@ -1630,7 +1628,7 @@
 <span class="sd">        open, attempt to open connections until that number is met.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">session</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">pool</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">pool</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
                 <span class="n">pool</span><span class="o">.</span><span class="n">ensure_core_connections</span><span class="p">()</span>
 
     <span class="nd">@staticmethod</span>
@@ -2324,7 +2322,7 @@
 <span class="sd">        Intended for internal use only.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
             <span class="k">if</span> <span class="n">host</span> <span class="o">!=</span> <span class="n">excluded_host</span> <span class="ow">and</span> <span class="n">host</span><span class="o">.</span><span class="n">is_up</span><span class="p">:</span>
                 <span class="n">future</span> <span class="o">=</span> <span class="n">ResponseFuture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">PrepareMessage</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">),</span> <span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_timeout</span><span class="p">)</span>
 
@@ -2369,7 +2367,7 @@
             <span class="n">future</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
         <span class="n">wait_futures</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_connect_futures</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">pool</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">pool</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="n">pool</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2520,7 +2518,7 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">remaining_callbacks</span><span class="p">:</span>
                 <span class="n">callback</span><span class="p">(</span><span class="n">host_errors</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">pool</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">pool</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="n">pool</span><span class="o">.</span><span class="n">_set_keyspace_for_all_conns</span><span class="p">(</span><span class="n">keyspace</span><span class="p">,</span> <span class="n">pool_finished_setting_keyspace</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">user_type_registered</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyspace</span><span class="p">,</span> <span class="n">user_type</span><span class="p">,</span> <span class="n">klass</span><span class="p">):</span>
@@ -2561,7 +2559,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_pool_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">dict</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="n">pool</span><span class="o">.</span><span class="n">get_state</span><span class="p">())</span> <span class="k">for</span> <span class="n">host</span><span class="p">,</span> <span class="n">pool</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="n">pool</span><span class="o">.</span><span class="n">get_state</span><span class="p">())</span> <span class="k">for</span> <span class="n">host</span><span class="p">,</span> <span class="n">pool</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
 
     <span class="k">def</span> <span class="nf">get_pools</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pools</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
@@ -3199,7 +3197,7 @@
         <span class="n">c</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_connection&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">if</span> <span class="n">c</span> <span class="k">else</span> <span class="p">[]</span>
 
-    <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">mark_host_down</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>  <span class="c1"># noqa</span>
         <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="ow">and</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
 
@@ -3384,7 +3382,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">query</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_time_remaining</span> <span class="o">=</span> <span class="n">timeout</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_retry_policy</span> <span class="o">=</span> <span class="n">retry_policy</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span> <span class="o">=</span> <span class="n">metrics</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span> <span class="o">=</span> <span class="n">prepared_statement</span>
@@ -3398,6 +3395,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_spec_execution_plan</span> <span class="o">=</span> <span class="n">speculative_execution_plan</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spec_execution_plan</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">attempted_hosts</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_start_timer</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_time_remaining</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_start_time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span> <span class="o">-</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_start_timer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -3417,7 +3420,8 @@
         <span class="n">errors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">errors</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_schema_agreed</span><span class="p">:</span>
-                <span class="n">errors</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_host</span><span class="o">.</span><span class="n">address</span><span class="p">:</span> <span class="s2">&quot;Client request timeout. See Session.execute[_async](timeout)&quot;</span><span class="p">}</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_host</span><span class="o">.</span><span class="n">address</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_host</span> <span class="k">else</span> <span class="s1">&#39;no host queried before timeout&#39;</span>
+                <span class="n">errors</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="s2">&quot;Client request timeout. See Session.execute[_async](timeout)&quot;</span><span class="p">}</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">control_connection</span><span class="o">.</span><span class="n">_connection</span>
                 <span class="n">host</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">host</span> <span class="k">if</span> <span class="n">connection</span> <span class="k">else</span> <span class="s1">&#39;unknown&#39;</span>
@@ -3429,8 +3433,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_timer</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_remaining</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_time</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_time_remaining</span> <span class="o">-=</span> <span class="n">elapsed</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_remaining</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_on_timeout</span><span class="p">()</span>
                     <span class="k">return</span>
@@ -3756,9 +3758,11 @@
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">ResultMessage</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">RESULT_KIND_PREPARED</span><span class="p">:</span>
-                <span class="c1"># result metadata is the only thing that could have changed from an alter</span>
-                <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">result_metadata</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">results</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">result_metadata</span> <span class="o">=</span> <span class="n">result_metadata</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="p">:</span>
+                    <span class="c1"># result metadata is the only thing that could have</span>
+                    <span class="c1"># changed from an alter</span>
+                    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">result_metadata</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">results</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">prepared_statement</span><span class="o">.</span><span class="n">result_metadata</span> <span class="o">=</span> <span class="n">result_metadata</span>
 
                 <span class="c1"># use self._query to re-use the same host and</span>
                 <span class="c1"># at the same time properly borrow the connection</span>
@@ -3901,8 +3905,15 @@
 <span class="sd">        details from Cassandra. If the trace is not available after `max_wait`,</span>
 <span class="sd">        :exc:`cassandra.query.TraceUnavailable` will be raised.</span>
 
+<span class="sd">        If the ResponseFuture is not done (async execution) and you try to retrieve the trace,</span>
+<span class="sd">        :exc:`cassandra.query.TraceUnavailable` will be raised.</span>
+
 <span class="sd">        `query_cl` is the consistency level used to poll the trace tables.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_result</span> <span class="ow">is</span> <span class="n">_NOT_SET</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_exception</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TraceUnavailable</span><span class="p">(</span>
+                <span class="s2">&quot;Trace information was not available. The ResponseFuture is not done.&quot;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_traces</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_query_trace</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_query_traces</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">max_wait</span><span class="p">,</span> <span class="n">query_cl</span><span class="p">)</span></div>
 
@@ -4215,13 +4226,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2013-2016 DataStax.
+        &#169; Copyright 2013-2017 DataStax.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
     </div>
   </body>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.pool &#8212; Cassandra Driver 3.9.0 documentation</title>
+    <title>cassandra.pool &#8212; Cassandra Driver 3.10 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.9.0',
+        VERSION:     '3.10',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
@@ -63,7 +63,7 @@
           <div class="body" role="main">
             
   <h1>Source code for cassandra.pool</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Copyright 2013-2016 DataStax, Inc.</span>
+<span></span><span class="c1"># Copyright 2013-2017 DataStax, Inc.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -424,18 +424,29 @@
 
         <span class="k">raise</span> <span class="n">NoConnectionsAvailable</span><span class="p">(</span><span class="s2">&quot;All request IDs are currently in use&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">mark_host_down</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stream_available_condition</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_stream_available_condition</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">connection</span><span class="o">.</span><span class="n">signaled_error</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Defunct or closed connection (</span><span class="si">%s</span><span class="s2">) returned to pool, potentially &quot;</span>
-                      <span class="s2">&quot;marking host </span><span class="si">%s</span><span class="s2"> as down&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
-            <span class="n">is_down</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">signal_connection_failure</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">connection</span><span class="o">.</span><span class="n">last_error</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-            <span class="n">connection</span><span class="o">.</span><span class="n">signaled_error</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">connection</span><span class="o">.</span><span class="n">signaled_error</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">mark_host_down</span><span class="p">:</span>
+                <span class="k">return</span>
+
+            <span class="n">is_down</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">connection</span><span class="o">.</span><span class="n">signaled_error</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Defunct or closed connection (</span><span class="si">%s</span><span class="s2">) returned to pool, potentially &quot;</span>
+                          <span class="s2">&quot;marking host </span><span class="si">%s</span><span class="s2"> as down&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+                <span class="n">is_down</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">signal_connection_failure</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">connection</span><span class="o">.</span><span class="n">last_error</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">connection</span><span class="o">.</span><span class="n">signaled_error</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="c1"># Force mark down a host on error, used by the ConnectionHeartbeat</span>
+            <span class="k">if</span> <span class="n">mark_host_down</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_down</span><span class="p">:</span>
+                <span class="n">is_down</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">on_down</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
             <span class="k">if</span> <span class="n">is_down</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
@@ -447,6 +458,11 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_replace</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_is_replacing</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">return</span>
+
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Replacing connection (</span><span class="si">%s</span><span class="s2">) to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">connection_factory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
@@ -691,7 +707,7 @@
 
         <span class="k">raise</span> <span class="n">NoConnectionsAvailable</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">mark_host_down</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>  <span class="c1">#noqa</span>
         <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">in_flight</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span>
@@ -859,13 +875,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2013-2016 DataStax.
+        &#169; Copyright 2013-2017 DataStax.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
     </div>
   </body>

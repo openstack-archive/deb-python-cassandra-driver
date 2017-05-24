@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.query - Prepared Statements, Batch Statements, Tracing, and Row Factories &#8212; Cassandra Driver 3.9.0 documentation</title>
+    <title>cassandra.query - Prepared Statements, Batch Statements, Tracing, and Row Factories &#8212; Cassandra Driver 3.10 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.9.0',
+        VERSION:     '3.10',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="metrics.html" title="cassandra.metrics - Performance Metrics"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &#187;</li> 
       </ul>
     </div>
@@ -179,6 +179,15 @@ Instances of this class should not be created directly, but through
 <a class="reference internal" href="cluster.html#cassandra.cluster.Session.prepare" title="cassandra.cluster.Session.prepare"><code class="xref py py-meth docutils literal"><span class="pre">Session.prepare()</span></code></a>.</p>
 <p>A <a class="reference internal" href="#cassandra.query.PreparedStatement" title="cassandra.query.PreparedStatement"><code class="xref py py-class docutils literal"><span class="pre">PreparedStatement</span></code></a> should be prepared only once. Re-preparing a statement
 may affect performance (as the operation requires a network roundtrip).</p>
+<p><b>A note about <code>*</code> in prepared statements</b>: Do not use <code class="docutils literal"><span class="pre">*</span></code> in prepared statements if you might
+change the schema of the table being queried. The driver and server each
+maintain a map between metadata for a schema and statements that were
+prepared against that schema. When a user changes a schema, e.g. by adding
+or removing a column, the server invalidates its mappings involving that
+schema. However, there is currently no way to propagate that invalidation
+to drivers. Thus, after a schema change, the driver will incorrectly
+interpret the results of <code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">*</span></code> queries prepared before the schema
+change. This is currently being addressed in <a class="reference external" href="https://issues.apache.org/jira/browse/CASSANDRA-10786">CASSANDRA-10786</a>.</p>
 <dl class="method">
 <dt id="cassandra.query.PreparedStatement.bind">
 <code class="descname">bind</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/query.html#PreparedStatement.bind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.query.PreparedStatement.bind" title="Permalink to this definition">¶</a></dt>
@@ -624,12 +633,12 @@ received the query.</p>
         <li class="right" >
           <a href="metrics.html" title="cassandra.metrics - Performance Metrics"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2013-2016 DataStax.
+        &#169; Copyright 2013-2017 DataStax.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
     </div>
   </body>
