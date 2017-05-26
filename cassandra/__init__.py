@@ -20,6 +20,7 @@ class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 
+
 logging.getLogger('cassandra').addHandler(NullHandler())
 
 __version_info__ = (3, 10, 0, 'post0')
@@ -91,6 +92,7 @@ class ConsistencyLevel(object):
     Sends a request only to replicas in the local datacenter and waits for
     one response.
     """
+
 
 ConsistencyLevel.value_to_name = {
     ConsistencyLevel.ANY: 'ANY',
