@@ -19,6 +19,10 @@ except ImportError:
 
 from itertools import islice, cycle
 from mock import Mock, patch
+try:
+    from thread import LockType  # py2
+except ImportError:
+    from _thread import LockType  # py3
 from random import randint
 import six
 import sys
@@ -34,7 +38,7 @@ from cassandra.policies import (RoundRobinPolicy, WhiteListRoundRobinPolicy, DCA
                                 RetryPolicy, WriteType,
                                 DowngradingConsistencyRetryPolicy, ConstantReconnectionPolicy,
                                 LoadBalancingPolicy, ConvictionPolicy, ReconnectionPolicy, FallthroughRetryPolicy,
-                                IdentityTranslator, EC2MultiRegionTranslator)
+                                IdentityTranslator, EC2MultiRegionTranslator, HostFilterPolicy)
 from cassandra.pool import Host
 from cassandra.query import Statement
 
@@ -1243,3 +1247,36 @@ class AddressTranslatorTest(unittest.TestCase):
         translated = ec2t.translate(addr)
         self.assertIsNot(translated, addr)  # verifies that the resolver path is followed
         self.assertEqual(translated, addr)  # and that it resolves to the same address
+
+
+class HostFilterPolicyTest(unittest.TestCase):
+
+    def setUp(self):
+        self.child_policy, self.predicate = (
+            Mock(name='child_policy'), Mock(name='predicate')
+        )
+
+        self.default_host_filter_policy = HostFilterPolicy(
+            child_policy=Mock(name='child_policy'),
+            predicate=Mock(name='predicate')
+        )
+
+    def _check_init(self, hfp):
+        self.assertIs(hfp.child_policy, self.child_policy)
+        self.assertIs(hfp.predicate, self.predicate)
+        self.assertIsInstance(hfp._hosts_lock, LockType)
+
+    def test_init_arg_order(self):
+        self._check_init(
+            HostFilterPolicy(self.child_policy, self.predicate)
+        )
+
+    def test_init_kwargs(self):
+        self._check_init(HostFilterPolicy(
+            predicate=self.predicate, child_policy=self.child_policy
+        ))
+
+    def test_immutable_predicate(self):
+        expected_message_regex = "can't set attribute"
+        with self.assertRaisesRegexp(AttributeError, expected_message_regex):
+            self.default_host_filter_policy.predicate = object()

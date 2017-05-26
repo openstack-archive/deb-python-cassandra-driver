@@ -441,6 +441,30 @@ class WhiteListRoundRobinPolicy(RoundRobinPolicy):
             RoundRobinPolicy.on_add(self, host)
 
 
+class HostFilterPolicy(LoadBalancingPolicy):
+
+    _predicate = None
+
+    def __init__(self, child_policy, predicate):
+        super(HostFilterPolicy, self).__init__()
+        self.child_policy = child_policy
+        self._predicate = predicate
+
+    @property
+    def predicate(self):
+        """
+        A predicate, set on :method:`HostFilterPolicy.__init__` that takes a
+        :class:`.Host` and returns a value. If the value is falsy, the
+        :class:`.Host`: is :class:`.IGNORED`. If the value is truthy,
+        :class:`.HostFilterPolicy` defers to :attr:.child_policy to determine
+        the host's distance.
+
+        This is a read-only value after ``__init__``, implemented as a
+        ``property``.
+        """
+        return self._predicate
+
+
 class ConvictionPolicy(object):
     """
     A policy which decides when hosts should be considered down
