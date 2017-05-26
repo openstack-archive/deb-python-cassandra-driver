@@ -28,10 +28,7 @@ from cassandra.query import SimpleStatement, named_tuple_factory, tuple_factory
 from cassandra.pool import Host
 from tests.unit.utils import mock_session_pools
 
-try:
-    from cassandra.io.libevreactor import LibevConnection
-except ImportError:
-    LibevConnection = None  # noqa
+from tests import CONNECTION_CLASS
 
 
 class ExceptionTypeTest(unittest.TestCase):
@@ -129,9 +126,7 @@ class SchedulerTest(unittest.TestCase):
 
 class SessionTest(unittest.TestCase):
     def setUp(self):
-        if LibevConnection is None:
-            raise unittest.SkipTest('libev does not appear to be installed correctly')
-        LibevConnection.initialize_reactor()
+        CONNECTION_CLASS.initialize_reactor()
 
     # TODO: this suite could be expanded; for now just adding a test covering a PR
     @mock_session_pools
@@ -164,9 +159,7 @@ class SessionTest(unittest.TestCase):
 
 class ExecutionProfileTest(unittest.TestCase):
     def setUp(self):
-        if LibevConnection is None:
-            raise unittest.SkipTest('libev does not appear to be installed correctly')
-        LibevConnection.initialize_reactor()
+        CONNECTION_CLASS.initialize_reactor()
 
     def _verify_response_future_profile(self, rf, prof):
         self.assertEqual(rf._load_balancer, prof.load_balancing_policy)

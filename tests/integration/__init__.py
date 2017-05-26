@@ -11,33 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-
-EVENT_LOOP_MANAGER = os.getenv('EVENT_LOOP_MANAGER', "libev")
-if "gevent" in EVENT_LOOP_MANAGER:
-    import gevent.monkey
-    gevent.monkey.patch_all()
-    from cassandra.io.geventreactor import GeventConnection
-    connection_class = GeventConnection
-elif "eventlet" in EVENT_LOOP_MANAGER:
-    from eventlet import monkey_patch
-    monkey_patch()
-
-    from cassandra.io.eventletreactor import EventletConnection
-    connection_class = EventletConnection
-elif "async" in EVENT_LOOP_MANAGER:
-    from cassandra.io.asyncorereactor import AsyncoreConnection
-    connection_class = AsyncoreConnection
-elif "twisted" in EVENT_LOOP_MANAGER:
-    from cassandra.io.twistedreactor import TwistedConnection
-    connection_class = TwistedConnection
-else:
-    from cassandra.io.libevreactor import LibevConnection
-    connection_class = LibevConnection
-
-from cassandra.cluster import Cluster
-Cluster.connection_class = connection_class
-
 try:
     import unittest2 as unittest
 except ImportError:
@@ -49,6 +22,7 @@ import sys
 import time
 import traceback
 import platform
+import os
 from threading import Event
 from subprocess import call
 from itertools import groupby
@@ -113,14 +87,6 @@ def _tuple_version(version_string):
 
 USE_CASS_EXTERNAL = bool(os.getenv('USE_CASS_EXTERNAL', False))
 
-# If set to to true this will force the Cython tests to run regardless of whether they are installed
-cython_env = os.getenv('VERIFY_CYTHON', "False")
-
-
-VERIFY_CYTHON = False
-
-if(cython_env == 'True'):
-    VERIFY_CYTHON = True
 
 default_cassandra_version = '2.2.0'
 
