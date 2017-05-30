@@ -1252,9 +1252,8 @@ class AddressTranslatorTest(unittest.TestCase):
 class HostFilterPolicyInitTest(unittest.TestCase):
 
     def setUp(self):
-        self.child_policy, self.predicate = (
-            Mock(name='child_policy'), Mock(name='predicate')
-        )
+        self.child_policy, self.predicate = (Mock(name='child_policy'),
+                                             Mock(name='predicate'))
 
     def _check_init(self, hfp):
         self.assertIs(hfp.child_policy, self.child_policy)
@@ -1262,9 +1261,7 @@ class HostFilterPolicyInitTest(unittest.TestCase):
         self.assertIsInstance(hfp._hosts_lock, LockType)
 
     def test_init_arg_order(self):
-        self._check_init(
-            HostFilterPolicy(self.child_policy, self.predicate)
-        )
+        self._check_init(HostFilterPolicy(self.child_policy, self.predicate))
 
     def test_init_kwargs(self):
         self._check_init(HostFilterPolicy(
@@ -1273,10 +1270,8 @@ class HostFilterPolicyInitTest(unittest.TestCase):
 
     def test_immutable_predicate(self):
         expected_message_regex = "can't set attribute"
-        hfp = HostFilterPolicy(
-            child_policy=Mock(name='child_policy'),
-            predicate=Mock(name='predicate')
-        )
+        hfp = HostFilterPolicy(child_policy=Mock(name='child_policy'),
+                               predicate=Mock(name='predicate'))
         with self.assertRaisesRegexp(AttributeError, expected_message_regex):
             hfp.predicate = object()
 
@@ -1292,10 +1287,8 @@ class HostFilterPolicyDeferralTest(unittest.TestCase):
     def _check_host_triggered_method(self, method):
         arg, kwarg = Mock(name='arg'), Mock(name='kwarg')
         result = method(arg, kw=kwarg)
-        child_method = getattr(
-            self.passthrough_hfp.child_policy,
-            method.__name__
-        )
+        child_method = getattr(self.passthrough_hfp.child_policy,
+                               method.__name__)
         child_method.assert_called_with(arg, kw=kwarg)
         self.assertIs(result, child_method.return_value)
 
