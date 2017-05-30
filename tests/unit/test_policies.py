@@ -1260,6 +1260,7 @@ class HostFilterPolicyTest(unittest.TestCase):
             child_policy=Mock(name='child_policy'),
             predicate=Mock(name='predicate')
         )
+        self.arg, self.kwarg = Mock(name='arg'), Mock(name='kwarg')
 
     def _check_init(self, hfp):
         self.assertIs(hfp.child_policy, self.child_policy)
@@ -1281,9 +1282,14 @@ class HostFilterPolicyTest(unittest.TestCase):
         with self.assertRaisesRegexp(AttributeError, expected_message_regex):
             self.default_host_filter_policy.predicate = object()
 
-    def test_defer_on_up_to_child_policy(self):
-        arg, kwarg = object(), object()
-        self.default_host_filter_policy.on_up(arg, kw=kwarg)
-        self.default_host_filter_policy.child_policy.on_up.assert_called_with(
-            arg, kw=kwarg
+    def _check_host_triggered_method(self, method):
+        result = method(self.arg, kw=self.kwarg)
+        child_method = getattr(
+            self.default_host_filter_policy.child_policy,
+            method.__name__
         )
+        child_method.assert_called_with(self.arg, kw=self.kwarg)
+        self.assertIs(result, child_method.return_value)
+
+    def test_defer_on_up_to_child_policy(self):
+        self._check_host_triggered_method(self.default_host_filter_policy.on_up)
