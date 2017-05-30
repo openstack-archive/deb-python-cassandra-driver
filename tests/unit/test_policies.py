@@ -1256,10 +1256,11 @@ class HostFilterPolicyTest(unittest.TestCase):
             Mock(name='child_policy'), Mock(name='predicate')
         )
 
-        self.default_host_filter_policy = HostFilterPolicy(
+        self.passthrough_host_filter_policy = HostFilterPolicy(
             child_policy=Mock(name='child_policy'),
             predicate=Mock(name='predicate')
         )
+        self.passthrough_host_filter_policy.predicate.return_value = True
         self.arg, self.kwarg = Mock(name='arg'), Mock(name='kwarg')
 
     def _check_init(self, hfp):
@@ -1280,19 +1281,25 @@ class HostFilterPolicyTest(unittest.TestCase):
     def test_immutable_predicate(self):
         expected_message_regex = "can't set attribute"
         with self.assertRaisesRegexp(AttributeError, expected_message_regex):
-            self.default_host_filter_policy.predicate = object()
+            self.passthrough_host_filter_policy.predicate = object()
 
     def _check_host_triggered_method(self, method):
         result = method(self.arg, kw=self.kwarg)
         child_method = getattr(
-            self.default_host_filter_policy.child_policy,
+            self.passthrough_host_filter_policy.child_policy,
             method.__name__
         )
         child_method.assert_called_with(self.arg, kw=self.kwarg)
         self.assertIs(result, child_method.return_value)
 
     def test_defer_on_up_to_child_policy(self):
-        self._check_host_triggered_method(self.default_host_filter_policy.on_up)
+        self._check_host_triggered_method(self.passthrough_host_filter_policy.on_up)
 
     def test_defer_on_down_to_child_policy(self):
-        self._check_host_triggered_method(self.default_host_filter_policy.on_down)
+        self._check_host_triggered_method(self.passthrough_host_filter_policy.on_down)
+
+    def test_defer_on_add_to_child_policy(self):
+        self._check_host_triggered_method(self.passthrough_host_filter_policy.on_add)
+
+    def test_defer_on_remove_to_child_policy(self):
+        self._check_host_triggered_method(self.passthrough_host_filter_policy.on_remove)
