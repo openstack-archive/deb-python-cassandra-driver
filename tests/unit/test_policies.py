@@ -1293,3 +1293,6 @@ class HostFilterPolicyTest(unittest.TestCase):
 
     def test_defer_on_up_to_child_policy(self):
         self._check_host_triggered_method(self.default_host_filter_policy.on_up)
+
+    def test_defer_on_down_to_child_policy(self):
+        self._check_host_triggered_method(self.default_host_filter_policy.on_down)

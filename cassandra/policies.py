@@ -453,6 +453,9 @@ class HostFilterPolicy(LoadBalancingPolicy):
     def on_up(self, *args, **kwargs):
         return self.child_policy.on_up(*args, **kwargs)
 
+    def on_down(self, *args, **kwargs):
+        return self.child_policy.on_down(*args, **kwargs)
+
     @property
     def predicate(self):
         """
