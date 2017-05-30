@@ -1280,3 +1280,10 @@ class HostFilterPolicyTest(unittest.TestCase):
         expected_message_regex = "can't set attribute"
         with self.assertRaisesRegexp(AttributeError, expected_message_regex):
             self.default_host_filter_policy.predicate = object()
+
+    def test_defer_on_up_to_child_policy(self):
+        arg, kwarg = object(), object()
+        self.default_host_filter_policy.on_up(arg, kw=kwarg)
+        self.default_host_filter_policy.child_policy.on_up.assert_called_with(
+            arg, kw=kwarg
+        )
