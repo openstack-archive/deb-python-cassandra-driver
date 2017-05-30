@@ -450,17 +450,21 @@ class HostFilterPolicy(LoadBalancingPolicy):
         self.child_policy = child_policy
         self._predicate = predicate
 
-    def on_up(self, *args, **kwargs):
-        return self.child_policy.on_up(*args, **kwargs)
+    def on_up(self, host, *args, **kwargs):
+        if self.predicate(host):
+            return self.child_policy.on_up(host, *args, **kwargs)
 
-    def on_down(self, *args, **kwargs):
-        return self.child_policy.on_down(*args, **kwargs)
+    def on_down(self, host, *args, **kwargs):
+        if self.predicate(host):
+            return self.child_policy.on_down(host, *args, **kwargs)
 
-    def on_add(self, *args, **kwargs):
-        return self.child_policy.on_add(*args, **kwargs)
+    def on_add(self, host, *args, **kwargs):
+        if self.predicate(host):
+            return self.child_policy.on_add(host, *args, **kwargs)
 
-    def on_remove(self, *args, **kwargs):
-        return self.child_policy.on_remove(*args, **kwargs)
+    def on_remove(self, host, *args, **kwargs):
+        if self.predicate(host):
+            return self.child_policy.on_remove(host, *args, **kwargs)
 
     @property
     def predicate(self):

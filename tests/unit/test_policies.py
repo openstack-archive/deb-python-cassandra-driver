@@ -1290,45 +1290,42 @@ class HostFilterPolicyDeferralTest(unittest.TestCase):
                            return_value=False)
         )
 
-    def _check_host_triggered_method(self, method, expect_called):
+    def _check_host_triggered_method(self, policy, name):
         arg, kwarg = Mock(name='arg'), Mock(name='kwarg')
+        expect_deferral = policy is self.passthrough_hfp
+        method, child_policy_method = (getattr(policy, name),
+                                       getattr(policy.child_policy, name))
+
         result = method(arg, kw=kwarg)
-        child_method = getattr(self.passthrough_hfp.child_policy,
-                               method.__name__)
-        if expect_called:
-            child_method.assert_called_with(arg, kw=kwarg)
-            self.assertIs(result, child_method.return_value)
+
+        if expect_deferral:
+            # method calls the child policy's method...
+            child_policy_method.assert_called_with(arg, kw=kwarg)
+            # and returns its return value
+            self.assertIs(result, child_policy_method.return_value)
         else:
-            child_method.assert_not_called()
+            child_policy_method.assert_not_called()
 
     def test_defer_on_up_to_child_policy(self):
-        self._check_host_triggered_method(self.passthrough_hfp.on_up,
-                                          expect_called=True)
+        self._check_host_triggered_method(self.passthrough_hfp, 'on_up')
 
     def test_defer_on_down_to_child_policy(self):
-        self._check_host_triggered_method(self.passthrough_hfp.on_down,
-                                          expect_called=True)
+        self._check_host_triggered_method(self.passthrough_hfp, 'on_down')
 
     def test_defer_on_add_to_child_policy(self):
-        self._check_host_triggered_method(self.passthrough_hfp.on_add,
-                                          expect_called=True)
+        self._check_host_triggered_method(self.passthrough_hfp, 'on_add')
 
     def test_defer_on_remove_to_child_policy(self):
-        self._check_host_triggered_method(self.passthrough_hfp.on_remove,
-                                          expect_called=True)
+        self._check_host_triggered_method(self.passthrough_hfp, 'on_remove')
 
     def test_filtered_host_on_up_doesnt_call_child_policy(self):
-        self._check_host_triggered_method(self.filterall_hfp.on_up,
-                                          expect_called=False)
+        self._check_host_triggered_method(self.filterall_hfp, 'on_up')
 
     def test_filtered_host_on_down_doesnt_call_child_policy(self):
-        self._check_host_triggered_method(self.filterall_hfp.on_down,
-                                          expect_called=False)
+        self._check_host_triggered_method(self.filterall_hfp, 'on_down')
 
     def test_filtered_host_on_add_doesnt_call_child_policy(self):
-        self._check_host_triggered_method(self.filterall_hfp.on_add,
-                                          expect_called=False)
+        self._check_host_triggered_method(self.filterall_hfp, 'on_add')
 
     def test_filtered_host_on_remove_doesnt_call_child_policy(self):
-        self._check_host_triggered_method(self.filterall_hfp.on_remove,
-                                          expect_called=False)
+        self._check_host_triggered_method(self.filterall_hfp, 'on_remove')
