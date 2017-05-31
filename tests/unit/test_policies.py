@@ -1357,6 +1357,7 @@ class HostFilterPolicyDistanceTest(unittest.TestCase):
         # second call of _child_policy with count() side effect
         self.assertEqual(self.hfp.distance(self.accepted_host), distances[1])
 
+
 class HostFilterPolicyPopulateTest(unittest.TestCase):
 
     def test_populate_deferred_to_child(self):
