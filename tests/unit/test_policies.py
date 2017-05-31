@@ -1300,7 +1300,7 @@ class HostFilterPolicyDeferralTest(unittest.TestCase):
 
         if expect_deferral:
             # method calls the child policy's method...
-            child_policy_method.assert_called_with(arg, kw=kwarg)
+            child_policy_method.assert_called_once_with(arg, kw=kwarg)
             # and returns its return value
             self.assertIs(result, child_policy_method.return_value)
         else:
