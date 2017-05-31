@@ -475,7 +475,7 @@ class HostFilterPolicy(LoadBalancingPolicy):
         :class:`.HostFilterPolicy` defers to :attr:.child_policy to determine
         the host's distance.
 
-        This is a read-only value after ``__init__``, implemented as a
+        This is a read-only value set in ``__init__``, implemented as a
         ``property``.
         """
         return self._predicate
