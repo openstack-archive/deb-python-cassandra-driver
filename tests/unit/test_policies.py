@@ -1256,7 +1256,7 @@ class HostFilterPolicyInitTest(unittest.TestCase):
                                              Mock(name='predicate'))
 
     def _check_init(self, hfp):
-        self.assertIs(hfp.child_policy, self.child_policy)
+        self.assertIs(hfp._child_policy, self.child_policy)
         self.assertIs(hfp.predicate, self.predicate)
         self.assertIsInstance(hfp._hosts_lock, LockType)
 
@@ -1294,7 +1294,7 @@ class HostFilterPolicyDeferralTest(unittest.TestCase):
         arg, kwarg = Mock(name='arg'), Mock(name='kwarg')
         expect_deferral = policy is self.passthrough_hfp
         method, child_policy_method = (getattr(policy, name),
-                                       getattr(policy.child_policy, name))
+                                       getattr(policy._child_policy, name))
 
         result = method(arg, kw=kwarg)
 
@@ -1348,7 +1348,7 @@ class HostFilterPolicyDistanceTest(unittest.TestCase):
                             HostDistance.IGNORED)
 
     def test_accepted_filter_defers_to_child_policy(self):
-        self.hfp.child_policy.distance.side_effect = distances = Mock(), Mock()
+        self.hfp._child_policy.distance.side_effect = distances = Mock(), Mock()
 
         # getting the distance for an ignored host shouldn't affect subsequent results
         self.hfp.distance(self.ignored_host)

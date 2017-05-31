@@ -447,24 +447,24 @@ class HostFilterPolicy(LoadBalancingPolicy):
 
     def __init__(self, child_policy, predicate):
         super(HostFilterPolicy, self).__init__()
-        self.child_policy = child_policy
+        self._child_policy = child_policy
         self._predicate = predicate
 
     def on_up(self, host, *args, **kwargs):
         if self.predicate(host):
-            return self.child_policy.on_up(host, *args, **kwargs)
+            return self._child_policy.on_up(host, *args, **kwargs)
 
     def on_down(self, host, *args, **kwargs):
         if self.predicate(host):
-            return self.child_policy.on_down(host, *args, **kwargs)
+            return self._child_policy.on_down(host, *args, **kwargs)
 
     def on_add(self, host, *args, **kwargs):
         if self.predicate(host):
-            return self.child_policy.on_add(host, *args, **kwargs)
+            return self._child_policy.on_add(host, *args, **kwargs)
 
     def on_remove(self, host, *args, **kwargs):
         if self.predicate(host):
-            return self.child_policy.on_remove(host, *args, **kwargs)
+            return self._child_policy.on_remove(host, *args, **kwargs)
 
     @property
     def predicate(self):
@@ -472,7 +472,7 @@ class HostFilterPolicy(LoadBalancingPolicy):
         A predicate, set on :method:`HostFilterPolicy.__init__` that takes a
         :class:`.Host` and returns a value. If the value is falsy, the
         :class:`.Host`: is :class:`.IGNORED`. If the value is truthy,
-        :class:`.HostFilterPolicy` defers to :attr:.child_policy to determine
+        :class:`.HostFilterPolicy` defers to :attr:._child_policy to determine
         the host's distance.
 
         This is a read-only value set in ``__init__``, implemented as a
@@ -482,7 +482,7 @@ class HostFilterPolicy(LoadBalancingPolicy):
 
     def distance(self, host):
         if self.predicate(host):
-            return self.child_policy.distance(host)
+            return self._child_policy.distance(host)
         else:
             return HostDistance.IGNORED
 
