@@ -492,6 +492,11 @@ class HostFilterPolicy(LoadBalancingPolicy):
             hosts=[h for h in hosts if self.predicate(h)]
         )
 
+    def make_query_plan(self, working_keyspace=None, query=None):
+        return self._child_policy.make_query_plan(
+            working_keyspace=working_keyspace, query=query
+        )
+
 
 class ConvictionPolicy(object):
     """

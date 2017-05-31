@@ -1385,3 +1385,21 @@ class HostFilterPolicyPopulateTest(unittest.TestCase):
             hfp._child_policy.populate.call_args[1]['hosts'],
             ['acceptme0', 'acceptme1']
         )
+
+
+class HostFilterPolicyQueryPlanTest(unittest.TestCase):
+
+    def test_query_plan_deferred_to_child(self):
+        hfp = HostFilterPolicy(
+            child_policy=Mock(name='child_policy'),
+            predicate=lambda host: True
+        )
+        working_keyspace, query = (Mock(name='working_keyspace'),
+                                   Mock(name='query'))
+        qp = hfp.make_query_plan(working_keyspace=working_keyspace,
+                                 query=query)
+        hfp._child_policy.make_query_plan.assert_called_once_with(
+            working_keyspace=working_keyspace,
+            query=query
+        )
+        self.assertEqual(qp, hfp._child_policy.make_query_plan.return_value)
