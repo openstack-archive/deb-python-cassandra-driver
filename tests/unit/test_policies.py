@@ -1329,3 +1329,30 @@ class HostFilterPolicyDeferralTest(unittest.TestCase):
 
     def test_filtered_host_on_remove_doesnt_call_child_policy(self):
         self._check_host_triggered_method(self.filterall_hfp, 'on_remove')
+
+
+class HostFilterPolicyDistanceTest(unittest.TestCase):
+
+    def setUp(self):
+        self.hfp = HostFilterPolicy(
+            child_policy=Mock(name='child_policy', distance=Mock(name='distance')),
+            predicate=lambda host: host.address == 'acceptme'
+        )
+        self.ignored_host = Host(inet_address='ignoreme', conviction_policy_factory=Mock())
+        self.accepted_host = Host(inet_address='acceptme', conviction_policy_factory=Mock())
+
+    def test_ignored_with_filter(self):
+        self.assertEqual(self.hfp.distance(self.ignored_host),
+                         HostDistance.IGNORED)
+        self.assertNotEqual(self.hfp.distance(self.accepted_host),
+                            HostDistance.IGNORED)
+
+    def test_accepted_filter_defers_to_child_policy(self):
+        self.hfp.child_policy.distance.side_effect = distances = Mock(), Mock()
+
+        # getting the distance for an ignored host shouldn't affect subsequent results
+        self.hfp.distance(self.ignored_host)
+        # first call of _child_policy with count() side effect
+        self.assertEqual(self.hfp.distance(self.accepted_host), distances[0])
+        # second call of _child_policy with count() side effect
+        self.assertEqual(self.hfp.distance(self.accepted_host), distances[1])

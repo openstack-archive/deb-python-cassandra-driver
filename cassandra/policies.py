@@ -480,6 +480,12 @@ class HostFilterPolicy(LoadBalancingPolicy):
         """
         return self._predicate
 
+    def distance(self, host):
+        if self.predicate(host):
+            return self.child_policy.distance(host)
+        else:
+            return HostDistance.IGNORED
+
 
 class ConvictionPolicy(object):
     """
