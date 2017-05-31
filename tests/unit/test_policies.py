@@ -1356,3 +1356,32 @@ class HostFilterPolicyDistanceTest(unittest.TestCase):
         self.assertEqual(self.hfp.distance(self.accepted_host), distances[0])
         # second call of _child_policy with count() side effect
         self.assertEqual(self.hfp.distance(self.accepted_host), distances[1])
+
+class HostFilterPolicyPopulateTest(unittest.TestCase):
+
+    def test_populate_deferred_to_child(self):
+        hfp = HostFilterPolicy(
+            child_policy=Mock(name='child_policy'),
+            predicate=lambda host: True
+        )
+        mock_cluster, hosts = (Mock(name='cluster'),
+                               ['host1', 'host2', 'host3'])
+        hfp.populate(mock_cluster, hosts)
+        hfp._child_policy.populate.assert_called_once_with(
+            cluster=mock_cluster,
+            hosts=hosts
+        )
+
+    def test_child_not_populated_with_filtered_hosts(self):
+        hfp = HostFilterPolicy(
+            child_policy=Mock(name='child_policy'),
+            predicate=lambda host: 'acceptme' in host
+        )
+        mock_cluster, hosts = (Mock(name='cluster'),
+                               ['acceptme0', 'ignoreme0', 'ignoreme1', 'acceptme1'])
+        hfp.populate(mock_cluster, hosts)
+        hfp._child_policy.populate.assert_called_once()
+        self.assertEqual(
+            hfp._child_policy.populate.call_args[1]['hosts'],
+            ['acceptme0', 'acceptme1']
+        )

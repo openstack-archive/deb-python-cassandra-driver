@@ -486,6 +486,12 @@ class HostFilterPolicy(LoadBalancingPolicy):
         else:
             return HostDistance.IGNORED
 
+    def populate(self, cluster, hosts):
+        self._child_policy.populate(
+            cluster=cluster,
+            hosts=[h for h in hosts if self.predicate(h)]
+        )
+
 
 class ConvictionPolicy(object):
     """
