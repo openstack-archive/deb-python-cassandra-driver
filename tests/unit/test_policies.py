@@ -1330,6 +1330,14 @@ class HostFilterPolicyDeferralTest(unittest.TestCase):
     def test_filtered_host_on_remove_doesnt_call_child_policy(self):
         self._check_host_triggered_method(self.filterall_hfp, 'on_remove')
 
+    def test_check_supported_defers_to_child(self):
+        self.passthrough_hfp.check_supported()
+        self.passthrough_hfp._child_policy.check_supported.assert_called_once()
+
+    def test_check_supported_defers_to_child_when_predicate_filtered(self):
+        self.filterall_hfp.check_supported()
+        self.filterall_hfp._child_policy.check_supported.assert_called_once()
+
 
 class HostFilterPolicyDistanceTest(unittest.TestCase):
 

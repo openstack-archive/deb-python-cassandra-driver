@@ -497,6 +497,9 @@ class HostFilterPolicy(LoadBalancingPolicy):
             working_keyspace=working_keyspace, query=query
         )
 
+    def check_supported(self):
+        return self._child_policy.check_supported()
+
 
 class ConvictionPolicy(object):
     """
