@@ -442,6 +442,13 @@ class WhiteListRoundRobinPolicy(RoundRobinPolicy):
 
 
 class HostFilterPolicy(LoadBalancingPolicy):
+    """
+    A :class:`.LoadBalancingPolicy` subclass that takes an instantiated
+    ``LoadBalancingPolicy`` as a child policy, and a single-argument predicate.
+    This policy defers to the child policy for hosts where ``predicate(host)``
+    is truthy. Hosts for which ``predicate(host)`` is falsey will be considered
+    :attr:`.IGNORED`, and will not be used in a query plan.
+    """
 
     _predicate = None
 
@@ -469,11 +476,11 @@ class HostFilterPolicy(LoadBalancingPolicy):
     @property
     def predicate(self):
         """
-        A predicate, set on :method:`HostFilterPolicy.__init__` that takes a
-        :class:`.Host` and returns a value. If the value is falsy, the
-        :class:`.Host`: is :class:`.IGNORED`. If the value is truthy,
-        :class:`.HostFilterPolicy` defers to :attr:._child_policy to determine
-        the host's distance.
+        A predicate, set on object initialization, that takes a :class:`.Host`
+        and returns a value. If the value is falsy, the :class:`.Host` is
+        :class:`~HostDistance.IGNORED`. If the value is truthy,
+        :class:`.HostFilterPolicy` defers to the child policy to determine the
+        host's distance.
 
         This is a read-only value set in ``__init__``, implemented as a
         ``property``.
@@ -481,6 +488,11 @@ class HostFilterPolicy(LoadBalancingPolicy):
         return self._predicate
 
     def distance(self, host):
+        """
+        Checks if ``predicate(host)``, then returns
+        :attr:`~HostDistance.IGNORED` if falsey, and defers to the child policy
+        otherwise.
+        """
         if self.predicate(host):
             return self._child_policy.distance(host)
         else:
@@ -493,6 +505,13 @@ class HostFilterPolicy(LoadBalancingPolicy):
         )
 
     def make_query_plan(self, working_keyspace=None, query=None):
+        """
+        Defers to the child policy's
+        :meth:`.LoadBalancingPolicy.make_query_plan`. Since host changes (up,
+        down, addition, and removal) have not been propagated to the child
+        policy, the child policy will only ever return policies for which
+        :meth:`.predicate(host)` was truthy when that change occurred.
+        """
         return self._child_policy.make_query_plan(
             working_keyspace=working_keyspace, query=query
         )
