@@ -9,6 +9,10 @@ Bug Fixes
 ---------
 * is_idempotent flag is not propagated from PreparedStatement to BoundStatement (PYTHON-736)
 
+Other
+-----
+* Deprecate WhiteListRoundRobinPolicy (PYTHON-759)
+
 3.10.0
 ======
 May 24, 2017
