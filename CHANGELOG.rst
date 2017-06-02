@@ -1,6 +1,10 @@
 3.11
 ====
 
+Features
+--------
+* Add HostFilterPolicy (PYTHON-761)
+
 Bug Fixes
 ---------
 * is_idempotent flag is not propagated from PreparedStatement to BoundStatement (PYTHON-736)
