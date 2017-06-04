@@ -240,6 +240,8 @@ class AsyncoreLoop(object):
         self._timers.add_timer(timer)
 
     def _cleanup(self):
+        global _dispatcher_map
+
         self._shutdown = True
         if not self._thread:
             return
@@ -252,6 +254,11 @@ class AsyncoreLoop(object):
                 "Please call Cluster.shutdown() to avoid this.")
 
         log.debug("Event loop thread was joined")
+
+        for conn in tuple(_dispatcher_map.values()):
+            conn.close()
+
+        log.debug("Dispatchers were closed")
 
 
 class AsyncoreConnection(Connection, asyncore.dispatcher):
