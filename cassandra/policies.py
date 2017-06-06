@@ -424,7 +424,8 @@ class WhiteListRoundRobinPolicy(RoundRobinPolicy):
         connections to.
         """
         msg = ('WhiteListRoundRobinPolicy is deprecated. '
-               'It will be removed in 4.0.')
+               'It will be removed in 4.0. '
+               'It can effectively be reimplemented using HostFilterPolicy.')
         warn(msg, DeprecationWarning)
         # DeprecationWarnings are silent by default so we also log the message
         log.warning(msg)
