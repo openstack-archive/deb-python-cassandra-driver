@@ -19,12 +19,9 @@ except ImportError:
 
 from itertools import islice, cycle
 from mock import Mock, patch
-try:
-    from thread import LockType  # py2
-except ImportError:
-    from _thread import LockType  # py3
 from random import randint
 import six
+from six.moves._thread import LockType
 import sys
 import struct
 from threading import Thread
