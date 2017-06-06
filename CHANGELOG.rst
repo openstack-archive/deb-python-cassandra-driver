@@ -1,3 +1,105 @@
+3.10.0
+======
+May 24, 2017
+
+Features
+--------
+* Add Duration type to cqlengine (PYTHON-750)
+* Community PR review: Raise error on primary key update only if its value changed (PYTHON-705)
+* get_query_trace() contract is ambiguous (PYTHON-196)
+
+Bug Fixes
+---------
+* Queries using speculative execution policy timeout prematurely (PYTHON-755)
+* Fix `map` where results are not consumed (PYTHON-749)
+* Driver fails to encode Duration's with large values (PYTHON-747)
+* UDT values are not updated correctly in CQLEngine (PYTHON-743)
+* UDT types are not validated in CQLEngine (PYTHON-742)
+* to_python is not implemented for types columns.Type and columns.Date in CQLEngine (PYTHON-741)
+* Clients spin infinitely trying to connect to a host that is drained (PYTHON-734)
+* Resulset.get_query_trace returns empty trace sometimes (PYTHON-730)
+* Memory grows and doesn't get removed (PYTHON-720)
+* Fix RuntimeError caused by change dict size during iteration (PYTHON-708)
+* fix ExponentialReconnectionPolicy may throw OverflowError problem (PYTHON-707)
+* Avoid using nonexistent prepared statement in ResponseFuture (PYTHON-706)
+
+Other
+-----
+* Update README (PYTHON-746)
+* Test python versions 3.5 and 3.6 (PYTHON-737)
+* Docs Warning About Prepare "select *" (PYTHON-626)
+* Increase Coverage in CqlEngine Test Suite (PYTHON-505)
+* Example SSL connection code does not verify server certificates (PYTHON-469)
+
+3.9.0
+=====
+
+Features
+--------
+* cqlengine: remove elements by key from a map (PYTHON-688)
+
+Bug Fixes
+---------
+* improve error handling when connecting to non-existent keyspace (PYTHON-665)
+* Sockets associated with sessions not getting cleaned up on session.shutdown() (PYTHON-673)
+* rare flake on integration.standard.test_cluster.ClusterTests.test_clone_shared_lbp (PYTHON-727)
+* MontonicTimestampGenerator.__init__ ignores class defaults (PYTHON-728)
+* race where callback or errback for request may not be called (PYTHON-733)
+* cqlengine: model.update() should not update columns with a default value that hasn't changed (PYTHON-657)
+* cqlengine: field value manager's explicit flag is True when queried back from cassandra (PYTHON-719)
+
+Other
+-----
+* Connection not closed in example_mapper (PYTHON-723)
+* Remove mention of pre-2.0 C* versions from OSS 3.0+ docs (PYTHON-710)
+
+3.8.1
+=====
+March 16, 2017
+
+Bug Fixes
+---------
+
+* implement __le__/__ge__/__ne__ on some custom types (PYTHON-714)
+* Fix bug in eventlet and gevent reactors that could cause hangs (PYTHON-721)
+* Fix DecimalType regression (PYTHON-724)
+
+3.8.0
+=====
+
+Features
+--------
+
+* Quote index names in metadata CQL generation (PYTHON-616)
+* On column deserialization failure, keep error message consistent between python and cython (PYTHON-631)
+* TokenAwarePolicy always sends requests to the same replica for a given key (PYTHON-643)
+* Added cql types to result set (PYTHON-648)
+* Add __len__ to BatchStatement (PYTHON-650)
+* Duration Type for Cassandra (PYTHON-655)
+* Send flags with PREPARE message in v5 (PYTHON-684)
+
+Bug Fixes
+---------
+
+* Potential Timing issue if application exits prior to session pool initialization (PYTHON-636)
+* "Host X.X.X.X has been marked down" without any exceptions (PYTHON-640)
+* NoHostAvailable or OperationTimedOut when using execute_concurrent with a generator that inserts into more than one table (PYTHON-642)
+* ResponseFuture creates Timers and don't cancel them even when result is received which leads to memory leaks (PYTHON-644)
+* Driver cannot connect to Cassandra version > 3 (PYTHON-646)
+* Unable to import model using UserType without setuping connection since 3.7 (PYTHON-649)
+* Don't prepare queries on ignored hosts on_up (PYTHON-669)
+* Sockets associated with sessions not getting cleaned up on session.shutdown() (PYTHON-673)
+* Make client timestamps strictly monotonic (PYTHON-676)
+* cassandra.cqlengine.connection.register_connection broken when hosts=None (PYTHON-692)
+
+Other
+-----
+
+* Create a cqlengine doc section explaining None semantics (PYTHON-623)
+* Resolve warnings in documentation generation (PYTHON-645)
+* Cython dependency (PYTHON-686)
+* Drop Support for Python 2.6 (PYTHON-690)
+
 3.7.1
 =====
 October 26, 2016

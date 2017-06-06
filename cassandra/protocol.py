@@ -1,4 +1,4 @@
-# Copyright 2013-2016 DataStax, Inc.
+# Copyright 2013-2017 DataStax, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import six
 from six.moves import range
 import io
 
+from cassandra import ProtocolVersion
 from cassandra import type_codes, DriverException
 from cassandra import (Unavailable, WriteTimeout, ReadTimeout,
                        WriteFailure, ReadFailure, FunctionFailure,
@@ -30,7 +31,7 @@ from cassandra import (Unavailable, WriteTimeout, ReadTimeout,
                        UserAggregateDescriptor, SchemaTargetType)
 from cassandra.marshal import (int32_pack, int32_unpack, uint16_pack, uint16_unpack,
                                int8_pack, int8_unpack, uint64_pack, header_pack,
-                               v3_header_pack)
+                               v3_header_pack, uint32_pack)
 from cassandra.cqltypes import (AsciiType, BytesType, BooleanType,
                                 CounterColumnType, DateType, DecimalType,
                                 DoubleType, FloatType, Int32Type,
@@ -38,7 +39,7 @@ from cassandra.cqltypes import (AsciiType, BytesType, BooleanType,
                                 LongType, MapType, SetType, TimeUUIDType,
                                 UTF8Type, VarcharType, UUIDType, UserType,
                                 TupleType, lookup_casstype, SimpleDateType,
-                                TimeType, ByteType, ShortType)
+                                TimeType, ByteType, ShortType, DurationType)
 from cassandra.policies import WriteType
 from cassandra.cython_deps import HAVE_CYTHON, HAVE_NUMPY
 from cassandra import util
@@ -54,9 +55,6 @@ class InternalError(Exception):
     pass
 
 ColumnMetadata = namedtuple("ColumnMetadata", ['keyspace_name', 'table_name', 'name', 'type'])
-
-MIN_SUPPORTED_VERSION = 1
-MAX_SUPPORTED_VERSION = 5
 
 HEADER_DIRECTION_TO_CLIENT = 0x80
 HEADER_DIRECTION_MASK = 0x80
@@ -263,7 +261,7 @@ class ReadFailureMessage(RequestExecutionException):
         received_responses = read_int(f)
         required_responses = read_int(f)
 
-        if protocol_version >= 5:
+        if ProtocolVersion.uses_error_code_map(protocol_version):
             error_code_map = read_error_code_map(f)
             failures = len(error_code_map)
         else:
@@ -311,7 +309,7 @@ class WriteFailureMessage(RequestExecutionException):
         received_responses = read_int(f)
         required_responses = read_int(f)
 
-        if protocol_version >= 5:
+        if ProtocolVersion.uses_error_code_map(protocol_version):
             error_code_map = read_error_code_map(f)
             failures = len(error_code_map)
         else:
@@ -560,7 +558,10 @@ class QueryMessage(_MessageType):
         if self.timestamp is not None:
             flags |= _PROTOCOL_TIMESTAMP
 
-        write_byte(f, flags)
+        if ProtocolVersion.uses_int_query_flags(protocol_version):
+            write_uint(f, flags)
+        else:
+            write_byte(f, flags)
 
         if self._query_params is not None:
             write_short(f, len(self._query_params))
@@ -601,19 +602,21 @@ class ResultMessage(_MessageType):
     _HAS_MORE_PAGES_FLAG = 0x0002
     _NO_METADATA_FLAG = 0x0004
 
-    def __init__(self, kind, results, paging_state=None):
+    def __init__(self, kind, results, paging_state=None, col_types=None):
         self.kind = kind
         self.results = results
         self.paging_state = paging_state
+        self.col_types = col_types
 
     @classmethod
     def recv_body(cls, f, protocol_version, user_type_map, result_metadata):
         kind = read_int(f)
         paging_state = None
+        col_types = None
         if kind == RESULT_KIND_VOID:
             results = None
         elif kind == RESULT_KIND_ROWS:
-            paging_state, results = cls.recv_results_rows(
+            paging_state, col_types, results = cls.recv_results_rows(
                 f, protocol_version, user_type_map, result_metadata)
         elif kind == RESULT_KIND_SET_KEYSPACE:
             ksname = read_string(f)
@@ -624,7 +627,7 @@ class ResultMessage(_MessageType):
             results = cls.recv_results_schema_change(f, protocol_version)
         else:
             raise DriverException("Unknown RESULT kind: %d" % kind)
-        return cls(kind, results, paging_state)
+        return cls(kind, results, paging_state, col_types)
 
     @classmethod
     def recv_results_rows(cls, f, protocol_version, user_type_map, result_metadata):
@@ -640,14 +643,15 @@ class ResultMessage(_MessageType):
                       for ctype, val in zip(coltypes, row))
                 for row in rows]
         except Exception:
-            for i in range(len(row)):
-                try:
-                    coltypes[i].from_binary(row[i], protocol_version)
-                except Exception as e:
-                    raise DriverException('Failed decoding result column "%s" of type %s: %s' % (colnames[i],
-                                                                                                 coltypes[i].cql_parameterized_type(),
-                                                                                                 e.message))
-        return paging_state, (colnames, parsed_rows)
+            for row in rows:
+                for i in range(len(row)):
+                    try:
+                        coltypes[i].from_binary(row[i], protocol_version)
+                    except Exception as e:
+                        raise DriverException('Failed decoding result column "%s" of type %s: %s' % (colnames[i],
+                                                                                                     coltypes[i].cql_parameterized_type(),
+                                                                                                     str(e)))
+        return paging_state, coltypes, (colnames, parsed_rows)
 
     @classmethod
     def recv_results_prepared(cls, f, protocol_version, user_type_map):
@@ -769,12 +773,14 @@ class PrepareMessage(_MessageType):
 
     def send_body(self, f, protocol_version):
         write_longstring(f, self.query)
+        if ProtocolVersion.uses_prepare_flags(protocol_version):
+            # Write the flags byte; with 0 value for now, but this should change in PYTHON-678
+            write_uint(f, 0)
 
 
 class ExecuteMessage(_MessageType):
     opcode = 0x0A
     name = 'EXECUTE'
-
     def __init__(self, query_id, query_params, consistency_level,
                  serial_consistency_level=None, fetch_size=None,
                  paging_state=None, timestamp=None, skip_meta=False):
@@ -821,7 +827,12 @@ class ExecuteMessage(_MessageType):
                         "3 or higher. Consider setting Cluster.protocol_version to 3.")
             if self.skip_meta:
                 flags |= _SKIP_METADATA_FLAG
-            write_byte(f, flags)
+
+            if ProtocolVersion.uses_int_query_flags(protocol_version):
+                write_uint(f, flags)
+            else:
+                write_byte(f, flags)
+
             write_short(f, len(self.query_params))
             for param in self.query_params:
                 write_value(f, param)
@@ -870,7 +881,11 @@ class BatchMessage(_MessageType):
                 flags |= _WITH_SERIAL_CONSISTENCY_FLAG
             if self.timestamp is not None:
                 flags |= _PROTOCOL_TIMESTAMP
-            write_byte(f, flags)
+
+            if ProtocolVersion.uses_int_query_flags(protocol_version):
+                write_int(f, flags)
+            else:
+                write_byte(f, flags)
 
             if self.serial_consistency_level:
                 write_consistency_level(f, self.serial_consistency_level)
@@ -1147,6 +1162,10 @@ def read_int(f):
 
 def write_int(f, i):
     f.write(int32_pack(i))
+
+
+def write_uint(f, i):
+    f.write(uint32_pack(i))
 
 
 def write_long(f, i):

@@ -1,4 +1,4 @@
-# Copyright 2013-2016 DataStax, Inc.
+# Copyright 2013-2017 DataStax, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ from cassandra.protocol import (ReadTimeoutErrorMessage, WriteTimeoutErrorMessag
                                 OverloadedErrorMessage, IsBootstrappingErrorMessage,
                                 PreparedQueryNotFound, PrepareMessage,
                                 RESULT_KIND_ROWS, RESULT_KIND_SET_KEYSPACE,
-                                RESULT_KIND_SCHEMA_CHANGE, ProtocolHandler)
+                                RESULT_KIND_SCHEMA_CHANGE, RESULT_KIND_PREPARED,
+                                ProtocolHandler)
 from cassandra.policies import RetryPolicy
 from cassandra.pool import NoConnectionsAvailable
 from cassandra.query import SimpleStatement
@@ -50,7 +51,7 @@ class ResponseFutureTests(unittest.TestCase):
         return ResponseFuture(session, message, query, 1)
 
     def make_mock_response(self, results):
-        return Mock(spec=ResultMessage, kind=RESULT_KIND_ROWS, results=results, paging_state=None)
+        return Mock(spec=ResultMessage, kind=RESULT_KIND_ROWS, results=results, paging_state=None, col_types=None)
 
     def test_result_message(self):
         session = self.make_basic_session()
@@ -508,3 +509,19 @@ class ResponseFutureTests(unittest.TestCase):
         result = Mock(spec=PreparedQueryNotFound, info='a' * 16)
         rf._set_result(None, None, None, result)
         self.assertRaises(ValueError, rf.result)
+
+    def test_repeat_orig_query_after_succesful_reprepare(self):
+        session = self.make_session()
+        rf = self.make_response_future(session)
+
+        response = Mock(spec=ResultMessage, kind=RESULT_KIND_PREPARED)
+        response.results = (None, None, None, None)
+
+        rf._query = Mock(return_value=True)
+        rf._execute_after_prepare('host', None, None, response)
+        rf._query.assert_called_once_with('host')
+
+        rf.prepared_statement = Mock()
+        rf._query = Mock(return_value=True)
+        rf._execute_after_prepare('host', None, None, response)
+        rf._query.assert_called_once_with('host')

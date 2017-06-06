@@ -1,4 +1,4 @@
-# Copyright 2013-2016 DataStax, Inc.
+# Copyright 2013-2017 DataStax, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 from binascii import unhexlify
 from bisect import bisect_right
 from collections import defaultdict, Mapping
+from functools import total_ordering
 from hashlib import md5
 from itertools import islice, cycle
 import json
@@ -1076,6 +1077,11 @@ class TableMetadata(object):
             return not incompatible
         return True
 
+    extensions = None
+    """
+    Metadata describing configuration for table extensions
+    """
+
     def __init__(self, keyspace_name, name, partition_key=None, clustering_key=None, columns=None, triggers=None, options=None):
         self.keyspace_name = keyspace_name
         self.name = name
@@ -1123,6 +1129,14 @@ class TableMetadata(object):
 
         for view_meta in self.views.values():
             ret += "\n\n%s;" % (view_meta.as_cql_query(formatted=True),)
+
+        if self.extensions:
+            registry = _RegisteredExtensionType._extension_registry
+            for k in six.viewkeys(registry) & self.extensions:  # no viewkeys on OrderedMapSerializeKey
+                ext = registry[k]
+                cql = ext.after_table_cql(self, k, self.extensions[k])
+                if cql:
+                    ret += "\n\n%s" % (cql,)
 
         return ret
 
@@ -1223,6 +1237,42 @@ class TableMetadata(object):
                 ret.append("%s = %s" % (name, protect_value(value)))
 
         return list(sorted(ret))
+
+
+class TableExtensionInterface(object):
+    """
+    Defines CQL/DDL for Cassandra table extensions.
+    """
+    # limited API for now. Could be expanded as new extension types materialize -- "extend_option_strings", for example
+    @classmethod
+    def after_table_cql(cls, ext_key, ext_blob):
+        """
+        Called to produce CQL/DDL to follow the table definition.
+        Should contain requisite terminating semicolon(s).
+        """
+        pass
+
+
+class _RegisteredExtensionType(type):
+
+    _extension_registry = {}
+
+    def __new__(mcs, name, bases, dct):
+        cls = super(_RegisteredExtensionType, mcs).__new__(mcs, name, bases, dct)
+        if name != 'RegisteredTableExtension':
+            mcs._extension_registry[cls.name] = cls
+        return cls
+
+
+@six.add_metaclass(_RegisteredExtensionType)
+class RegisteredTableExtension(TableExtensionInterface):
+    """
+    Extending this class registers it by name (associated by key in the `system_schema.tables.extensions` map).
+    """
+    name = None
+    """
+    Name of the extension (key in the map)
+    """
 
 
 def protect_name(name):
@@ -1336,14 +1386,14 @@ class IndexMetadata(object):
         index_target = options.pop("target")
         if self.kind != "CUSTOM":
             return "CREATE INDEX %s ON %s.%s (%s)" % (
-                self.name,  # Cassandra doesn't like quoted index names for some reason
+                protect_name(self.name),
                 protect_name(self.keyspace_name),
                 protect_name(self.table_name),
                 index_target)
         else:
             class_name = options.pop("class_name")
             ret = "CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s'" % (
-                self.name,  # Cassandra doesn't like quoted index names for some reason
+                protect_name(self.name),
                 protect_name(self.keyspace_name),
                 protect_name(self.table_name),
                 index_target,
@@ -1443,6 +1493,7 @@ class TokenMap(object):
         return []
 
 
+@total_ordering
 class Token(object):
     """
     Abstract class representing a token.
@@ -1462,14 +1513,6 @@ class Token(object):
     @classmethod
     def from_string(cls, token_string):
         raise NotImplementedError()
-
-    def __cmp__(self, other):
-        if self.value < other.value:
-            return -1
-        elif self.value == other.value:
-            return 0
-        else:
-            return 1
 
     def __eq__(self, other):
         return self.value == other.value
@@ -2222,6 +2265,8 @@ class SchemaParserV3(SchemaParserV22):
                 index_meta = self._build_index_metadata(table_meta, index_row)
                 if index_meta:
                     table_meta.indexes[index_meta.name] = index_meta
+
+            table_meta.extensions = row.get('extensions', {})
         except Exception:
             table_meta._exc_info = sys.exc_info()
             log.exception("Error while parsing metadata for table %s.%s row(%s) columns(%s)", keyspace_name, table_name, row, col_rows)
@@ -2279,6 +2324,7 @@ class SchemaParserV3(SchemaParserV22):
         view_meta = MaterializedViewMetadata(keyspace_name, view_name, base_table_name,
                                              include_all_columns, where_clause, self._build_table_options(row))
         self._build_table_columns(view_meta, col_rows)
+        view_meta.extensions = row.get('extensions', {})
 
         return view_meta
 
@@ -2439,6 +2485,11 @@ class MaterializedViewMetadata(object):
     view.
     """
 
+    extensions = None
+    """
+    Metadata describing configuration for table extensions
+    """
+
     def __init__(self, keyspace_name, view_name, base_table_name, include_all_columns, where_clause, options):
         self.keyspace_name = keyspace_name
         self.name = view_name
@@ -2475,19 +2526,29 @@ class MaterializedViewMetadata(object):
 
         properties = TableMetadataV3._property_string(formatted, self.clustering_key, self.options)
 
-        return "CREATE MATERIALIZED VIEW %(keyspace)s.%(name)s AS%(sep)s" \
+        ret = "CREATE MATERIALIZED VIEW %(keyspace)s.%(name)s AS%(sep)s" \
                "SELECT %(selected_cols)s%(sep)s" \
                "FROM %(keyspace)s.%(base_table)s%(sep)s" \
                "WHERE %(where_clause)s%(sep)s" \
                "PRIMARY KEY %(pk)s%(sep)s" \
                "WITH %(properties)s" % locals()
 
+        if self.extensions:
+            registry = _RegisteredExtensionType._extension_registry
+            for k in six.viewkeys(registry) & self.extensions:  # no viewkeys on OrderedMapSerializeKey
+                ext = registry[k]
+                cql = ext.after_table_cql(self, k, self.extensions[k])
+                if cql:
+                    ret += "\n\n%s" % (cql,)
+        return ret
+
     def export_as_string(self):
         return self.as_cql_query(formatted=True) + ";"
 
 
 def get_schema_parser(connection, server_version, timeout):
-    if server_version.startswith('3'):
+    server_major_version = int(server_version.split('.')[0])
+    if server_major_version >= 3:
         return SchemaParserV3(connection, timeout)
     else:
         # we could further specialize by version. Right now just refactoring the

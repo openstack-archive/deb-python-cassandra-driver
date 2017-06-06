@@ -1,4 +1,4 @@
-# Copyright 2013-2016 DataStax, Inc.
+# Copyright 2013-2017 DataStax, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,12 +28,12 @@ from cassandra.protocol import SyntaxException
 from cassandra.cluster import Cluster, NoHostAvailable
 from tests.integration import get_cluster, get_node, use_singledc, PROTOCOL_VERSION, execute_until_pass
 from greplin import scales
-from tests.integration import BasicSharedKeyspaceUnitTestCaseWTable, BasicExistingKeyspaceUnitTestCase
+from tests.integration import BasicSharedKeyspaceUnitTestCaseWTable, BasicExistingKeyspaceUnitTestCase, local
 
 def setup_module():
     use_singledc()
 
-
+@local
 class MetricsTests(unittest.TestCase):
 
     def setUp(self):
@@ -143,6 +143,8 @@ class MetricsTests(unittest.TestCase):
         self.assertTrue(results)
 
         # Stop node gracefully
+        # Sometimes this commands continues with the other nodes having not noticed
+        # 1 is down, and a Timeout error is returned instead of an Unavailable
         get_node(1).stop(wait=True, wait_other_notice=True)
 
         try:
@@ -178,7 +180,7 @@ class MetricsTests(unittest.TestCase):
 
 
 class MetricsNamespaceTest(BasicSharedKeyspaceUnitTestCaseWTable):
-
+    @local
     def test_metrics_per_cluster(self):
         """
         Test to validate that metrics can be scopped to invdividual clusters
@@ -271,6 +273,9 @@ class MetricsNamespaceTest(BasicSharedKeyspaceUnitTestCaseWTable):
         self.assertTrue("appcluster" in scales._Stats.stats.keys())
         self.assertTrue("devops" in scales._Stats.stats.keys())
 
+        cluster2.shutdown()
+        cluster3.shutdown()
+
 
 class RequestAnalyzer(object):
     """
@@ -310,6 +315,9 @@ class RequestAnalyzer(object):
         self.errors += 1
         if self.throw_on_fail:
             raise AttributeError
+
+    def remove_ra(self, session):
+        session.remove_request_init_listener(self.on_request)
 
     def __str__(self):
         # just extracting request count from the size stats (which are recorded on all requests)
@@ -357,10 +365,15 @@ class MetricsRequestSize(BasicExistingKeyspaceUnitTestCase):
         self.assertTrue(self.wait_for_count(ra, 10))
         self.assertTrue(self.wait_for_count(ra, 3, error=True))
 
+        ra.remove_ra(self.session)
 
         # Make sure a poorly coded RA doesn't cause issues
-        RequestAnalyzer(self.session, throw_on_success=False, throw_on_fail=True)
+        ra = RequestAnalyzer(self.session, throw_on_success=False, throw_on_fail=True)
         self.session.execute("SELECT release_version FROM system.local")
+        
+        ra.remove_ra(self.session)
+
+        RequestAnalyzer(self.session, throw_on_success=True)
         try:
             self.session.execute("nonesense")
         except SyntaxException:

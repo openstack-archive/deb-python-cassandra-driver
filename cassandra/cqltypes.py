@@ -1,4 +1,4 @@
-# Copyright 2013-2016 DataStax, Inc.
+# Copyright 2013-2017 DataStax, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ from cassandra.marshal import (int8_pack, int8_unpack, int16_pack, int16_unpack,
                                uint16_pack, uint16_unpack, uint32_pack, uint32_unpack,
                                int32_pack, int32_unpack, int64_pack, int64_unpack,
                                float_pack, float_unpack, double_pack, double_unpack,
-                               varint_pack, varint_unpack)
+                               varint_pack, varint_unpack, vints_pack, vints_unpack)
 from cassandra import util
 
 apache_cassandra_type_prefix = 'org.apache.cassandra.db.marshal.'
@@ -176,7 +176,7 @@ def lookup_casstype(casstype):
     Example:
 
         >>> lookup_casstype('org.apache.cassandra.db.marshal.MapType(org.apache.cassandra.db.marshal.UTF8Type,org.apache.cassandra.db.marshal.Int32Type)')
-        <class 'cassandra.types.MapType(UTF8Type, Int32Type)'>
+        <class 'cassandra.cqltypes.MapType(UTF8Type, Int32Type)'>
 
     """
     if isinstance(casstype, (CassandraType, CassandraTypeType)):
@@ -296,7 +296,7 @@ class _CassandraType(object):
         using them as parameters. This is how composite types are constructed.
 
             >>> MapType.apply_parameters([DateType, BooleanType])
-            <class 'cassandra.types.MapType(DateType, BooleanType)'>
+            <class 'cassandra.cqltypes.MapType(DateType, BooleanType)'>
 
         `subtypes` will be a sequence of CassandraTypes.  If provided, `names`
         will be an equally long sequence of column names or Nones.
@@ -660,6 +660,23 @@ class TimeType(_CassandraType):
         return int64_pack(nano)
 
 
+class DurationType(_CassandraType):
+    typename = 'duration'
+
+    @staticmethod
+    def deserialize(byts, protocol_version):
+        months, days, nanoseconds = vints_unpack(byts)
+        return util.Duration(months, days, nanoseconds)
+
+    @staticmethod
+    def serialize(duration, protocol_version):
+        try:
+            m, d, n = duration.months, duration.days, duration.nanoseconds
+        except AttributeError:
+            raise TypeError('DurationType arguments must be a Duration.')
+        return vints_pack([m, d, n])
+
+
 class UTF8Type(_CassandraType):
     typename = 'text'
     empty_binary_ok = True
@@ -1010,7 +1027,7 @@ class ReversedType(_ParameterizedType):
     @classmethod
     def deserialize_safe(cls, byts, protocol_version):
         subtype, = cls.subtypes
-        return subtype.from_binary(byts)
+        return subtype.from_binary(byts, protocol_version)
 
     @classmethod
     def serialize_safe(cls, val, protocol_version):
@@ -1025,7 +1042,7 @@ class FrozenType(_ParameterizedType):
     @classmethod
     def deserialize_safe(cls, byts, protocol_version):
         subtype, = cls.subtypes
-        return subtype.from_binary(byts)
+        return subtype.from_binary(byts, protocol_version)
 
     @classmethod
     def serialize_safe(cls, val, protocol_version):

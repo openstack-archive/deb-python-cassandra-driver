@@ -1,4 +1,4 @@
-# Copyright 2013-2016 DataStax, Inc.
+# Copyright 2013-2017 DataStax, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,20 +20,29 @@ try:
 except ImportError:
     import unittest  # noqa
 import logging
+from cassandra import ProtocolVersion
 from cassandra import ConsistencyLevel, Unavailable, InvalidRequest, cluster
 from cassandra.query import (PreparedStatement, BoundStatement, SimpleStatement,
                              BatchStatement, BatchType, dict_factory, TraceUnavailable)
 from cassandra.cluster import Cluster, NoHostAvailable
 from cassandra.policies import HostDistance, RoundRobinPolicy
-from tests.unit.cython.utils import notcython
-from tests.integration import use_singledc, PROTOCOL_VERSION, BasicSharedKeyspaceUnitTestCase, get_server_versions, greaterthanprotocolv3, MockLoggingHandler, get_supported_protocol_versions
+from tests.integration import use_singledc, PROTOCOL_VERSION, BasicSharedKeyspaceUnitTestCase, get_server_versions, \
+    greaterthanprotocolv3, MockLoggingHandler, get_supported_protocol_versions, local, get_cluster, setup_keyspace
+from tests import notwindows
 
 import time
 import re
 
-
 def setup_module():
-    use_singledc()
+    use_singledc(start=False)
+    ccm_cluster = get_cluster()
+    ccm_cluster.clear()
+    # This is necessary because test_too_many_statements may
+    # timeout otherwise
+    config_options = {'write_request_timeout_in_ms': '20000'}
+    ccm_cluster.set_configuration_options(config_options)
+    ccm_cluster.start(wait_for_binary_proto=True, wait_other_notice=True)
+    setup_keyspace()
     global CASS_SERVER_VERSION
     CASS_SERVER_VERSION = get_server_versions()[0]
 
@@ -70,7 +79,6 @@ class QueryTests(BasicSharedKeyspaceUnitTestCase):
         for event in trace.events:
             str(event)
 
-    @notcython
     def test_row_error_message(self):
         """
         Test to validate, new column deserialization message
@@ -85,7 +93,7 @@ class QueryTests(BasicSharedKeyspaceUnitTestCase):
         self.session.execute(ss)
         with self.assertRaises(DriverException) as context:
             self.session.execute("SELECT * FROM {0}.{1}".format(self.keyspace_name, self.function_table_name))
-        self.assertIn("Failed decoding result column", context.exception.message)
+        self.assertIn("Failed decoding result column", str(context.exception))
 
     def test_trace_id_to_resultset(self):
 
@@ -117,6 +125,7 @@ class QueryTests(BasicSharedKeyspaceUnitTestCase):
         for event in trace.events:
             str(event)
 
+    @local
     @greaterthanprotocolv3
     def test_client_ip_in_trace(self):
         """
@@ -145,7 +154,7 @@ class QueryTests(BasicSharedKeyspaceUnitTestCase):
         response_future.result()
 
         # Fetch the client_ip from the trace.
-        trace = response_future.get_query_trace(max_wait=2.0)
+        trace = response_future.get_query_trace(max_wait=10.0)
         client_ip = trace.client
 
         # Ip address should be in the local_host range
@@ -181,6 +190,7 @@ class QueryTests(BasicSharedKeyspaceUnitTestCase):
             self.assertIsNotNone(response_future.get_query_trace(max_wait=2.0, query_cl=ConsistencyLevel.ANY).trace_id)
         self.assertIsNotNone(response_future.get_query_trace(max_wait=2.0, query_cl=ConsistencyLevel.QUORUM).trace_id)
 
+    @notwindows
     def test_incomplete_query_trace(self):
         """
         Tests to ensure that partial tracing works.
@@ -244,9 +254,37 @@ class QueryTests(BasicSharedKeyspaceUnitTestCase):
     def _is_trace_present(self, trace_id):
         select_statement = SimpleStatement("SElECT duration FROM system_traces.sessions WHERE session_id = {0}".format(trace_id), consistency_level=ConsistencyLevel.ALL)
         ssrs = self.session.execute(select_statement)
-        if(ssrs[0].duration is None):
+        if not len(ssrs.current_rows) or ssrs[0].duration is None:
             return False
         return True
+
+    def test_query_by_id(self):
+        """
+        Test to ensure column_types are set as part of the result set
+
+        @since 3.8
+        @jira_ticket PYTHON-648
+        @expected_result column_names should be preset.
+
+        @test_category queries basic
+        """
+        create_table = "CREATE TABLE {0}.{1} (id int primary key, m map<int, text>)".format(self.keyspace_name, self.function_table_name)
+        self.session.execute(create_table)
+
+        self.session.execute("insert into "+self.keyspace_name+"."+self.function_table_name+" (id, m) VALUES ( 1, {1: 'one', 2: 'two', 3:'three'})")
+        results1 = self.session.execute("select id, m from {0}.{1}".format(self.keyspace_name, self.function_table_name))
+
+        self.assertIsNotNone(results1.column_types)
+        self.assertEqual(results1.column_types[0].typename, 'int')
+        self.assertEqual(results1.column_types[1].typename, 'map')
+        self.assertEqual(results1.column_types[0].cassname, 'Int32Type')
+        self.assertEqual(results1.column_types[1].cassname, 'MapType')
+        self.assertEqual(len(results1.column_types[0].subtypes), 0)
+        self.assertEqual(len(results1.column_types[1].subtypes), 2)
+        self.assertEqual(results1.column_types[1].subtypes[0].typename, "int")
+        self.assertEqual(results1.column_types[1].subtypes[1].typename, "varchar")
+        self.assertEqual(results1.column_types[1].subtypes[0].cassname, "Int32Type")
+        self.assertEqual(results1.column_types[1].subtypes[1].cassname, "VarcharType")
 
     def test_column_names(self):
         """
@@ -268,8 +306,12 @@ class QueryTests(BasicSharedKeyspaceUnitTestCase):
                         score INT,
                         PRIMARY KEY (user, game, year, month, day)
                         )""".format(self.keyspace_name, self.function_table_name)
+
+
         self.session.execute(create_table)
         result_set = self.session.execute("SELECT * FROM {0}.{1}".format(self.keyspace_name, self.function_table_name))
+        self.assertIsNotNone(result_set.column_types)
+
         self.assertEqual(result_set.column_names, [u'user', u'game', u'year', u'month', u'day', u'score'])
 
 
@@ -360,17 +402,14 @@ class PreparedStatementTests(unittest.TestCase):
 class ForcedHostSwitchPolicy(RoundRobinPolicy):
 
     def make_query_plan(self, working_keyspace=None, query=None):
-        if query is not None and "system.local" in str(query):
-            if hasattr(self, 'counter'):
-                self.counter += 1
-            else:
-                self.counter = 0
-            index = self.counter % 3
-            a = list(self._live_hosts)
-            value = [a[index]]
-            return value
+        if hasattr(self, 'counter'):
+            self.counter += 1
         else:
-            return list(self._live_hosts)
+            self.counter = 0
+        index = self.counter % 3
+        a = list(self._live_hosts)
+        value = [a[index]]
+        return value
 
 
 class PreparedStatementMetdataTest(unittest.TestCase):
@@ -390,7 +429,9 @@ class PreparedStatementMetdataTest(unittest.TestCase):
 
         base_line = None
         for proto_version in get_supported_protocol_versions():
-            cluster = Cluster(protocol_version=proto_version)
+            beta_flag = True if proto_version in ProtocolVersion.BETA_VERSIONS else False
+            cluster = Cluster(protocol_version=proto_version, allow_beta_protocol_version=beta_flag)
+
             session = cluster.connect()
             select_statement = session.prepare("SELECT * FROM system.local")
             if proto_version == 1:
@@ -400,9 +441,9 @@ class PreparedStatementMetdataTest(unittest.TestCase):
             future = session.execute_async(select_statement)
             results = future.result()
             if base_line is None:
-                base_line = results[0].__dict__.keys()
+                base_line = results[0]._asdict().keys()
             else:
-                self.assertEqual(base_line, results[0].__dict__.keys())
+                self.assertEqual(base_line, results[0]._asdict().keys())
             cluster.shutdown()
 
 
@@ -423,18 +464,99 @@ class PreparedStatementArgTest(unittest.TestCase):
         clus = Cluster(
             load_balancing_policy=white_list,
             protocol_version=PROTOCOL_VERSION, prepare_on_all_hosts=False, reprepare_on_up=False)
-        try:
-            session = clus.connect(wait_for_all_pools=True)
-            mock_handler = MockLoggingHandler()
-            logger = logging.getLogger(cluster.__name__)
-            logger.addHandler(mock_handler)
-            select_statement = session.prepare("SELECT * FROM system.local")
-            session.execute(select_statement)
-            session.execute(select_statement)
-            session.execute(select_statement)
-            self.assertEqual(2, mock_handler.get_message_count('debug', "Re-preparing"))
-        finally:
-            clus.shutdown()
+        self.addCleanup(clus.shutdown)
+
+        session = clus.connect(wait_for_all_pools=True)
+        mock_handler = MockLoggingHandler()
+        logger = logging.getLogger(cluster.__name__)
+        logger.addHandler(mock_handler)
+        select_statement = session.prepare("SELECT * FROM system.local")
+        session.execute(select_statement)
+        session.execute(select_statement)
+        session.execute(select_statement)
+        self.assertEqual(2, mock_handler.get_message_count('debug', "Re-preparing"))
+
+
+    def test_prepare_batch_statement(self):
+        """
+        Test to validate a prepared statement used inside a batch statement is correctly handled
+        by the driver
+
+        @since 3.10
+        @jira_ticket PYTHON-706
+        @expected_result queries will have to re-prepared on hosts that aren't the control connection
+        and the batch statement will be sent.
+        """
+        white_list = ForcedHostSwitchPolicy()
+        clus = Cluster(
+            load_balancing_policy=white_list,
+            protocol_version=PROTOCOL_VERSION, prepare_on_all_hosts=False,
+            reprepare_on_up=False)
+        self.addCleanup(clus.shutdown)
+
+        table = "test3rf.%s" % self._testMethodName.lower()
+
+        session = clus.connect(wait_for_all_pools=True)
+
+        session.execute("DROP TABLE IF EXISTS %s" % table)
+        session.execute("CREATE TABLE %s (k int PRIMARY KEY, v int )" % table)
+
+        insert_statement = session.prepare("INSERT INTO %s (k, v) VALUES  (?, ?)" % table)
+
+        # This is going to query a host where the query
+        # is not prepared
+        batch_statement = BatchStatement(consistency_level=ConsistencyLevel.ONE)
+        batch_statement.add(insert_statement, (1, 2))
+        session.execute(batch_statement)
+        select_results = session.execute("SELECT * FROM %s WHERE k = 1" % table)
+        first_row = select_results[0][:2]
+        self.assertEqual((1, 2), first_row)
+
+    def test_prepare_batch_statement_after_alter(self):
+        """
+        Test to validate a prepared statement used inside a batch statement is correctly handled
+        by the driver. The metadata might be updated when a table is altered. This tests combines
+        queries not being prepared and an update of the prepared statement metadata
+
+        @since 3.10
+        @jira_ticket PYTHON-706
+        @expected_result queries will have to re-prepared on hosts that aren't the control connection
+        and the batch statement will be sent.
+        """
+        white_list = ForcedHostSwitchPolicy()
+        clus = Cluster(
+            load_balancing_policy=white_list,
+            protocol_version=PROTOCOL_VERSION, prepare_on_all_hosts=False,
+            reprepare_on_up=False)
+        self.addCleanup(clus.shutdown)
+
+        table = "test3rf.%s" % self._testMethodName.lower()
+
+        session = clus.connect(wait_for_all_pools=True)
+
+        session.execute("DROP TABLE IF EXISTS %s" % table)
+        session.execute("CREATE TABLE %s (k int PRIMARY KEY, a int, b int, d int)" % table)
+        insert_statement = session.prepare("INSERT INTO %s (k, b, d) VALUES  (?, ?, ?)" % table)
+
+        # Altering the table might trigger an update in the insert metadata
+        session.execute("ALTER TABLE %s ADD c int" % table)
+
+        values_to_insert = [(1, 2, 3), (2, 3, 4), (3, 4, 5), (4, 5, 6)]
+
+        # We query the three hosts in order (due to the ForcedHostSwitchPolicy)
+        # the first three queries will have to be repreapred and the rest should
+        # work as normal batch prepared statements
+        for i in range(10):
+            value_to_insert = values_to_insert[i % len(values_to_insert)]
+            batch_statement = BatchStatement(consistency_level=ConsistencyLevel.ONE)
+            batch_statement.add(insert_statement, value_to_insert)
+            session.execute(batch_statement)
+
+        select_results = session.execute("SELECT * FROM %s" % table)
+        expected_results = [(1, None, 2, None, 3), (2, None, 3, None, 4),
+             (3, None, 4, None, 5), (4, None, 5, None, 6)]
+        
+        self.assertEqual(set(expected_results), set(select_results._current_rows))
 
 
 class PrintStatementTests(unittest.TestCase):
@@ -483,7 +605,7 @@ class BatchStatementTests(BasicSharedKeyspaceUnitTestCase):
         self.cluster = Cluster(protocol_version=PROTOCOL_VERSION)
         if PROTOCOL_VERSION < 3:
             self.cluster.set_core_connections_per_host(HostDistance.LOCAL, 1)
-        self.session = self.cluster.connect()
+        self.session = self.cluster.connect(wait_for_all_pools=True)
 
     def tearDown(self):
         self.cluster.shutdown()
