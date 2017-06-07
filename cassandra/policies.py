@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from functools import wraps
 from itertools import islice, cycle, groupby, repeat
 import logging
 from random import randint, shuffle
@@ -503,7 +504,25 @@ class HostFilterPolicy(LoadBalancingPolicy):
         """
         super(HostFilterPolicy, self).__init__()
         self._child_policy = child_policy
-        self._predicate = predicate
+
+        # if the user passes a lambda, wraps(predicate) will fail without a
+        # __name__
+        if not hasattr(predicate, '__name__'):
+            predicate.__name__ = ''
+
+        @wraps(predicate)
+        def predicate_with_better_error_handling(*args, **kwargs):
+            try:
+                return predicate(*args, **kwargs)
+            except TypeError as te:
+                msg = (
+                    'caught the following error while calling ' +
+                    self.__class__.__name__ + " object's predicate method: " +
+                    repr(te.message)
+                )
+                raise TypeError(msg)
+
+        self._predicate = predicate_with_better_error_handling
 
     def on_up(self, host, *args, **kwargs):
         if self.predicate(host):

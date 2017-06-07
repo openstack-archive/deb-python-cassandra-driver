@@ -18,7 +18,7 @@ except ImportError:
     import unittest  # noqa
 
 from itertools import islice, cycle
-from mock import Mock, patch
+from mock import Mock, patch, call
 from random import randint
 import six
 from six.moves._thread import LockType
@@ -1254,8 +1254,13 @@ class HostFilterPolicyInitTest(unittest.TestCase):
 
     def _check_init(self, hfp):
         self.assertIs(hfp._child_policy, self.child_policy)
-        self.assertIs(hfp.predicate, self.predicate)
         self.assertIsInstance(hfp._hosts_lock, LockType)
+
+        # we can't use a simple assertIs because we wrap the function
+        arg0, arg1 = Mock(name='arg0'), Mock(name='arg1')
+        hfp.predicate(arg0)
+        hfp.predicate(arg1)
+        self.predicate.assert_has_calls([call(arg0), call(arg1)])
 
     def test_init_arg_order(self):
         self._check_init(HostFilterPolicy(self.child_policy, self.predicate))
