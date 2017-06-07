@@ -466,6 +466,29 @@ class HostFilterPolicy(LoadBalancingPolicy):
     This policy defers to the child policy for hosts where ``predicate(host)``
     is truthy. Hosts for which ``predicate(host)`` is falsey will be considered
     :attr:`.IGNORED`, and will not be used in a query plan.
+
+    This can be used in the cases where you need a whitelist or blacklist
+    policy, e.g. to prepare for decommissioning nodes or for testing:
+
+    .. code-block:: python
+
+        def address_is_ignored(host):
+            return host.address not in [ignored_address0, ignored_address1]
+
+        blacklist_filter_policy = HostFilterPolicy(
+            child_policy=RoundRobinPolicy(),
+            predicate=address_is_ignored
+        )
+
+        cluster = Cluster(
+            primary_host,
+            load_balancing_policy=blacklist_filter_policy,
+        )
+
+    Please note that whitelist and blacklist policies are not recommended for
+    general, day-to-day use. You probably want something like
+    :class:`.DCAwareRoundRobinPolicy`, which prefers a local DC but has
+    fallbacks, over a brute-force method like whitelisting or blacklisting.
     """
 
     _predicate = None
