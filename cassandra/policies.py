@@ -461,11 +461,11 @@ class WhiteListRoundRobinPolicy(RoundRobinPolicy):
 
 class HostFilterPolicy(LoadBalancingPolicy):
     """
-    A :class:`.LoadBalancingPolicy` subclass that takes an instantiated
-    ``LoadBalancingPolicy`` as a child policy, and a single-argument predicate.
-    This policy defers to the child policy for hosts where ``predicate(host)``
-    is truthy. Hosts for which ``predicate(host)`` is falsey will be considered
-    :attr:`.IGNORED`, and will not be used in a query plan.
+    A :class:`.LoadBalancingPolicy` subclass configured with a child policy,
+    and a single-argument predicate. This policy defers to the child policy for
+    hosts where ``predicate(host)`` is truthy. Hosts for which
+    ``predicate(host)`` is falsey will be considered :attr:`.IGNORED`, and will
+    not be used in a query plan.
 
     This can be used in the cases where you need a whitelist or blacklist
     policy, e.g. to prepare for decommissioning nodes or for testing:
@@ -494,6 +494,13 @@ class HostFilterPolicy(LoadBalancingPolicy):
     _predicate = None
 
     def __init__(self, child_policy, predicate):
+        """
+        :param child_policy: an instantiated :class:`.LoadBalancingPolicy`
+                             that this one will defer to.
+        :param predicate: a one-parameter function that takes a :class:`.Host`.
+                          If it returns a falsey value, the :class:`.Host` will
+                          be :attr:`.IGNORED` and not returned in query plans.
+        """
         super(HostFilterPolicy, self).__init__()
         self._child_policy = child_policy
         self._predicate = predicate
