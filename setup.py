@@ -187,8 +187,18 @@ elif not is_supported_arch:
 try_extensions = "--no-extensions" not in sys.argv and is_supported_platform and is_supported_arch and not os.environ.get('CASS_DRIVER_NO_EXTENSIONS')
 try_murmur3 = try_extensions and "--no-murmur3" not in sys.argv
 try_libev = try_extensions and "--no-libev" not in sys.argv and not is_pypy and not is_windows
+
+# cython is not installable through pip in Windows
+is_cython_installable = is_supported_platform and "win" not in sys.platform
+try:
+    import cython
+    is_cython_installed = True
+except:
+    is_cython_installed = False
+
 try_cython = try_extensions and "--no-cython" not in sys.argv and not is_pypy and not os.environ.get('CASS_DRIVER_NO_CYTHON')
 try_cython &= 'egg_info' not in sys.argv  # bypass setup_requires for pip egg_info calls, which will never have --install-option"--no-cython" coming fomr pip
+try_cython &= is_cython_installed or is_cython_installable
 
 sys.argv = [a for a in sys.argv if a not in ("--no-murmur3", "--no-libev", "--no-cython", "--no-extensions")]
 
