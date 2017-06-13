@@ -27,7 +27,8 @@ from cassandra.connection import Connection
 
 from tests.integration import BasicSharedKeyspaceUnitTestCase, greaterthancass21
 from tests import notwindows
-from tests.integration.simulacron.utils import start_and_prime_singledc, prime_query, stopt_simulacron, NO_THEN
+from tests.integration.simulacron.utils import start_and_prime_cluster, prime_query, stopt_simulacron, \
+    clear_queries, NO_THEN
 
 from mock import patch
 
@@ -55,7 +56,7 @@ class SpecExecTest(BasicSharedKeyspaceUnitTestCase):
 
     @classmethod
     def setUpClass(cls):
-        start_and_prime_singledc()
+        start_and_prime_cluster(cls.__name__.lower(), 3)
 
         cls.common_setup(1)
 
@@ -72,6 +73,9 @@ class SpecExecTest(BasicSharedKeyspaceUnitTestCase):
     @classmethod
     def tearDownClass(cls):
         stopt_simulacron()
+
+    def tearDown(self):
+        clear_queries()
 
     @greaterthancass21
     def test_speculative_execution(self):
