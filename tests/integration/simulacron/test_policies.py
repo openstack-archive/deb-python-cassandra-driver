@@ -11,9 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from tests.integration import use_singledc
-
 try:
     import unittest2 as unittest
 except ImportError:
@@ -23,18 +20,15 @@ from cassandra import OperationTimedOut
 from cassandra.cluster import ExecutionProfile
 from cassandra.query import SimpleStatement
 from cassandra.policies import ConstantSpeculativeExecutionPolicy, RoundRobinPolicy
-from cassandra.connection import Connection
 
 from tests.integration import BasicSharedKeyspaceUnitTestCase, greaterthancass21
 from tests import notwindows
 from tests.integration.simulacron.utils import start_and_prime_cluster, prime_query, stopt_simulacron, \
     clear_queries, NO_THEN
 
-from mock import patch
 
 def setup_module():
-    #use_singledc()
-    pass
+    start_and_prime_cluster("policies", 3)
 
 
 class BadRoundRobinPolicy(RoundRobinPolicy):
@@ -56,8 +50,6 @@ class SpecExecTest(BasicSharedKeyspaceUnitTestCase):
 
     @classmethod
     def setUpClass(cls):
-        start_and_prime_cluster(cls.__name__.lower(), 3)
-
         cls.common_setup(1)
 
         spec_ep_brr = ExecutionProfile(load_balancing_policy=BadRoundRobinPolicy(), speculative_execution_policy=ConstantSpeculativeExecutionPolicy(.01, 20))
@@ -69,10 +61,6 @@ class SpecExecTest(BasicSharedKeyspaceUnitTestCase):
         cls.cluster.add_execution_profile("spec_ep_rr", spec_ep_rr)
         cls.cluster.add_execution_profile("spec_ep_rr_lim", spec_ep_rr_lim)
         cls.cluster.add_execution_profile("spec_ep_brr_lim", spec_ep_brr_lim)
-
-    @classmethod
-    def tearDownClass(cls):
-        stopt_simulacron()
 
     def tearDown(self):
         clear_queries()
@@ -146,8 +134,6 @@ class SpecExecTest(BasicSharedKeyspaceUnitTestCase):
 
         @test_category metadata
         """
-        # We mock this so no messages are sent, otherwise a reponse might arrive
-        # and we would not know how many hosts we queried
         prime_query("INSERT INTO test3rf.test (k, v) VALUES (0, 1);", then=NO_THEN)
 
         statement = SimpleStatement("INSERT INTO test3rf.test (k, v) VALUES (0, 1);", is_idempotent=True)
