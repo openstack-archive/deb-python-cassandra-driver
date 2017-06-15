@@ -37,7 +37,7 @@ if 'gevent.monkey' in sys.modules:
 else:
     from six.moves.queue import Queue, Empty  # noqa
 
-from cassandra import ConsistencyLevel, AuthenticationFailed, OperationTimedOut, ProtocolVersion
+from cassandra import ConsistencyLevel, AuthenticationFailed, OperationTimedOut, ProtocolVersion, DriverException
 from cassandra.marshal import int32_pack
 from cassandra.protocol import (ReadyMessage, AuthenticateMessage, OptionsMessage,
                                 StartupMessage, ErrorMessage, CredentialsMessage,
@@ -436,9 +436,9 @@ class Connection(object):
         try:
             return self.request_ids.popleft()
         except IndexError:
-            self.highest_request_id += 1
             # in_flight checks should guarantee this
-            assert self.highest_request_id <= self.max_request_id
+            assert self.highest_request_id + 1 <= self.max_request_id
+            self.highest_request_id += 1
             return self.highest_request_id
 
     def handle_pushed(self, response):
@@ -486,7 +486,14 @@ class Connection(object):
             needed = len(msgs) - messages_sent
             with self.lock:
                 available = min(needed, self.max_request_id - self.in_flight + 1)
-                request_ids = [self.get_request_id() for _ in range(available)]
+                request_ids = []
+                for _ in range(available):
+                    try:
+                        request_ids.append(self.get_request_id())
+                    except:
+                        for id in request_ids:
+                            self.request_ids.append(id)
+                        raise DriverException("Not enough IDs available")
                 self.in_flight += available
 
             for i, request_id in enumerate(request_ids):
