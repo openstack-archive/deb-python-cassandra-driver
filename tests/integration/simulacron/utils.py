@@ -21,6 +21,28 @@ import subprocess
 import time
 
 
+class SimulacronCluster(object):
+    def __init__(self, json_text):
+        self.json = json_text
+        self.o = json.loads(json_text)
+
+    def get_cluster_id(self):
+        return self.o["id"]
+
+    def get_cluster_name(self):
+        return self.o["name"]
+
+    def get_data_centers_ids(self):
+        return [dc["id"] for dc in self.o["data_centers"]]
+
+    def get_data_centers_names(self):
+        return [dc["name"] for dc in self.o["data_centers"]]
+
+    def get_node_ids(self, datacenter_id):
+        datacenter = list(filter(lambda x: x["id"] ==  datacenter_id, self.o["data_centers"])).pop()
+        return [node["id"] for node in datacenter["nodes"]]
+
+
 class SimulacronServer(object):
 
     def __init__(self, jar_path):
@@ -41,23 +63,24 @@ class SimulacronServer(object):
         # We could check self.proc.poll here instead
         return self.running
 
+
 jar_path = "/home/jaume/workspace/simulacron/standalone/target/standalone-0.1-SNAPSHOT.jar"
-server_simulacron = SimulacronServer(jar_path)
+SERVER_SIMULACRON = SimulacronServer(jar_path)
+
 
 def start_simulacron():
-    if server_simulacron.is_running():
-        server_simulacron.stop()
+    if SERVER_SIMULACRON.is_running():
+        SERVER_SIMULACRON.stop()
 
-    server_simulacron.start()
+    SERVER_SIMULACRON.start()
 
     time.sleep(5)
 
 def stopt_simulacron():
-    server_simulacron.stop()
+    SERVER_SIMULACRON.stop()
 
 
 class SimulacronClient(object):
-
     def __init__(self, admin_addr="127.0.0.1:8187"):
         self.admin_addr = admin_addr
 
@@ -69,6 +92,7 @@ class SimulacronClient(object):
         return result
 
     def prime_server_versions(self):
+        #This information has to be primed for the test harness to run
         system_local_row = {}
         system_local_row["cql_version"] = "3.4.4"
         system_local_row["release_version"] = "3.1.1" + "-SNAPSHOT"
@@ -84,6 +108,7 @@ class SimulacronClient(object):
         result = requests.delete("http://{0}/{1}".format(
             self.admin_addr, "prime-query-single"))
         return result
+
 
 NO_THEN = object()
 
@@ -112,20 +137,23 @@ class PrimeOptions(object):
     def fetch_url_params(self):
         return ""
 
+
 class PrimeQuery(object):
 
-    def __init__(self, expected_query, result="success", rows=None, column_types=None, then=None):
+    def __init__(self, expected_query, result="success", rows=None, column_types=None, when=None, then=None):
         self.expected_query = expected_query
         self.rows = rows
         self.result = result
         self.column_types = column_types
         self.path = "prime-query-single"
         self.then = then
+        self.when = when
 
     def fetch_json(self):
         json_dict = {}
         then = {}
         when = {}
+
         when['query'] = self.expected_query
         then['result'] = self.result
         if self.rows is not None:
@@ -137,9 +165,13 @@ class PrimeQuery(object):
         if self.then is not None and self.then is not NO_THEN:
             then.update(self.then)
 
-        json_dict['when'] = when
         if self.then is not NO_THEN:
             json_dict['then'] = then
+
+        if self.when is not None:
+            when.update(self.when)
+
+        json_dict['when'] = when
 
         return json_dict
 
@@ -162,7 +194,7 @@ class PrimeQuery(object):
 
 
 class ClusterQuery(object):
-    def __init__(self, cluster_name, cassandra_version, data_centers=1, json_dict=None):
+    def __init__(self, cluster_name, cassandra_version, data_centers="3", json_dict=None):
         self.cluster_name = cluster_name
         self.cassandra_version = cassandra_version
         self.data_centers = data_centers
@@ -186,7 +218,14 @@ def prime_driver_defaults():
     client_simulacron.prime_server_versions()
 
 
-def prime_cluster(cluster_name, data_centers=1, version=None):
+def prime_cluster(cluster_name, data_centers="3", version=None):
+    """
+    Creates a new cluster in the simulacron server
+    :param cluster_name: name of the cluster
+    :param data_centers: string describing the datacenter, e.g. 2/3 would be two
+    datacenters of 2 nodes and three nodes
+    :param version: C* version
+    """
     version = version or CASSANDRA_VERSION
     cluster_query = ClusterQuery(cluster_name, version, data_centers)
     client_simulacron = SimulacronClient()
@@ -195,10 +234,18 @@ def prime_cluster(cluster_name, data_centers=1, version=None):
 
 
 def start_and_prime_singledc(cluster_name):
-    start_and_prime_cluster(cluster_name, number_of_dc=1)
+    """
+    Starts simulacron and creates a cluster with a single datacenter
+    """
+    start_and_prime_cluster(cluster_name, number_of_dc=1, nodes_per_dc=3)
 
 
 def start_and_prime_cluster(cluster_name, number_of_dc, nodes_per_dc, version=None):
+    """
+    :param number_of_dc: number of datacentes
+    :param nodes_per_dc: number of nodes per datacenter
+    :param version: C* version
+    """
     start_simulacron()
     data_centers = ",".join([str(nodes_per_dc)] * number_of_dc)
     prime_cluster(cluster_name, data_centers=data_centers, version=version)
@@ -214,40 +261,32 @@ default_row = {}
 default_row["key"] = 2
 default_row["description"] = "whatever_description"
 default_row["dates"] = {"whatever_text" : "2014-08-01"}
+default_rows = [default_row]
+
 
 def prime_request(request):
+    """
+    :param request: It could be PrimeQuery class or an PrimeOptions class
+    """
     client_simulacron = SimulacronClient()
     response = client_simulacron.submit_request(request)
     return response
 
-def prime_query(query, rows=[default_row], column_types=default_column_types, then=None):
-    client_simulacron = SimulacronClient()
-    query = PrimeQuery(query, rows=rows, column_types=column_types, then=then)
-    response = client_simulacron.submit_request(query)
+
+def prime_query(query, rows=default_rows, column_types=default_column_types, when=None, then=None):
+    """
+    Shortcut function for priming a query
+    :return:
+    """
+    query = PrimeQuery(query, rows=rows, column_types=column_types, when=when, then=then)
+    response = prime_request(query)
     return response
 
+
 def clear_queries():
+    """
+    Clears all the queries that have been primed to simulacron
+    """
     client_simulacron = SimulacronClient()
     client_simulacron.clear_all_queries()
 
-
-class SimulacronCluster(object):
-    def __init__(self, json_text):
-        self.json = json_text
-        self.o = json.loads(json_text)
-
-    def get_cluster_id(self):
-        return self.o["id"]
-
-    def get_cluster_name(self):
-        return self.o["name"]
-
-    def get_data_centers_ids(self):
-        return [dc["id"] for dc in self.o["data_centers"]]
-
-    def get_data_centers_names(self):
-        return [dc["name"] for dc in self.o["data_centers"]]
-
-    def get_node_ids(self, datacenter_id):
-        datacenter = filter(lambda x: x["id"] ==  datacenter_id, self.o["data_centers"]).pop()
-        return [node["id"] for node in datacenter["nodes"]]

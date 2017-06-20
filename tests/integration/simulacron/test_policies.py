@@ -23,12 +23,12 @@ from cassandra.policies import ConstantSpeculativeExecutionPolicy, RoundRobinPol
 
 from tests.integration import BasicSharedKeyspaceUnitTestCase, greaterthancass21
 from tests import notwindows
-from tests.integration.simulacron.utils import start_and_prime_cluster, prime_query, stopt_simulacron, \
+from tests.integration.simulacron.utils import start_and_prime_singledc, prime_query, \
     clear_queries, NO_THEN
 
 
 def setup_module():
-    start_and_prime_cluster("policies", 3)
+    start_and_prime_singledc("policies")
 
 
 class BadRoundRobinPolicy(RoundRobinPolicy):
@@ -111,17 +111,20 @@ class SpecExecTest(BasicSharedKeyspaceUnitTestCase):
         with self.assertRaises(OperationTimedOut):
             result = self.session.execute(statement, execution_profile='spec_ep_rr', timeout=.5)
 
-        """
+        prepared_query_to_prime = "SELECT * FROM test3rf.test where k = ?"
+        when = {"params": {"k": "0"}, "paramTypes": {"k": "bigint"}}
+        prime_query(prepared_query_to_prime, when=when, then={"delay_in_ms": 4000})
+
         # PYTHON-736 Test speculation policy works with a prepared statement
-        statement = self.session.prepare("SELECT timeout(i) FROM d WHERE k = ?")
+        prepared_statement = self.session.prepare(prepared_query_to_prime)
         # non-idempotent
-        result = self.session.execute(statement, (0,), execution_profile='spec_ep_brr')
+        result = self.session.execute(prepared_statement, (0,), execution_profile='spec_ep_brr')
         self.assertEqual(1, len(result.response_future.attempted_hosts))
         # idempotent
-        statement.is_idempotent = True
-        result = self.session.execute(statement, (0,), execution_profile='spec_ep_brr')
+        prepared_statement.is_idempotent = True
+        result = self.session.execute(prepared_statement, (0,), execution_profile='spec_ep_brr')
         self.assertLess(1, len(result.response_future.attempted_hosts))
-        """
+
 
 
     def test_speculative_and_timeout(self):

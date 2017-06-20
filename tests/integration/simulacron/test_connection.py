@@ -20,8 +20,9 @@ import time
 import logging
 
 from cassandra import OperationTimedOut
-from cassandra.cluster import Cluster, NoHostAvailable
+from cassandra.cluster import Cluster, _Scheduler
 from cassandra.policies import RoundRobinPolicy, HostStateListener
+from concurrent.futures import ThreadPoolExecutor
 
 from tests.integration.simulacron.utils import start_and_prime_cluster, prime_query, stopt_simulacron, \
     clear_queries, prime_request, PrimeOptions, NO_THEN
@@ -33,6 +34,13 @@ class TrackDownListener(HostStateListener):
 
     def on_down(self, host):
         self.hosts_marked_down.append(host)
+
+class ThreadTracker(ThreadPoolExecutor):
+    called_functions = []
+
+    def submit(self, fn, *args, **kwargs):
+        self.called_functions.append(fn.__name__)
+        return super(ThreadTracker, self).submit(fn, *args, **kwargs)
 
 class ConnectionTest(unittest.TestCase):
 
@@ -57,10 +65,17 @@ class ConnectionTest(unittest.TestCase):
         start_and_prime_cluster("test_heart_beat_timeout", number_of_dcs, nodes_per_dc)
 
         listener = TrackDownListener()
+        executor = ThreadTracker(max_workers=16)
+
         cluster = Cluster(load_balancing_policy=RoundRobinPolicy(),
                           idle_heartbeat_interval=idle_heartbeat_interval,
                           idle_heartbeat_timeout=idle_heartbeat_timeout,
                           executor_threads=16)
+
+        cluster.scheduler.shutdown()
+        cluster.executor = executor
+        cluster.scheduler = _Scheduler(executor)
+
         session = cluster.connect(wait_for_all_pools=True)
         cluster.register_listener(listener)
         log = logging.getLogger()
@@ -74,7 +89,7 @@ class ConnectionTest(unittest.TestCase):
         prime_request(PrimeOptions(then=NO_THEN))
 
         futures = []
-        for _ in range(600):
+        for _ in range(number_of_dcs * nodes_per_dc):
             future = session.execute_async(query_to_prime)
             futures.append(future)
 
@@ -83,7 +98,11 @@ class ConnectionTest(unittest.TestCase):
             assert isinstance(f._final_exception, OperationTimedOut)
 
         # We allow from some extra time for all the hosts to be to on_down
-        time.sleep((idle_heartbeat_timeout + idle_heartbeat_interval)*3)
+        # The callbacks should start happening after idle_heartbeat_timeout + idle_heartbeat_interval
+        time.sleep((idle_heartbeat_timeout + idle_heartbeat_interval)*2)
 
         for host in cluster.metadata.all_hosts():
             self.assertIn(host, listener.hosts_marked_down)
+
+        # In this case HostConnection._replace shouldn't be called
+        self.assertNotIn("_replace", executor.called_functions)
