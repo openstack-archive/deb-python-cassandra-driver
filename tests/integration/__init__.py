@@ -263,6 +263,8 @@ lessthancass30 = unittest.skipUnless(CASSANDRA_VERSION < '3.0', 'Cassandra versi
 dseonly = unittest.skipUnless(DSE_VERSION, "Test is only applicalbe to DSE clusters")
 pypy = unittest.skipUnless(platform.python_implementation() == "PyPy", "Test is skipped unless it's on PyPy")
 notpy3 = unittest.skipIf(sys.version_info >= (3, 0), "Test not applicable for Python 3.x runtime")
+notbigclockgranularity = unittest.skipIf("Windows" in platform.system() or "async" in EVENT_LOOP_MANAGER,
+                                             "This test is not sutiables for ennvironments with big clock granularity")
 
 
 def wait_for_node_socket(node, timeout):

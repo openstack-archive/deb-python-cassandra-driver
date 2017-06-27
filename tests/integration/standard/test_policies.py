@@ -26,7 +26,7 @@ from cassandra.policies import ConstantSpeculativeExecutionPolicy, RoundRobinPol
 from cassandra.connection import Connection
 
 from tests.integration import BasicSharedKeyspaceUnitTestCase, greaterthancass21
-from tests import notwindows
+from tests.integration import notbigclockgranularity
 
 from mock import patch
 
@@ -47,8 +47,7 @@ class BadRoundRobinPolicy(RoundRobinPolicy):
         return hosts
 
 
-# This doesn't work well with Windows clock granularity
-@notwindows
+@notbigclockgranularity
 class SpecExecTest(BasicSharedKeyspaceUnitTestCase):
 
     @classmethod
