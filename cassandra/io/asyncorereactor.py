@@ -331,10 +331,6 @@ class AsyncoreConnection(Connection, asyncore.dispatcher):
             self.error_all_requests(
                 ConnectionShutdown("Connection to %s was closed" % self.host))
 
-            #This happens when the connection is shutdown while waiting for the ReadyMessage
-            if not self.connected_event.is_set():
-                self.last_error = ConnectionShutdown("Connection to %s was closed" % self.host)
-
             # don't leave in-progress operations hanging
             self.connected_event.set()
 
