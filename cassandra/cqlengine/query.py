@@ -719,7 +719,7 @@ class AbstractQuerySet(object):
             else:
                 query_val = column.to_database(val)
                 if not col_op:  # only equal values should be deferred
-                    clone._defer_fields.add(col_name)
+                    clone._defer_fields.add(column.db_field_name)
                     clone._deferred_values[column.db_field_name] = val  # map by db field name for substitution in results
 
             clone._where.append(WhereClause(column.db_field_name, operator, query_val, quote_field=quote_field))
