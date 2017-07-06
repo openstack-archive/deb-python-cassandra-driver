@@ -30,7 +30,7 @@ try:
 except ImportError:
     from cassandra.util import WeakSet  # noqa
 
-import asyncore
+import cassandra.io.asyncore as asyncore
 
 try:
     import ssl
@@ -321,7 +321,6 @@ class AsyncoreConnection(Connection, asyncore.dispatcher):
             if self.is_closed:
                 return
             self.is_closed = True
-
         log.debug("Closing connection (%s) to %s", id(self), self.host)
         self._writable = False
         self._readable = False
