@@ -1,7 +1,10 @@
+from collections import namedtuple
 import struct
 
 from six.moves import range
 
+
+BodyAndTail = namedtuple('BodyAndTail', ['body', 'tail', 'total_len'])
 
 def body_and_tail(data):
     l = len(data)
@@ -10,16 +13,16 @@ def body_and_tail(data):
     if nblocks:
         # we use '<', specifying little-endian byte order for data bigger than
         # a byte so behavior is the same on little- and big-endian platforms
-        return (
-            struct.unpack_from('<' + ('qq' * nblocks), data),
-            struct.unpack_from('b' * tail, data, -tail),
-            l
+        return BodyAndTail(
+            body=struct.unpack_from('<' + ('qq' * nblocks), data),
+            tail=struct.unpack_from('b' * tail, data, -tail),
+            total_len=l
         )
     else:
-        return (
-            tuple(),
-            struct.unpack_from('b' * tail, data, -tail),
-            l
+        return BodyAndTail(
+            body=tuple(),
+            tail=struct.unpack_from('b' * tail, data, -tail),
+            total_len=l
         )
 
 
