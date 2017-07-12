@@ -10,9 +10,17 @@ def body_and_tail(data):
     if nblocks:
         # we use '<', specifying little-endian byte order for data bigger than
         # a byte so behavior is the same on little- and big-endian platforms
-        return struct.unpack_from('<' + ('qq' * nblocks), data), struct.unpack_from('b' * tail, data, -tail), l
+        return (
+            struct.unpack_from('<' + ('qq' * nblocks), data),
+            struct.unpack_from('b' * tail, data, -tail),
+            l
+        )
     else:
-        return tuple(), struct.unpack_from('b' * tail, data, -tail), l
+        return (
+            tuple(),
+            struct.unpack_from('b' * tail, data, -tail),
+            l
+        )
 
 
 def rotl64(x, r):
