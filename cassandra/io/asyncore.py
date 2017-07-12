@@ -170,7 +170,8 @@ def poll2(timeout=0.0, map=None):
         timeout = int(timeout*1000)
     pollster = select.poll()
     if map:
-        for fd, obj in list(map.items()):
+        map_copy = dict(map)
+        for fd, obj in map_copy.items():
             flags = 0
             if obj.readable():
                 flags |= select.POLLIN | select.POLLPRI
@@ -182,8 +183,8 @@ def poll2(timeout=0.0, map=None):
 
         r = pollster.poll(timeout)
         for fd, flags in r:
-            obj = map.get(fd)
-            if obj is None:
+            obj = map_copy.get(fd)
+            if fd not in map or map.get(fd) != obj:
                 continue
             readwrite(obj, flags)
 
