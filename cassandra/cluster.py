@@ -2325,6 +2325,9 @@ class Session(object):
     def __exit__(self, *args):
         self.shutdown()
 
+    def __del__(self):
+        self.shutdown()
+
     def add_or_renew_pool(self, host, is_host_addition):
         """
         For internal use only.
