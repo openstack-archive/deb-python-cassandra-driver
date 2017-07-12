@@ -1,5 +1,6 @@
-from six.moves import range
 import struct
+
+from six.moves import range
 
 
 def body_and_tail(data):
