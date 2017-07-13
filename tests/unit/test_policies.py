@@ -1402,13 +1402,13 @@ class HostFilterPolicyPopulateTest(unittest.TestCase):
             hosts=hosts
         )
 
-    def test_child_not_populated_with_filtered_hosts(self):
+    def test_child_is_populated_with_filtered_hosts(self):
         hfp = HostFilterPolicy(
             child_policy=Mock(name='child_policy'),
-            predicate=lambda host: 'acceptme' in host
+            predicate=lambda host: False
         )
         mock_cluster, hosts = (Mock(name='cluster'),
-                               ['acceptme0', 'ignoreme0', 'ignoreme1', 'acceptme1'])
+                               ['acceptme0', 'acceptme1'])
         hfp.populate(mock_cluster, hosts)
         hfp._child_policy.populate.assert_called_once()
         self.assertEqual(

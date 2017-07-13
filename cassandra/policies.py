@@ -504,20 +504,16 @@ class HostFilterPolicy(LoadBalancingPolicy):
         self._predicate = predicate
 
     def on_up(self, host, *args, **kwargs):
-        if self.predicate(host):
-            return self._child_policy.on_up(host, *args, **kwargs)
+        return self._child_policy.on_up(host, *args, **kwargs)
 
     def on_down(self, host, *args, **kwargs):
-        if self.predicate(host):
-            return self._child_policy.on_down(host, *args, **kwargs)
+        return self._child_policy.on_down(host, *args, **kwargs)
 
     def on_add(self, host, *args, **kwargs):
-        if self.predicate(host):
-            return self._child_policy.on_add(host, *args, **kwargs)
+        return self._child_policy.on_add(host, *args, **kwargs)
 
     def on_remove(self, host, *args, **kwargs):
-        if self.predicate(host):
-            return self._child_policy.on_remove(host, *args, **kwargs)
+        return self._child_policy.on_remove(host, *args, **kwargs)
 
     @property
     def predicate(self):
@@ -547,7 +543,7 @@ class HostFilterPolicy(LoadBalancingPolicy):
     def populate(self, cluster, hosts):
         self._child_policy.populate(
             cluster=cluster,
-            hosts=[h for h in hosts if self.predicate(h)]
+            hosts=hosts
         )
 
     def make_query_plan(self, working_keyspace=None, query=None):
