@@ -327,8 +327,9 @@ class TimeoutTimerTest(unittest.TestCase):
         # self.node1, self.node2, self.node3 = get_cluster().nodes.values()
 
         node1 = ExecutionProfile(
-            load_balancing_policy=HostFilterPolicy(RoundRobinPolicy(),
-                                                lambda host: host.address == "127.0.0.1")
+            load_balancing_policy=HostFilterPolicy(
+                RoundRobinPolicy(), lambda host: host.address == "127.0.0.1"
+            )
         )
         self.cluster = Cluster(protocol_version=PROTOCOL_VERSION, execution_profiles={EXEC_PROFILE_DEFAULT: node1})
         self.session = self.cluster.connect(wait_for_all_pools=True)
