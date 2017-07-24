@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cqlengine.query &#8212; Cassandra Driver 3.10 documentation</title>
+    <title>cassandra.cqlengine.query &#8212; Cassandra Driver 3.11.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '3.10',
+        VERSION:     '3.11.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
@@ -420,9 +420,15 @@
         <span class="c1"># because explicit is better than implicit</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_limit</span> <span class="o">=</span> <span class="mi">10000</span>
 
-        <span class="c1"># see the defer and only methods</span>
+        <span class="c1"># We store the fields for which we use the Equal operator</span>
+        <span class="c1"># in a query, so we don&#39;t select it from the DB. _defer_fields</span>
+        <span class="c1"># will contain the names of the fields in the DB, not the names</span>
+        <span class="c1"># of the variables used by the mapper</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_defer_fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_deferred_values</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># This variable will hold the names in the database of the fields</span>
+        <span class="c1"># for which we want to query</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_only_fields</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_values_list</span> <span class="o">=</span> <span class="kc">False</span>
@@ -784,7 +790,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">query_val</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">to_database</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">col_op</span><span class="p">:</span>  <span class="c1"># only equal values should be deferred</span>
-                    <span class="n">clone</span><span class="o">.</span><span class="n">_defer_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
+                    <span class="n">clone</span><span class="o">.</span><span class="n">_defer_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">)</span>
                     <span class="n">clone</span><span class="o">.</span><span class="n">_deferred_values</span><span class="p">[</span><span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>  <span class="c1"># map by db field name for substitution in results</span>
 
             <span class="n">clone</span><span class="o">.</span><span class="n">_where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">WhereClause</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">db_field_name</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">query_val</span><span class="p">,</span> <span class="n">quote_field</span><span class="o">=</span><span class="n">quote_field</span><span class="p">))</span>
@@ -1006,6 +1012,8 @@
                 <span class="s2">&quot;Can&#39;t resolve fields </span><span class="si">{0}</span><span class="s2"> in </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_fields</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
 
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">db_field_name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">]</span>
+
         <span class="k">if</span> <span class="n">action</span> <span class="o">==</span> <span class="s1">&#39;defer&#39;</span><span class="p">:</span>
             <span class="n">clone</span><span class="o">.</span><span class="n">_defer_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">action</span> <span class="o">==</span> <span class="s1">&#39;only&#39;</span><span class="p">:</span>
@@ -1133,18 +1141,18 @@
 
     <span class="k">def</span> <span class="nf">_select_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_defer_fields</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_only_fields</span><span class="p">:</span>
-            <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">columns</span><span class="o">.</span><span class="n">db_field_name</span> <span class="k">for</span> <span class="n">columns</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_defer_fields</span><span class="p">:</span>
                 <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_defer_fields</span><span class="p">]</span>
                 <span class="c1"># select the partition keys if all model fields are set defer</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">fields</span><span class="p">:</span>
-                    <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_partition_keys</span>
+                    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">columns</span><span class="o">.</span><span class="n">db_field_name</span> <span class="k">for</span> <span class="n">columns</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_partition_keys</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_only_fields</span><span class="p">:</span>
                 <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_only_fields</span><span class="p">]</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">fields</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">QueryException</span><span class="p">(</span><span class="s1">&#39;No fields in select query. Only fields: &quot;</span><span class="si">{0}</span><span class="s1">&quot;, defer fields: &quot;</span><span class="si">{1}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_only_fields</span><span class="p">),</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_defer_fields</span><span class="p">)))</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_columns</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">.</span><span class="n">db_field_name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">fields</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ModelQuerySet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_select_fields</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_get_result_constructor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1576,7 +1584,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>

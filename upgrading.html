@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Upgrading &#8212; Cassandra Driver 3.10 documentation</title>
+    <title>Upgrading &#8212; Cassandra Driver 3.11.0 documentation</title>
     
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.10',
+        VERSION:     '3.11.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="getting_started.html" title="Getting Started"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.10 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -157,9 +157,14 @@ materialize a list using the iterator:</p>
 <span class="n">row_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>For backward compatability, <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResultSet" title="cassandra.cluster.ResultSet"><code class="xref py py-class docutils literal"><span class="pre">ResultSet</span></code></a> supports indexing. If
-the result is paged, all pages will be materialized. A warning will
-be logged if a paged query is implicitly materialized.</p>
+<p>For backward compatability, <a class="reference internal" href="api/cassandra/cluster.html#cassandra.cluster.ResultSet" title="cassandra.cluster.ResultSet"><code class="xref py py-class docutils literal"><span class="pre">ResultSet</span></code></a> supports indexing. When
+accessed at an index, a <cite>~.ResultSet</cite> object will materialize all its pages:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM system.local&quot;</span><span class="p">)</span>
+<span class="n">first_result</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># materializes results, fetching all pages</span>
+</pre></div>
+</div>
+<p>This can send requests and load (possibly large) results into memory, so
+<cite>~.ResultSet</cite> will log a warning on implicit materialization.</p>
 </div>
 <div class="section" id="trace-information-is-not-attached-to-executed-statements">
 <h4>Trace information is not attached to executed Statements<a class="headerlink" href="#trace-information-is-not-attached-to-executed-statements" title="Permalink to this headline">¶</a></h4>
@@ -413,7 +418,7 @@ now:</p>
         <li class="right" >
           <a href="getting_started.html" title="Getting Started"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.10 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

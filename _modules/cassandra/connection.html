@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.connection &#8212; Cassandra Driver 3.10 documentation</title>
+    <title>cassandra.connection &#8212; Cassandra Driver 3.11.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.10',
+        VERSION:     '3.11.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
@@ -126,6 +126,12 @@
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="k">pass</span>
 <span class="k">else</span><span class="p">:</span>
+    <span class="c1"># The compress and decompress functions we need were moved from the lz4 to</span>
+    <span class="c1"># the lz4.block namespace, so we try both here.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">lz4_block</span> <span class="o">=</span> <span class="n">lz4</span><span class="o">.</span><span class="n">block</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="n">lz4_block</span> <span class="o">=</span> <span class="n">lz4</span>
 
     <span class="c1"># Cassandra writes the uncompressed message length in big endian order,</span>
     <span class="c1"># but the lz4 lib requires little endian order, so we wrap these</span>
@@ -133,11 +139,11 @@
 
     <span class="k">def</span> <span class="nf">lz4_compress</span><span class="p">(</span><span class="n">byts</span><span class="p">):</span>
         <span class="c1"># write length in big-endian instead of little-endian</span>
-        <span class="k">return</span> <span class="n">int32_pack</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">byts</span><span class="p">))</span> <span class="o">+</span> <span class="n">lz4</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">byts</span><span class="p">)[</span><span class="mi">4</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">int32_pack</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">byts</span><span class="p">))</span> <span class="o">+</span> <span class="n">lz4_block</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">byts</span><span class="p">)[</span><span class="mi">4</span><span class="p">:]</span>
 
     <span class="k">def</span> <span class="nf">lz4_decompress</span><span class="p">(</span><span class="n">byts</span><span class="p">):</span>
         <span class="c1"># flip from big-endian to little-endian</span>
-        <span class="k">return</span> <span class="n">lz4</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">byts</span><span class="p">[</span><span class="mi">3</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">byts</span><span class="p">[</span><span class="mi">4</span><span class="p">:])</span>
+        <span class="k">return</span> <span class="n">lz4_block</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">byts</span><span class="p">[</span><span class="mi">3</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">byts</span><span class="p">[</span><span class="mi">4</span><span class="p">:])</span>
 
     <span class="n">locally_supported_compressions</span><span class="p">[</span><span class="s1">&#39;lz4&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">lz4_compress</span><span class="p">,</span> <span class="n">lz4_decompress</span><span class="p">)</span>
 
@@ -501,9 +507,10 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_ids</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">highest_request_id</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">new_request_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">highest_request_id</span> <span class="o">+</span> <span class="mi">1</span>
             <span class="c1"># in_flight checks should guarantee this</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">highest_request_id</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_request_id</span>
+            <span class="k">assert</span> <span class="n">new_request_id</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_request_id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">highest_request_id</span> <span class="o">=</span> <span class="n">new_request_id</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">highest_request_id</span>
 
     <span class="k">def</span> <span class="nf">handle_pushed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
@@ -875,7 +882,29 @@
 <span class="sd">        When the operation completes, `callback` will be called with</span>
 <span class="sd">        two arguments: this connection and an Exception if an error</span>
 <span class="sd">        occurred, otherwise :const:`None`.</span>
+
+<span class="sd">        This method will always increment :attr:`.in_flight` attribute, even if</span>
+<span class="sd">        it doesn&#39;t need to make a request, just to maintain an</span>
+<span class="sd">        &quot;:attr:`.in_flight` is incremented&quot; invariant.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Here we increment in_flight unconditionally, whether we need to issue</span>
+        <span class="c1"># a request or not. This is bad, but allows callers -- specifically</span>
+        <span class="c1"># _set_keyspace_for_all_conns -- to assume that we increment</span>
+        <span class="c1"># self.in_flight during this call. This allows the passed callback to</span>
+        <span class="c1"># safely call HostConnection{Pool,}.return_connection on this</span>
+        <span class="c1"># Connection.</span>
+        <span class="c1">#</span>
+        <span class="c1"># We use a busy wait on the lock here because:</span>
+        <span class="c1"># - we&#39;ll only spin if the connection is at max capacity, which is very</span>
+        <span class="c1">#   unlikely for a set_keyspace call</span>
+        <span class="c1"># - it allows us to avoid signaling a condition every time a request completes</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_request_id</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">break</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.001</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="n">keyspace</span> <span class="ow">or</span> <span class="n">keyspace</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyspace</span><span class="p">:</span>
             <span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">return</span>
@@ -893,19 +922,9 @@
                 <span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">ConnectionException</span><span class="p">(</span>
                     <span class="s2">&quot;Problem while setting keyspace: </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">result</span><span class="p">,),</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)))</span>
 
-        <span class="n">request_id</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="c1"># we use a busy wait on the lock here because:</span>
-        <span class="c1"># - we&#39;ll only spin if the connection is at max capacity, which is very</span>
-        <span class="c1">#   unlikely for a set_keyspace call</span>
-        <span class="c1"># - it allows us to avoid signaling a condition every time a request completes</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_request_id</span><span class="p">:</span>
-                    <span class="n">request_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_id</span><span class="p">()</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">break</span>
-
-            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.001</span><span class="p">)</span>
+        <span class="c1"># We&#39;ve incremented self.in_flight above, so we &quot;have permission&quot; to</span>
+        <span class="c1"># acquire a new request id</span>
+        <span class="n">request_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_id</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">send_msg</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">request_id</span><span class="p">,</span> <span class="n">process_result</span><span class="p">)</span>
 
@@ -1016,9 +1035,10 @@
 
 <span class="k">class</span> <span class="nc">ConnectionHeartbeat</span><span class="p">(</span><span class="n">Thread</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval_sec</span><span class="p">,</span> <span class="n">get_connection_holders</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval_sec</span><span class="p">,</span> <span class="n">get_connection_holders</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
         <span class="n">Thread</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Connection heartbeat&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_interval</span> <span class="o">=</span> <span class="n">interval_sec</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="n">timeout</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_get_connection_holders</span> <span class="o">=</span> <span class="n">get_connection_holders</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
@@ -1055,11 +1075,14 @@
                             <span class="n">owner</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_raise_if_stopped</span><span class="p">()</span>
 
+                <span class="c1"># Wait max `self._timeout` seconds for all HeartbeatFutures to complete</span>
+                <span class="n">timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span>
+                <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">futures</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_raise_if_stopped</span><span class="p">()</span>
                     <span class="n">connection</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">connection</span>
                     <span class="k">try</span><span class="p">:</span>
-                        <span class="n">f</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interval</span><span class="p">)</span>
+                        <span class="n">f</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
                         <span class="c1"># TODO: move this, along with connection locks in pool, down into Connection</span>
                         <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
                             <span class="n">connection</span><span class="o">.</span><span class="n">in_flight</span> <span class="o">-=</span> <span class="mi">1</span>
@@ -1069,10 +1092,15 @@
                                     <span class="nb">id</span><span class="p">(</span><span class="n">connection</span><span class="p">),</span> <span class="n">connection</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
                         <span class="n">failed_connections</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">f</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
 
+                    <span class="n">timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">-</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
+
                 <span class="k">for</span> <span class="n">connection</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">exc</span> <span class="ow">in</span> <span class="n">failed_connections</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_raise_if_stopped</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_control_connection</span><span class="p">:</span>
+                        <span class="c1"># Only HostConnection supports shutdown_on_error</span>
+                        <span class="n">owner</span><span class="o">.</span><span class="n">shutdown_on_error</span> <span class="o">=</span> <span class="kc">True</span>
                     <span class="n">connection</span><span class="o">.</span><span class="n">defunct</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-                    <span class="n">owner</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">mark_host_down</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">owner</span><span class="o">.</span><span class="n">return_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
             <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">ShutdownException</span><span class="p">:</span>
                 <span class="k">pass</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -1173,7 +1201,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>

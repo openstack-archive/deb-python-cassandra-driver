@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies - Load balancing and Failure Handling Policies &#8212; Cassandra Driver 3.10 documentation</title>
+    <title>cassandra.policies - Load balancing and Failure Handling Policies &#8212; Cassandra Driver 3.11.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.10',
+        VERSION:     '3.11.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">API Documentation</a> &#187;</li> 
       </ul>
     </div>
@@ -219,7 +219,10 @@ By default, all remote hosts are ignored.</p>
 <dl class="class">
 <dt id="cassandra.policies.WhiteListRoundRobinPolicy">
 <em class="property">class </em><code class="descclassname">cassandra.policies.</code><code class="descname">WhiteListRoundRobinPolicy</code><span class="sig-paren">(</span><em>hosts</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/policies.html#WhiteListRoundRobinPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.WhiteListRoundRobinPolicy" title="Permalink to this definition">¶</a></dt>
-<dd><p>A subclass of <a class="reference internal" href="#cassandra.policies.RoundRobinPolicy" title="cassandra.policies.RoundRobinPolicy"><code class="xref py py-class docutils literal"><span class="pre">RoundRobinPolicy</span></code></a> which evenly
+<dd><p><b><code>WhiteListRoundRobinPolicy</code></b> <strong>is deprecated. It will be removed in 4.0.</strong> It can effectively be
+reimplemented using <a class="reference internal" href="#cassandra.policies.HostFilterPolicy" title="cassandra.policies.HostFilterPolicy"><code class="xref py py-class docutils literal"><span class="pre">HostFilterPolicy</span></code></a>. For more information, see
+<a class="reference external" href="https://datastax-oss.atlassian.net/browse/PYTHON-758">PYTHON-758</a>.</p>
+<p>A subclass of <a class="reference internal" href="#cassandra.policies.RoundRobinPolicy" title="cassandra.policies.RoundRobinPolicy"><code class="xref py py-class docutils literal"><span class="pre">RoundRobinPolicy</span></code></a> which evenly
 distributes queries across all nodes in the cluster,
 regardless of what datacenter the nodes may be in, but
 only if that node exists in the list of allowed nodes</p>
@@ -249,6 +252,88 @@ policy&#8217;s query plan will be used as is.</p>
 <dt id="cassandra.policies.TokenAwarePolicy.shuffle_replicas">
 <code class="descname">shuffle_replicas</code><em class="property"> = False</em><a class="headerlink" href="#cassandra.policies.TokenAwarePolicy.shuffle_replicas" title="Permalink to this definition">¶</a></dt>
 <dd><p>Yield local replicas in a random order.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cassandra.policies.HostFilterPolicy">
+<em class="property">class </em><code class="descclassname">cassandra.policies.</code><code class="descname">HostFilterPolicy</code><span class="sig-paren">(</span><em>child_policy</em>, <em>predicate</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/policies.html#HostFilterPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.HostFilterPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#cassandra.policies.LoadBalancingPolicy" title="cassandra.policies.LoadBalancingPolicy"><code class="xref py py-class docutils literal"><span class="pre">LoadBalancingPolicy</span></code></a> subclass configured with a child policy,
+and a single-argument predicate. This policy defers to the child policy for
+hosts where <code class="docutils literal"><span class="pre">predicate(host)</span></code> is truthy. Hosts for which
+<code class="docutils literal"><span class="pre">predicate(host)</span></code> is falsey will be considered <a class="reference internal" href="#cassandra.policies.HostDistance.IGNORED" title="cassandra.policies.HostDistance.IGNORED"><code class="xref py py-attr docutils literal"><span class="pre">IGNORED</span></code></a>, and will
+not be used in a query plan.</p>
+<p>This can be used in the cases where you need a whitelist or blacklist
+policy, e.g. to prepare for decommissioning nodes or for testing:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">address_is_ignored</span><span class="p">(</span><span class="n">host</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">host</span><span class="o">.</span><span class="n">address</span> <span class="ow">in</span> <span class="p">[</span><span class="n">ignored_address0</span><span class="p">,</span> <span class="n">ignored_address1</span><span class="p">]</span>
+
+<span class="n">blacklist_filter_policy</span> <span class="o">=</span> <span class="n">HostFilterPolicy</span><span class="p">(</span>
+    <span class="n">child_policy</span><span class="o">=</span><span class="n">RoundRobinPolicy</span><span class="p">(),</span>
+    <span class="n">predicate</span><span class="o">=</span><span class="n">address_is_ignored</span>
+<span class="p">)</span>
+
+<span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="p">(</span>
+    <span class="n">primary_host</span><span class="p">,</span>
+    <span class="n">load_balancing_policy</span><span class="o">=</span><span class="n">blacklist_filter_policy</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>See the note in the <a class="reference internal" href="#cassandra.policies.HostFilterPolicy.make_query_plan" title="cassandra.policies.HostFilterPolicy.make_query_plan"><code class="xref py py-meth docutils literal"><span class="pre">make_query_plan()</span></code></a> documentation for a caveat on
+how wrapping ordering polices (e.g. <a class="reference internal" href="#cassandra.policies.RoundRobinPolicy" title="cassandra.policies.RoundRobinPolicy"><code class="xref py py-class docutils literal"><span class="pre">RoundRobinPolicy</span></code></a>) may break
+desirable properties of the wrapped policy.</p>
+<p>Please note that whitelist and blacklist policies are not recommended for
+general, day-to-day use. You probably want something like
+<a class="reference internal" href="#cassandra.policies.DCAwareRoundRobinPolicy" title="cassandra.policies.DCAwareRoundRobinPolicy"><code class="xref py py-class docutils literal"><span class="pre">DCAwareRoundRobinPolicy</span></code></a>, which prefers a local DC but has
+fallbacks, over a brute-force method like whitelisting or blacklisting.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>child_policy</strong> &#8211; an instantiated <a class="reference internal" href="#cassandra.policies.LoadBalancingPolicy" title="cassandra.policies.LoadBalancingPolicy"><code class="xref py py-class docutils literal"><span class="pre">LoadBalancingPolicy</span></code></a>
+that this one will defer to.</li>
+<li><strong>predicate</strong> &#8211; a one-parameter function that takes a <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><code class="xref py py-class docutils literal"><span class="pre">Host</span></code></a>.
+If it returns a falsey value, the <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><code class="xref py py-class docutils literal"><span class="pre">Host</span></code></a> will
+be <a class="reference internal" href="#cassandra.policies.HostDistance.IGNORED" title="cassandra.policies.HostDistance.IGNORED"><code class="xref py py-attr docutils literal"><span class="pre">IGNORED</span></code></a> and not returned in query plans.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="cassandra.policies.HostFilterPolicy.predicate">
+<code class="descname">predicate</code><span class="sig-paren">(</span><em>host</em><span class="sig-paren">)</span><a class="headerlink" href="#cassandra.policies.HostFilterPolicy.predicate" title="Permalink to this definition">¶</a></dt>
+<dd><p>A predicate, set on object initialization, that takes a <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><code class="xref py py-class docutils literal"><span class="pre">Host</span></code></a>
+and returns a value. If the value is falsy, the <a class="reference internal" href="pool.html#cassandra.pool.Host" title="cassandra.pool.Host"><code class="xref py py-class docutils literal"><span class="pre">Host</span></code></a> is
+<a class="reference internal" href="#cassandra.policies.HostDistance.IGNORED" title="cassandra.policies.HostDistance.IGNORED"><code class="xref py py-class docutils literal"><span class="pre">IGNORED</span></code></a>. If the value is truthy,
+<a class="reference internal" href="#cassandra.policies.HostFilterPolicy" title="cassandra.policies.HostFilterPolicy"><code class="xref py py-class docutils literal"><span class="pre">HostFilterPolicy</span></code></a> defers to the child policy to determine the
+host&#8217;s distance.</p>
+<p>This is a read-only value set in <code class="docutils literal"><span class="pre">__init__</span></code>, implemented as a
+<code class="docutils literal"><span class="pre">property</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.HostFilterPolicy.distance">
+<code class="descname">distance</code><span class="sig-paren">(</span><em>host</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/policies.html#HostFilterPolicy.distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.HostFilterPolicy.distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if <code class="docutils literal"><span class="pre">predicate(host)</span></code>, then returns
+<a class="reference internal" href="#cassandra.policies.HostDistance.IGNORED" title="cassandra.policies.HostDistance.IGNORED"><code class="xref py py-attr docutils literal"><span class="pre">IGNORED</span></code></a> if falsey, and defers to the child policy
+otherwise.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cassandra.policies.HostFilterPolicy.make_query_plan">
+<code class="descname">make_query_plan</code><span class="sig-paren">(</span><em>working_keyspace=None</em>, <em>query=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/cassandra/policies.html#HostFilterPolicy.make_query_plan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cassandra.policies.HostFilterPolicy.make_query_plan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defers to the child policy&#8217;s
+<a class="reference internal" href="#cassandra.policies.LoadBalancingPolicy.make_query_plan" title="cassandra.policies.LoadBalancingPolicy.make_query_plan"><code class="xref py py-meth docutils literal"><span class="pre">LoadBalancingPolicy.make_query_plan()</span></code></a> and filters the results.</p>
+<p>Note that this filtering may break desirable properties of the wrapped
+policy in some cases. For instance, imagine if you configure this
+policy to filter out <code class="docutils literal"><span class="pre">host2</span></code>, and to wrap a round-robin policy that
+rotates through three hosts in the order <code class="docutils literal"><span class="pre">host1,</span> <span class="pre">host2,</span> <span class="pre">host3</span></code>,
+<code class="docutils literal"><span class="pre">host2,</span> <span class="pre">host3,</span> <span class="pre">host1</span></code>, <code class="docutils literal"><span class="pre">host3,</span> <span class="pre">host1,</span> <span class="pre">host2</span></code>, repeating. This
+policy will yield <code class="docutils literal"><span class="pre">host1,</span> <span class="pre">host3</span></code>, <code class="docutils literal"><span class="pre">host3,</span> <span class="pre">host1</span></code>, <code class="docutils literal"><span class="pre">host3,</span> <span class="pre">host1</span></code>,
+disproportionately favoring <code class="docutils literal"><span class="pre">host3</span></code>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -649,7 +734,7 @@ than reading nothing, even if there is a risk of reading stale data.</p>
         <li class="right" >
           <a href="cluster.html" title="cassandra.cluster - Clusters and Sessions"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >API Documentation</a> &#187;</li> 
       </ul>
     </div>

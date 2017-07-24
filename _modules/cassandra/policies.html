@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.policies &#8212; Cassandra Driver 3.10 documentation</title>
+    <title>cassandra.policies &#8212; Cassandra Driver 3.11.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.10',
+        VERSION:     '3.11.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
@@ -82,6 +82,7 @@
 <span class="kn">from</span> <span class="nn">random</span> <span class="k">import</span> <span class="n">randint</span><span class="p">,</span> <span class="n">shuffle</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Lock</span>
 <span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="k">import</span> <span class="n">warn</span>
 
 <span class="kn">from</span> <span class="nn">cassandra</span> <span class="k">import</span> <span class="n">ConsistencyLevel</span><span class="p">,</span> <span class="n">OperationTimedOut</span>
 
@@ -461,6 +462,10 @@
 
 <div class="viewcode-block" id="WhiteListRoundRobinPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.WhiteListRoundRobinPolicy">[docs]</a><span class="k">class</span> <span class="nc">WhiteListRoundRobinPolicy</span><span class="p">(</span><span class="n">RoundRobinPolicy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    |wlrrp| **is deprecated. It will be removed in 4.0.** It can effectively be</span>
+<span class="sd">    reimplemented using :class:`.HostFilterPolicy`. For more information, see</span>
+<span class="sd">    PYTHON-758_.</span>
+
 <span class="sd">    A subclass of :class:`.RoundRobinPolicy` which evenly</span>
 <span class="sd">    distributes queries across all nodes in the cluster,</span>
 <span class="sd">    regardless of what datacenter the nodes may be in, but</span>
@@ -470,12 +475,25 @@
 <span class="sd">    https://datastax-oss.atlassian.net/browse/JAVA-145</span>
 <span class="sd">    Where connection errors occur when connection</span>
 <span class="sd">    attempts are made to private IP addresses remotely</span>
+
+<span class="sd">    .. |wlrrp| raw:: html</span>
+
+<span class="sd">       &lt;b&gt;&lt;code&gt;WhiteListRoundRobinPolicy&lt;/code&gt;&lt;/b&gt;</span>
+
+<span class="sd">    .. _PYTHON-758: https://datastax-oss.atlassian.net/browse/PYTHON-758</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hosts</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The `hosts` parameter should be a sequence of hosts to permit</span>
 <span class="sd">        connections to.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;WhiteListRoundRobinPolicy is deprecated. &#39;</span>
+               <span class="s1">&#39;It will be removed in 4.0. &#39;</span>
+               <span class="s1">&#39;It can effectively be reimplemented using HostFilterPolicy.&#39;</span><span class="p">)</span>
+        <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+        <span class="c1"># DeprecationWarnings are silent by default so we also log the message</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_hosts</span> <span class="o">=</span> <span class="n">hosts</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_hosts_resolved</span> <span class="o">=</span> <span class="p">[</span><span class="n">endpoint</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_hosts</span>
@@ -504,6 +522,118 @@
     <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">address</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_hosts_resolved</span><span class="p">:</span>
             <span class="n">RoundRobinPolicy</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HostFilterPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.HostFilterPolicy">[docs]</a><span class="k">class</span> <span class="nc">HostFilterPolicy</span><span class="p">(</span><span class="n">LoadBalancingPolicy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A :class:`.LoadBalancingPolicy` subclass configured with a child policy,</span>
+<span class="sd">    and a single-argument predicate. This policy defers to the child policy for</span>
+<span class="sd">    hosts where ``predicate(host)`` is truthy. Hosts for which</span>
+<span class="sd">    ``predicate(host)`` is falsey will be considered :attr:`.IGNORED`, and will</span>
+<span class="sd">    not be used in a query plan.</span>
+
+<span class="sd">    This can be used in the cases where you need a whitelist or blacklist</span>
+<span class="sd">    policy, e.g. to prepare for decommissioning nodes or for testing:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        def address_is_ignored(host):</span>
+<span class="sd">            return host.address in [ignored_address0, ignored_address1]</span>
+
+<span class="sd">        blacklist_filter_policy = HostFilterPolicy(</span>
+<span class="sd">            child_policy=RoundRobinPolicy(),</span>
+<span class="sd">            predicate=address_is_ignored</span>
+<span class="sd">        )</span>
+
+<span class="sd">        cluster = Cluster(</span>
+<span class="sd">            primary_host,</span>
+<span class="sd">            load_balancing_policy=blacklist_filter_policy,</span>
+<span class="sd">        )</span>
+
+<span class="sd">    See the note in the :meth:`.make_query_plan` documentation for a caveat on</span>
+<span class="sd">    how wrapping ordering polices (e.g. :class:`.RoundRobinPolicy`) may break</span>
+<span class="sd">    desirable properties of the wrapped policy.</span>
+
+<span class="sd">    Please note that whitelist and blacklist policies are not recommended for</span>
+<span class="sd">    general, day-to-day use. You probably want something like</span>
+<span class="sd">    :class:`.DCAwareRoundRobinPolicy`, which prefers a local DC but has</span>
+<span class="sd">    fallbacks, over a brute-force method like whitelisting or blacklisting.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child_policy</span><span class="p">,</span> <span class="n">predicate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param child_policy: an instantiated :class:`.LoadBalancingPolicy`</span>
+<span class="sd">                             that this one will defer to.</span>
+<span class="sd">        :param predicate: a one-parameter function that takes a :class:`.Host`.</span>
+<span class="sd">                          If it returns a falsey value, the :class:`.Host` will</span>
+<span class="sd">                          be :attr:`.IGNORED` and not returned in query plans.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">HostFilterPolicy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_child_policy</span> <span class="o">=</span> <span class="n">child_policy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_predicate</span> <span class="o">=</span> <span class="n">predicate</span>
+
+    <span class="k">def</span> <span class="nf">on_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_policy</span><span class="o">.</span><span class="n">on_up</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_policy</span><span class="o">.</span><span class="n">on_down</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_policy</span><span class="o">.</span><span class="n">on_add</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_policy</span><span class="o">.</span><span class="n">on_remove</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">predicate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A predicate, set on object initialization, that takes a :class:`.Host`</span>
+<span class="sd">        and returns a value. If the value is falsy, the :class:`.Host` is</span>
+<span class="sd">        :class:`~HostDistance.IGNORED`. If the value is truthy,</span>
+<span class="sd">        :class:`.HostFilterPolicy` defers to the child policy to determine the</span>
+<span class="sd">        host&#39;s distance.</span>
+
+<span class="sd">        This is a read-only value set in ``__init__``, implemented as a</span>
+<span class="sd">        ``property``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predicate</span>
+
+<div class="viewcode-block" id="HostFilterPolicy.distance"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.HostFilterPolicy.distance">[docs]</a>    <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks if ``predicate(host)``, then returns</span>
+<span class="sd">        :attr:`~HostDistance.IGNORED` if falsey, and defers to the child policy</span>
+<span class="sd">        otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">predicate</span><span class="p">(</span><span class="n">host</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_policy</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">IGNORED</span></div>
+
+    <span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">hosts</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_child_policy</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span><span class="n">cluster</span><span class="o">=</span><span class="n">cluster</span><span class="p">,</span> <span class="n">hosts</span><span class="o">=</span><span class="n">hosts</span><span class="p">)</span>
+
+<div class="viewcode-block" id="HostFilterPolicy.make_query_plan"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.HostFilterPolicy.make_query_plan">[docs]</a>    <span class="k">def</span> <span class="nf">make_query_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">working_keyspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Defers to the child policy&#39;s</span>
+<span class="sd">        :meth:`.LoadBalancingPolicy.make_query_plan` and filters the results.</span>
+
+<span class="sd">        Note that this filtering may break desirable properties of the wrapped</span>
+<span class="sd">        policy in some cases. For instance, imagine if you configure this</span>
+<span class="sd">        policy to filter out ``host2``, and to wrap a round-robin policy that</span>
+<span class="sd">        rotates through three hosts in the order ``host1, host2, host3``,</span>
+<span class="sd">        ``host2, host3, host1``, ``host3, host1, host2``, repeating. This</span>
+<span class="sd">        policy will yield ``host1, host3``, ``host3, host1``, ``host3, host1``,</span>
+<span class="sd">        disproportionately favoring ``host3``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">child_qp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_policy</span><span class="o">.</span><span class="n">make_query_plan</span><span class="p">(</span>
+            <span class="n">working_keyspace</span><span class="o">=</span><span class="n">working_keyspace</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">child_qp</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">predicate</span><span class="p">(</span><span class="n">host</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">host</span></div>
+
+    <span class="k">def</span> <span class="nf">check_supported</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_policy</span><span class="o">.</span><span class="n">check_supported</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="ConvictionPolicy"><a class="viewcode-back" href="../../api/cassandra/policies.html#cassandra.cluster.ConvictionPolicy">[docs]</a><span class="k">class</span> <span class="nc">ConvictionPolicy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -683,6 +813,7 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A lighweight-transaction write, such as &quot;DELETE ... IF EXISTS&quot;.</span>
 <span class="sd">    &quot;&quot;&quot;</span></div>
+
 
 <span class="n">WriteType</span><span class="o">.</span><span class="n">name_to_value</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;SIMPLE&#39;</span><span class="p">:</span> <span class="n">WriteType</span><span class="o">.</span><span class="n">SIMPLE</span><span class="p">,</span>
@@ -1059,7 +1190,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>

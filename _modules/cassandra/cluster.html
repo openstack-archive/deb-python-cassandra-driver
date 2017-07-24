@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cassandra.cluster &#8212; Cassandra Driver 3.10 documentation</title>
+    <title>cassandra.cluster &#8212; Cassandra Driver 3.11.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.10',
+        VERSION:     '3.11.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" accesskey="U">cassandra</a> &#187;</li> 
       </ul>
@@ -655,6 +655,12 @@
 <span class="sd">    Setting to zero disables heartbeats.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">idle_heartbeat_timeout</span> <span class="o">=</span> <span class="mi">30</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Timeout, in seconds, on which the heartbeat wait for idle connection responses.</span>
+<span class="sd">    Lowering this value can help to discover bad connections earlier.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">schema_event_refresh_window</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Window, in seconds, within which a schema component will be refreshed after</span>
@@ -821,7 +827,8 @@
                  <span class="n">reprepare_on_up</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                  <span class="n">execution_profiles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">allow_beta_protocol_version</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">timestamp_generator</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                 <span class="n">timestamp_generator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">idle_heartbeat_timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        ``executor_threads`` defines the number of threads in a pool for handling asynchronous tasks such as</span>
 <span class="sd">        extablishing connection pools or refreshing metadata.</span>
@@ -912,6 +919,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">max_schema_agreement_wait</span> <span class="o">=</span> <span class="n">max_schema_agreement_wait</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">control_connection_timeout</span> <span class="o">=</span> <span class="n">control_connection_timeout</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">idle_heartbeat_interval</span> <span class="o">=</span> <span class="n">idle_heartbeat_interval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idle_heartbeat_timeout</span> <span class="o">=</span> <span class="n">idle_heartbeat_timeout</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">schema_event_refresh_window</span> <span class="o">=</span> <span class="n">schema_event_refresh_window</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">topology_event_refresh_window</span> <span class="o">=</span> <span class="n">topology_event_refresh_window</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status_event_refresh_window</span> <span class="o">=</span> <span class="n">status_event_refresh_window</span>
@@ -1252,7 +1260,11 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">profile_manager</span><span class="o">.</span><span class="n">check_supported</span><span class="p">()</span>  <span class="c1"># todo: rename this method</span>
 
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">idle_heartbeat_interval</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_idle_heartbeat</span> <span class="o">=</span> <span class="n">ConnectionHeartbeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">idle_heartbeat_interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_connection_holders</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_idle_heartbeat</span> <span class="o">=</span> <span class="n">ConnectionHeartbeat</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">idle_heartbeat_interval</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">get_connection_holders</span><span class="p">,</span>
+                        <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">idle_heartbeat_timeout</span>
+                    <span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_is_setup</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new_session</span><span class="p">(</span><span class="n">keyspace</span><span class="p">)</span>
@@ -1460,8 +1472,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">:</span>
             <span class="k">return</span>
+
         <span class="k">with</span> <span class="n">host</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
             <span class="n">was_up</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">is_up</span>
+
             <span class="c1"># ignore down signals if we have open pools to the host</span>
             <span class="c1"># this is to avoid closing pools when a control connection host became isolated</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_discount_down_events</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_manager</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">host</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HostDistance</span><span class="o">.</span><span class="n">IGNORED</span><span class="p">:</span>
@@ -2376,6 +2390,10 @@
     <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
 
+    <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Ensure all connections are closed, in case the Session object is deleted by the GC</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
     <span class="k">def</span> <span class="nf">add_or_renew_pool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">is_host_addition</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        For internal use only.</span>
@@ -3197,7 +3215,7 @@
         <span class="n">c</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_connection&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">if</span> <span class="n">c</span> <span class="k">else</span> <span class="p">[]</span>
 
-    <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">mark_host_down</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>  <span class="c1"># noqa</span>
+    <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="ow">and</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">is_defunct</span> <span class="ow">or</span> <span class="n">connection</span><span class="o">.</span><span class="n">is_closed</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
 
@@ -4226,7 +4244,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Cassandra Driver 3.11.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../cassandra.html" >cassandra</a> &#187;</li> 
       </ul>
