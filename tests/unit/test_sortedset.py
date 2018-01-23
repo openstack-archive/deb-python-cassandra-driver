@@ -38,14 +38,13 @@ class SortedSetTest(unittest.TestCase):
         ss = sortedset(input)
 
         for i in expected:
-            self.assertTrue(i in ss)
-            self.assertFalse(i not in ss)
+            self.assertIn(i, ss)
 
         hi = max(expected)+1
         lo = min(expected)-1
 
-        self.assertFalse(hi in ss)
-        self.assertFalse(lo in ss)
+        self.assertNotIn(hi, ss)
+        self.assertNotIn(lo, ss)
 
     def test_mutable_contents(self):
         ba = bytearray(b'some data here')
@@ -82,8 +81,8 @@ class SortedSetTest(unittest.TestCase):
         ss = sortedset([comparable(), o])
         ss2 = ss.copy()
         self.assertNotEqual(id(ss), id(ss2))
-        self.assertTrue(o in ss)
-        self.assertTrue(o in ss2)
+        self.assertIn(o, ss)
+        self.assertIn(o, ss2)
 
     def test_isdisjoint(self):
         # set, ss
