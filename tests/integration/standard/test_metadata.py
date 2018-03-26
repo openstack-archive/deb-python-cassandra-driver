@@ -51,7 +51,7 @@ class HostMetatDataTests(BasicExistingKeyspaceUnitTestCase):
     @local
     def test_broadcast_listen_address(self):
         """
-        Check to ensure that the broadcast and listen adresss is populated correctly
+        Check to ensure that the broadcast and listen addresss is populated correctly
 
         @since 3.3
         @jira_ticket PYTHON-332

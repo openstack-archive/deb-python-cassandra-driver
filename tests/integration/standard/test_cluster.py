@@ -1062,7 +1062,7 @@ class ClusterTests(unittest.TestCase):
         return queried_hosts
 
 
-class LocalHostAdressTranslator(AddressTranslator):
+class LocalHostAddressTranslator(AddressTranslator):
 
     def __init__(self, addr_map=None):
         self.addr_map = addr_map
@@ -1088,7 +1088,7 @@ class TestAddressTranslation(unittest.TestCase):
 
         @test_category metadata
         """
-        lh_ad = LocalHostAdressTranslator({'127.0.0.1': '127.0.0.1', '127.0.0.2': '127.0.0.1', '127.0.0.3': '127.0.0.1'})
+        lh_ad = LocalHostAddressTranslator({'127.0.0.1': '127.0.0.1', '127.0.0.2': '127.0.0.1', '127.0.0.3': '127.0.0.1'})
         c = Cluster(address_translator=lh_ad)
         c.connect()
         self.assertEqual(len(c.metadata.all_hosts()), 1)
@@ -1108,7 +1108,7 @@ class TestAddressTranslation(unittest.TestCase):
         @test_category metadata
         """
         adder_map = {'127.0.0.1': '127.0.0.1', '127.0.0.2': '127.0.0.3', '127.0.0.3': '127.0.0.2'}
-        lh_ad = LocalHostAdressTranslator(adder_map)
+        lh_ad = LocalHostAddressTranslator(adder_map)
         c = Cluster(address_translator=lh_ad)
         c.connect()
         for host in c.metadata.all_hosts():
