@@ -190,7 +190,7 @@ class CustomResultMessageRaw(ResultMessage):
 class CustomTestRawRowType(ProtocolHandler):
     """
     This is the a custom protocol handler that will substitute the the
-    customResultMesageRowRaw Result message for our own implementation
+    customResultMessageRowRaw Result message for our own implementation
     """
     my_opcodes = ProtocolHandler.message_types_by_opcode.copy()
     my_opcodes[CustomResultMessageRaw.opcode] = CustomResultMessageRaw
